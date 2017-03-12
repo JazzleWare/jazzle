@@ -1,0 +1,11 @@
+while yield: yield
+
+<while>
+  <test>
+    <simple>yield</simple>
+    <simple>sent</simple>
+  </test>
+  <body>
+    <simple>yield</simple>
+  </body>
+</while>

@@ -1,0 +1,17 @@
+for ((yield)[yield] = yield; yield; yield) yield
+
+<for>
+  <init>
+    <simple>yield</simple>
+    <simple>t=sent; yield</simple>
+    <simple>t1=sent; yield</simple>
+    <simple>t[t1]=sent</simple>
+  </init>
+  <test>
+    <simple>yield</simple>
+    <simple>sent</simple>
+  </test>
+  <nextiter>
+    <simple>yield</simple>
+  </nextiter>
+</for>

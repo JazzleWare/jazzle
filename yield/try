@@ -1,0 +1,13 @@
+try { yield } catch { yield } finally { yield }
+ <tcf>
+   <try>
+     <simple>yield</simple>
+   </try>
+   <catch>
+     <simple>yield</simple>
+   </catch>
+   <finally>
+     <simple>yield</simple>
+     <simple:rt/>
+   </finally>
+ </tcf>

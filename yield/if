@@ -1,0 +1,17 @@
+if yield:
+  yield
+else:
+  yield
+
+<if>
+  <test>
+    <simple>yield</simple>
+    <simple>sent</simple>
+  </test>
+  <consequent>
+    <simple>yield</simple>
+  </consequent>
+  <alternate>
+    <simple>yield</simple>
+  </alternate>
+</if>

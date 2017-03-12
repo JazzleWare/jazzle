@@ -1,0 +1,56 @@
+LOAD angular-1.2.5.js
+LOAD backbone-1.1.0.js
+LOAD benchmark.js
+LOAD jquery-1.9.1.js
+LOAD jquery.mobile-1.4.2.js
+LOAD mootools-1.4.5.js
+LOAD underscore-1.5.2.js
+LOAD yui-3.12.0.js
+-----------START---------
+ source:  angular-1.2.5.js
+0.09883631034482758 '(shift)'
+------------DONE---------
+
+
+-----------START---------
+ source:  backbone-1.1.0.js
+0.013945796551724135 '(shift)'
+------------DONE---------
+
+
+-----------START---------
+ source:  benchmark.js
+0.02190815497076023 '(shift)'
+------------DONE---------
+
+
+-----------START---------
+ source:  jquery-1.9.1.js
+0.0795448 '(shift)'
+------------DONE---------
+
+
+-----------START---------
+ source:  jquery.mobile-1.4.2.js
+0.1244279166666667 '(shift)'
+------------DONE---------
+
+
+-----------START---------
+ source:  mootools-1.4.5.js
+0.06708460000000001 '(shift)'
+------------DONE---------
+
+
+-----------START---------
+ source:  underscore-1.5.2.js
+0.01291059666666667 '(shift)'
+------------DONE---------
+
+
+-----------START---------
+ source:  yui-3.12.0.js
+0.05818662121212122 '(shift)'
+------------DONE---------
+
+

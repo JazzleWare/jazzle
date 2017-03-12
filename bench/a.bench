@@ -1,0 +1,56 @@
+LOAD angular-1.2.5.js
+LOAD backbone-1.1.0.js
+LOAD benchmark.js
+LOAD jquery-1.9.1.js
+LOAD jquery.mobile-1.4.2.js
+LOAD mootools-1.4.5.js
+LOAD underscore-1.5.2.js
+LOAD yui-3.12.0.js
+-----------START---------
+ source:  angular-1.2.5.js
+0.13233108695652174 '(acorn)'
+------------DONE---------
+
+
+-----------START---------
+ source:  backbone-1.1.0.js
+0.019113475555555558 '(acorn)'
+------------DONE---------
+
+
+-----------START---------
+ source:  benchmark.js
+0.02846697807017544 '(acorn)'
+------------DONE---------
+
+
+-----------START---------
+ source:  jquery-1.9.1.js
+0.10160228571428571 '(acorn)'
+------------DONE---------
+
+
+-----------START---------
+ source:  jquery.mobile-1.4.2.js
+0.15951542105263156 '(acorn)'
+------------DONE---------
+
+
+-----------START---------
+ source:  mootools-1.4.5.js
+0.08806951785714286 '(acorn)'
+------------DONE---------
+
+
+-----------START---------
+ source:  underscore-1.5.2.js
+0.017090788888888892 '(acorn)'
+------------DONE---------
+
+
+-----------START---------
+ source:  yui-3.12.0.js
+0.059831640625 '(acorn)'
+------------DONE---------
+
+

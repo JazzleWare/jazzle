@@ -1,0 +1,51 @@
+{
+  "name": "jazzle",
+  "main": "dist/jazzle.js",
+  "version": "0.5.880",
+  "description": "A dazzlingly fast ECMAScript parser written in vanilla ES3",
+  "homepage": "https://github.com/JazzleWare/jazzle-parser",
+  "engines": { "node": ">=6.20.0" },
+  "author": {
+    "name": "Neni Onoda",
+    "email": "neni.onoda@gmail.com"
+  },
+  "maintainers": [
+    {
+      "name": "Neni Onoda",
+      "email": "neni.onoda@gmail.com",
+      "web": "https://github.com/nenionoda"
+    },
+    {
+      "name": "Ulolo Onoda",
+      "email": "icefapper@gmail.com",
+      "web": "https://github.com/icefapper"
+    }
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/JazzleWare/jazzle-parser.git"
+  },
+  "bugs": {
+    "url": "https://github.com/JazzleWare/jazzle-parser/issues"
+  },
+  "license": "MIT",
+  "keywords": [
+    "ast",
+    "ecmascript",
+    "fast",
+    "javascript",
+    "jsrube",
+    "parser",
+    "syntax"
+  ],
+  "scripts": {
+    "test": "node test/run.js",
+    "benchmark": "node bench/run.js"
+  },
+  "devDependencies": {
+    "acorn": "^3.2.0",
+    "esprima": "^2.7.2",
+    "benchmark": "^2.1.0",
+    "microtime": "^2.1.1"
+  }
+}

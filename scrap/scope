@@ -1,0 +1,237 @@
+Scope
+    parent: Scope // parent
+    type: enum ScopeType // type
+    scs: Scope // surrounding concrete scope
+    deflist: SortedObj[String]Decl // definitions belonging to this scope
+    reflist: SortedObj[String]Ref // references made in this scope
+    allowed: enum ScopeActions // things allowed in this scope (throw, return, break, etc.)
+    mode: enum ScopeMode // strict, loop, etc.
+    labels: SortedObj[String]
+    allNames: SortedObj[String]
+    #decl(name: String, mode: enum DeclMode)
+    #reference(name: String)
+    #synthName(baseName: String)
+    #synthesize()
+    #finish()
+
+    #isFunc()
+    #isIndirect()
+    #isLexical()
+    #isDecl()
+    #isConcrete()
+    #isExpr()
+    #isClass()
+    #isHoisted()
+    #isCatch()
+    #isBlock()
+    #isBare()
+    #isMeth()
+    #isCtor()
+    #isGen()
+    #isSimpleMem()
+    #isSpecialMem()
+    #isStaticMem()
+    #isNonStaticMem()
+    #isClassMem()
+    #isGetter()
+    #isSetter()
+    #isAccessor()
+
+    #insideLoop()
+    #insideIf()
+    #insideStrict()
+    #insideBlock()
+    #insideForInit();
+
+    #canReturn()
+    #canContinue()
+    #canBreak()
+    #canDeclareLet()
+    #canDeclareFunc()
+    #canYield()
+    #canAwait()
+    #canSupCall()
+    #canSupMem()
+    #canHaveNewTarget()
+    #canDup()
+    #enterUniqueArgs()
+    #exitUniqueArgs()
+
+    #enterForInit()
+    #exitForInit()
+
+    #hasOwnArguments()
+
+FunctionScope < class(Scope):
+    prolog: []String
+    paramList: SortedObj[String]Decl
+    #makeStrict()
+ 
+LexicalScope < class(Scope)
+    name: String|"" // if the scope has to be synthesized, it is not ""
+    children: Array[]Decl // if the scope has to be synthesized, these are the names it will contain
+    surroundingCatch: Scope // the catch scope this scope is in, or null if it is not in any
+
+MethodScope;
+
+ClassScope < class(Scope)
+    synthCLSPName: String // clsp name
+    synthSuperName: String // super name, if any
+    synthCLSName: String // cls name
+
+CatchScope < class(LexicalScope):
+    paramList: SortedObj[String]Decl
+    hasSimpleList: true|false
+    catchVarName: String|""
+    
+RefCount:
+    fw: Number
+    bw: Number
+    #total()
+
+Ref:
+    direct: RefCount
+    indirect: RefCount
+    scope: Scope
+    lors: Array[]Scope
+    unresolved: true|false
+    #total()
+
+enum.bits ScopeType {
+  `GLOBAL = 1, `MODULE, `SCRIPT, `METH, `CLASS_DECL,
+  `CONSTRUCTOR, `FN_DECL, `CLASS_EXPR, `FN_EXPR, `ARROW_FUNC,
+  `CATCH, `FN = FN_EXPR|FN_DECL, `CLASS = `CLASS_EXPR|`CLASS_DECL
+}
+
+enum.bits ScopeMode { `LOOP, `UNIQUE, `STRICT, `ARGS, `IN_BLOCK, `INSIDE_IF }
+
+enum.bits ScopeActions {
+  `THROW, `RETURN, `BREAK, `SUPER_CALL, `SUPER_MEM,
+  `CONTINUE, `YIELD
+}
+
+enum.bits BindingMode {
+  VAR = 1,
+  FUNCTION,
+  LET,
+  DECL,
+  FC_EXPR,
+  CATCH_VAR,
+  FN_PARAM,
+  CLS,
+  SUPER,
+  THIS,
+  TEMP,
+  ARGUMENTS
+}
+
+Decl { type: enum DeclMode; ref: Ref; name: String; site: Identifier }
+
+enum.bits ScopeType {
+  GLOBAL, #Scope::createGlobal
+  MODULE, #GlobalScope::spawnModule
+  SCRIPT, #GlobalScope::spawnScript
+  BLOCK, #Scope::spawnBlock
+  CATCH, #Scope::spawnCatch
+  FN, #Scope::spawnFunc
+  CLS, #Scope::spawnClass
+  CLSMEM, #Scope::spawnClassMem
+  METH, #Scope::spawnMeth
+  GEN, #Scope::spawnGen
+  
+}
+
+* global    ->  GLOBAL Scope.GlobalScope()
+* module    ->  MODULE global.moduleScope()
+* script    ->  SCRIPT global.scriptScope()
+* block     ->  BLOCK scope.blockScope()
+* catch     ->  CATCH scope.catchScope()
+* func-expr ->  FN|EXPR scope.funcScope(EXPR)
+* func-decl ->  FN|DECL scope.funcScope(DECL)
+* class-expr->  CLS|EXPR scope.clsScope(EXPR)
+* class-decl->  CLS|DECL scope.clsScope(DECL)
+* class-meth->  FN|METH|CLSMEM cls.memScope(METH)
+* gen-expr  ->  FN|GEN|EXPR scope.genScope(EXPR)
+* gen-decl  ->  FN|GEN|DECL scope.genScope(DECL)
+* class-gen ->  FN|GEN|CLSMEM cls.memScope(GEN)
+* class-ctor->  FN|CTOR|CLSMEM cls.memScope(CTOR);
+* arrow     ->  FN|ARROW scope.arrowScope()
+
+function a() {}
+function* a() {}
+// FUNC|DECLNAME|VAR_LIKE
+
+{ function a() {} }
+{ function* a() {} }
+// FUNC|DECLNAME|LEXICAL
+
+(function a() {})
+(function* a() {})
+// FUNC|EXPRNAME
+
+var a;
+// BINDING|VAR_LIKE
+
+class a {}
+// CLS|DECLNAME|VARLIKE
+
+let a;
+// BINDING|LEXICAL
+
+{ class a {} }
+// CLS|DECLNAME|LEXICAL
+
+(class a{})
+// CLS|EXPRNAME
+
+(function(a) {})
+// PARAMFN
+
+try {} catch (a) {}
+// PARAMCATCH
+
+class a { CLS|DECL }
+class a extends e { CLS|DECL }
+class a { e() { METH|CLSMEM } }
+class a { *e() { GEN|CLSMEM } }
+class a { set e(n) { GETTER|CLSMEM } }
+class a { get e(n) { SETTER|CLSMEM } }
+class a { static e() { METH|STATICMEM } }
+class a { static *e() { GEN|STATICMEM } }
+class a { static set e(n) { SETTER|STATICMEM } }
+class a { static get e(n) { GETTER|STATICMEM } }
+class a { constructor() { CTOR } }
+class a { static constructor() { METH|STATICMEM } }
+({ e() { METH|OBJMEM } })
+({ *e() { GEN|OBJMEM } })
+({ set e(n) { SETTER|OBJMEM } })
+({ get e(n) { GETTER|OBJMEM } })
+(class a extends e { CLS|EXPR })
+(class a { CLS|EXPR })
+function a() { DECL|FN }
+function* a() { GEN|DECL }
+(function*() { GEN|EXPR })
+(function() { FN|EXPR })
+try {} catch (e) { CATCH }
+{ BLOCK }
+() => ARROW
+() => { ARROW }
+if (a) { BLOCK }
+if (a) BARE
+
+CLS, METH, GEN, DECL, EXPR, FN, CLSMEM, SETTER, GETTER, STATICMEM, CTOR, OBJMEM, ARROW, BLOCK, CATCH, BARE
+
+{ class a {} } // CLS|LEXICAL
+{ function a() {} } // FUNCTION|LEXICAL
+let a; // NAME|LEXICAL
+var a; // NAME|FNVAR
+(function(a) {}) // NAME|FNARG
+try {} catch (a) {} // NAME|CATCHARG
+class a {} // CLS|FNVAR
+function a() {} // FUNCTION|FNVAR
+(function a() {}) // SCOPENAME; not an actual declType -- rather, it sets the scope name
+
+if (false) LEXICAL|BODY
+(function /*FN|EXPR|HEAD*/a(FN|EXPR) { FN|EXPR|BODY })
+function a /*FN|DECL|HEAD*/() { FN|DECL|BODY })
+

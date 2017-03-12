@@ -1,0 +1,31 @@
+ecmaVersion
+sourceType
+onInsertedSemicolon-
+onTrailingComma
+allowReserved
+allowReturnOutsideFunction
+allowImportExportEverywhere
+allowHashBang
+locations
+onToken
+onComment (block,text,start,end[,startLoc,endLoc])
+  ```javascript
+  {
+    "type": "Line" | "Block",
+    "value": "comment text",
+    "start": Number,
+    "end": Number,
+    // If `locations` option is on:
+    "loc": {
+      "start": {line: Number, column: Number}
+      "end": {line: Number, column: Number}
+    },
+    // If `ranges` option is on:
+    "range": [Number, Number]
+  }
+  ```
+ranges
+program
+sourceFile
+directSourceFile
+preserveParens

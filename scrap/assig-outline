@@ -1,0 +1,75 @@
+(yield) || (yield)
+
+yield
+if (t = sent) {
+  yield
+}
+
+[a] = (yield) || (yield)
+
+yield
+if (t = sent) {
+  yield
+  t = sent
+}
+t = arrIter(t)
+a = t.get()
+
+[a=yield] = (yield) || a()
+
+yield
+t = sent || a()
+a = uon(t1 = t.get()) ? yield : t1
+  if uon(t1 = t.get() {
+    yield
+    t1 = sent
+  }
+  else
+    t1 = t1
+
+yield
+t = sent || a()
+if uon(t1 = t.get()) {
+  yield
+  t1 = sent
+}
+else: t1 = t1 // omitted
+
+transform['WhileStatement'] = function(n, list, isVal) {
+  if `y(n): 
+    return `transformWhileWithYield(n, list, isVal)
+
+  n.test = `tr(n.test, list, true);
+  n.body = `tr(n.body, list, false);
+
+  return n
+}
+ 
+`transformWhileWithYield(n, list, isVal) {
+  var whileContainer = Container.createWhile();
+  whileContainer.test = `tr(n.test, whileContainer, true);
+  whileContainer.push(n.body);
+  list.push(whileContainer);
+}
+
+transform['TryStatement'] = function(n, list, isVal) {
+  if `y(n):
+    return `transformTryWithYield(n, list, isVal);
+  n.block = `tr(n.block, list, false);
+  if n.handler:
+    n.handler = `tr(n.handler, list, false);
+  if n.finalizer:
+    n.finalizer = `tr(n.finalizer, list, false);
+
+  return n;
+}
+
+`transformTryWithYield(n, list, isVal) {
+  var tcf = Container.createTCF();
+
+  var block = Container.tryBlock()
+  block@push_checked(`tr(n.block, block, false))
+  tcf.block = block
+
+  var handler = Container.catchClause()
+  handler.
