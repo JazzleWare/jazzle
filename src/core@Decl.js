@@ -63,18 +63,7 @@ this.absorbRef = function(otherRef) {
 
   var fromScope = otherRef.scope;
   var cur = this.ref;
-  
-  if (fromScope.isIndirect()) {
-    if (fromScope.isHoisted() &&
-        !this.isTopmostInItsScope())
-      cur.indirect.fw += ref.total();
-    else
-      cur.indirect.ex += ref.total()
-  } else {
-    cur.indirect.ex += ref.indirect.total();
-    cur.direct.ex += ref.direct.total();
-  }
-
+  cur.absorb(otherRef);
   return cur;
 };
 

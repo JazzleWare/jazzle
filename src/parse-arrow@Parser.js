@@ -13,8 +13,8 @@ this.parseArrowFunctionExpression = function(arg, context)   {
   switch ( arg.type ) {
   case 'Identifier':
     var decl = this.scope.findDecl(arg.name);
-    if (decl) this.ref.direct.ex--;
-    else this.scope.findRef(arg.name).direct.fw--;
+    if (decl) this.ref.direct--;
+    else this.scope.findRef(arg.name).direct--;
 
     this.enterScope(this.scope.fnHeadScope(st));
     this.asArrowFuncArg(arg);

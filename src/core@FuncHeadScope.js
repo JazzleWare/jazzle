@@ -52,7 +52,7 @@ this.absorb = function(parenScope) {
 
   var list = this.paramList, i = 0;
   while (i < list.length)
-    list[i++].ref.direct.fw--; // one ref is a decls
+    list[i++].ref.direct--; // one ref is a decls
 };
 
 this.writeTo = function(emitter) {

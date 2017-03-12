@@ -1618,18 +1618,7 @@ this.absorbRef = function(otherRef) {
 
   var fromScope = otherRef.scope;
   var cur = this.ref;
-  
-  if (fromScope.isIndirect()) {
-    if (fromScope.isHoisted() &&
-        !this.isTopmostInItsScope())
-      cur.indirect.fw += ref.total();
-    else
-      cur.indirect.ex += ref.total()
-  } else {
-    cur.indirect.ex += ref.indirect.total();
-    cur.direct.ex += ref.direct.total();
-  }
-
+  cur.absorb(otherRef);
   return cur;
 };
 
@@ -2668,7 +2657,7 @@ this.absorb = function(parenScope) {
 
   var list = this.paramList, i = 0;
   while (i < list.length)
-    list[i++].ref.direct.fw--; // one ref is a decls
+    list[i++].ref.direct--; // one ref is a decls
 };
 
 this.writeTo = function(emitter) {
@@ -4843,8 +4832,8 @@ this.parseArrowFunctionExpression = function(arg, context)   {
   switch ( arg.type ) {
   case 'Identifier':
     var decl = this.scope.findDecl(arg.name);
-    if (decl) this.ref.direct.ex--;
-    else this.scope.findRef(arg.name).direct.fw--;
+    if (decl) this.ref.direct--;
+    else this.scope.findRef(arg.name).direct--;
 
     this.enterScope(this.scope.fnHeadScope(st));
     this.asArrowFuncArg(arg);
@@ -9351,8 +9340,7 @@ this.parseThis = function() {
   };
   this.next() ;
 
-  if (this.scope.scs.isArrowComp())
-    this.scope.reference_m(RS_LTHIS);
+  this.scope.reference_m(RS_LTHIS);
 
   return n;
 };
@@ -10134,23 +10122,26 @@ this.resolve = function() {
 };
 
 this.total = function() {
-  return this.indirect.total() + this.direct.total();
+  return this.indirect + this.direct;
 };
 
 this.absorb = function(anotherRef) {
-  ASSERT.call(this, !this.resolved,
-    'a resolved reference must absorb through its decl');
+//ASSERT.call(this, !this.resolved,
+//  'a resolved reference must absorb through its decl');
   ASSERT.call(this, !anotherRef.resolved,
     'absorbing a reference that has been resolved is not a valid action');
   var fromScope = anotherRef.scope;
-  if (fromScope.isIndirect()) {
-    if (fromScope.isHoistable())
-      this.indirect.fw += anotherRef.total();
-    else {
-      this.direct.fw += anotherRef.direct.fw;
-      this.indirect.fw += anotherRef.indirect.fw;
-    }
+  if (fromScope.isIndirect())
+    this.indirect += anotherRef.total();
+  else {
+    this.direct += anotherRef.direct;
+    this.indirect += anotherRef.indirect;
   }
+
+  if (fromScope.isConcrete())
+    this.lors.push(fromScope);
+  if (anotherRef.lors.length)
+    this.lors = this.lors.concat(anotherRef.lors);
 };
 
 }]  ],
@@ -10462,7 +10453,7 @@ this.reference_m = function(mname, prevRef) {
     if (prevRef)
       decl.absorbRef(prevRef);
     else
-      decl.ref.direct.ex++;
+      decl.ref.direct++;
 
     return decl.ref;
   }
@@ -10470,7 +10461,7 @@ this.reference_m = function(mname, prevRef) {
   var ref = this.findRef_m(mname, true);
   
   if (prevRef) ref.absorb(prevRef);
-  else ref.direct.fw++;
+  else ref.direct++;
 
   return ref;
 };

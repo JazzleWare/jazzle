@@ -23,7 +23,7 @@ this.reference_m = function(mname, prevRef) {
     if (prevRef)
       decl.absorbRef(prevRef);
     else
-      decl.ref.direct.ex++;
+      decl.ref.direct++;
 
     return decl.ref;
   }
@@ -31,7 +31,7 @@ this.reference_m = function(mname, prevRef) {
   var ref = this.findRef_m(mname, true);
   
   if (prevRef) ref.absorb(prevRef);
-  else ref.direct.fw++;
+  else ref.direct++;
 
   return ref;
 };
