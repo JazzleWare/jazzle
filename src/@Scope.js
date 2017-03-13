@@ -10,7 +10,7 @@ function Scope(sParent, sType) {
 
   this.allowed = this.calculateAllowedActions();
   this.mode = this.calculateScopeMode();
-  if (this.isCtorComp() && !this.parent.hasHeritage())
+  if (this.isCtorComp() && this.isBody() && !this.parent.parent.hasHeritage())
     this.allowed &= ~SA_CALLSUP;
 
   this.labelTracker = new LabelTracker();

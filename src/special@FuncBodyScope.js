@@ -25,14 +25,14 @@ this.getMemSuper = function() {
     this.isClassMem(),
     'only methmems can have supmem');
 
-  if (!this.parent.special.calledSuper) {
+  if (!this.cls().special.calledSuper) {
     var decl = new Decl(),
         ref = this.findRef_m(RS_SMEM, true);
-    this.parent.special.smem =
+    this.cls().special.smem =
       decl.r(ref).n(_u(RS_SMEM));
   }
 
-  return this.parent.special.smem;
+  return this.cls().special.smem;
 };
 
 this.getCalledSuper = function() {
@@ -44,10 +44,10 @@ this.getCalledSuper = function() {
     this.isCtor(),
     'only a constructor is allowed to call super');
 
-  ASSERT.call(
-    this,
-    this.parent.isClass(),
-    'a ctor can only have a parent of type class');
+//ASSERT.call(
+//  this,
+//  this.parent.isClass(),
+//  'a ctor can only have a parent of type class');
 
   if (!this.parent.special.scall) {
     var decl = new Decl(),

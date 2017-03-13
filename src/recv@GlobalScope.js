@@ -3,6 +3,7 @@ this.defineGlobal_m = function(mname, ref) {
   newDecl = new Decl().r(globalRef).n(_u(mname));
   globalRef.absorb(ref);
   globalRef.resolve();
+  this.insertDecl_m(mname, newDecl);
 };
   
 this.receiveRef_m = function(mname, ref) {

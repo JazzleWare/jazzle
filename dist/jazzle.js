@@ -263,9 +263,9 @@ var Parser = function (src, o) {
 ;
 function Ref(scope) {
   this.lors = [];
-  this.indirect = new RefCount();
+  this.indirect = 0;
   this.scope = scope;
-  this.direct = new RefCount();
+  this.direct = 0;
   this.resolved = false;
 }
 ;
@@ -286,7 +286,7 @@ function Scope(sParent, sType) {
 
   this.allowed = this.calculateAllowedActions();
   this.mode = this.calculateScopeMode();
-  if (this.isCtorComp() && !this.parent.hasHeritage())
+  if (this.isCtorComp() && this.isBody() && !this.parent.parent.hasHeritage())
     this.allowed &= ~SA_CALLSUP;
 
   this.labelTracker = new LabelTracker();
@@ -1654,8 +1654,10 @@ this.s = function(site) {
 },
 function(){
 this.str = function() {
+
   return this.i+':<decl type="'+
-         this.typeString()+'">'+this.name+'</decl>';
+         this.typeString()+'">'+
+         this.name+'[d:'+this.ref.direct+';i:'+this.ref.indirect+']</decl>';
 };
 
 this.typeString = function() {
@@ -2491,7 +2493,15 @@ this.applyTo = function(obj) {
 
 }]  ],
 [FuncBodyScope.prototype, [function(){
-
+this.cls = function() {
+  ASSERT.call(this, this.isClassMem(),
+     'scopes that are not classmems can not have '+
+     'class');
+  ASSERT.call(this, this.parent.parent.isClass(),
+     'this scope is a classmem and must have a '+
+     'class for its parent');
+  return this.parent.parent;
+};
 
 },
 function(){
@@ -2502,7 +2512,7 @@ this.receiveRef_m = function(mname, ref) {
     isMemSuper(mname) ? this.getMemSuper() :
     isNewTarget(mname) ? this.getNewTarget() :
     isLexicalThis(mname) ? this.getLexicalThis() :
-    this.funcHead.findDecl_m(mname);
+    null;
 
   if (decl)
     decl.absorbRef(ref);
@@ -2539,14 +2549,14 @@ this.getMemSuper = function() {
     this.isClassMem(),
     'only methmems can have supmem');
 
-  if (!this.parent.special.calledSuper) {
+  if (!this.cls().special.calledSuper) {
     var decl = new Decl(),
         ref = this.findRef_m(RS_SMEM, true);
-    this.parent.special.smem =
+    this.cls().special.smem =
       decl.r(ref).n(_u(RS_SMEM));
   }
 
-  return this.parent.special.smem;
+  return this.cls().special.smem;
 };
 
 this.getCalledSuper = function() {
@@ -2558,10 +2568,10 @@ this.getCalledSuper = function() {
     this.isCtor(),
     'only a constructor is allowed to call super');
 
-  ASSERT.call(
-    this,
-    this.parent.isClass(),
-    'a ctor can only have a parent of type class');
+//ASSERT.call(
+//  this,
+//  this.parent.isClass(),
+//  'a ctor can only have a parent of type class');
 
   if (!this.parent.special.scall) {
     var decl = new Decl(),
@@ -2687,6 +2697,7 @@ this.defineGlobal_m = function(mname, ref) {
   newDecl = new Decl().r(globalRef).n(_u(mname));
   globalRef.absorb(ref);
   globalRef.resolve();
+  this.insertDecl_m(mname, newDecl);
 };
   
 this.receiveRef_m = function(mname, ref) {
@@ -2845,11 +2856,8 @@ this.dissolve = function() {
     if (ref.resolved)
       ref.resolved = false;
 
-    ref.direct.fw += elem.direct.fw; 
-    ref.direct.ex += elem.direct.ex;
-
-    ref.indirect.fw += elem.indirect.fw;
-    ref.indirect.ex += elem.indirect.ex;
+    ref.direct += elem.direct; 
+    ref.indirect += elem.indirect;
 
     i++;
   }
@@ -4882,7 +4890,7 @@ this.parseArrowFunctionExpression = function(arg, context)   {
 
   }
 
-  var funcHead = this.exitScope();
+  var funcHead = this.scope;
   this.currentExprIsParams();
 
   this.enterScope(this.scope.fnBodyScope(st));
@@ -4905,7 +4913,8 @@ this.parseArrowFunctionExpression = function(arg, context)   {
   else
     nbody = this. parseNonSeqExpr(PREC_WITH_NO_OP, context|CTX_PAT) ;
 
-  this.exitScope();
+  this.exitScope(); // body
+  this.exitScope(); // head
 
   var params = core(arg);
   if (params === null)
@@ -6538,14 +6547,15 @@ this.parseFunc = function(context, st) {
 
   this.declMode = DM_FNARG;
   var argList = this.parseArgs(argLen);
-  var fnHeadScope = this.exitScope();
+  var fnHeadScope = this.scope;
 
   this.labels = {};
 
   this.enterScope(this.scope.fnBodyScope(st));
   this.scope.funcHead = fnHeadScope;
   var body = this.parseFuncBody(context & CTX_FOR);
-  this.exitScope();
+  this.exitScope(); // body
+  this.exitScope(); // head
 
   var n = {
     type: isStmt ? 'FunctionDeclaration' : 'FunctionExpression',
@@ -10131,7 +10141,7 @@ this.absorb = function(anotherRef) {
   ASSERT.call(this, !anotherRef.resolved,
     'absorbing a reference that has been resolved is not a valid action');
   var fromScope = anotherRef.scope;
-  if (fromScope.isIndirect())
+  if (fromScope.isIndirect() && !fromScope.isHead())
     this.indirect += anotherRef.total();
   else {
     this.direct += anotherRef.direct;

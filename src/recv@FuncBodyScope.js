@@ -5,7 +5,7 @@ this.receiveRef_m = function(mname, ref) {
     isMemSuper(mname) ? this.getMemSuper() :
     isNewTarget(mname) ? this.getNewTarget() :
     isLexicalThis(mname) ? this.getLexicalThis() :
-    this.funcHead.findDecl_m(mname);
+    null;
 
   if (decl)
     decl.absorbRef(ref);

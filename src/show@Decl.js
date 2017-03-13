@@ -1,6 +1,8 @@
 this.str = function() {
+
   return this.i+':<decl type="'+
-         this.typeString()+'">'+this.name+'</decl>';
+         this.typeString()+'">'+
+         this.name+'[d:'+this.ref.direct+';i:'+this.ref.indirect+']</decl>';
 };
 
 this.typeString = function() {

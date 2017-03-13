@@ -1,7 +1,7 @@
 function Ref(scope) {
   this.lors = [];
-  this.indirect = new RefCount();
+  this.indirect = 0;
   this.scope = scope;
-  this.direct = new RefCount();
+  this.direct = 0;
   this.resolved = false;
 }

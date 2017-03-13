@@ -63,7 +63,7 @@ this.parseArrowFunctionExpression = function(arg, context)   {
 
   }
 
-  var funcHead = this.exitScope();
+  var funcHead = this.scope;
   this.currentExprIsParams();
 
   this.enterScope(this.scope.fnBodyScope(st));
@@ -86,7 +86,8 @@ this.parseArrowFunctionExpression = function(arg, context)   {
   else
     nbody = this. parseNonSeqExpr(PREC_WITH_NO_OP, context|CTX_PAT) ;
 
-  this.exitScope();
+  this.exitScope(); // body
+  this.exitScope(); // head
 
   var params = core(arg);
   if (params === null)
