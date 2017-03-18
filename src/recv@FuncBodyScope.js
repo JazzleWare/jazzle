@@ -12,3 +12,16 @@ this.receiveRef_m = function(mname, ref) {
   else
     this.findRef_m(mname, true).absorb(ref);
 };
+
+this.handOver_m = function(mname, ref) {
+  var decl = 
+    isArguments(mname) && !this.funcHead.findDecl_m(mname) ? this.getArguments(ref) :
+    isCalledSuper(mname) ? this.getCalledSuper(ref) :
+    isMemSuper(mname) ? this.getMemSuper(ref) :
+    isNewTarget(mname) ? this.getNewTarget(ref) :
+    isLexicalThis(mname) ? this.getLexicalThis(ref) :
+    null;
+
+  if (!decl)
+    this.parent.reference_m(mname, ref);
+};

@@ -10,3 +10,7 @@ this.receiveRef_m = function(mname, ref) {
     'this scope is supposed to have its own custom ref');
   this.defaultReceive_m(mname, ref);
 };
+
+this.handOver_m = function(mname, ref) {
+  this.parent.reference_m(mname, ref);
+};

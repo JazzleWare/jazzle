@@ -6,3 +6,7 @@ this.receiveRef_m = function(mname, ref) {
   else
     this.findRef_m(mname, true).absorb(ref);
 };
+
+this.handOver_m = function(mname, ref) {
+  return this.parent.reference_m(mname, ref);
+};

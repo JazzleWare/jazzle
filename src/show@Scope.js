@@ -41,8 +41,24 @@ this.writeTo = function(emitter) {
       di = 0;
 
   emitter.w(this.headI+':<scope type="'+this.typeString()+'">');
-  if (defs.keys.length !== 0 || scopes.length !== 0) {
+  var specialThis = null, specialArguments = null;
+  if (this.isAnyFnBody()) {
+    specialThis = this.special.lexicalThis;
+    specialArguments = this.special.arguments;
+  }
+
+  if (defs.keys.length !== 0 || scopes.length !== 0 || specialThis || specialArguments) {
     emitter.i();
+    if (specialThis) {
+      emitter.l().w(
+        '<special:this r="[d:'+specialThis.ref.direct+';i:'+specialThis.ref.indirect+']">');
+    }
+
+    if (specialArguments) {
+      emitter.l().w(
+        '<special:arguments r="[d:'+specialArguments.ref.direct+';i:'+specialArguments.ref.indirect+']">');
+    }
+
     while (true) {
       var def = null,
           scope = null;

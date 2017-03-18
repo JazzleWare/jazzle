@@ -8,7 +8,7 @@ this.handOverRefsToParent = function() {
   while (i < list.length) {
     var ref = this.refs.at(i);
     if (!ref.resolved)
-      this.parent.receiveRef_m(list[i], ref);
+      this.handOver_m(list[i], ref);
     i++ ;
   }
 };

@@ -63,6 +63,11 @@ var DM_CLS = 1,
     DM_SCOPENAME = DM_CONST << 1,
     DM_CATCHARG = DM_SCOPENAME << 1,
     DM_FNARG = DM_CATCHARG << 1,
+    DM_ARGUMENTS = DM_FNARG << 1,
+    DM_NEW_TARGET = DM_ARGUMENTS << 1,
+    DM_LTHIS = DM_NEW_TARGET << 1,
+    DM_MEMSUP = DM_LTHIS << 1,
+    DM_CALLSUP = DM_MEMSUP << 1,
     DM_NONE = 0;
 
 var RS_ARGUMENTS = _m('arguments'),

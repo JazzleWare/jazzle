@@ -19,6 +19,10 @@ this.dissolve = function() {
 
     i++;
   }
+
+  list = this.ch, i = 0;
+  while (i < list.length)
+    list[i++].parent = this.parent;
 };
 
 this.addPossibleArgument = function(argNode) {

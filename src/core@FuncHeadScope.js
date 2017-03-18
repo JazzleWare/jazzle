@@ -51,10 +51,21 @@ this.absorb = function(parenScope) {
   this.tailI = parenScope.tailI;
 
   var list = this.paramList, i = 0;
+  while (i < list.length) {
+    var elem = list[i++];
+    elem.ref.direct--; // one ref is a decls
+  }
+  
+  list = this.refs, i = 0;
+  while (i < list.keys.length)
+    list.at(i++).scope = this;
+
+  list = parenScope.ch, i = 0;
   while (i < list.length)
-    list[i++].ref.direct--; // one ref is a decls
+    list[i++].parent = this;
 };
 
+if (false) {
 this.writeTo = function(emitter) {
   var list = this.paramList, i = 0;
   emitter.w(this.headI+':<arglist type="'+this.typeString()+'">');
@@ -68,3 +79,4 @@ this.writeTo = function(emitter) {
   }
   emitter.w(this.tailI+':</arglist>');
 };
+}

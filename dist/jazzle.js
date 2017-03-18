@@ -1027,6 +1027,11 @@ var DM_CLS = 1,
     DM_SCOPENAME = DM_CONST << 1,
     DM_CATCHARG = DM_SCOPENAME << 1,
     DM_FNARG = DM_CATCHARG << 1,
+    DM_ARGUMENTS = DM_FNARG << 1,
+    DM_NEW_TARGET = DM_ARGUMENTS << 1,
+    DM_LTHIS = DM_NEW_TARGET << 1,
+    DM_MEMSUP = DM_LTHIS << 1,
+    DM_CALLSUP = DM_MEMSUP << 1,
     DM_NONE = 0;
 
 var RS_ARGUMENTS = _m('arguments'),
@@ -1538,10 +1543,18 @@ this.receiveRef_m = function(mname, ref) {
     this.findRef_m(mname, true).absorb(ref);
 };
 
+this.handOver_m = function(mname, ref) {
+  return this.parent.reference_m(mname, ref);
+};
+
 }]  ],
 [CatchHeadScope.prototype, [function(){
-this.recv = function(mname, ref) {
+this.receiveRef_m = function(mname, ref) {
   return this.defaultRecv(mname, ref);
+};
+
+this.handOver_m = function(mname, ref) {
+  return this.parent.reference_m(mname, ref);
 };
 
 }]  ],
@@ -1549,6 +1562,10 @@ this.recv = function(mname, ref) {
 this.receiveRef_m = function(mname, ref) {
   var decl = null;
   this.findRef_m(mname, true).absorb(ref);
+};
+
+this.handOver_m = function(mname, ref) {
+  return this.reference_m(mname, ref);
 };
 
 }]  ],
@@ -2520,14 +2537,26 @@ this.receiveRef_m = function(mname, ref) {
     this.findRef_m(mname, true).absorb(ref);
 };
 
+this.handOver_m = function(mname, ref) {
+  var decl = 
+    isArguments(mname) && !this.funcHead.findDecl_m(mname) ? this.getArguments(ref) :
+    isCalledSuper(mname) ? this.getCalledSuper(ref) :
+    isMemSuper(mname) ? this.getMemSuper(ref) :
+    isNewTarget(mname) ? this.getNewTarget(ref) :
+    isLexicalThis(mname) ? this.getLexicalThis(ref) :
+    null;
+
+  if (!decl)
+    this.parent.reference_m(mname, ref);
+};
+
 },
 function(){
-this.getArguments = function() {
+this.getArguments = function(ref) {
   if (this.isArrowComp())
     return null;
   if (!this.special.arguments) {
-    var decl = new Decl(),
-        ref = this.findRef_m(RS_ARGUMENTS, true);
+    var decl = new Decl();
     this.special.arguments =
       decl.r(ref).n(_u(RS_ARGUMENTS));
   }
@@ -2535,7 +2564,7 @@ this.getArguments = function() {
   return this.special.arguments;
 };
 
-this.getMemSuper = function() {
+this.getMemSuper = function(ref) {
   if (this.isArrowComp())
     return null;
 
@@ -2550,8 +2579,7 @@ this.getMemSuper = function() {
     'only methmems can have supmem');
 
   if (!this.cls().special.calledSuper) {
-    var decl = new Decl(),
-        ref = this.findRef_m(RS_SMEM, true);
+    var decl = new Decl();
     this.cls().special.smem =
       decl.r(ref).n(_u(RS_SMEM));
   }
@@ -2559,7 +2587,7 @@ this.getMemSuper = function() {
   return this.cls().special.smem;
 };
 
-this.getCalledSuper = function() {
+this.getCalledSuper = function(ref) {
   if (this.isArrowComp())
     return null;
 
@@ -2574,8 +2602,7 @@ this.getCalledSuper = function() {
 //  'a ctor can only have a parent of type class');
 
   if (!this.parent.special.scall) {
-    var decl = new Decl(),
-        ref = this.findRef_m(RS_SCALL, true);
+    var decl = new Decl();
     this.parent.special.scall = 
       decl.r(ref).n(_u(RS_MEM));
   }
@@ -2583,13 +2610,12 @@ this.getCalledSuper = function() {
   return this.parent.special.scall;
 };
 
-this.getNewTarget = function() {
+this.getNewTarget = function(ref) {
   if (this.isArrowComp())
     return null;
 
   if (!this.special.newTarget) {
-    var decl = new Decl(),
-        ref = this.findRef_m(RS_NTARGET, true);
+    var decl = new Decl();
     this.special.newTarget =
       decl.r(ref).n(_u(RS_NTARGET));
   }
@@ -2597,13 +2623,12 @@ this.getNewTarget = function() {
   return this.special.newTarget;
 };
 
-this.getLexicalThis = function() {
+this.getLexicalThis = function(ref) {
   if (this.isArrowComp())
     return null;
 
   if (!this.special.lexicalThis) {
-    var decl = new Decl(),
-        ref = this.findRef_m(RS_LTHIS, true);
+    var decl = new Decl();
     this.special.lexicalThis =
       decl.r(ref).n(_u(RS_LTHIS));
   }
@@ -2666,10 +2691,21 @@ this.absorb = function(parenScope) {
   this.tailI = parenScope.tailI;
 
   var list = this.paramList, i = 0;
+  while (i < list.length) {
+    var elem = list[i++];
+    elem.ref.direct--; // one ref is a decls
+  }
+  
+  list = this.refs, i = 0;
+  while (i < list.keys.length)
+    list.at(i++).scope = this;
+
+  list = parenScope.ch, i = 0;
   while (i < list.length)
-    list[i++].ref.direct--; // one ref is a decls
+    list[i++].parent = this;
 };
 
+if (false) {
 this.writeTo = function(emitter) {
   var list = this.paramList, i = 0;
   emitter.w(this.headI+':<arglist type="'+this.typeString()+'">');
@@ -2683,6 +2719,7 @@ this.writeTo = function(emitter) {
   }
   emitter.w(this.tailI+':</arglist>');
 };
+}
 
 },
 function(){
@@ -2702,6 +2739,14 @@ this.defineGlobal_m = function(mname, ref) {
   
 this.receiveRef_m = function(mname, ref) {
   this.defineGlobal_m(mname, ref);
+};
+
+this.handOver_m = function(mname, ref) {
+  var newDecl = null, globalRef = this.findRef_m(mname, true);
+  newDecl = new Decl().r(globalRef).n(_u(mname));
+  globalRef.absorb(ref);
+  globalRef.resolve();
+  this.insertDecl_m(mname, newDecl);
 };
 
 },
@@ -2861,6 +2906,10 @@ this.dissolve = function() {
 
     i++;
   }
+
+  list = this.ch, i = 0;
+  while (i < list.length)
+    list[i++].parent = this.parent;
 };
 
 this.addPossibleArgument = function(argNode) {
@@ -10141,7 +10190,7 @@ this.absorb = function(anotherRef) {
   ASSERT.call(this, !anotherRef.resolved,
     'absorbing a reference that has been resolved is not a valid action');
   var fromScope = anotherRef.scope;
-  if (fromScope.isIndirect() && !fromScope.isHead())
+  if (fromScope.isIndirect() && fromScope !== this)
     this.indirect += anotherRef.total();
   else {
     this.direct += anotherRef.direct;
@@ -10416,7 +10465,7 @@ this.handOverRefsToParent = function() {
   while (i < list.length) {
     var ref = this.refs.at(i);
     if (!ref.resolved)
-      this.parent.receiveRef_m(list[i], ref);
+      this.handOver_m(list[i], ref);
     i++ ;
   }
 };
@@ -10434,6 +10483,10 @@ this.receiveRef_m = function(mname, ref) {
   ASSERT.call(this, this.isScript() || this.isModule(),
     'this scope is supposed to have its own custom ref');
   this.defaultReceive_m(mname, ref);
+};
+
+this.handOver_m = function(mname, ref) {
+  this.parent.reference_m(mname, ref);
 };
 
 },
@@ -10521,8 +10574,24 @@ this.writeTo = function(emitter) {
       di = 0;
 
   emitter.w(this.headI+':<scope type="'+this.typeString()+'">');
-  if (defs.keys.length !== 0 || scopes.length !== 0) {
+  var specialThis = null, specialArguments = null;
+  if (this.isAnyFnBody()) {
+    specialThis = this.special.lexicalThis;
+    specialArguments = this.special.arguments;
+  }
+
+  if (defs.keys.length !== 0 || scopes.length !== 0 || specialThis || specialArguments) {
     emitter.i();
+    if (specialThis) {
+      emitter.l().w(
+        '<special:this r="[d:'+specialThis.ref.direct+';i:'+specialThis.ref.indirect+']">');
+    }
+
+    if (specialArguments) {
+      emitter.l().w(
+        '<special:arguments r="[d:'+specialArguments.ref.direct+';i:'+specialArguments.ref.indirect+']">');
+    }
+
     while (true) {
       var def = null,
           scope = null;

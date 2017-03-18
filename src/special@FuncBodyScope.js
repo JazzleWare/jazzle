@@ -1,9 +1,8 @@
-this.getArguments = function() {
+this.getArguments = function(ref) {
   if (this.isArrowComp())
     return null;
   if (!this.special.arguments) {
-    var decl = new Decl(),
-        ref = this.findRef_m(RS_ARGUMENTS, true);
+    var decl = new Decl();
     this.special.arguments =
       decl.r(ref).n(_u(RS_ARGUMENTS));
   }
@@ -11,7 +10,7 @@ this.getArguments = function() {
   return this.special.arguments;
 };
 
-this.getMemSuper = function() {
+this.getMemSuper = function(ref) {
   if (this.isArrowComp())
     return null;
 
@@ -26,8 +25,7 @@ this.getMemSuper = function() {
     'only methmems can have supmem');
 
   if (!this.cls().special.calledSuper) {
-    var decl = new Decl(),
-        ref = this.findRef_m(RS_SMEM, true);
+    var decl = new Decl();
     this.cls().special.smem =
       decl.r(ref).n(_u(RS_SMEM));
   }
@@ -35,7 +33,7 @@ this.getMemSuper = function() {
   return this.cls().special.smem;
 };
 
-this.getCalledSuper = function() {
+this.getCalledSuper = function(ref) {
   if (this.isArrowComp())
     return null;
 
@@ -50,8 +48,7 @@ this.getCalledSuper = function() {
 //  'a ctor can only have a parent of type class');
 
   if (!this.parent.special.scall) {
-    var decl = new Decl(),
-        ref = this.findRef_m(RS_SCALL, true);
+    var decl = new Decl();
     this.parent.special.scall = 
       decl.r(ref).n(_u(RS_MEM));
   }
@@ -59,13 +56,12 @@ this.getCalledSuper = function() {
   return this.parent.special.scall;
 };
 
-this.getNewTarget = function() {
+this.getNewTarget = function(ref) {
   if (this.isArrowComp())
     return null;
 
   if (!this.special.newTarget) {
-    var decl = new Decl(),
-        ref = this.findRef_m(RS_NTARGET, true);
+    var decl = new Decl();
     this.special.newTarget =
       decl.r(ref).n(_u(RS_NTARGET));
   }
@@ -73,13 +69,12 @@ this.getNewTarget = function() {
   return this.special.newTarget;
 };
 
-this.getLexicalThis = function() {
+this.getLexicalThis = function(ref) {
   if (this.isArrowComp())
     return null;
 
   if (!this.special.lexicalThis) {
-    var decl = new Decl(),
-        ref = this.findRef_m(RS_LTHIS, true);
+    var decl = new Decl();
     this.special.lexicalThis =
       decl.r(ref).n(_u(RS_LTHIS));
   }

@@ -15,7 +15,7 @@ this.absorb = function(anotherRef) {
   ASSERT.call(this, !anotherRef.resolved,
     'absorbing a reference that has been resolved is not a valid action');
   var fromScope = anotherRef.scope;
-  if (fromScope.isIndirect() && !fromScope.isHead())
+  if (fromScope.isIndirect() && fromScope !== this)
     this.indirect += anotherRef.total();
   else {
     this.direct += anotherRef.direct;
