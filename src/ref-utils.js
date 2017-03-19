@@ -1,19 +1,19 @@
 function isArguments(mname) {
-  return mname === _m('arguments');
+  return mname === RS_ARGUMENTS;
 }
 
-function isCalledSuper(mname) {
-  return mname === _m('special:supermem');
+function isSupCall(mname) {
+  return mname === RS_SCALL;
 }
 
-function isMemSuper(mname) {
-  return mname === _m('special:supercall');
+function isSupMem(mname) {
+  return mname === RS_SMEM;
 }
 
 function isNewTarget(mname) {
-  return mname === _m('new.target');
+  return mname === RS_NTARGET;
 }
 
-function isLexicalThis(mname) {
-  return mname === _m('special:this');
+function isThis(mname) {
+  return mname === RS_THIS;
 }

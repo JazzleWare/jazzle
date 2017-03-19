@@ -15,10 +15,6 @@ this.parseAssignment = function(head, context) {
 
   var right = null;
   if (o === '=') {
-    if (context & CTX_PARAM) {
-      if (head.type === 'Identifier')
-        this.scope.addPossibleArgument(head);
-    }
     if (context & CTX_PARPAT)
       this.adjustErrors();
 

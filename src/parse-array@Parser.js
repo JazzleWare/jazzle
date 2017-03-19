@@ -67,9 +67,6 @@ this.parseArrayExpression = function(context) {
       else break;
     }
  
-    if (elemContext & CTX_PARAM)
-      elem && this.scope.addPossibleArgument(elem);
-
     if (elem && (elemContext & CTX_PARPAT)) {
       var elemCore = elem;
       // TODO: [...(a),] = 12

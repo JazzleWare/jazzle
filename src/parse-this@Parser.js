@@ -7,7 +7,7 @@ this.parseThis = function() {
   };
   this.next() ;
 
-  this.scope.reference_m(RS_LTHIS);
+  this.scope.refDirect(RS_THIS, null);
 
   return n;
 };

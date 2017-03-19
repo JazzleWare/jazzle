@@ -10,7 +10,7 @@ function Scope(sParent, sType) {
 
   this.allowed = this.calculateAllowedActions();
   this.mode = this.calculateScopeMode();
-  if (this.isCtorComp() && this.isBody() && !this.parent.parent.hasHeritage())
+  if (this.isCtorComp() && this.isBody() && !this.cls().hasHeritage())
     this.allowed &= ~SA_CALLSUP;
 
   this.labelTracker = new LabelTracker();
@@ -19,11 +19,6 @@ function Scope(sParent, sType) {
     new SortedObj();
 
   this.resolveCache = new SortedObj();
-
-  this.iRef = this.parent ? this.parent.iRef : {v: 0};
-
-  this.headI = this.iRef.v++;
-  this.tailI = -1;
 
   this.ch = [];
   if (this.parent)

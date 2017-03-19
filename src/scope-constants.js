@@ -68,10 +68,11 @@ var DM_CLS = 1,
     DM_LTHIS = DM_NEW_TARGET << 1,
     DM_MEMSUP = DM_LTHIS << 1,
     DM_CALLSUP = DM_MEMSUP << 1,
+    DM_GLOBAL = DM_CALLSUP << 1,
     DM_NONE = 0;
 
 var RS_ARGUMENTS = _m('arguments'),
     RS_SMEM = _m('special:supermem'),
     RS_SCALL = _m('special:supercall'),
     RS_NTARGET = _m('new.target'),
-    RS_LTHIS = _m('special:this');
+    RS_THIS = _m('special:this');

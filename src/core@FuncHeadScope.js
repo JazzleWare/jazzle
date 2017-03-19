@@ -36,27 +36,9 @@ this.absorb = function(parenScope) {
   ASSERT.call(this, parenScope.isParen(),
     'the only scope that can be absorbed into an arrow-head is a paren');
 
-  parenScope.parent = this;
-
-  this.firstNonSimple = parenScope.firstNonSimple;
-  this.firstDup = parenScope.firstDup;
   this.refs = parenScope.refs;
-  if (this.firstDup)
-    this.parser.err('argsdup');
-
-  this.paramMap = parenScope.paramMap;
-  this.paramList = parenScope.paramList;
-
-  this.headI = parenScope.headI;
-  this.tailI = parenScope.tailI;
-
-  var list = this.paramList, i = 0;
-  while (i < list.length) {
-    var elem = list[i++];
-    elem.ref.direct--; // one ref is a decls
-  }
-  
-  list = this.refs, i = 0;
+ 
+  var list = this.refs, i = 0;
   while (i < list.keys.length)
     list.at(i++).scope = this;
 
@@ -64,6 +46,8 @@ this.absorb = function(parenScope) {
   while (i < list.length)
     list[i++].parent = this;
 };
+
+this.hasScopeName_m = function(mname) { return false; };
 
 if (false) {
 this.writeTo = function(emitter) {

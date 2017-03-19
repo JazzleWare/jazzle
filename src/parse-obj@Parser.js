@@ -50,9 +50,6 @@ this.parseObjectExpression = function(context) {
     if (!(elemContext & CTX_PARPAT))
       continue;
 
-    if (elemContext & CTX_PARAM)
-      this.scope.addPossibleArgument(elem);
-
     if ((elemContext & CTX_PARAM) &&
        !(elemContext & CTX_HAS_A_PARAM_ERR) &&
        this.pt !== ERR_NONE_YET) {

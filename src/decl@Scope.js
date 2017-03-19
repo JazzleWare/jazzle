@@ -173,3 +173,16 @@ this.findDecl_m = function(mname) {
 this.insertDecl_m = function(mname, decl) {
   this.defs.set(mname, decl);
 };
+
+this.getGlobal_m = function(mname) {
+  ASSERT.call(this, this.isGlobal(),
+    'global scope was expected');
+  var decl = this.findDecl_m(mname);
+  if (!decl) {
+    decl = new Decl()
+      .m(DM_GLOBAL)
+      .r(this.findRef_m(mname, true).resolve());
+    this.insertDecl_m(mname, decl);
+  }
+  return decl;
+};

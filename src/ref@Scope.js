@@ -1,3 +1,25 @@
+this.refDirect = function(name, ref) {
+  return this.refDirect_m(_m(name), ref);
+};
+
+this.refIndirect = function(name, ref) {
+  return this.refIndirect_m(_m(name), ref);
+};
+
+this.findRef = function(name, createIfNone) {
+  return this.findRef_m(_m(name), createIfNone);
+};
+
+this.refDirect_m = function(mname, anotherRef) {
+  var ref = this.findRef_m(mname, true);
+  if (anotherRef === null) ref.direct++;
+  else ref.absorbDirect(anotherRef);
+};
+
+this.refIndirect_m = function(mname, ref) {
+  this.findRef_m(mname, true).absorbDirect(ref);
+};
+
 this.findRef_m = function(mname, createIfNone) {
   return (
     this.refs.has(mname) ? 
@@ -7,31 +29,4 @@ this.findRef_m = function(mname, createIfNone) {
       null
   );
   
-};
-
-this.findRef = function(name, createIfNone) {
-  return this.findRef_m(_m(name), createIfNone);
-};
-
-this.reference = function(name, prevRef) {
-  return this.reference_m(_m(name), prevRef);
-};
-
-this.reference_m = function(mname, prevRef) {
-  var decl = this.findDecl_m(mname);
-  if (decl) {
-    if (prevRef)
-      decl.absorbRef(prevRef);
-    else
-      decl.ref.direct++;
-
-    return decl.ref;
-  }
-
-  var ref = this.findRef_m(mname, true);
-  
-  if (prevRef) ref.absorb(prevRef);
-  else ref.direct++;
-
-  return ref;
 };

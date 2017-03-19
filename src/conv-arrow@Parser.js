@@ -8,6 +8,8 @@ this.asArrowFuncArg = function(arg) {
   var i = 0, list = null;
   if (arg === this.po)
     this.throwTricky('p', this.pt);
+  if (arg.type !== 'Identifier')
+    this.scope.firstNonSimple = arg;
 
   switch  ( arg.type ) {
   case 'Identifier':
@@ -19,7 +21,8 @@ this.asArrowFuncArg = function(arg) {
     if (this.scope.insideStrict() && arguments_or_eval(arg.name))
       this.err('binding.to.arguments.or.eval',{tn:arg});
 
-//  this.scope.declare(arg.name, DM_FNARG);
+    this.scope.declare(arg.name, DM_FNARG);
+    this.scope.findRef(arg.name).direct--; // one ref is a decl
     return;
 
   case 'ArrayExpression':

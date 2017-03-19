@@ -1,3 +1,15 @@
+this.absorbIndirect = function(anotherRef) {
+  ASSERT.call(this, !anotherRef.resolved,
+    'absorbing a reference that has been resolved is not a valid action');
+  this.indirect += anotherRef.total();
+  if (anotherRef.scope.isConcrete())
+    this.lors.push(anotherRef.scope);
+  if (anotherRef.lors.length)
+    this.lors = this.lors.concat(anotherRef.lors);
+
+  anotherRef.parent = this;
+};
+
 this.resolve = function() {
   ASSERT.call(this, !this.resolved,
     'this ref has already been resolved actually');
@@ -9,21 +21,14 @@ this.total = function() {
   return this.indirect + this.direct;
 };
 
-this.absorb = function(anotherRef) {
-//ASSERT.call(this, !this.resolved,
-//  'a resolved reference must absorb through its decl');
+this.absorbDirect = function(anotherRef) {
   ASSERT.call(this, !anotherRef.resolved,
     'absorbing a reference that has been resolved is not a valid action');
-  var fromScope = anotherRef.scope;
-  if (fromScope.isIndirect() && fromScope !== this)
-    this.indirect += anotherRef.total();
-  else {
-    this.direct += anotherRef.direct;
-    this.indirect += anotherRef.indirect;
-  }
-
-  if (fromScope.isConcrete())
-    this.lors.push(fromScope);
+  this.direct += anotherRef.direct;
+  this.indirect += anotherRef.indirect;
+  if (anotherRef.scope.isConcrete())
+    this.lors.push(anotherRef.scope);
   if (anotherRef.lors.length)
     this.lors = this.lors.concat(anotherRef.lors);
+  anotherRef.parent = this;
 };

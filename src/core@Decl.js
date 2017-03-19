@@ -57,13 +57,21 @@ this.isName = function() {
     (DM_VAR|DM_LET|DM_CONST);
 };
 
-this.absorbRef = function(otherRef) {
+this.absorbDirect = function(otherRef) {
   ASSERT.call(this, !otherRef.resolved,
     'a resolved reference must not be absorbed by a declref');
 
-  var fromScope = otherRef.scope;
   var cur = this.ref;
-  cur.absorb(otherRef);
+  cur.absorbDirect(otherRef);
+  return cur;
+};
+
+this.absorbIndirect = function(otherRef) {
+  ASSERT.call(this, !otherRef.resolved,
+    'a resolved reference must not be absorbed by a declref');
+
+  var cur = this.ref;
+  cur.absorbIndirect(otherRef);
   return cur;
 };
 
@@ -78,7 +86,6 @@ this.r = function(ref) {
   ASSERT.call(this, this.ref === null,
     'can not change ref');
   this.ref = ref;
-  this.i = this.ref.scope.iRef.v++;
   return this;
 };
 

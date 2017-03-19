@@ -1,5 +1,4 @@
 this.finish = function() {
-  this.tailI = this.iRef.v-1;
   this.handOverRefsToParent();
 };
 

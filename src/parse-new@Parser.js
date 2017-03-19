@@ -46,7 +46,7 @@ this.parseNewHead = function () {
 
   // #if V
   if (head.type === 'Identifier')
-    this.scope.reference(head.name);
+    this.scope.refDirect(head.name, null);
   // #end
 
   var inner = core( head ) ;

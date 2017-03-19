@@ -13,12 +13,11 @@ this.parseArrowFunctionExpression = function(arg, context)   {
   switch ( arg.type ) {
   case 'Identifier':
     var decl = this.scope.findDecl(arg.name);
-    if (decl) this.ref.direct--;
+    if (decl) decl.ref.direct--;
     else this.scope.findRef(arg.name).direct--;
 
     this.enterScope(this.scope.fnHeadScope(st));
     this.asArrowFuncArg(arg);
-    this.scope.declare(arg.name, DM_FNARG);
     break;
 
   case PAREN_NODE:
@@ -55,7 +54,6 @@ this.parseArrowFunctionExpression = function(arg, context)   {
     st |= ST_ASYNC;
     this.enterScope(this.scope.fnHeadScope(st));
     this.asArrowFuncArg(arg.id);
-    this.scope.declare(arg.name, DM_FNARG);
     break;
 
   default:
