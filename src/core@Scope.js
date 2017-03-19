@@ -1,8 +1,11 @@
-this.calculateParent = function() {
-  if (this.parent.isParen())
-    this.parent = this.parent.calculateParen();
-
-  return this.parent;
+this.calculateSpecial = function() {
+  if (this.isClass())
+    return {supMem: null, supCall: null};
+  if (this.isAnyFnHead())
+    return {lexicalThis: null, arguments: null, newTarget: null};
+  if (this.isScript() || this.isModule())
+    return {lexicalThis: null};
+  return null;
 };
 
 this.calculateAllowedActions = function() {
@@ -53,10 +56,17 @@ this.calculateScopeMode = function() {
   return m;
 };
 
+this.calculateParent = function() {
+  if (this.parent.isParen())
+    this.parent = this.parent.calculateParen();
+
+  return this.parent;
+};
+
 this.setName = function(name) {
   ASSERT.call(this, this.isExpr(),
     'the current scope is not an expr scope, and can not have a name');
-  ASSERT.call(this, this.scopeName === "",
+  ASSERT.call(this, this.scopeName === null,
     'the current scope has already got a name');
   this.scopeName = name;
 };

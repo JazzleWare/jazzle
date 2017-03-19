@@ -24,7 +24,7 @@ function ClassScope(sParent, sType) {
   this.synthCLSPName = "";
   this.synthSuperName = "";
   this.synthCLSName = "";
-  this.scopeName = "";
+  this.scopeName = null;
 
   this.special = { scall: null, smem: null };
 }
@@ -104,7 +104,7 @@ function FuncHeadScope(sParent, st) {
   Scope.call(this, sParent, st|ST_HEAD);
   this.paramList = [];
   this.firstNonSimple = null;
-  this.scopeName = "";
+  this.scopeName = null;
   this.firstDup = null;
   this.firstEvalOrArguments = null;
   this.mode |= SM_INARGS;
@@ -299,6 +299,8 @@ function Scope(sParent, sType) {
   this.ch = [];
   if (this.parent)
     this.parent.ch.push(this);
+
+  this.special = this.calculateSpecial();
 
   this.parser = this.parent ? this.parent.parser : null;
 }
@@ -2628,6 +2630,14 @@ this.absorb = function(parenScope) {
 
 this.hasScopeName_m = function(mname) { return false; };
 
+this.findDecl_m = function(mname) {
+  if (HAS.call(this.paramMap, mname))
+    return this.paramMap[mname];
+  if (mname === RS_ARGUMENTS)
+    return this.special.arguments;
+  return null;
+};
+
 if (false) {
 this.writeTo = function(emitter) {
   var list = this.paramList, i = 0;
@@ -2784,15 +2794,7 @@ this.dissolve = function() {
   list = refs.keys, i = 0;
   while (i < list.length) {
     var mname = list[i];
-    elem = refs.get(mname),
-    ref = parent.findRef_m(mname, true);
-
-    if (ref.resolved)
-      ref.resolved = false;
-
-    ref.direct += elem.direct; 
-    ref.indirect += elem.indirect;
-
+    parent.refDirect_m(mname, refs.get(mname));
     i++;
   }
 
@@ -3037,7 +3039,7 @@ this.asArrowFuncArg = function(arg) {
       this.err('binding.to.arguments.or.eval',{tn:arg});
 
     this.scope.declare(arg.name, DM_FNARG);
-    this.scope.findRef(arg.name).direct--; // one ref is a decl
+    this.scope.findRef_m(_m(arg.name)).direct--; // one ref is a decl
     return;
 
   case 'ArrayExpression':
@@ -4773,7 +4775,7 @@ this.parseArrowFunctionExpression = function(arg, context)   {
   case 'Identifier':
     var decl = this.scope.findDecl(arg.name);
     if (decl) decl.ref.direct--;
-    else this.scope.findRef(arg.name).direct--;
+    else this.scope.findRef_m(_m(arg.name)).direct--;
 
     this.enterScope(this.scope.fnHeadScope(st));
     this.asArrowFuncArg(arg);
@@ -6123,7 +6125,7 @@ this.parseExprHead = function (context) {
     }
     
   if (head.type === 'Identifier')
-    this.scope.refDirect(head.name, null);
+    this.scope.refDirect_m(_m(head.name), null);
 
   switch (this.lttype) {
   case '.':
@@ -7732,7 +7734,7 @@ this.parseNewHead = function () {
   }
 
   if (head.type === 'Identifier')
-    this.scope.refDirect(head.name, null);
+    this.scope.refDirect_m(_m(head.name), null);
 
   var inner = core( head ) ;
   while ( true ) {
@@ -9267,7 +9269,7 @@ this.parseThis = function() {
   };
   this.next() ;
 
-  this.scope.refDirect(RS_THIS, null);
+  this.scope.refDirect_m(RS_THIS, null);
 
   return n;
 };
@@ -10084,11 +10086,14 @@ this.total = function() {
 
 }]  ],
 [Scope.prototype, [function(){
-this.calculateParent = function() {
-  if (this.parent.isParen())
-    this.parent = this.parent.calculateParen();
-
-  return this.parent;
+this.calculateSpecial = function() {
+  if (this.isClass())
+    return {supMem: null, supCall: null};
+  if (this.isAnyFnHead())
+    return {lexicalThis: null, arguments: null, newTarget: null};
+  if (this.isScript() || this.isModule())
+    return {lexicalThis: null};
+  return null;
 };
 
 this.calculateAllowedActions = function() {
@@ -10139,10 +10144,17 @@ this.calculateScopeMode = function() {
   return m;
 };
 
+this.calculateParent = function() {
+  if (this.parent.isParen())
+    this.parent = this.parent.calculateParen();
+
+  return this.parent;
+};
+
 this.setName = function(name) {
   ASSERT.call(this, this.isExpr(),
     'the current scope is not an expr scope, and can not have a name');
-  ASSERT.call(this, this.scopeName === "",
+  ASSERT.call(this, this.scopeName === null,
     'the current scope has already got a name');
   this.scopeName = name;
 };
@@ -10359,7 +10371,7 @@ this.handOverRefsToParent = function() {
 function(){
 this.clsMemHandOver_m = function(mname, ref) {
   if (this.isHead())
-    return this.parent.refIndirect(mname, ref);
+    return this.parent.refIndirect_m(mname, ref);
   if (isSupMem(mname))
     return this.cls()
                .getSupMem()
@@ -10377,7 +10389,7 @@ this.fnBodyHandOver_m = function(mname, ref) {
                .absorbDirect(ref);
   ASSERT.call(this, this.parent.isAnyFnHead(),
     'fnbody must have an fn-head parent');
-  this.parent.refDirect(mname, ref);
+  this.parent.refDirect_m(mname, ref);
 };
 
 this.fnHeadHandOver_m = function(mname, ref) {
@@ -10386,20 +10398,20 @@ this.fnHeadHandOver_m = function(mname, ref) {
                .absorbDirect(ref);
   if (this.hasScopeName_m(mname))
     return this.scopeName.absorbDirect(ref);
-  this.parent.refIndirect(mname, ref);
+  this.parent.refIndirect_m(mname, ref);
 };
 
 this.arrowHandOver_m = function(mname, ref) {
   if (this.isHead())
-    this.parent.refIndirect(mname, ref);
+    this.parent.refIndirect_m(mname, ref);
   else
-    this.parent.refDirect(mname, ref);
+    this.parent.refDirect_m(mname, ref);
 };
 
 this.clsHandOver_m = function(mname, ref) {
   if (isArguments(mname) || isThis(mname))
-    return this.parent.refIndirect(mname, ref);
-  return this.parent.refDirect(mname, ref);
+    return this.parent.refIndirect_m(mname, ref);
+  return this.parent.refDirect_m(mname, ref);
 };
 
 this.handOver_m = function(mname, ref) {
@@ -10424,13 +10436,15 @@ this.handOver_m = function(mname, ref) {
       this.parent.isGlobal(),
       'script must have a parent scope of type '+
       'global');
+    if (isThis(mname))
+      return this.getThis().absorbDirect(ref);
     return this.parent.getGlobal_m(mname).absorbDirect(ref);
   }
 
   ASSERT.call(this, this.isAnyFnComp(),
     'the only remaining type should have been fn');
 
-  this.parent.funcHandOver_m(mname, ref);
+  this.funcHandOver_m(mname, ref);
 };
 
 this.funcHandOver_m = function(mname, ref) {
@@ -10441,6 +10455,7 @@ this.funcHandOver_m = function(mname, ref) {
 
 },
 function(){
+if (false) {
 this.refDirect = function(name, ref) {
   return this.refDirect_m(_m(name), ref);
 };
@@ -10452,6 +10467,7 @@ this.refIndirect = function(name, ref) {
 this.findRef = function(name, createIfNone) {
   return this.findRef_m(_m(name), createIfNone);
 };
+}
 
 this.refDirect_m = function(mname, anotherRef) {
   var ref = this.findRef_m(mname, true);
@@ -10460,7 +10476,7 @@ this.refDirect_m = function(mname, anotherRef) {
 };
 
 this.refIndirect_m = function(mname, ref) {
-  this.findRef_m(mname, true).absorbDirect(ref);
+  this.findRef_m(mname, true).absorbIndirect(ref);
 };
 
 this.findRef_m = function(mname, createIfNone) {
@@ -10594,6 +10610,52 @@ this.bodyScope = function() {
 
 this.parenScope = function() {
   return new ParenScope(this);
+};
+
+},
+function(){
+this.getSupMem = function() {
+  ASSERT.call(this, this.isClass(),
+    'a supmem is only reachable through a class');
+  if (!this.special.supMem)
+    this.special.supMem =
+      new Decl().m(DM_MEMSUP).n(_u(RS_SMEM)).r(new Ref(this).resolve());
+
+  return this.special.supMem;
+};
+
+this.getNewTarget = function() {
+  ASSERT.call(this, this.isAnyFnBody(),
+    'a newTarget is only reachable through an fnbody');
+  if (!this.special.newTarget)
+    this.special.newTarget =
+      new Decl().m(DM_NEW_TARGET).n(_u(RS_NTARGET)).r(new Ref(this).resolve());
+
+  return this.special.newTarget;
+};
+
+this.getThis = function() {
+  ASSERT.call(
+    this,
+    this.isModule() || this.isAnyFnBody() || this.isScript(),
+    'a this is only reachable through a module, fnbody, or script');
+  if (!this.special.lexicalThis)
+    this.special.lexicalThis =
+      new Decl().m(DM_LTHIS).n(_u(RS_THIS)).r(new Ref(this).resolve());
+
+  return this.special.lexicalThis;
+};
+
+this.getArguments = function() {
+  ASSERT.call(this, this.isAnyFnHead(),
+    'any special handling of arguments is only allowed from an fn-head');
+
+  var argDecl = this.findDecl_m(RS_ARGUMENTS);
+  if (!argDecl)
+    argDecl = this.special.arguments =
+      new Decl().m(DM_ARGUMENTS).n('arguments').r(new Ref(this).resolve());
+
+  return argDecl;
 };
 
 },

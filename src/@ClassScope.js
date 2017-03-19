@@ -4,7 +4,7 @@ function ClassScope(sParent, sType) {
   this.synthCLSPName = "";
   this.synthSuperName = "";
   this.synthCLSName = "";
-  this.scopeName = "";
+  this.scopeName = null;
 
   this.special = { scall: null, smem: null };
 }

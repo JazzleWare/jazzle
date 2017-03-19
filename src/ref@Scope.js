@@ -1,3 +1,4 @@
+if (false) {
 this.refDirect = function(name, ref) {
   return this.refDirect_m(_m(name), ref);
 };
@@ -9,6 +10,7 @@ this.refIndirect = function(name, ref) {
 this.findRef = function(name, createIfNone) {
   return this.findRef_m(_m(name), createIfNone);
 };
+}
 
 this.refDirect_m = function(mname, anotherRef) {
   var ref = this.findRef_m(mname, true);
@@ -17,7 +19,7 @@ this.refDirect_m = function(mname, anotherRef) {
 };
 
 this.refIndirect_m = function(mname, ref) {
-  this.findRef_m(mname, true).absorbDirect(ref);
+  this.findRef_m(mname, true).absorbIndirect(ref);
 };
 
 this.findRef_m = function(mname, createIfNone) {

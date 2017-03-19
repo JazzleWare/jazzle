@@ -8,15 +8,7 @@ this.dissolve = function() {
   list = refs.keys, i = 0;
   while (i < list.length) {
     var mname = list[i];
-    elem = refs.get(mname),
-    ref = parent.findRef_m(mname, true);
-
-    if (ref.resolved)
-      ref.resolved = false;
-
-    ref.direct += elem.direct; 
-    ref.indirect += elem.indirect;
-
+    parent.refDirect_m(mname, refs.get(mname));
     i++;
   }
 

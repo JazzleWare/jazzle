@@ -49,6 +49,14 @@ this.absorb = function(parenScope) {
 
 this.hasScopeName_m = function(mname) { return false; };
 
+this.findDecl_m = function(mname) {
+  if (HAS.call(this.paramMap, mname))
+    return this.paramMap[mname];
+  if (mname === RS_ARGUMENTS)
+    return this.special.arguments;
+  return null;
+};
+
 if (false) {
 this.writeTo = function(emitter) {
   var list = this.paramList, i = 0;

@@ -1,6 +1,6 @@
 this.clsMemHandOver_m = function(mname, ref) {
   if (this.isHead())
-    return this.parent.refIndirect(mname, ref);
+    return this.parent.refIndirect_m(mname, ref);
   if (isSupMem(mname))
     return this.cls()
                .getSupMem()
@@ -18,7 +18,7 @@ this.fnBodyHandOver_m = function(mname, ref) {
                .absorbDirect(ref);
   ASSERT.call(this, this.parent.isAnyFnHead(),
     'fnbody must have an fn-head parent');
-  this.parent.refDirect(mname, ref);
+  this.parent.refDirect_m(mname, ref);
 };
 
 this.fnHeadHandOver_m = function(mname, ref) {
@@ -27,20 +27,20 @@ this.fnHeadHandOver_m = function(mname, ref) {
                .absorbDirect(ref);
   if (this.hasScopeName_m(mname))
     return this.scopeName.absorbDirect(ref);
-  this.parent.refIndirect(mname, ref);
+  this.parent.refIndirect_m(mname, ref);
 };
 
 this.arrowHandOver_m = function(mname, ref) {
   if (this.isHead())
-    this.parent.refIndirect(mname, ref);
+    this.parent.refIndirect_m(mname, ref);
   else
-    this.parent.refDirect(mname, ref);
+    this.parent.refDirect_m(mname, ref);
 };
 
 this.clsHandOver_m = function(mname, ref) {
   if (isArguments(mname) || isThis(mname))
-    return this.parent.refIndirect(mname, ref);
-  return this.parent.refDirect(mname, ref);
+    return this.parent.refIndirect_m(mname, ref);
+  return this.parent.refDirect_m(mname, ref);
 };
 
 this.handOver_m = function(mname, ref) {
@@ -65,13 +65,15 @@ this.handOver_m = function(mname, ref) {
       this.parent.isGlobal(),
       'script must have a parent scope of type '+
       'global');
+    if (isThis(mname))
+      return this.getThis().absorbDirect(ref);
     return this.parent.getGlobal_m(mname).absorbDirect(ref);
   }
 
   ASSERT.call(this, this.isAnyFnComp(),
     'the only remaining type should have been fn');
 
-  this.parent.funcHandOver_m(mname, ref);
+  this.funcHandOver_m(mname, ref);
 };
 
 this.funcHandOver_m = function(mname, ref) {

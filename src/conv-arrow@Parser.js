@@ -22,7 +22,7 @@ this.asArrowFuncArg = function(arg) {
       this.err('binding.to.arguments.or.eval',{tn:arg});
 
     this.scope.declare(arg.name, DM_FNARG);
-    this.scope.findRef(arg.name).direct--; // one ref is a decl
+    this.scope.findRef_m(_m(arg.name)).direct--; // one ref is a decl
     return;
 
   case 'ArrayExpression':

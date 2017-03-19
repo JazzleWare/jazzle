@@ -24,5 +24,7 @@ function Scope(sParent, sType) {
   if (this.parent)
     this.parent.ch.push(this);
 
+  this.special = this.calculateSpecial();
+
   this.parser = this.parent ? this.parent.parser : null;
 }

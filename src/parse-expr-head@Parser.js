@@ -48,7 +48,7 @@ this.parseExprHead = function (context) {
     
   // #if V
   if (head.type === 'Identifier')
-    this.scope.refDirect(head.name, null);
+    this.scope.refDirect_m(_m(head.name), null);
   // #end
 
   switch (this.lttype) {
