@@ -41,3 +41,13 @@ this.getArguments = function() {
 
   return argDecl;
 };
+
+this.getSupCall = function() {
+  ASSERT.call(this, this.isClass(),
+    'a call to super is only reachable through a class');
+  if (!this.special.supCall)
+    this.special.supCall =
+      new Decl().m(DM_CALLSUP).n(_u(RS_SCALL)).r(new Ref(this).resolve());
+
+  return this.special.supCall;
+};

@@ -108,13 +108,15 @@ this.parseSuper = function() {
     if (!this.scope.canSupCall())
       this.err('class.super.call',{tn:n});
  
+    this.scope.refDirect_m(RS_SCALL, null);
     break;
  
   case '.':
   case '[':
     if (!this.scope.canSupMem())
       this.err('class.super.mem',{tn:n});
- 
+
+    this.scope.refDirect_m(RS_SMEM, null);
     break ;
   
   default:

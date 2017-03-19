@@ -5313,13 +5313,15 @@ this.parseSuper = function() {
     if (!this.scope.canSupCall())
       this.err('class.super.call',{tn:n});
  
+    this.scope.refDirect_m(RS_SCALL, null);
     break;
  
   case '.':
   case '[':
     if (!this.scope.canSupMem())
       this.err('class.super.mem',{tn:n});
- 
+
+    this.scope.refDirect_m(RS_SMEM, null);
     break ;
   
   default:
@@ -10656,6 +10658,16 @@ this.getArguments = function() {
       new Decl().m(DM_ARGUMENTS).n('arguments').r(new Ref(this).resolve());
 
   return argDecl;
+};
+
+this.getSupCall = function() {
+  ASSERT.call(this, this.isClass(),
+    'a call to super is only reachable through a class');
+  if (!this.special.supCall)
+    this.special.supCall =
+      new Decl().m(DM_CALLSUP).n(_u(RS_SCALL)).r(new Ref(this).resolve());
+
+  return this.special.supCall;
 };
 
 },
