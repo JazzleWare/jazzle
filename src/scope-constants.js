@@ -69,6 +69,7 @@ var DM_CLS = 1,
     DM_MEMSUP = DM_LTHIS << 1,
     DM_CALLSUP = DM_MEMSUP << 1,
     DM_GLOBAL = DM_CALLSUP << 1,
+    DM_LIQUID = DM_GLOBAL << 1,
     DM_NONE = 0;
 
 var RS_ARGUMENTS = _m('arguments'),

@@ -24,7 +24,10 @@ function Scope(sParent, sType) {
   if (this.parent)
     this.parent.ch.push(this);
 
+  this.synthLiquids = this.isConcrete() ? new SortedObj() : null;
+
   this.special = this.calculateSpecial();
+  this.id = this.parent ? this.parent.id++ : 1;
 
   this.parser = this.parent ? this.parent.parser : null;
 }

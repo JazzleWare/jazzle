@@ -4,3 +4,4 @@ function _u(name) {
     'only mangled names are allowed to get unmangled');
   return name.substring(0, name.length-1);
 }
+function _full(nameSpace, name) { return nameSpace+':'+name; }

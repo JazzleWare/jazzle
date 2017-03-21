@@ -18,26 +18,26 @@ this.getNewTarget = function() {
   return this.special.newTarget;
 };
 
-this.getThis = function() {
+this.getThis = function(ref) {
   ASSERT.call(
     this,
     this.isModule() || this.isAnyFnBody() || this.isScript(),
     'a this is only reachable through a module, fnbody, or script');
   if (!this.special.lexicalThis)
     this.special.lexicalThis =
-      new Decl().m(DM_LTHIS).n(_u(RS_THIS)).r(new Ref(this).resolve());
+      new Decl().m(DM_LTHIS).n(_u(RS_THIS)).r(ref.resolve());
 
   return this.special.lexicalThis;
 };
 
-this.getArguments = function() {
+this.getArguments = function(ref) {
   ASSERT.call(this, this.isAnyFnHead(),
     'any special handling of arguments is only allowed from an fn-head');
 
   var argDecl = this.findDecl_m(RS_ARGUMENTS);
   if (!argDecl)
     argDecl = this.special.arguments =
-      new Decl().m(DM_ARGUMENTS).n('arguments').r(new Ref(this).resolve());
+      new Decl().m(DM_ARGUMENTS).n('arguments').r(ref.resolve());
 
   return argDecl;
 };

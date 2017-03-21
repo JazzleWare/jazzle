@@ -4,4 +4,6 @@ function Ref(scope) {
   this.scope = scope;
   this.direct = 0;
   this.resolved = false;
+  this.synthTarget = null;
+  this.idealSynthName = "";
 }

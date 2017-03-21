@@ -14,8 +14,7 @@ this.clsMemHandOver_m = function(mname, ref) {
 
 this.fnBodyHandOver_m = function(mname, ref) {
   if (isThis(mname))
-    return this.getThis()
-               .absorbDirect(ref);
+    return this.getThis(ref);
   ASSERT.call(this, this.parent.isAnyFnHead(),
     'fnbody must have an fn-head parent');
   this.parent.refDirect_m(mname, ref);
@@ -23,8 +22,7 @@ this.fnBodyHandOver_m = function(mname, ref) {
 
 this.fnHeadHandOver_m = function(mname, ref) {
   if (isArguments(mname))
-    return this.getArguments()
-               .absorbDirect(ref);
+    return this.getArguments(ref);
   if (this.hasScopeName_m(mname))
     return this.scopeName.absorbDirect(ref);
   this.parent.refIndirect_m(mname, ref);
@@ -44,6 +42,9 @@ this.clsHandOver_m = function(mname, ref) {
 };
 
 this.handOver_m = function(mname, ref) {
+  if (ref.synthTarget === this)
+    return this.declareLiquid_m(mname, ref);
+
   if (this.isArrowComp()) {
     return this.arrowHandOver_m(mname, ref);
   }
@@ -66,8 +67,8 @@ this.handOver_m = function(mname, ref) {
       'script must have a parent scope of type '+
       'global');
     if (isThis(mname))
-      return this.getThis().absorbDirect(ref);
-    return this.parent.getGlobal_m(mname).absorbDirect(ref);
+      return this.getThis(ref);
+    return this.parent.getGlobal_m(mname, ref);
   }
 
   ASSERT.call(this, this.isAnyFnComp(),

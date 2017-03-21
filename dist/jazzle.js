@@ -267,6 +267,8 @@ function Ref(scope) {
   this.scope = scope;
   this.direct = 0;
   this.resolved = false;
+  this.synthTarget = null;
+  this.idealSynthName = "";
 }
 ;
 function RefCount() {
@@ -300,7 +302,10 @@ function Scope(sParent, sType) {
   if (this.parent)
     this.parent.ch.push(this);
 
+  this.synthLiquids = this.isConcrete() ? new SortedObj() : null;
+
   this.special = this.calculateSpecial();
+  this.id = this.parent ? this.parent.id++ : 1;
 
   this.parser = this.parent ? this.parent.parser : null;
 }
@@ -1030,6 +1035,7 @@ var DM_CLS = 1,
     DM_MEMSUP = DM_LTHIS << 1,
     DM_CALLSUP = DM_MEMSUP << 1,
     DM_GLOBAL = DM_CALLSUP << 1,
+    DM_LIQUID = DM_GLOBAL << 1,
     DM_NONE = 0;
 
 var RS_ARGUMENTS = _m('arguments'),
@@ -1044,6 +1050,7 @@ function _u(name) {
     'only mangled names are allowed to get unmangled');
   return name.substring(0, name.length-1);
 }
+function _full(nameSpace, name) { return nameSpace+':'+name; }
 ;
 
 function synth_id_node(name) {
@@ -2489,92 +2496,6 @@ this.cls = function() {
      'this scope is a classmem and must have a '+
      'class for its parent');
   return this.parent.parent;
-};
-
-},
-function(){
-this.getArguments = function(ref) {
-  if (this.isArrowComp())
-    return null;
-  if (!this.special.arguments) {
-    var decl = new Decl();
-    this.special.arguments =
-      decl.r(ref).n(_u(RS_ARGUMENTS));
-  }
-
-  return this.special.arguments;
-};
-
-this.getMemSuper = function(ref) {
-  if (this.isArrowComp())
-    return null;
-
-  // TODO: object must have a scope that intercepts
-  // the references to supermem
-  if (this.isObjMem())
-    return objectSuper();
-
-  ASSERT.call(
-    this,
-    this.isClassMem(),
-    'only methmems can have supmem');
-
-  if (!this.cls().special.calledSuper) {
-    var decl = new Decl();
-    this.cls().special.smem =
-      decl.r(ref).n(_u(RS_SMEM));
-  }
-
-  return this.cls().special.smem;
-};
-
-this.getCalledSuper = function(ref) {
-  if (this.isArrowComp())
-    return null;
-
-  ASSERT.call(
-    this,
-    this.isCtor(),
-    'only a constructor is allowed to call super');
-
-//ASSERT.call(
-//  this,
-//  this.parent.isClass(),
-//  'a ctor can only have a parent of type class');
-
-  if (!this.parent.special.scall) {
-    var decl = new Decl();
-    this.parent.special.scall = 
-      decl.r(ref).n(_u(RS_MEM));
-  }
-
-  return this.parent.special.scall;
-};
-
-this.getNewTarget = function(ref) {
-  if (this.isArrowComp())
-    return null;
-
-  if (!this.special.newTarget) {
-    var decl = new Decl();
-    this.special.newTarget =
-      decl.r(ref).n(_u(RS_NTARGET));
-  }
-
-  return this.special.newTarget;
-};
-
-this.getLexicalThis = function(ref) {
-  if (this.isArrowComp())
-    return null;
-
-  if (!this.special.lexicalThis) {
-    var decl = new Decl();
-    this.special.lexicalThis =
-      decl.r(ref).n(_u(RS_LTHIS));
-  }
-
-  return this.special.lexicalThis;
 };
 
 }]  ],
@@ -10055,6 +9976,21 @@ this.absorbIndirect = function(anotherRef) {
     this.lors = this.lors.concat(anotherRef.lors);
 
   anotherRef.parent = this;
+  if (anotherRef.synthTarget) {
+    if (this.synthTarget === null) {
+      this.synthTarget = anotherRef.synthTarget;
+      this.idealSynthName = anotherRef.idealSynthName;
+    }
+    else {
+      ASSERT.call(this, this.synthTarget === anotherRef.synthTarget,
+        'synth targets have to match for ' + anotherRef.idealSynthName);
+      ASSERT.call(this, this.idealSynthName === anotherRef.idealSynthName,
+        'current ISN has to match for ' + anotherRef.idealSynthName);
+    }
+  }
+  else
+    ASSERT.call(this, !this.synthTarget,
+      'a ref with a synthTarget is not allowed to absorb a ref without one');
 };
 
 this.resolve = function() {
@@ -10078,6 +10014,21 @@ this.absorbDirect = function(anotherRef) {
   if (anotherRef.lors.length)
     this.lors = this.lors.concat(anotherRef.lors);
   anotherRef.parent = this;
+  if (anotherRef.synthTarget) {
+    if (this.synthTarget === null) {
+      this.synthTarget = anotherRef.synthTarget;
+      this.idealSynthName = anotherRef.idealSynthName;
+    }
+    else {
+      ASSERT.call(this, this.synthTarget === anotherRef.synthTarget,
+        'synth targets have to match for ' + anotherRef.idealSynthName);
+      ASSERT.call(this, this.idealSynthName === anotherRef.idealSynthName,
+        'current ISN has to match for ' + anotherRef.idealSynthName);
+    }
+  }
+  else
+    ASSERT.call(this, !this.synthTarget,
+      'a ref with a synthTarget is not allowed to absorb a ref without one');
 };
 
 }]  ],
@@ -10340,14 +10291,14 @@ this.insertDecl_m = function(mname, decl) {
   this.defs.set(mname, decl);
 };
 
-this.getGlobal_m = function(mname) {
+this.getGlobal_m = function(mname, ref) {
   ASSERT.call(this, this.isGlobal(),
     'global scope was expected');
   var decl = this.findDecl_m(mname);
   if (!decl) {
     decl = new Decl()
       .m(DM_GLOBAL)
-      .r(this.findRef_m(mname, true).resolve());
+      .r(ref.resolve());
     this.insertDecl_m(mname, decl);
   }
   return decl;
@@ -10387,8 +10338,7 @@ this.clsMemHandOver_m = function(mname, ref) {
 
 this.fnBodyHandOver_m = function(mname, ref) {
   if (isThis(mname))
-    return this.getThis()
-               .absorbDirect(ref);
+    return this.getThis(ref);
   ASSERT.call(this, this.parent.isAnyFnHead(),
     'fnbody must have an fn-head parent');
   this.parent.refDirect_m(mname, ref);
@@ -10396,8 +10346,7 @@ this.fnBodyHandOver_m = function(mname, ref) {
 
 this.fnHeadHandOver_m = function(mname, ref) {
   if (isArguments(mname))
-    return this.getArguments()
-               .absorbDirect(ref);
+    return this.getArguments(ref);
   if (this.hasScopeName_m(mname))
     return this.scopeName.absorbDirect(ref);
   this.parent.refIndirect_m(mname, ref);
@@ -10417,6 +10366,9 @@ this.clsHandOver_m = function(mname, ref) {
 };
 
 this.handOver_m = function(mname, ref) {
+  if (ref.synthTarget === this)
+    return this.declareLiquid_m(mname, ref);
+
   if (this.isArrowComp()) {
     return this.arrowHandOver_m(mname, ref);
   }
@@ -10439,8 +10391,8 @@ this.handOver_m = function(mname, ref) {
       'script must have a parent scope of type '+
       'global');
     if (isThis(mname))
-      return this.getThis().absorbDirect(ref);
-    return this.parent.getGlobal_m(mname).absorbDirect(ref);
+      return this.getThis(ref);
+    return this.parent.getGlobal_m(mname, ref);
   }
 
   ASSERT.call(this, this.isAnyFnComp(),
@@ -10636,26 +10588,26 @@ this.getNewTarget = function() {
   return this.special.newTarget;
 };
 
-this.getThis = function() {
+this.getThis = function(ref) {
   ASSERT.call(
     this,
     this.isModule() || this.isAnyFnBody() || this.isScript(),
     'a this is only reachable through a module, fnbody, or script');
   if (!this.special.lexicalThis)
     this.special.lexicalThis =
-      new Decl().m(DM_LTHIS).n(_u(RS_THIS)).r(new Ref(this).resolve());
+      new Decl().m(DM_LTHIS).n(_u(RS_THIS)).r(ref.resolve());
 
   return this.special.lexicalThis;
 };
 
-this.getArguments = function() {
+this.getArguments = function(ref) {
   ASSERT.call(this, this.isAnyFnHead(),
     'any special handling of arguments is only allowed from an fn-head');
 
   var argDecl = this.findDecl_m(RS_ARGUMENTS);
   if (!argDecl)
     argDecl = this.special.arguments =
-      new Decl().m(DM_ARGUMENTS).n('arguments').r(new Ref(this).resolve());
+      new Decl().m(DM_ARGUMENTS).n('arguments').r(ref.resolve());
 
   return argDecl;
 };
@@ -10668,6 +10620,34 @@ this.getSupCall = function() {
       new Decl().m(DM_CALLSUP).n(_u(RS_SCALL)).r(new Ref(this).resolve());
 
   return this.special.supCall;
+};
+
+},
+function(){
+this.accessSynth = function(targetScope, targetName) {
+  ASSERT.call(this, targetScope.isConcrete(),
+    'only concrete scopes are allowed to be used as external scopes');
+  var fullSynthName = _full(targetScope.id, targetName);
+  var ref = this.findRef_m(fullSynthName);
+  if (ref === null) {
+    ref = this.findRef_m(fullSynthName, true);
+    ref.synthTarget = targetScope;
+    ref.idealSynthName = targetName;
+  }
+  ++ref.direct;
+  return fullSynthName;
+};
+
+this.declareLiquid_m = function(fullSynthName, ref) {
+  ASSERT.call(this, this.isConcrete(),
+    'a tracked-synth is only available in a concrete scope');
+  ASSERT.call(this, !this.synthLiquids.has(fullSynthName),
+    fullSynthName + ' exists');
+  return this.synthLiquids.set(
+    fullSynthName,
+    new Decl().r(ref.resolve())
+              .m(DM_LIQUID)
+              .n(ref.idealSynthName));
 };
 
 },
@@ -11364,4 +11344,85 @@ this.Emitter = Emitter;
 this.Transformer = Transformer;
 this.Scope = Scope;
 this.Hitmap = Hitmap;
+this.GlobalScope = GlobalScope;
+
+this.ST_GLOBAL  = ST_GLOBAL ;
+this.ST_MODULE  = ST_MODULE ;
+this.ST_SCRIPT  = ST_SCRIPT ;
+this.ST_DECL  = ST_DECL ;
+this.ST_CLS  = ST_CLS ;
+this.ST_FN  = ST_FN ;
+this.ST_CLSMEM  = ST_CLSMEM ;
+this.ST_SETTER  = ST_SETTER ;
+this.ST_GETTER  = ST_GETTER ;
+this.ST_STATICMEM  = ST_STATICMEM ;
+this.ST_CTOR  = ST_CTOR ;
+this.ST_OBJMEM  = ST_OBJMEM ;
+this.ST_ARROW  = ST_ARROW ;
+this.ST_BLOCK  = ST_BLOCK ;
+this.ST_CATCH  = ST_CATCH ;
+this.ST_ASYNC  = ST_ASYNC ;
+this.ST_BARE  = ST_BARE ;
+this.ST_BODY  = ST_BODY ;
+this.ST_METH  = ST_METH ;
+this.ST_EXPR  = ST_EXPR ;
+this.ST_GEN  = ST_GEN ;
+this.ST_HEAD  = ST_HEAD ;
+this.ST_PAREN  = ST_PAREN ;
+
+this.ST_ACCESSOR  = ST_ACCESSOR ;
+this.ST_SPECIAL  = ST_SPECIAL ;
+this.ST_MEM_FN  = ST_MEM_FN ;
+this.ST_TOP  = ST_TOP ;
+this.ST_LEXICAL  = ST_LEXICAL ;
+this.ST_HOISTABLE  = ST_HOISTABLE ;
+this.ST_ANY_FN  = ST_ANY_FN ;
+this.ST_CONCRETE  = ST_CONCRETE ;
+this.ST_NONE = 0;
+
+this.SM_LOOP  = SM_LOOP ;
+this.SM_UNIQUE  = SM_UNIQUE ;
+this.SM_STRICT  = SM_STRICT ;
+this.SM_INARGS  = SM_INARGS ;
+this.SM_INBLOCK  = SM_INBLOCK ;
+this.SM_INSIDE_IF  = SM_INSIDE_IF ;
+this.SM_CLS_WITH_SUPER  = SM_CLS_WITH_SUPER ;
+this.SM_FOR_INIT  = SM_FOR_INIT ;
+this.SM_YIELD_KW  = SM_YIELD_KW ;
+this.SM_AWAIT_KW  = SM_AWAIT_KW ;
+this.SM_NONE = SM_NONE;
+
+this.SA_THROW  = SA_THROW ;
+this.SA_AWAIT  = SA_AWAIT ;
+this.SA_BREAK  = SA_BREAK ;
+this.SA_RETURN  = SA_RETURN ;
+this.SA_YIELD  = SA_YIELD ;
+this.SA_CONTINUE  = SA_CONTINUE ;
+this.SA_CALLSUP  = SA_CALLSUP ;
+this.SA_MEMSUP  = SA_MEMSUP ;
+this.SA_NONE = 0;
+
+this.DM_CLS  = DM_CLS ;
+this.DM_FUNCTION  = DM_FUNCTION ;
+this.DM_LET  = DM_LET ;
+this.DM_TEMP  = DM_TEMP ;
+this.DM_VAR  = DM_VAR ;
+this.DM_CONST  = DM_CONST ;
+this.DM_SCOPENAME  = DM_SCOPENAME ;
+this.DM_CATCHARG  = DM_CATCHARG ;
+this.DM_FNARG  = DM_FNARG ;
+this.DM_ARGUMENTS  = DM_ARGUMENTS ;
+this.DM_NEW_TARGET  = DM_NEW_TARGET ;
+this.DM_LTHIS  = DM_LTHIS ;
+this.DM_MEMSUP  = DM_MEMSUP ;
+this.DM_CALLSUP  = DM_CALLSUP ;
+this.DM_GLOBAL  = DM_GLOBAL ;
+this.DM_LIQUID  = DM_LIQUID ;
+this.DM_NONE = 0;
+
+this.RS_ARGUMENTS  = RS_ARGUMENTS ;
+this.RS_SMEM  = RS_SMEM ;
+this.RS_SCALL  = RS_SCALL ;
+this.RS_NTARGET  = RS_NTARGET ;
+this.RS_THIS = RS_THIS;
 ;}).call (function(){try{return module.exports;}catch(e){return this;}}.call(this))

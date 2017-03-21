@@ -8,6 +8,21 @@ this.absorbIndirect = function(anotherRef) {
     this.lors = this.lors.concat(anotherRef.lors);
 
   anotherRef.parent = this;
+  if (anotherRef.synthTarget) {
+    if (this.synthTarget === null) {
+      this.synthTarget = anotherRef.synthTarget;
+      this.idealSynthName = anotherRef.idealSynthName;
+    }
+    else {
+      ASSERT.call(this, this.synthTarget === anotherRef.synthTarget,
+        'synth targets have to match for ' + anotherRef.idealSynthName);
+      ASSERT.call(this, this.idealSynthName === anotherRef.idealSynthName,
+        'current ISN has to match for ' + anotherRef.idealSynthName);
+    }
+  }
+  else
+    ASSERT.call(this, !this.synthTarget,
+      'a ref with a synthTarget is not allowed to absorb a ref without one');
 };
 
 this.resolve = function() {
@@ -31,4 +46,19 @@ this.absorbDirect = function(anotherRef) {
   if (anotherRef.lors.length)
     this.lors = this.lors.concat(anotherRef.lors);
   anotherRef.parent = this;
+  if (anotherRef.synthTarget) {
+    if (this.synthTarget === null) {
+      this.synthTarget = anotherRef.synthTarget;
+      this.idealSynthName = anotherRef.idealSynthName;
+    }
+    else {
+      ASSERT.call(this, this.synthTarget === anotherRef.synthTarget,
+        'synth targets have to match for ' + anotherRef.idealSynthName);
+      ASSERT.call(this, this.idealSynthName === anotherRef.idealSynthName,
+        'current ISN has to match for ' + anotherRef.idealSynthName);
+    }
+  }
+  else
+    ASSERT.call(this, !this.synthTarget,
+      'a ref with a synthTarget is not allowed to absorb a ref without one');
 };
