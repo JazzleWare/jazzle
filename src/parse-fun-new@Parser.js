@@ -89,7 +89,7 @@ this.parseFunc = function(context, st) {
 
   this.enterScope(this.scope.fnHeadScope(st));
   if (fnName && this.scope.isExpr())
-    this.scope.setName(fnName);
+    this.scope.setScopeName(fnName.name);
 
   this.declMode = DM_FNARG;
   var argList = this.parseArgs(argLen);
@@ -98,6 +98,7 @@ this.parseFunc = function(context, st) {
   this.labels = {};
 
   this.enterScope(this.scope.fnBodyScope(st));
+  var scope = this.scope; 
   this.scope.funcHead = fnHeadScope;
   var body = this.parseFuncBody(context & CTX_FOR);
   this.exitScope(); // body
@@ -112,7 +113,7 @@ this.parseFunc = function(context, st) {
     body: body,
     loc: { start: startLoc, end: body.loc.end },
     expression: body.type !== 'BlockStatement', params: argList,
-    async: (st & ST_ASYNC) !== 0
+    async: (st & ST_ASYNC) !== 0, scope: scope
   };
 
   if (isStmt)

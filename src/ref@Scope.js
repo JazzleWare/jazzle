@@ -13,21 +13,22 @@ this.findRef = function(name, createIfNone) {
 }
 
 this.refDirect_m = function(mname, anotherRef) {
-  var ref = this.findRef_m(mname, true);
+  var ref = this.findRef_m(mname, true, anotherRef && anotherRef.synthTarget !== null);
   if (anotherRef === null) ref.direct++;
   else ref.absorbDirect(anotherRef);
 };
 
 this.refIndirect_m = function(mname, ref) {
-  this.findRef_m(mname, true).absorbIndirect(ref);
+  this.findRef_m(mname, true, ref.synthTarget !== null).absorbIndirect(ref);
 };
 
-this.findRef_m = function(mname, createIfNone) {
+this.findRef_m = function(mname, createIfNone, isLiquid) {
+  var target = isLiquid ? this.liquidRefs : this.refs;
   return (
-    this.refs.has(mname) ? 
-    this.refs.get(mname) :
+    target.has(mname) ? 
+    target.get(mname) :
     createIfNone ?
-      this.refs.set(mname, new Ref(this)) :
+      target.set(mname, new Ref(this)) :
       null
   );
   

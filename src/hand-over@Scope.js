@@ -23,7 +23,7 @@ this.fnBodyHandOver_m = function(mname, ref) {
 this.fnHeadHandOver_m = function(mname, ref) {
   if (isArguments(mname))
     return this.getArguments(ref);
-  if (this.hasScopeName_m(mname))
+  if (this.hasScopeName_m(mname) && !this.isMem())
     return this.scopeName.absorbDirect(ref);
   this.parent.refIndirect_m(mname, ref);
 };

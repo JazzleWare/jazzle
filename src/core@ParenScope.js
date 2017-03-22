@@ -58,7 +58,6 @@ this.addPossibleArgument = function(argNode) {
         this.firstNonSimple = newDecl;
     }
     newDecl.r(ref);
-    ref.resolve();
     this.paramMap[mname] = newDecl;
   }
 

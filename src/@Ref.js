@@ -6,4 +6,5 @@ function Ref(scope) {
   this.resolved = false;
   this.synthTarget = null;
   this.idealSynthName = "";
+  this.decl = null;
 }

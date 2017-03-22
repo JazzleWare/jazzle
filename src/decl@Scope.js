@@ -56,7 +56,7 @@ this.catchArg_m = function(mname, mode) {
     this.parser.err('var.catch.is.dup');
 
   var newDecl = null;
-  var ref = this.findRef_m(mname, true).resolve();
+  var ref = this.findRef_m(mname, true);
 
   newDecl = new Decl().m(mode).n(_u(mname)).r(ref);
   this.insertDecl_m(mname, newDecl);
@@ -69,7 +69,7 @@ this.fnArg_m = function(mname, mode) {
     'only fn heads are allowed to declare fn-args');
 
   var ref = this.findRef_m(mname, true),
-      newDecl = new Decl().m(mode).n(_u(mname)).r(ref);
+      newDecl = new Decl().m(mode).n(_u(mname));
 
   var existing = null;
   if (HAS.call(this.paramMap, mname))
@@ -81,6 +81,8 @@ this.fnArg_m = function(mname, mode) {
 
     if (!this.firstDup)
       this.firstDup = newDecl;
+
+    newDecl.ref = ref; // TODO: eliminate
   }
   else {
     switch (_u(mname)) {
@@ -89,7 +91,7 @@ this.fnArg_m = function(mname, mode) {
       if (!this.firstEvalOrArguments)
         this.firstEvalOrArguments = newDecl;
     }
-    ref.resolve();
+    newDecl.r(ref);
     this.paramMap[mname] = newDecl;
   }
 
@@ -106,7 +108,7 @@ this.declareLexical_m = function(mname, mode) {
     this.err('lexical.can.not.override.existing');
 
   
-  var newDecl = null, ref = this.findRef_m(mname, true).resolve();
+  var newDecl = null, ref = this.findRef_m(mname, true);
   newDecl = new Decl().m(mode).n(_u(mname)).r(ref);
 
   this.insertDecl_m(mname, newDecl);
@@ -157,7 +159,7 @@ this.declareVarLike_m = function(mname, mode) {
   }
 
   if (!varDecl) {
-    var ref = dest.findRef_m(mname, true).resolve();
+    var ref = dest.findRef_m(mname, true);
     newDecl.r(ref);
     dest.insertDecl_m(mname, newDecl);
   }
@@ -181,7 +183,7 @@ this.getGlobal_m = function(mname, ref) {
   if (!decl) {
     decl = new Decl()
       .m(DM_GLOBAL)
-      .r(ref.resolve());
+      .r(ref);
     this.insertDecl_m(mname, decl);
   }
   return decl;

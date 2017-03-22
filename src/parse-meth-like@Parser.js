@@ -24,6 +24,9 @@ this.parseMeth = function(name, context, st) {
 
     val = this.parseFunc(CTX_NONE, st);
 
+    if (name.type === 'Identifier')
+      val.scope.funcHead.setScopeName(name.name);
+
     return {
       type: 'MethodDefinition', key: core(name),
       start: name.start, end: val.end,

@@ -1,11 +1,12 @@
 this.finish = function() {
-  this.handOverRefsToParent();
+  this.handOverRefsToParent(this.refs);
+  this.handOverRefsToParent(this.liquidRefs);
 };
 
-this.handOverRefsToParent = function() {
-  var list = this.refs.keys, i = 0;
+this.handOverRefsToParent = function(refs) {
+  var list = refs.keys, i = 0;
   while (i < list.length) {
-    var ref = this.refs.at(i);
+    var ref = refs.at(i);
     if (!ref.resolved)
       this.handOver_m(list[i], ref);
     i++ ;

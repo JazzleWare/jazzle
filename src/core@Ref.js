@@ -25,10 +25,11 @@ this.absorbIndirect = function(anotherRef) {
       'a ref with a synthTarget is not allowed to absorb a ref without one');
 };
 
-this.resolve = function() {
+this.resolveTo = function(decl) {
   ASSERT.call(this, !this.resolved,
     'this ref has already been resolved actually');
   this.resolved = true;
+  this.decl = decl;
   return this;
 };
 
@@ -61,4 +62,12 @@ this.absorbDirect = function(anotherRef) {
   else
     ASSERT.call(this, !this.synthTarget,
       'a ref with a synthTarget is not allowed to absorb a ref without one');
+};
+
+this.getDecl = function() {
+  if (this.decl)
+    return this.decl;
+  if (this.parent)
+    return this.decl = this.parent.getDecl();
+  return null;
 };

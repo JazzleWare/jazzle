@@ -25,6 +25,7 @@ function Scope(sParent, sType) {
     this.parent.ch.push(this);
 
   this.synthLiquids = this.isConcrete() ? new SortedObj() : null;
+  this.liquidRefs = new SortedObj();
 
   this.special = this.calculateSpecial();
   this.id = this.parent ? this.parent.id++ : 1;

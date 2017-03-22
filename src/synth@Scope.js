@@ -19,7 +19,7 @@ this.declareLiquid_m = function(fullSynthName, ref) {
     fullSynthName + ' exists');
   return this.synthLiquids.set(
     fullSynthName,
-    new Decl().r(ref.resolve())
+    new Decl().r(ref)
               .m(DM_LIQUID)
               .n(ref.idealSynthName));
 };

@@ -269,6 +269,7 @@ function Ref(scope) {
   this.resolved = false;
   this.synthTarget = null;
   this.idealSynthName = "";
+  this.decl = null;
 }
 ;
 function RefCount() {
@@ -303,6 +304,7 @@ function Scope(sParent, sType) {
     this.parent.ch.push(this);
 
   this.synthLiquids = this.isConcrete() ? new SortedObj() : null;
+  this.liquidRefs = new SortedObj();
 
   this.special = this.calculateSpecial();
   this.id = this.parent ? this.parent.id++ : 1;
@@ -1628,7 +1630,7 @@ this.m = function(mode) {
 this.r = function(ref) {
   ASSERT.call(this, this.ref === null,
     'can not change ref');
-  this.ref = ref;
+  this.ref = ref.resolveTo(this);
   return this;
 };
 
@@ -2549,7 +2551,21 @@ this.absorb = function(parenScope) {
     list[i++].parent = this;
 };
 
-this.hasScopeName_m = function(mname) { return false; };
+this.hasScopeName_m = function(mname) {
+  return this.scopeName &&
+    this.scopeName.name === _u(mname); 
+};
+
+this.setScopeName = function(name) {
+  ASSERT.call(this, !this.scopeName,
+    'this scope has already got a name');
+  this.scopeName =
+    new Decl().m(DM_SCOPENAME)
+              .r(new Ref(this))
+              .n(name);
+
+  return this.scopeName;
+};
 
 this.findDecl_m = function(mname) {
   if (HAS.call(this.paramMap, mname))
@@ -2765,7 +2781,6 @@ this.addPossibleArgument = function(argNode) {
         this.firstNonSimple = newDecl;
     }
     newDecl.r(ref);
-    ref.resolve();
     this.paramMap[mname] = newDecl;
   }
 
@@ -6394,7 +6409,7 @@ this.parseFunc = function(context, st) {
 
   this.enterScope(this.scope.fnHeadScope(st));
   if (fnName && this.scope.isExpr())
-    this.scope.setName(fnName);
+    this.scope.setScopeName(fnName.name);
 
   this.declMode = DM_FNARG;
   var argList = this.parseArgs(argLen);
@@ -6403,6 +6418,7 @@ this.parseFunc = function(context, st) {
   this.labels = {};
 
   this.enterScope(this.scope.fnBodyScope(st));
+  var scope = this.scope; 
   this.scope.funcHead = fnHeadScope;
   var body = this.parseFuncBody(context & CTX_FOR);
   this.exitScope(); // body
@@ -6417,7 +6433,7 @@ this.parseFunc = function(context, st) {
     body: body,
     loc: { start: startLoc, end: body.loc.end },
     expression: body.type !== 'BlockStatement', params: argList,
-    async: (st & ST_ASYNC) !== 0
+    async: (st & ST_ASYNC) !== 0, scope: scope
   };
 
   if (isStmt)
@@ -7580,6 +7596,9 @@ this.parseMeth = function(name, context, st) {
     }
 
     val = this.parseFunc(CTX_NONE, st);
+
+    if (name.type === 'Identifier')
+      val.scope.funcHead.setScopeName(name.name);
 
     return {
       type: 'MethodDefinition', key: core(name),
@@ -9993,10 +10012,11 @@ this.absorbIndirect = function(anotherRef) {
       'a ref with a synthTarget is not allowed to absorb a ref without one');
 };
 
-this.resolve = function() {
+this.resolveTo = function(decl) {
   ASSERT.call(this, !this.resolved,
     'this ref has already been resolved actually');
   this.resolved = true;
+  this.decl = decl;
   return this;
 };
 
@@ -10029,6 +10049,14 @@ this.absorbDirect = function(anotherRef) {
   else
     ASSERT.call(this, !this.synthTarget,
       'a ref with a synthTarget is not allowed to absorb a ref without one');
+};
+
+this.getDecl = function() {
+  if (this.decl)
+    return this.decl;
+  if (this.parent)
+    return this.decl = this.parent.getDecl();
+  return null;
 };
 
 }]  ],
@@ -10173,7 +10201,7 @@ this.catchArg_m = function(mname, mode) {
     this.parser.err('var.catch.is.dup');
 
   var newDecl = null;
-  var ref = this.findRef_m(mname, true).resolve();
+  var ref = this.findRef_m(mname, true);
 
   newDecl = new Decl().m(mode).n(_u(mname)).r(ref);
   this.insertDecl_m(mname, newDecl);
@@ -10186,7 +10214,7 @@ this.fnArg_m = function(mname, mode) {
     'only fn heads are allowed to declare fn-args');
 
   var ref = this.findRef_m(mname, true),
-      newDecl = new Decl().m(mode).n(_u(mname)).r(ref);
+      newDecl = new Decl().m(mode).n(_u(mname));
 
   var existing = null;
   if (HAS.call(this.paramMap, mname))
@@ -10198,6 +10226,8 @@ this.fnArg_m = function(mname, mode) {
 
     if (!this.firstDup)
       this.firstDup = newDecl;
+
+    newDecl.ref = ref; // TODO: eliminate
   }
   else {
     switch (_u(mname)) {
@@ -10206,7 +10236,7 @@ this.fnArg_m = function(mname, mode) {
       if (!this.firstEvalOrArguments)
         this.firstEvalOrArguments = newDecl;
     }
-    ref.resolve();
+    newDecl.r(ref);
     this.paramMap[mname] = newDecl;
   }
 
@@ -10223,7 +10253,7 @@ this.declareLexical_m = function(mname, mode) {
     this.err('lexical.can.not.override.existing');
 
   
-  var newDecl = null, ref = this.findRef_m(mname, true).resolve();
+  var newDecl = null, ref = this.findRef_m(mname, true);
   newDecl = new Decl().m(mode).n(_u(mname)).r(ref);
 
   this.insertDecl_m(mname, newDecl);
@@ -10274,7 +10304,7 @@ this.declareVarLike_m = function(mname, mode) {
   }
 
   if (!varDecl) {
-    var ref = dest.findRef_m(mname, true).resolve();
+    var ref = dest.findRef_m(mname, true);
     newDecl.r(ref);
     dest.insertDecl_m(mname, newDecl);
   }
@@ -10298,7 +10328,7 @@ this.getGlobal_m = function(mname, ref) {
   if (!decl) {
     decl = new Decl()
       .m(DM_GLOBAL)
-      .r(ref.resolve());
+      .r(ref);
     this.insertDecl_m(mname, decl);
   }
   return decl;
@@ -10307,13 +10337,14 @@ this.getGlobal_m = function(mname, ref) {
 },
 function(){
 this.finish = function() {
-  this.handOverRefsToParent();
+  this.handOverRefsToParent(this.refs);
+  this.handOverRefsToParent(this.liquidRefs);
 };
 
-this.handOverRefsToParent = function() {
-  var list = this.refs.keys, i = 0;
+this.handOverRefsToParent = function(refs) {
+  var list = refs.keys, i = 0;
   while (i < list.length) {
-    var ref = this.refs.at(i);
+    var ref = refs.at(i);
     if (!ref.resolved)
       this.handOver_m(list[i], ref);
     i++ ;
@@ -10347,7 +10378,7 @@ this.fnBodyHandOver_m = function(mname, ref) {
 this.fnHeadHandOver_m = function(mname, ref) {
   if (isArguments(mname))
     return this.getArguments(ref);
-  if (this.hasScopeName_m(mname))
+  if (this.hasScopeName_m(mname) && !this.isMem())
     return this.scopeName.absorbDirect(ref);
   this.parent.refIndirect_m(mname, ref);
 };
@@ -10424,21 +10455,22 @@ this.findRef = function(name, createIfNone) {
 }
 
 this.refDirect_m = function(mname, anotherRef) {
-  var ref = this.findRef_m(mname, true);
+  var ref = this.findRef_m(mname, true, anotherRef && anotherRef.synthTarget !== null);
   if (anotherRef === null) ref.direct++;
   else ref.absorbDirect(anotherRef);
 };
 
 this.refIndirect_m = function(mname, ref) {
-  this.findRef_m(mname, true).absorbIndirect(ref);
+  this.findRef_m(mname, true, ref.synthTarget !== null).absorbIndirect(ref);
 };
 
-this.findRef_m = function(mname, createIfNone) {
+this.findRef_m = function(mname, createIfNone, isLiquid) {
+  var target = isLiquid ? this.liquidRefs : this.refs;
   return (
-    this.refs.has(mname) ? 
-    this.refs.get(mname) :
+    target.has(mname) ? 
+    target.get(mname) :
     createIfNone ?
-      this.refs.set(mname, new Ref(this)) :
+      target.set(mname, new Ref(this)) :
       null
   );
   
@@ -10573,7 +10605,7 @@ this.getSupMem = function() {
     'a supmem is only reachable through a class');
   if (!this.special.supMem)
     this.special.supMem =
-      new Decl().m(DM_MEMSUP).n(_u(RS_SMEM)).r(new Ref(this).resolve());
+      new Decl().m(DM_MEMSUP).n(_u(RS_SMEM)).r(new Ref(this));
 
   return this.special.supMem;
 };
@@ -10583,7 +10615,7 @@ this.getNewTarget = function() {
     'a newTarget is only reachable through an fnbody');
   if (!this.special.newTarget)
     this.special.newTarget =
-      new Decl().m(DM_NEW_TARGET).n(_u(RS_NTARGET)).r(new Ref(this).resolve());
+      new Decl().m(DM_NEW_TARGET).n(_u(RS_NTARGET)).r(new Ref(this));
 
   return this.special.newTarget;
 };
@@ -10595,7 +10627,7 @@ this.getThis = function(ref) {
     'a this is only reachable through a module, fnbody, or script');
   if (!this.special.lexicalThis)
     this.special.lexicalThis =
-      new Decl().m(DM_LTHIS).n(_u(RS_THIS)).r(ref.resolve());
+      new Decl().m(DM_LTHIS).n(_u(RS_THIS)).r(ref);
 
   return this.special.lexicalThis;
 };
@@ -10607,7 +10639,7 @@ this.getArguments = function(ref) {
   var argDecl = this.findDecl_m(RS_ARGUMENTS);
   if (!argDecl)
     argDecl = this.special.arguments =
-      new Decl().m(DM_ARGUMENTS).n('arguments').r(ref.resolve());
+      new Decl().m(DM_ARGUMENTS).n('arguments').r(ref);
 
   return argDecl;
 };
@@ -10617,7 +10649,7 @@ this.getSupCall = function() {
     'a call to super is only reachable through a class');
   if (!this.special.supCall)
     this.special.supCall =
-      new Decl().m(DM_CALLSUP).n(_u(RS_SCALL)).r(new Ref(this).resolve());
+      new Decl().m(DM_CALLSUP).n(_u(RS_SCALL)).r(new Ref(this));
 
   return this.special.supCall;
 };
@@ -10645,7 +10677,7 @@ this.declareLiquid_m = function(fullSynthName, ref) {
     fullSynthName + ' exists');
   return this.synthLiquids.set(
     fullSynthName,
-    new Decl().r(ref.resolve())
+    new Decl().r(ref)
               .m(DM_LIQUID)
               .n(ref.idealSynthName));
 };

@@ -85,7 +85,7 @@ this.m = function(mode) {
 this.r = function(ref) {
   ASSERT.call(this, this.ref === null,
     'can not change ref');
-  this.ref = ref;
+  this.ref = ref.resolveTo(this);
   return this;
 };
 
