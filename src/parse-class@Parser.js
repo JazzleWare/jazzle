@@ -15,9 +15,6 @@ this. parseClass = function(context) {
 
   this.next(); // 'class'
 
-  // TODO: this is highly unnecessary, and prone to many errors if missed
-//this.scope.strict = true;
-
   var st = ST_NONE;
   if (isStmt) {
     st = ST_DECL;
@@ -42,9 +39,12 @@ this. parseClass = function(context) {
   }
 
   var memParseFlags = ST_CLSMEM, memParseContext = CTX_NONE;
+
   this.enterScope(this.scope.clsScope(st));
-  if (this.scope.isExpr() && name)
-    this.scope.setName(name);
+  var scope = this.scope;
+
+  if (name && this.scope.isExpr())
+    this.scope.setScopeName(name.name);
 
   if (superClass)
     this.scope.mode |= SM_CLS_WITH_SUPER;
@@ -79,8 +79,10 @@ this. parseClass = function(context) {
     body: {
       type: 'ClassBody', loc: { start: startLocBody, end: endLoc },
       start: startcBody, end: this.c,
-      body: list/* ,y:-1*/
-    }/* ,y:-1*/ 
+      body: list, y:-1
+    },
+    y: -1,
+    scope: scope
   };
 
   if (!this.expectType_soft('}'))

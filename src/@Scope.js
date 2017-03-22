@@ -13,13 +13,7 @@ function Scope(sParent, sType) {
   if (this.isCtorComp() && this.isBody() && !this.cls().hasHeritage())
     this.allowed &= ~SA_CALLSUP;
 
-  this.labelTracker = new LabelTracker();
-  this.allNames = this.parent ? 
-    this.parent.allNames :
-    new SortedObj();
-
-  this.resolveCache = new SortedObj();
-
+  this.allSynthNames = this.isConcrete() ? new SortedObj() : null;
   this.ch = [];
   if (this.parent)
     this.parent.ch.push(this);

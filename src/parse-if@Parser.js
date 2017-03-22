@@ -4,6 +4,8 @@ this.parseIfStatement = function () {
 
   this.fixupLabels(false);
   this.enterScope(this.scope.bodyScope());
+  var ifScope = this.scope; 
+
   this.scope.mode |= SM_INSIDE_IF;
 
   var startc = this.c0,
@@ -20,15 +22,16 @@ this.parseIfStatement = function () {
   var nbody = this. parseStatement (false);
   var scope = this.exitScope(); 
 
-  var alt = null;
+  var alt = null, elseScope = null;
   if ( this.lttype === 'Identifier' && this.ltval === 'else') {
      this.kw(), this.next() ;
      this.enterScope(this.scope.bodyScope());
+     elseScope = this.scope; 
      alt = this.parseStatement(false);
      this.exitScope();
   }
 
   this.foundStatement = true;
   return { type: 'IfStatement', test: cond, start: startc, end: (alt||nbody).end,
-     loc: { start: startLoc, end: (alt||nbody).loc.end }, consequent: nbody, alternate: alt/*,scope:  scope  ,y:-1*/};
+     loc: { start: startLoc, end: (alt||nbody).loc.end }, consequent: nbody, alternate: alt, ifScope: ifScope, elseScope: elseScope, y: -1};
 };

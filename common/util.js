@@ -282,7 +282,11 @@ mex.ej_adjust = function(e, j, name) {
 
   delete e.errors; 
 
-  delete j.y; delete j.scope;
+  delete j.y;
+
+  delete j.elseScope;
+  delete j.ifScope;
+  delete j.scope;
   delete j.tokens;
 
   if (e.tokens) {

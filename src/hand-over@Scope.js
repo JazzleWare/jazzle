@@ -38,6 +38,10 @@ this.arrowHandOver_m = function(mname, ref) {
 this.clsHandOver_m = function(mname, ref) {
   if (isArguments(mname) || isThis(mname))
     return this.parent.refIndirect_m(mname, ref);
+
+  if (this.hasScopeName_m(mname))
+    return this.scopeName.absorbDirect(ref);
+
   return this.parent.refDirect_m(mname, ref);
 };
 

@@ -1,5 +1,6 @@
 this.parseWhileStatement = function () {
    this.enterScope(this.scope.bodyScope());
+   var scope = this.scope; 
    this.allow(SA_BREAK|SA_CONTINUE);
    if (!this.ensureStmt_soft())
      this.err('not.stmt');
@@ -23,5 +24,5 @@ this.parseWhileStatement = function () {
 
    var scope = this.exitScope();
    return { type: 'WhileStatement', test: cond, start: startc, end: nbody.end,
-       loc: { start: startLoc, end: nbody.loc.end }, body:nbody/*,scope:  scope ,y:-1*/ };
+       loc: { start: startLoc, end: nbody.loc.end }, body:nbody, scope: scope, y:-1 };
 };

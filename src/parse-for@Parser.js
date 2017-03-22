@@ -12,6 +12,7 @@ this.parseFor = function() {
     this.err('for.with.no.opening.paren',{extra:[startc,startLoc]});
 
   this.enterScope(this.scope.bodyScope());
+  var scope = this.scope;
   this.scope.enterForInit();
   var head = null, headIsExpr = false;
   this.missingInit = false;
@@ -103,7 +104,9 @@ this.parseFor = function() {
         type: kind, loc: { start: startLoc, end: nbody.loc.end },
         start: startc, end: nbody.end,
         right: core(afterHead), left: head,
-        body: nbody/* ,y:-1*/
+        body: nbody, 
+        y:-1,
+        scope: scope
       };
 
     default:
@@ -139,7 +142,7 @@ this.parseFor = function() {
     start : startc, end: nbody.end,
     test: afterHead && core(afterHead),
     loc: { start: startLoc, end: nbody.loc.end },
-    update: tail && core(tail), body: nbody/* ,y:-1*/
+    update: tail && core(tail), body: nbody, scope: scope, y:-1
   };
 };
 

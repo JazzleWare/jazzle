@@ -65,6 +65,7 @@ this.parseArrowFunctionExpression = function(arg, context)   {
   this.currentExprIsParams();
 
   this.enterScope(this.scope.fnBodyScope(st));
+  var scope = this.scope;
   this.scope.funcHead = funcHead;
 
   if (this.nl)
@@ -109,7 +110,7 @@ this.parseArrowFunctionExpression = function(arg, context)   {
     },
     generator: false, expression: isExpr,
     body: core(nbody), id : null,
-    async: async
+    async: async, scope: scope
   }; 
 };
 

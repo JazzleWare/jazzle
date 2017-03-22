@@ -31,7 +31,7 @@ this.parseTryStatement = function () {
 
   this.foundStatement = true;
   return  { type: 'TryStatement', block: tryBlock, start: startc, end: finOrCat.end,
-            handler: catBlock, finalizer: finBlock, loc: { start: startLoc, end: finOrCat.loc.end } /* ,y:-1*/};
+            handler: catBlock, finalizer: finBlock, loc: { start: startLoc, end: finOrCat.loc.end }, y: -1};
 };
 
 

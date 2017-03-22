@@ -23,6 +23,8 @@ this.parseSwitchStatement = function () {
   this.err('switch.has.no.opening.curly');
 
   this.enterScope(this.scope.blockScope()); 
+  var scope = this.scope;
+
   this.allow(SA_BREAK);
 
   while ( elem = this.parseSwitchCase()) {
@@ -37,7 +39,7 @@ this.parseSwitchStatement = function () {
   var scope = this.exitScope(); 
 
   var n = { type: 'SwitchStatement', cases: cases, start: startc, discriminant: switchExpr,
-            end: this.c, loc: { start: startLoc, end: this.loc() }/*,scope:  scope  ,y:-1*/};
+            end: this.c, loc: { start: startLoc, end: this.loc() },scope: scope, y:-1};
   if ( !this.expectType_soft ('}' ) &&
         this.err('switch.unfinished') )
     return this.errorHandlerOutput ;

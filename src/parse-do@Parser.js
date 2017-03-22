@@ -3,6 +3,8 @@ this.parseDoWhileStatement = function () {
     this.err('not.stmt');
 
   this.enterScope(this.scope.bodyScope());
+  var scope = this.scope; 
+
   this.allow(SA_BREAK|SA_CONTINUE);
   this.fixupLabels(true);
 
@@ -37,5 +39,5 @@ this.parseDoWhileStatement = function () {
  this.exitScope(); 
 
  return { type: 'DoWhileStatement', test: cond, start: startc, end: c,
-          body: nbody, loc: { start: startLoc, end: { line: li, column: col } } /* ,y:-1*/} ;
+          body: nbody, loc: { start: startLoc, end: { line: li, column: col } }, scope, y: -1} ;
 };

@@ -7,6 +7,8 @@ this . parseWithStatement = function() {
      this.err('with.strict')  ;
 
    this.enterScope(this.scope.bodyScope());
+   var scope = this.scope;
+
    this.fixupLabels(false);
 
    var startc = this.c0,
@@ -31,8 +33,6 @@ this . parseWithStatement = function() {
        loc: { start: startLoc, end: nbody.loc.end },
        start: startc,
        end: nbody.end,
-       object: obj, body: nbody/*,scope:  scope ,y:-1*/
+       object: obj, body: nbody, scope: scope, y: -1
    };
 };
-
-

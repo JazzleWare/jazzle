@@ -19,14 +19,8 @@ function CatchHeadScope(sParent) {
 
 ;
 function ClassScope(sParent, sType) {
-  Scope.call(this, sParent, sType|ST_CLS);
-  
-  this.synthCLSPName = "";
-  this.synthSuperName = "";
-  this.synthCLSName = "";
+  Scope.call(this, sParent, sType|ST_CLS);  
   this.scopeName = null;
-
-  this.special = { scall: null, smem: null };
 }
 ;
 function Decl() {
@@ -292,13 +286,7 @@ function Scope(sParent, sType) {
   if (this.isCtorComp() && this.isBody() && !this.cls().hasHeritage())
     this.allowed &= ~SA_CALLSUP;
 
-  this.labelTracker = new LabelTracker();
-  this.allNames = this.parent ? 
-    this.parent.allNames :
-    new SortedObj();
-
-  this.resolveCache = new SortedObj();
-
+  this.allSynthNames = this.isConcrete() ? new SortedObj() : null;
   this.ch = [];
   if (this.parent)
     this.parent.ch.push(this);
@@ -1541,7 +1529,24 @@ this.findCatchVar_m = function(mname) {
 
 }]  ],
 null,
-null,
+[ClassScope.prototype, [function(){
+this.hasScopeName_m = function(mname) {
+  return this.scopeName &&
+    this.scopeName.name === _u(mname); 
+};
+
+this.setScopeName = function(name) {
+  ASSERT.call(this, !this.scopeName,
+    'this scope has already got a name');
+  this.scopeName =
+    new Decl().m(DM_SCOPENAME)
+              .r(new Ref(this))
+              .n(name);
+
+  return this.scopeName;
+};
+
+}]  ],
 [Decl.prototype, [function(){
 this.isHoistedInItsScope = function() {
   return this.mode & DM_FUNCTION;
@@ -2738,53 +2743,6 @@ this.dissolve = function() {
   list = this.ch, i = 0;
   while (i < list.length)
     list[i++].parent = this.parent;
-};
-
-this.addPossibleArgument = function(argNode) {
-  var head = null;
-
-  if (argNode.type === 'Property')
-    argNode = argNode.value;
-
-  if (argNode.type === 'Identifier')
-    head = argNode;
-//else if (
-//  argNode.type === 'AssignmentExpression' &&
-//  argNode.left.type === 'Identifier')
-//  head = argNode.left;
-  else if (
-    argNode.type === 'SpreadElement' &&
-    argNode.argument.type === 'Identifier')
-    head = argNode.argument;
-
-  if (!head)
-    return;
-
-  var name = head.name;
-  var mname = _m(name);
-
-  var existing = HAS.call(this.paramMap, mname) ?
-    this.paramMap[mname] : null;
-
-  var newDecl = new Decl().m(DM_FNARG).n(name);
-
-  if (existing) {
-    if (!this.firstDup)
-      this.firstDup = newDecl;
-  }
-  else {
-    var ref = this.findRef_m(mname, true);
-    switch (name) {
-    case 'arguments':
-    case 'eval':
-      if (!this.firstNonSimple)
-        this.firstNonSimple = newDecl;
-    }
-    newDecl.r(ref);
-    this.paramMap[mname] = newDecl;
-  }
-
-  this.paramList.push(newDecl);
 };
 
 this.finish = function() {};
@@ -4762,6 +4720,7 @@ this.parseArrowFunctionExpression = function(arg, context)   {
   this.currentExprIsParams();
 
   this.enterScope(this.scope.fnBodyScope(st));
+  var scope = this.scope;
   this.scope.funcHead = funcHead;
 
   if (this.nl)
@@ -4806,7 +4765,7 @@ this.parseArrowFunctionExpression = function(arg, context)   {
     },
     generator: false, expression: isExpr,
     body: core(nbody), id : null,
-    async: async
+    async: async, scope: scope
   }; 
 };
 
@@ -5035,13 +4994,14 @@ this.parseBlockStatement = function () {
   this.fixupLabels(false);
 
   this.enterScope(this.scope.blockScope()); 
+  var scope = this.scope;
 
   var startc = this.c - 1,
       startLoc = this.locOn(1);
   this.next();
 
   var n = { type: 'BlockStatement', body: this.blck(), start: startc, end: this.c,
-        loc: { start: startLoc, end: this.loc() }/*,scope:  this.scope  ,y:-1*/};
+        loc: { start: startLoc, end: this.loc() }, scope: scope, y: -1};
 
   if ( !this.expectType_soft ('}' ) &&
         this.err('block.unfinished',{tn:n,extra:{delim:'}'}}))
@@ -5105,6 +5065,7 @@ this. parseCatchClause = function () {
    this.next();
 
    this.enterScope(this.scope.catchHeadScope());
+   var catchHead = this.scope;
    if ( !this.expectType_soft ('(') &&
         this.err('catch.has.no.opening.paren',{c0:startc,loc0:startLoc}) )
      return this.errorHandlerOutput ;
@@ -5123,16 +5084,21 @@ this. parseCatchClause = function () {
    this.exitScope();
 
    this.enterScope(this.scope.catchBodyScope());
+   var scope = this.scope; 
+   scope.catchHead = catchHead;
+
    var catBlock = this.parseBlockStatement_dependent('catch');
    this.exitScope();
 
    return {
        type: 'CatchClause',
-        loc: { start: startLoc, end: catBlock.loc.end },
+       loc: { start: startLoc, end: catBlock.loc.end },
        start: startc,
        end: catBlock.end,
        param: catParam ,
-       body: catBlock ,y:-1
+       body: catBlock,
+       scope,
+       y: -1
    };
 };
 
@@ -5155,9 +5121,6 @@ this. parseClass = function(context) {
   }
 
   this.next(); // 'class'
-
-  // TODO: this is highly unnecessary, and prone to many errors if missed
-//this.scope.strict = true;
 
   var st = ST_NONE;
   if (isStmt) {
@@ -5183,9 +5146,12 @@ this. parseClass = function(context) {
   }
 
   var memParseFlags = ST_CLSMEM, memParseContext = CTX_NONE;
+
   this.enterScope(this.scope.clsScope(st));
-  if (this.scope.isExpr() && name)
-    this.scope.setName(name);
+  var scope = this.scope;
+
+  if (name && this.scope.isExpr())
+    this.scope.setScopeName(name.name);
 
   if (superClass)
     this.scope.mode |= SM_CLS_WITH_SUPER;
@@ -5220,8 +5186,10 @@ this. parseClass = function(context) {
     body: {
       type: 'ClassBody', loc: { start: startLocBody, end: endLoc },
       start: startcBody, end: this.c,
-      body: list ,y:-1
-    } ,y:-1 
+      body: list, y:-1
+    },
+    y: -1,
+    scope: scope
   };
 
   if (!this.expectType_soft('}'))
@@ -5468,7 +5436,7 @@ this. parseBlockStatement_dependent = function(name) {
       this.err('block.dependent.no.opening.curly',{extra:{name:name}});
 
     var n = { type: 'BlockStatement', body: this.blck(), start: startc, end: this.c,
-        loc: { start: startLoc, end: this.loc() }/*,scope:  this.scope  ,y:-1*/ };
+        loc: { start: startLoc, end: this.loc() }, scope: this.scope, y:-1 };
     if ( ! this.expectType_soft ('}') &&
          this.err('block.dependent.is.unfinished',{tn:n, extra:{delim:'}'}})  )
       return this.errorHandlerOutput;
@@ -5483,6 +5451,8 @@ this.parseDoWhileStatement = function () {
     this.err('not.stmt');
 
   this.enterScope(this.scope.bodyScope());
+  var scope = this.scope; 
+
   this.allow(SA_BREAK|SA_CONTINUE);
   this.fixupLabels(true);
 
@@ -5517,7 +5487,7 @@ this.parseDoWhileStatement = function () {
  this.exitScope(); 
 
  return { type: 'DoWhileStatement', test: cond, start: startc, end: c,
-          body: nbody, loc: { start: startLoc, end: { line: li, column: col } }  ,y:-1} ;
+          body: nbody, loc: { start: startLoc, end: { line: li, column: col } }, scope, y: -1} ;
 };
 
 },
@@ -6174,6 +6144,7 @@ this.parseFor = function() {
     this.err('for.with.no.opening.paren',{extra:[startc,startLoc]});
 
   this.enterScope(this.scope.bodyScope());
+  var scope = this.scope;
   this.scope.enterForInit();
   var head = null, headIsExpr = false;
   this.missingInit = false;
@@ -6265,7 +6236,9 @@ this.parseFor = function() {
         type: kind, loc: { start: startLoc, end: nbody.loc.end },
         start: startc, end: nbody.end,
         right: core(afterHead), left: head,
-        body: nbody ,y:-1
+        body: nbody, 
+        y:-1,
+        scope: scope
       };
 
     default:
@@ -6301,7 +6274,7 @@ this.parseFor = function() {
     start : startc, end: nbody.end,
     test: afterHead && core(afterHead),
     loc: { start: startLoc, end: nbody.loc.end },
-    update: tail && core(tail), body: nbody ,y:-1
+    update: tail && core(tail), body: nbody, scope: scope, y:-1
   };
 };
 
@@ -6482,7 +6455,6 @@ this.parseFuncBody = function(context) {
 
   return  n;
 };
-
 
 
 },
@@ -6971,6 +6943,8 @@ this.parseIfStatement = function () {
 
   this.fixupLabels(false);
   this.enterScope(this.scope.bodyScope());
+  var ifScope = this.scope; 
+
   this.scope.mode |= SM_INSIDE_IF;
 
   var startc = this.c0,
@@ -6987,17 +6961,18 @@ this.parseIfStatement = function () {
   var nbody = this. parseStatement (false);
   var scope = this.exitScope(); 
 
-  var alt = null;
+  var alt = null, elseScope = null;
   if ( this.lttype === 'Identifier' && this.ltval === 'else') {
      this.kw(), this.next() ;
      this.enterScope(this.scope.bodyScope());
+     elseScope = this.scope; 
      alt = this.parseStatement(false);
      this.exitScope();
   }
 
   this.foundStatement = true;
   return { type: 'IfStatement', test: cond, start: startc, end: (alt||nbody).end,
-     loc: { start: startLoc, end: (alt||nbody).loc.end }, consequent: nbody, alternate: alt/*,scope:  scope  ,y:-1*/};
+     loc: { start: startLoc, end: (alt||nbody).loc.end }, consequent: nbody, alternate: alt, ifScope: ifScope, elseScope: elseScope, y: -1};
 };
 
 },
@@ -9016,6 +8991,8 @@ this.parseSwitchStatement = function () {
   this.err('switch.has.no.opening.curly');
 
   this.enterScope(this.scope.blockScope()); 
+  var scope = this.scope;
+
   this.allow(SA_BREAK);
 
   while ( elem = this.parseSwitchCase()) {
@@ -9030,7 +9007,7 @@ this.parseSwitchStatement = function () {
   var scope = this.exitScope(); 
 
   var n = { type: 'SwitchStatement', cases: cases, start: startc, discriminant: switchExpr,
-            end: this.c, loc: { start: startLoc, end: this.loc() }/*,scope:  scope  ,y:-1*/};
+            end: this.c, loc: { start: startLoc, end: this.loc() },scope: scope, y:-1};
   if ( !this.expectType_soft ('}' ) &&
         this.err('switch.unfinished') )
     return this.errorHandlerOutput ;
@@ -9324,7 +9301,7 @@ this.parseTryStatement = function () {
 
   this.foundStatement = true;
   return  { type: 'TryStatement', block: tryBlock, start: startc, end: finOrCat.end,
-            handler: catBlock, finalizer: finBlock, loc: { start: startLoc, end: finOrCat.loc.end }  ,y:-1};
+            handler: catBlock, finalizer: finBlock, loc: { start: startLoc, end: finOrCat.loc.end }, y: -1};
 };
 
 
@@ -9529,6 +9506,7 @@ this.parseVariableDeclarator = function(context) {
 function(){
 this.parseWhileStatement = function () {
    this.enterScope(this.scope.bodyScope());
+   var scope = this.scope; 
    this.allow(SA_BREAK|SA_CONTINUE);
    if (!this.ensureStmt_soft())
      this.err('not.stmt');
@@ -9552,7 +9530,7 @@ this.parseWhileStatement = function () {
 
    var scope = this.exitScope();
    return { type: 'WhileStatement', test: cond, start: startc, end: nbody.end,
-       loc: { start: startLoc, end: nbody.loc.end }, body:nbody/*,scope:  scope ,y:-1*/ };
+       loc: { start: startLoc, end: nbody.loc.end }, body:nbody, scope: scope, y:-1 };
 };
 
 },
@@ -9566,6 +9544,8 @@ this . parseWithStatement = function() {
      this.err('with.strict')  ;
 
    this.enterScope(this.scope.bodyScope());
+   var scope = this.scope;
+
    this.fixupLabels(false);
 
    var startc = this.c0,
@@ -9590,11 +9570,9 @@ this . parseWithStatement = function() {
        loc: { start: startLoc, end: nbody.loc.end },
        start: startc,
        end: nbody.end,
-       object: obj, body: nbody/*,scope:  scope ,y:-1*/
+       object: obj, body: nbody, scope: scope, y: -1
    };
 };
-
-
 
 },
 function(){
@@ -10393,6 +10371,10 @@ this.arrowHandOver_m = function(mname, ref) {
 this.clsHandOver_m = function(mname, ref) {
   if (isArguments(mname) || isThis(mname))
     return this.parent.refIndirect_m(mname, ref);
+
+  if (this.hasScopeName_m(mname))
+    return this.scopeName.absorbDirect(ref);
+
   return this.parent.refDirect_m(mname, ref);
 };
 
