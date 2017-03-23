@@ -117,6 +117,9 @@ this.parseFunc = function(context, st) {
   };
 
   if (isStmt)
+    this.scope.insertFn(n);
+
+  if (isStmt)
     this.foundStatement = true;
 
   this.labels = prevLabels;

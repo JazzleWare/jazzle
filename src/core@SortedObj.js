@@ -34,3 +34,7 @@ this.remove = function(name) {
 this.has = function(name) {
   return HAS.call(this.obj, name);
 };
+
+this.length = function() {
+  return this.keys.length;
+};

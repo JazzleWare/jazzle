@@ -1,4 +1,4 @@
-this.accessSynth = function(targetScope, targetName) {
+this.accessLiquid = function(targetScope, targetName) {
   ASSERT.call(this, targetScope.isConcrete(),
     'only concrete scopes are allowed to be used as external scopes');
   var fullSynthName = _full(targetScope.id, targetName);

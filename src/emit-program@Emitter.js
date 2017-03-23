@@ -1,5 +1,9 @@
 Emitters['Program'] = function(n, prec, flags) {
   var list = n.body, i = 0;
+
+  n.scope.synthesizeLiquids();
+  this.emitScriptStart(n);
+
   while (i < list.length) {
     var stmt = list[i++];
     i > 0 && this.startLine();

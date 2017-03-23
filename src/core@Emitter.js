@@ -72,6 +72,9 @@ this.write = function(rawStr) {
 };
 
 this.w = function(rawStr) {
+  ASSERT.call(this, arguments.length === 1,
+    'one argument was expected but got '+arguments.length);
+
   this.write(rawStr);
   return this;
 };
@@ -137,3 +140,10 @@ this.noWrap = function() {
   this.noWrap_ = true;
   return this;
 };
+
+this.findLiquid = function(scope, liquidName) {
+  var fullLiquidName = _full(scope.id, liquidName);
+  return scope.synthLiquids.has(fullLiquidName) ?
+    scope.synthLiquids.get(fullLiquidName) : null;
+};
+  

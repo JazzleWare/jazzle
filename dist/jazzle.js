@@ -297,6 +297,8 @@ function Scope(sParent, sType) {
   this.special = this.calculateSpecial();
   this.id = this.parent ? this.parent.id++ : 1;
 
+  this.funcDecls = [];
+
   this.parser = this.parent ? this.parent.parser : null;
 }
 ;
@@ -415,7 +417,8 @@ Template.from = function(str, i, eof) {
 //
 // doing a rigorous transform on all AST nodes, then, is the best bet, until a more lightweight alternative is found.
 function Transformer() {
-  this.inGen = false; // y is a rather slow function, and its usage must be strictly limited to generators
+  this.globalScope = null;
+  this.scriptScope = null;
   this.currentScope = null;
 }
 
@@ -1758,6 +1761,9 @@ this.write = function(rawStr) {
 };
 
 this.w = function(rawStr) {
+  ASSERT.call(this, arguments.length === 1,
+    'one argument was expected but got '+arguments.length);
+
   this.write(rawStr);
   return this;
 };
@@ -1823,6 +1829,13 @@ this.noWrap = function() {
   this.noWrap_ = true;
   return this;
 };
+
+this.findLiquid = function(scope, liquidName) {
+  var fullLiquidName = _full(scope.id, liquidName);
+  return scope.synthLiquids.has(fullLiquidName) ?
+    scope.synthLiquids.get(fullLiquidName) : null;
+};
+  
 
 },
 function(){
@@ -2333,6 +2346,10 @@ function findComputed(list) {
 function(){
 Emitters['Program'] = function(n, prec, flags) {
   var list = n.body, i = 0;
+
+  n.scope.synthesizeLiquids();
+  this.emitScriptStart(n);
+
   while (i < list.length) {
     var stmt = list[i++];
     i > 0 && this.startLine();
@@ -2474,6 +2491,61 @@ Emitters['WhileStatement'] = function(n, prec, flags) {
 },
 function(){
 this.isReserved = function(idString) { return false; };
+
+},
+function(){
+this.emitJZ = function(n) {
+  var jz = this.findLiquid(n.scope, 'jz');
+  if (!jz) return;
+
+  this.wm('var',' ',jz.synthName,';').l();
+};
+
+this.emitGlobalNamespace = function(n) {
+  var gns = this.findLiquid(n.scope.parent, '');
+  if (!gns) return;
+
+  this.wm('var',' ',gns.synthName,' ','=',' ','this',';');
+};
+
+this.emitThisInScript = function(n) {
+  var sThis = n.scope.special.lexicalThis;
+  if (!sThis)
+    return;
+  if (sThis.ref.indirect === 0)
+    return;
+  this.wm('var',' ',sThis.synthName,' ','=',' ','this',';');
+};
+
+this.emitTemps = function(n) {
+  var scope = n.scope, t = 0;
+  var list = scope.allSynthNames;
+  var len = list.length(), i = 0;
+  while (i < len) {
+    var tdecl = list.at(i++);
+    if (tdecl.isTemp()) {
+      if (t === 0) this.w('var').s();
+      else this.wm(',',' ');
+      this.w(tdecl.synthName);
+      t++;
+    }
+  }
+};
+
+this.emitFuncs = function(n) {
+  var list = n.scope.funcDecls, i = 0;
+  while (i < list.length)
+    this.emitFuncDecl(list[i++]);
+};
+
+this.emitScriptStart = function(n) {
+  this.emitJZ(n);
+  this.emitGlobalNamespace(n);
+  this.emitThisInScript(n);
+  this.emitTemps(n);
+  this.emitFuncs(n);
+};
+
 
 }]  ],
 [ErrorString.prototype, [function(){
@@ -6410,6 +6482,9 @@ this.parseFunc = function(context, st) {
   };
 
   if (isStmt)
+    this.scope.insertFn(n);
+
+  if (isStmt)
     this.foundStatement = true;
 
   this.labels = prevLabels;
@@ -10312,6 +10387,10 @@ this.getGlobal_m = function(mname, ref) {
   return decl;
 };
 
+this.insertFn = function(declNode) {
+  this.funcDecls.push(declNode);
+};
+
 },
 function(){
 this.finish = function() {
@@ -10418,6 +10497,34 @@ this.funcHandOver_m = function(mname, ref) {
   if (this.isHead())
     return this.fnHeadHandOver_m(mname, ref);
   this.fnBodyHandOver_m(mname, ref);
+};
+
+},
+function(){
+this.accessLiquid = function(targetScope, targetName) {
+  ASSERT.call(this, targetScope.isConcrete(),
+    'only concrete scopes are allowed to be used as external scopes');
+  var fullSynthName = _full(targetScope.id, targetName);
+  var ref = this.findRef_m(fullSynthName);
+  if (ref === null) {
+    ref = this.findRef_m(fullSynthName, true);
+    ref.synthTarget = targetScope;
+    ref.idealSynthName = targetName;
+  }
+  ++ref.direct;
+  return fullSynthName;
+};
+
+this.declareLiquid_m = function(fullSynthName, ref) {
+  ASSERT.call(this, this.isConcrete(),
+    'a tracked-synth is only available in a concrete scope');
+  ASSERT.call(this, !this.synthLiquids.has(fullSynthName),
+    fullSynthName + ' exists');
+  return this.synthLiquids.set(
+    fullSynthName,
+    new Decl().r(ref)
+              .m(DM_LIQUID)
+              .n(ref.idealSynthName));
 };
 
 },
@@ -10638,30 +10745,36 @@ this.getSupCall = function() {
 
 },
 function(){
-this.accessSynth = function(targetScope, targetName) {
-  ASSERT.call(this, targetScope.isConcrete(),
-    'only concrete scopes are allowed to be used as external scopes');
-  var fullSynthName = _full(targetScope.id, targetName);
-  var ref = this.findRef_m(fullSynthName);
-  if (ref === null) {
-    ref = this.findRef_m(fullSynthName, true);
-    ref.synthTarget = targetScope;
-    ref.idealSynthName = targetName;
-  }
-  ++ref.direct;
-  return fullSynthName;
+this.synthesizeLiquids = function() {
+  var list = this.liquidRefs, i = 0, len = this.liquidRefs.length();
+  while (i < len)
+    this.trackSynthName(list.at(i++).synthName);
+
+  list = this.synthLiquids, i = 0, len = this.synthLiquids.length();
+  while (i < len)
+    this.synthesizeDecl(list.at(i++));
 };
 
-this.declareLiquid_m = function(fullSynthName, ref) {
-  ASSERT.call(this, this.isConcrete(),
-    'a tracked-synth is only available in a concrete scope');
-  ASSERT.call(this, !this.synthLiquids.has(fullSynthName),
-    fullSynthName + ' exists');
-  return this.synthLiquids.set(
-    fullSynthName,
-    new Decl().r(ref)
-              .m(DM_LIQUID)
-              .n(ref.idealSynthName));
+},
+function(){
+this.synthesizeProgram = function(sourceType) {
+  ASSERT.call(this, sourceType !== 'module',
+    'synthesizing modules scopes is not currently supported');
+  var list = this.defs, i = 0, len = list.length;
+  while (i < len) {
+    var decl = list.at(i++);
+    if (decl.name === 'arguments')
+      continue;
+    this.synthesizeDecl(decl);
+  }
+
+  var argumentsDecl = this.findDecl('arguments');
+  if (argumentsDecl && argumentsDecl.ref.indirect)
+    this.synthesizeDecl(argumentsDecl);
+
+  var thisDecl = this.special.lexicalThis;
+  if (thisDecl && thisDecl.ref.indirect)
+    this.synthesizeDecl(thisDecl);
 };
 
 },
@@ -10833,6 +10946,10 @@ this.has = function(name) {
   return HAS.call(this.obj, name);
 };
 
+this.length = function() {
+  return this.keys.length;
+};
+
 }]  ],
 [Template.prototype, [function(){
 // TODO: add a mechanism to react to cases where latestVal does not have a property (own or inherited)
@@ -10901,6 +11018,12 @@ this.save = function(n, list) {
   var temp = this.allocTemp();
   push_checked(synth_assig(temp, n), list);
   return temp;
+};
+
+this.setScope = function(scope) {
+  var currentScope = this.currentScope;
+  this.currentScope = scope;
+  return currentScope;
 };
 
 },
@@ -11277,10 +11400,16 @@ transform['NewExpression'] = function(n, pushTarget, isVal) {
 function(){
 transform['Program'] = function(n, list, isVal) {
   var b = n.body, i = 0;
+  n.scope.synthesizeProgram(n.sourceType);
+  this.scriptScope = n.scope;
+  this.globalScope = this.scriptScope.parent;
+
+  var ps = this.setScope(this.scriptScope);
   while (i < b.length) {
     b[i] = this.transform(b[i], null, false);
     i++;
   }
+  this.setScope(ps);
   return n;
 };
 
@@ -11296,6 +11425,13 @@ transform['SequenceExpression'] = function(n, pushTarget, isVal) {
     i++;
   }
 
+  return n;
+};
+
+},
+function(){
+transform['SpreadElement'] = function(n, pushTarget, isVal) {
+  n.argument = this.transform(n.argument, pushTarget, isVal);
   return n;
 };
 

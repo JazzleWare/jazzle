@@ -188,3 +188,7 @@ this.getGlobal_m = function(mname, ref) {
   }
   return decl;
 };
+
+this.insertFn = function(declNode) {
+  this.funcDecls.push(declNode);
+};

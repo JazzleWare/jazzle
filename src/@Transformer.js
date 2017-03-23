@@ -25,7 +25,8 @@
 //
 // doing a rigorous transform on all AST nodes, then, is the best bet, until a more lightweight alternative is found.
 function Transformer() {
-  this.inGen = false; // y is a rather slow function, and its usage must be strictly limited to generators
+  this.globalScope = null;
+  this.scriptScope = null;
   this.currentScope = null;
 }
 

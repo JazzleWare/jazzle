@@ -36,3 +36,9 @@ this.save = function(n, list) {
   push_checked(synth_assig(temp, n), list);
   return temp;
 };
+
+this.setScope = function(scope) {
+  var currentScope = this.currentScope;
+  this.currentScope = scope;
+  return currentScope;
+};
