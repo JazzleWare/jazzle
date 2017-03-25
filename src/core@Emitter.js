@@ -143,7 +143,7 @@ this.noWrap = function() {
 
 this.findLiquid = function(scope, liquidName) {
   var fullLiquidName = _full(scope.id, liquidName);
-  return scope.synthLiquids.has(fullLiquidName) ?
+  return scope.liquidDefs.has(fullLiquidName) ?
     scope.synthLiquids.get(fullLiquidName) : null;
 };
   

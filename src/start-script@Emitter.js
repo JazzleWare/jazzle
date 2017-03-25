@@ -22,8 +22,7 @@ this.emitThisInScript = function(n) {
 };
 
 this.emitTemps = function(n) {
-  var scope = n.scope, t = 0;
-  var list = scope.allSynthNames;
+  var scope = n.scope, t = 0, list = scope.synthDefs;
   var len = list.length(), i = 0;
   while (i < len) {
     var tdecl = list.at(i++);
@@ -32,6 +31,18 @@ this.emitTemps = function(n) {
       else this.wm(',',' ');
       this.w(tdecl.synthName);
       t++;
+    }
+  }
+};
+
+this.emitVars = function(n) {
+  var scope = n.scope, v = 0, list = scope.synthDefs;
+  var len = list.length(), i = 0;
+  while (i < len) {
+    var vdecl = list.at(i++);
+    if (vdecl.type === DM_VAR) {
+      this.w(v?',':'var').s().w(vdecl.synthName);
+      v++;
     }
   }
 };
@@ -48,5 +59,6 @@ this.emitScriptStart = function(n) {
   this.emitThisInScript(n);
   this.emitTemps(n);
   this.emitFuncs(n);
+  this.emitVars(n);
 };
 

@@ -13,12 +13,14 @@ function Scope(sParent, sType) {
   if (this.isCtorComp() && this.isBody() && !this.cls().hasHeritage())
     this.allowed &= ~SA_CALLSUP;
 
-  this.allSynthNames = this.isConcrete() ? new SortedObj() : null;
+  this.synthDefs = this.isConcrete() ? new SortedObj() : null;
+  this.synthRefs = this.isConcrete() ? new SortedObj() : null;
+
   this.ch = [];
   if (this.parent)
     this.parent.ch.push(this);
 
-  this.synthLiquids = this.isConcrete() ? new SortedObj() : null;
+  this.liquidDefs = this.isConcrete() ? new SortedObj() : null;
   this.liquidRefs = new SortedObj();
 
   this.special = this.calculateSpecial();

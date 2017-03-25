@@ -15,9 +15,9 @@ this.accessLiquid = function(targetScope, targetName) {
 this.declareLiquid_m = function(fullSynthName, ref) {
   ASSERT.call(this, this.isConcrete(),
     'a tracked-synth is only available in a concrete scope');
-  ASSERT.call(this, !this.synthLiquids.has(fullSynthName),
+  ASSERT.call(this, !this.liquidDefs.has(fullSynthName),
     fullSynthName + ' exists');
-  return this.synthLiquids.set(
+  return this.liquidDefs.set(
     fullSynthName,
     new Decl().r(ref)
               .m(DM_LIQUID)

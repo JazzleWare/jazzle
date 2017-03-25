@@ -286,12 +286,14 @@ function Scope(sParent, sType) {
   if (this.isCtorComp() && this.isBody() && !this.cls().hasHeritage())
     this.allowed &= ~SA_CALLSUP;
 
-  this.allSynthNames = this.isConcrete() ? new SortedObj() : null;
+  this.synthDefs = this.isConcrete() ? new SortedObj() : null;
+  this.synthRefs = this.isConcrete() ? new SortedObj() : null;
+
   this.ch = [];
   if (this.parent)
     this.parent.ch.push(this);
 
-  this.synthLiquids = this.isConcrete() ? new SortedObj() : null;
+  this.liquidDefs = this.isConcrete() ? new SortedObj() : null;
   this.liquidRefs = new SortedObj();
 
   this.special = this.calculateSpecial();
@@ -1832,7 +1834,7 @@ this.noWrap = function() {
 
 this.findLiquid = function(scope, liquidName) {
   var fullLiquidName = _full(scope.id, liquidName);
-  return scope.synthLiquids.has(fullLiquidName) ?
+  return scope.liquidDefs.has(fullLiquidName) ?
     scope.synthLiquids.get(fullLiquidName) : null;
 };
   
@@ -2099,6 +2101,10 @@ this.emitCondTest = function(n, prec, flags) {
   this.eN(n, PREC_NONE, flags);
   if (paren) this.w(')');
 };
+
+},
+function(){
+Emitters['VariableDeclaration'] = function(n, prec, flags) { return; };
 
 },
 function(){
@@ -2518,8 +2524,7 @@ this.emitThisInScript = function(n) {
 };
 
 this.emitTemps = function(n) {
-  var scope = n.scope, t = 0;
-  var list = scope.allSynthNames;
+  var scope = n.scope, t = 0, list = scope.synthDefs;
   var len = list.length(), i = 0;
   while (i < len) {
     var tdecl = list.at(i++);
@@ -2528,6 +2533,18 @@ this.emitTemps = function(n) {
       else this.wm(',',' ');
       this.w(tdecl.synthName);
       t++;
+    }
+  }
+};
+
+this.emitVars = function(n) {
+  var scope = n.scope, v = 0, list = scope.synthDefs;
+  var len = list.length(), i = 0;
+  while (i < len) {
+    var vdecl = list.at(i++);
+    if (vdecl.type === DM_VAR) {
+      this.w(v?',':'var').s().w(vdecl.synthName);
+      v++;
     }
   }
 };
@@ -2544,6 +2561,7 @@ this.emitScriptStart = function(n) {
   this.emitThisInScript(n);
   this.emitTemps(n);
   this.emitFuncs(n);
+  this.emitVars(n);
 };
 
 
@@ -10518,9 +10536,9 @@ this.accessLiquid = function(targetScope, targetName) {
 this.declareLiquid_m = function(fullSynthName, ref) {
   ASSERT.call(this, this.isConcrete(),
     'a tracked-synth is only available in a concrete scope');
-  ASSERT.call(this, !this.synthLiquids.has(fullSynthName),
+  ASSERT.call(this, !this.liquidDefs.has(fullSynthName),
     fullSynthName + ' exists');
-  return this.synthLiquids.set(
+  return this.liquidDefs.set(
     fullSynthName,
     new Decl().r(ref)
               .m(DM_LIQUID)
@@ -10748,9 +10766,9 @@ function(){
 this.synthesizeLiquids = function() {
   var list = this.liquidRefs, i = 0, len = this.liquidRefs.length();
   while (i < len)
-    this.trackSynthName(list.at(i++).synthName);
+    this.trackSynthNameDef(list.at(i++).synthName);
 
-  list = this.synthLiquids, i = 0, len = this.synthLiquids.length();
+  list = this.liquidDefs, i = 0, len = this.liquidDefs.length();
   while (i < len)
     this.synthesizeDecl(list.at(i++));
 };
@@ -10760,7 +10778,7 @@ function(){
 this.synthesizeProgram = function(sourceType) {
   ASSERT.call(this, sourceType !== 'module',
     'synthesizing modules scopes is not currently supported');
-  var list = this.defs, i = 0, len = list.length;
+  var list = this.defs, i = 0, len = list.length();
   while (i < len) {
     var decl = list.at(i++);
     if (decl.name === 'arguments')
@@ -11285,6 +11303,12 @@ this.transformConditionalExpressionWithYield = function(n, list, isVal) {
   return isVal ? t : NOEXPR;
 };
 
+
+},
+function(){
+transform['VariableDeclaration'] = function(n, pushTarget, isVal) {
+  return n;
+};
 
 },
 function(){
