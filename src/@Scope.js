@@ -6,22 +6,22 @@ function Scope(sParent, sType) {
     this.parent.scs;
   
   this.defs = new SortedObj();
+  this.synthDefs = this.isConcrete() ? new SortedObj() : null;
+  this.liquidDefs = this.isConcrete() ? new SortedObj() : null;
   this.refs = new SortedObj();
+  this.liquidRefs = new SortedObj();
+
+  this.synthNamesUntilNow =
+    this.isConcrete() ? new SortedObj() : null;
 
   this.allowed = this.calculateAllowedActions();
   this.mode = this.calculateScopeMode();
   if (this.isCtorComp() && this.isBody() && !this.cls().hasHeritage())
     this.allowed &= ~SA_CALLSUP;
 
-  this.synthDefs = this.isConcrete() ? new SortedObj() : null;
-  this.synthRefs = this.isConcrete() ? new SortedObj() : null;
-
   this.ch = [];
   if (this.parent)
     this.parent.ch.push(this);
-
-  this.liquidDefs = this.isConcrete() ? new SortedObj() : null;
-  this.liquidRefs = new SortedObj();
 
   this.special = this.calculateSpecial();
   this.id = this.parent ? this.parent.id++ : 1;
