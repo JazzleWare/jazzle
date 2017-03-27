@@ -9,7 +9,6 @@ function Scope(sParent, sType) {
   this.synthDefs = this.isConcrete() ? new SortedObj() : null;
   this.liquidDefs = this.isConcrete() ? new SortedObj() : null;
   this.refs = new SortedObj();
-  this.liquidRefs = new SortedObj();
 
   this.synthNamesUntilNow =
     this.isConcrete() ? new SortedObj() : null;
