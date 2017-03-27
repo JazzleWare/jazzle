@@ -1,6 +1,5 @@
 this.finish = function() {
   this.handOverRefsToParent(this.refs);
-  this.handOverRefsToParent(this.liquidRefs);
 };
 
 this.handOverRefsToParent = function(refs) {

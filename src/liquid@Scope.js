@@ -15,7 +15,7 @@ this.getLiquid = function(name) {
 
   return scs.liquidDefs.set(
     fullName,
-    new Liquid(this, _u(fullName))
+    new Liquid(this, name)
   );
 };
 

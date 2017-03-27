@@ -23,7 +23,9 @@ function Scope(sParent, sType) {
     this.parent.ch.push(this);
 
   this.special = this.calculateSpecial();
-  this.id = this.parent ? this.parent.id++ : 1;
+
+  this.idRef = this.parent ? this.parent.idRef : {v: 0};
+  this.id = this.idRef.v++;
 
   this.funcDecls = [];
 
