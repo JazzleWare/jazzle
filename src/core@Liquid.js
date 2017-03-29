@@ -1,7 +1,7 @@
 this.trackScope = function(scope) {
   var cur = scope, end = this.scope.scs;
   // var ownerReached = false;
-  while (true) {
+  while (end !== cur) {
     // if (cur === this.scope) ownerReached = true;
     if (cur.isConcrete()) {
       // if we have tracked a scope, all of its parents have also been tracked
@@ -11,10 +11,6 @@ this.trackScope = function(scope) {
        this.crsMap[cur.id] = cur;
        this.crsList.push(cur);
     }
-
-    if (cur === end)
-      break;
-
     cur = cur.parent;
     ASSERT.call(this, cur !== null,
       'scope '+scope.id+' is not included in the scs for scope '+this.scope.id+
@@ -23,7 +19,7 @@ this.trackScope = function(scope) {
 };
 
 this.i = function(idealName) {
-  ASSERT.call(this. this.idealName === "",
+  ASSERT.call(this, this.idealName === "",
     'an ideal name has already been set on this liquid');
   this.idealName = idealName;
   return this;
@@ -42,4 +38,12 @@ this.associateWith = function(decl) {
   ASSERT.call(this, this.associatedDecl === null,
     'this liquid has already got an associate');
   this.associatedDecl = decl;
+  var list = this.associatedDecl.ref.lors, i = 0;
+  while (i < list.length) {
+    var rs = list[i++];
+    if (!HAS.call(this.crsMap, rs)) {
+      this.crsMap[i] = rs;
+      this.crsList.push(rs);
+    }
+  }
 };

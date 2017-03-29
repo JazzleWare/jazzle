@@ -32,7 +32,7 @@ this.synthLiquid = function(liquid) {
       baseName = "lq";
   }
 
-  var synthName = this.newSynthName(baseName, liquid.crsList);
+  var synthName = Scope.newSynthName(baseName, this, liquid.crsList);
   liquid.setSynthName(synthName);
   this.trackSynthName(synthName);
 };
@@ -43,7 +43,7 @@ this.synthDecl = function(decl) {
   var baseName = decl.name;
   ASSERT.call(this, baseName !== "",
     'the decl has to have a name');
-  var synthName = this.newSynthName(baseName, decl.ref.lors);
+  var synthName = Scope.newSynthName(baseName, this, decl.ref.lors);
   decl.setSynthName(synthName);
   this.trackSynthName(synthName);
 };

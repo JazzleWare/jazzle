@@ -6,6 +6,15 @@ transform['FunctionDeclaration'] = function(n, pushTarget, isVal) {
     return this.transformGenerator(n, null, isVal);
 
   var ps = this.setScope(n.scope);
+  if (this.currentScope.isExpr() && this.currentScope.funcHead.scopeName) {
+    var scopeName = this.currentScope.funcHead.scopeName;
+    var synthName = Scope.newSynthName(scopeName.name, null, scopeName.ref.lors);
+    if (synthName !== scopeName.name) {
+      var l = ps.accessLiquid(ps.scs, scopeName.name, true);
+      l.associateWith(scopeName);
+    }
+  }
+
   if (this.currentScope.synthNamesUntilNow === null)
     this.currentScope.calculateBaseSynthNames();
 

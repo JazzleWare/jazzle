@@ -1,12 +1,14 @@
-this.newSynthName = function(baseName, locrs) {
+Scope.newSynthName = function(baseName, declScope, locrs) {
   locrs = locrs || null;
   var i = 0, name = baseName;
 
   RENAME:
   for (;; ++i, name = baseName + "" + i) {
     var mname = _m(name);
-    if (!this.acceptsName_m(mname, ACC_DECL))
-      continue RENAME;
+    if (declScope) {
+      if (!declScope.acceptsName_m(mname, ACC_DECL))
+        continue RENAME;
+    }
 
     if (locrs) {
       var l = 0;

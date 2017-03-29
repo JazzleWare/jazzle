@@ -3,7 +3,9 @@ this.hasLiquid = function(name) {
 };
 
 this.accessLiquid = function(targetScope, targetName, createNew) {
-  targetScope.getLiquid(targetName, createNew).trackScope(this);
+  var liquid = targetScope.getLiquid(targetName, createNew);
+  liquid.trackScope(this);
+  return liquid;
 };
 
 this.getLiquid = function(name, createNew) {

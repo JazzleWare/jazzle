@@ -1,0 +1,50 @@
+`transformAssig(n, pushTarget, isVal) {
+  if `y(n):
+    return `transformAssigWithYield(n, pushTarget, isVal)
+
+
+[[a()[b()]]] = e()[l()]
+
+t1 = a()
+t2 = b()
+t0 = arrIter(e()[l()]
+tl = arrIter(t0.get())
+t1[t2] = tl.get()
+
+t1 = a()
+t2 = b()
+t0 = arrIter(e()[l()])
+##tr([t1[t2]] = t0.get())
+  tl = arrIter(t0.get())
+  t1[t2] = tl.get()
+  tl.end()
+t0.end()
+
+t1 = a()
+t2 = b()
+t0 = arrIter(e()[l()])
+tl = arrIter(t0.get())
+t1[t2] = tl.get()
+tl.end()
+t0.end()
+
+[[a],[b],[e],[l]] = 12
+t0 = arrIter(12)
+##tr([a] = t0.get())
+  t1 = arrIter(t0.get())
+  a = t1.get()
+  t1.e()
+##tr([b] = t0.get())
+  t1 = arrIter(t0.get())
+  b = t1.get()
+  t1.end()
+##tr([e] = t0.get())
+  t1 = arrIter(t0.get())
+  e = t1.get()
+  t1.end()
+##tr([l] = t0.get())
+  t1 = arrIter(t0.get())
+  l = t1.get()
+  t1.end()
+t0.end()
+

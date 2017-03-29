@@ -2123,6 +2123,13 @@ function(n, flags, ri) {
 
 },
 function(){
+Emitters['ClassExpression'] = 
+Emitters['ClassDeclaration'] = function(n, prec, flags) {
+  this.w('[:<'+n.type+'>:]');
+};
+
+},
+function(){
 Emitters['ConditionalExpression'] = function(n, prec, flags) {
   this.emitCondTest(n.test, flags);
   this.wm(' ','?',' ').eN(n.consequent, PREC_NONE, EC_NONE);
@@ -2851,7 +2858,7 @@ this.newSynthLabelName = function(baseLabelName) {
 this.trackScope = function(scope) {
   var cur = scope, end = this.scope.scs;
   // var ownerReached = false;
-  while (true) {
+  while (end !== cur) {
     // if (cur === this.scope) ownerReached = true;
     if (cur.isConcrete()) {
       // if we have tracked a scope, all of its parents have also been tracked
@@ -2861,10 +2868,6 @@ this.trackScope = function(scope) {
        this.crsMap[cur.id] = cur;
        this.crsList.push(cur);
     }
-
-    if (cur === end)
-      break;
-
     cur = cur.parent;
     ASSERT.call(this, cur !== null,
       'scope '+scope.id+' is not included in the scs for scope '+this.scope.id+
@@ -2873,7 +2876,7 @@ this.trackScope = function(scope) {
 };
 
 this.i = function(idealName) {
-  ASSERT.call(this. this.idealName === "",
+  ASSERT.call(this, this.idealName === "",
     'an ideal name has already been set on this liquid');
   this.idealName = idealName;
   return this;
@@ -2892,6 +2895,14 @@ this.associateWith = function(decl) {
   ASSERT.call(this, this.associatedDecl === null,
     'this liquid has already got an associate');
   this.associatedDecl = decl;
+  var list = this.associatedDecl.ref.lors, i = 0;
+  while (i < list.length) {
+    var rs = list[i++];
+    if (!HAS.call(this.crsMap, rs)) {
+      this.crsMap[i] = rs;
+      this.crsList.push(rs);
+    }
+  }
 };
 
 }]  ],
@@ -10590,7 +10601,9 @@ this.hasLiquid = function(name) {
 };
 
 this.accessLiquid = function(targetScope, targetName, createNew) {
-  targetScope.getLiquid(targetName, createNew).trackScope(this);
+  var liquid = targetScope.getLiquid(targetName, createNew);
+  liquid.trackScope(this);
+  return liquid;
 };
 
 this.getLiquid = function(name, createNew) {
@@ -10862,15 +10875,17 @@ this.acceptsName = function(name, acceptMode) {
 
 },
 function(){
-this.newSynthName = function(baseName, locrs) {
+Scope.newSynthName = function(baseName, declScope, locrs) {
   locrs = locrs || null;
   var i = 0, name = baseName;
 
   RENAME:
   for (;; ++i, name = baseName + "" + i) {
     var mname = _m(name);
-    if (!this.acceptsName_m(mname, ACC_DECL))
-      continue RENAME;
+    if (declScope) {
+      if (!declScope.acceptsName_m(mname, ACC_DECL))
+        continue RENAME;
+    }
 
     if (locrs) {
       var l = 0;
@@ -10932,7 +10947,7 @@ this.synthLiquid = function(liquid) {
       baseName = "lq";
   }
 
-  var synthName = this.newSynthName(baseName, liquid.crsList);
+  var synthName = Scope.newSynthName(baseName, this, liquid.crsList);
   liquid.setSynthName(synthName);
   this.trackSynthName(synthName);
 };
@@ -10943,7 +10958,7 @@ this.synthDecl = function(decl) {
   var baseName = decl.name;
   ASSERT.call(this, baseName !== "",
     'the decl has to have a name');
-  var synthName = this.newSynthName(baseName, decl.ref.lors);
+  var synthName = Scope.newSynthName(baseName, this, decl.ref.lors);
   decl.setSynthName(synthName);
   this.trackSynthName(synthName);
 };
@@ -11263,6 +11278,9 @@ transform['ArgsPrologue'] = function(n, pushTarget, isVal) {
 
 },
 function(){
+
+},
+function(){
 var transformAssig = {};
 transform['SyntheticAssignment'] =
 transform['AssignmentExpression'] = function(n, list, isVal) {
@@ -11480,6 +11498,16 @@ transform['CallExpression'] = function(n, pushTarget, isVal) {
 
 },
 function(){
+transform['ClassExpression'] =
+transform['ClassDeclaration'] = function(n, pushTarget, isVal) {
+  if (this.y(n))
+    return transformClassWithYield(n, pushTarget, isVal);
+
+  return n;
+};
+
+},
+function(){
 transform['ConditionalExpression'] = function(n, list, isVal) {
   if (this.y(n))
     return this.transformConditionalExpressionWithYield(n, list, isVal);
@@ -11534,6 +11562,15 @@ transform['FunctionDeclaration'] = function(n, pushTarget, isVal) {
     return this.transformGenerator(n, null, isVal);
 
   var ps = this.setScope(n.scope);
+  if (this.currentScope.isExpr() && this.currentScope.funcHead.scopeName) {
+    var scopeName = this.currentScope.funcHead.scopeName;
+    var synthName = Scope.newSynthName(scopeName.name, null, scopeName.ref.lors);
+    if (synthName !== scopeName.name) {
+      var l = ps.accessLiquid(ps.scs, scopeName.name, true);
+      l.associateWith(scopeName);
+    }
+  }
+
   if (this.currentScope.synthNamesUntilNow === null)
     this.currentScope.calculateBaseSynthNames();
 
