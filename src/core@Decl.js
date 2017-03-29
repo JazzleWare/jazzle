@@ -89,6 +89,8 @@ this.r = function(ref) {
   if (ref.indirect || ref.direct)
     this.useTZ();
 
+  this.i = this.ref.scope.diRef.v++;
+
   return this;
 };
 

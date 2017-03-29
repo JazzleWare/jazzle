@@ -2,15 +2,6 @@ this.y = function(n) {
   return this.inGen ? y(n) : 0;
 };
 
-this.allocTemp = function() {
-  var id = newTemp(this.currentScope.allocateTemp());
-  return id;
-};
-
-this.releaseTemp = this.rl = function(id) {
-  this.currentScope.releaseTemp(id.name);
-};
-
 this.transform = this.tr = function(n, list, isVal) {
   var ntype = n.type;
   switch (ntype) {

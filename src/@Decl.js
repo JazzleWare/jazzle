@@ -3,7 +3,7 @@ function Decl() {
   this.ref = null;
   this.name = "";
   this.site = null;
-
+  this.i = -1;
   this.hasTZ = false;
   this.synthName = "";
 }

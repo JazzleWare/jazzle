@@ -28,7 +28,7 @@ function Decl() {
   this.ref = null;
   this.name = "";
   this.site = null;
-
+  this.i = -1;
   this.hasTZ = false;
   this.synthName = "";
 }
@@ -1661,6 +1661,8 @@ this.r = function(ref) {
   this.ref = ref.resolveTo(this);
   if (ref.indirect || ref.direct)
     this.useTZ();
+
+  this.i = this.ref.scope.diRef.v++;
 
   return this;
 };
@@ -11172,15 +11174,6 @@ this.y = function(n) {
   return this.inGen ? y(n) : 0;
 };
 
-this.allocTemp = function() {
-  var id = newTemp(this.currentScope.allocateTemp());
-  return id;
-};
-
-this.releaseTemp = this.rl = function(id) {
-  this.currentScope.releaseTemp(id.name);
-};
-
 this.transform = this.tr = function(n, list, isVal) {
   var ntype = n.type;
   switch (ntype) {
@@ -11211,6 +11204,42 @@ this.setScope = function(scope) {
   var currentScope = this.currentScope;
   this.currentScope = scope;
   return currentScope;
+};
+
+},
+function(){
+this.findFAT = function() {
+  if (this.tempStack.length === 0)
+    this.prepareTemp();
+  return this.tempStack[this.tempStack.length-1];
+};
+
+this.ensureFAT = function(t) {
+  if (t === null)
+    ASSERT.call(this, this.tempStack.length === 0,
+      'temps must be empty');
+  else
+    ASSERT.call(this, this.findFAT() === t,
+      'FAT mismatch');
+};
+
+this.allocTemp = function() {
+  if (this.tempStack.length === 0)
+    this.prepareTemp();
+  return this.tempStack.pop();
+};
+
+this.prepareTemp = function() {
+  var t = this.currentScope.accessLiquid(this.currentScope.scs, 't', true);
+  t.idealName = 't';
+  this.tempStack.push(t);
+};
+
+this.releaseTemp = function(temp, ensureFAT) {
+  ASSERT.call(this, temp !== null, 'temp is not allowed to be null');
+  this.tempStack.push(temp);
+  if (ensureFAT)
+    this.ensureFAT(ensureFAT);
 };
 
 },
