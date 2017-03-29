@@ -14,6 +14,8 @@ this.newSynthName = function(baseName, locrs) {
         if (!locrs[l++].acceptsName_m(mname, ACC_REF))
           continue RENAME;
     }
+
+    break;
   }
 
   return name;

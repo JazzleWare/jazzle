@@ -77,3 +77,6 @@ var RS_ARGUMENTS = _m('arguments'),
     RS_SCALL = _m('special:supercall'),
     RS_NTARGET = _m('new.target'),
     RS_THIS = _m('special:this');
+
+var ACC_DECL = 1,
+    ACC_REF = 2;

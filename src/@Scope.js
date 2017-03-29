@@ -6,12 +6,10 @@ function Scope(sParent, sType) {
     this.parent.scs;
   
   this.defs = new SortedObj();
-  this.synthDefs = this.isConcrete() ? new SortedObj() : null;
   this.liquidDefs = this.isConcrete() ? new SortedObj() : null;
   this.refs = new SortedObj();
 
-  this.synthNamesUntilNow =
-    this.isConcrete() ? new SortedObj() : null;
+  this.synthNamesUntilNow = null;
 
   this.allowed = this.calculateAllowedActions();
   this.mode = this.calculateScopeMode();
@@ -27,7 +25,11 @@ function Scope(sParent, sType) {
   this.idRef = this.parent ? this.parent.idRef : {v: 0};
   this.id = this.idRef.v++;
 
+  this.diRef = this !== this.scs ? this.scs.diRef : {v: 0};
+  this.di = this.diRef.v++;
+
   this.funcDecls = [];
 
   this.parser = this.parent ? this.parent.parser : null;
+  this.hasTZ = false;
 }

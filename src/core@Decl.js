@@ -86,6 +86,9 @@ this.r = function(ref) {
   ASSERT.call(this, this.ref === null,
     'can not change ref');
   this.ref = ref.resolveTo(this);
+  if (ref.indirect || ref.direct)
+    this.useTZ();
+
   return this;
 };
 
@@ -100,5 +103,22 @@ this.s = function(site) {
   ASSERT.call(this, this.site === null,
     'can not change site');
   this.site = site;
+  return this;
+};
+
+this.setSynthName = function(synthName) {
+  ASSERT.call(this, this.synthName === "",
+    'this decl has already got a synth-name');
+  this.synthName = synthName;
+  return this;
+};
+
+this.useTZ = function() {
+  if (!this.hasTZ) {
+    this.hasTZ = true;
+    if (!this.ref.scope.hasTZ)
+      this.ref.scope.hasTZ = true;
+  }
+
   return this;
 };

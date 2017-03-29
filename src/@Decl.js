@@ -3,5 +3,7 @@ function Decl() {
   this.ref = null;
   this.name = "";
   this.site = null;
+
+  this.hasTZ = false;
   this.synthName = "";
 }

@@ -5,4 +5,5 @@ function Liquid(scope, name) {
   this.crsMap = {};
   this.idealName = "";
   this.synthName = "";
+  this.associatedDecl = null;
 }

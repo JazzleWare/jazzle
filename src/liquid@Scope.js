@@ -2,14 +2,27 @@ this.hasLiquid = function(name) {
   return this.hasLiquid_m(_m(name));
 };
 
-this.accessLiquid = function(targetScope, targetName) {
-  targetScope.getLiquid(targetName).trackScope(this);
+this.accessLiquid = function(targetScope, targetName, createNew) {
+  targetScope.getLiquid(targetName, createNew).trackScope(this);
 };
 
-this.getLiquid = function(name) {
+this.getLiquid = function(name, createNew) {
   var fullName = _full(this.id, name),
       scs = this.scs;
 
+  if (createNew) {
+    var num = 0, newName = name;
+    while (scs.liquidDefs.has(fullName)) {
+      num++;
+      newName = name + "" + num;
+      fullName =_full(this.id, newName);
+    }
+    return scs.liquidDefs.set(
+      fullName,
+      new Liquid(this, newName).i(name)
+    );
+  }
+ 
   if (scs.liquidDefs.has(fullName))
     return scs.liquidDefs.get(fullName);
 

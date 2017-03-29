@@ -28,3 +28,18 @@ this.i = function(idealName) {
   this.idealName = idealName;
   return this;
 };
+
+this.setSynthName = function(synthName) {
+  ASSERT.call(this, this.synthName === "",
+    'this liquid has already got a synth-name');
+  this.synthName = synthName;
+  if (this.associatedDecl)
+    this.associatedDecl.setSynthName(synthName);
+  return this;
+};
+
+this.associateWith = function(decl) {
+  ASSERT.call(this, this.associatedDecl === null,
+    'this liquid has already got an associate');
+  this.associatedDecl = decl;
+};

@@ -18,7 +18,7 @@ this.parseFuncBody = function(context) {
   var list = this.blck();
 
   var n = { type : 'BlockStatement', body: list, start: startc, end: this.c,
-           loc: { start: startLoc, end: this.loc() }/* ,scope: this.scope ,y:-1*/ };
+           loc: { start: startLoc, end: this.loc() } , scope: null ,y:-1 };
 
   if ( ! this.expectType_soft ( '}' ) &&
          this.err('func.body.is.unfinished') )
