@@ -18,6 +18,8 @@ transform['FunctionDeclaration'] = function(n, pushTarget, isVal) {
   if (this.currentScope.synthNamesUntilNow === null)
     this.currentScope.calculateBaseSynthNames();
 
+  this.currentScope.calculateRefs();
+
   n.body = this.transform(n.body, null, isVal);
   this.currentScope.synthesizeLiquidsInto(this.currentScope);
   this.setScope(ps);

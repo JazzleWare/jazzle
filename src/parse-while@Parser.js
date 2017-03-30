@@ -2,6 +2,9 @@ this.parseWhileStatement = function () {
    this.enterScope(this.scope.bodyScope());
    var scope = this.scope; 
    this.allow(SA_BREAK|SA_CONTINUE);
+
+   this.scope.mode |= SM_LOOP;
+
    if (!this.ensureStmt_soft())
      this.err('not.stmt');
 

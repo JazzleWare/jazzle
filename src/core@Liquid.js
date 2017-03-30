@@ -3,7 +3,7 @@ this.trackScope = function(scope) {
   // var ownerReached = false;
   while (end !== cur) {
     // if (cur === this.scope) ownerReached = true;
-    if (cur.isConcrete()) {
+    if (cur.isConcrete() && !cur.isAnyFnHead()) {
       // if we have tracked a scope, all of its parents have also been tracked
       if (HAS.call(this.crsMap, cur.id))
         break;

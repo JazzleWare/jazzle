@@ -1,4 +1,3 @@
-if (false) {
 Emitters['Identifier'] = function(n, prec, flags) {
   return this.emitIdentifierWithValue(n.name);
 };
@@ -14,8 +13,8 @@ this.emitIdentifierWithValue = function(value) {
     i++;
   }
 };
-}
 
+if (false) {
 Emitters['Identifier'] = function(n, prec, flags) {
   var paren = false, zero = false;
   var needsTest = false, isV = false;
@@ -55,3 +54,4 @@ this.writeTDZ = function(declName, decl) {
 this.writeName = function(name) {
   this.w(name); // TODO: name has to get tested for being an actual identifier
 };
+}

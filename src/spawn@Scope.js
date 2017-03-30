@@ -23,7 +23,7 @@ this.catchHeadScope = function() {
 };
 
 this.bodyScope = function() {
-  return new LexicalScope(this, ST_BODY);
+  return new LexicalScope(this, ST_BARE|ST_BODY);
 };
 
 this.parenScope = function() {

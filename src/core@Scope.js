@@ -46,7 +46,7 @@ this.calculateScopeMode = function() {
       this.parent.insideStrict())
     m |= SM_STRICT;
 
-  if (this.isLexical() && this.parent.insideLoop())
+  if (!this.isAnyFnComp() && this.parent.insideLoop())
     m |= SM_LOOP;
 
   // catch-heads and non-simple fn-heads

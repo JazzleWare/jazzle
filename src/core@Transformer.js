@@ -5,7 +5,6 @@ this.y = function(n) {
 this.transform = this.tr = function(n, list, isVal) {
   var ntype = n.type;
   switch (ntype) {
-    case 'Identifier':
     case 'Literal':
     case 'This':
     case 'Super':

@@ -28,7 +28,7 @@ function(n, prec, flags) {
     this.w('(').eA(n, PREC_NONE, EC_NONE).w(')');
     break;
   default: 
-    this.emitAny(n, prec, flags);
+    this.emitAny(n, prec, flags|EC_EXPR_HEAD);
     break;
   }
 };
@@ -146,4 +146,7 @@ this.findLiquid = function(scope, liquidName) {
   return scope.liquidDefs.has(fullLiquidName) ?
     scope.synthLiquids.get(fullLiquidName) : null;
 };
-  
+
+this.jz = function(name) {
+  return this.wm('jz','.',name);
+};

@@ -61,7 +61,8 @@ this.handOver_m = function(mname, ref) {
 
   if (this.isCatchComp()||
      this.isBlock() ||
-     this.isLexical() || this.type === ST_BODY) 
+     this.isLexical() ||
+     this.isBare())
     return this.parent.refDirect_m(mname, ref);
 
   if (this.isScript() || this.isModule()) {

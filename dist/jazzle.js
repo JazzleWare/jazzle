@@ -1068,6 +1068,12 @@ function _u(name) {
 }
 function _full(nameSpace, name) { return nameSpace+':'+name; }
 ;
+function synth_ResolvedName(name, decl, shouldTest) {
+  return { 
+    type: '#ResolvedName', decl: decl, name: name, shouldTest: shouldTest
+  };
+};
+;
 
 function synth_id_node(name) {
    return { type: 'Identifier', synth: !false, name: name };
@@ -1766,7 +1772,7 @@ function(n, prec, flags) {
     this.w('(').eA(n, PREC_NONE, EC_NONE).w(')');
     break;
   default: 
-    this.emitAny(n, prec, flags);
+    this.emitAny(n, prec, flags|EC_EXPR_HEAD);
     break;
   }
 };
@@ -1884,7 +1890,10 @@ this.findLiquid = function(scope, liquidName) {
   return scope.liquidDefs.has(fullLiquidName) ?
     scope.synthLiquids.get(fullLiquidName) : null;
 };
-  
+
+this.jz = function(name) {
+  return this.wm('jz','.',name);
+};
 
 },
 function(){
@@ -2090,7 +2099,7 @@ Emitters['CallExpression'] = function(n, prec, flags) {
     this.w('(');
   }
 
-  this.eH(n.callee, prec, flags);
+  this.eH(n.callee, prec, flags|EC_CALL_HEAD);
   this.w('(');
   this.emitArrayChunk(n.arguments, 0, n.arguments.length-1);
   this.w(')');
@@ -2108,8 +2117,8 @@ function(n, flags, ri) {
 
   var c = n.callee;
   if (c.type === 'MemberExpression') {
-    this.wm('jz','.','meth','(')
-        .wm('jz','.','b','(')
+    this.jz('meth').w('(')
+        .jz('b').w('(')
         .eN(c.object, PREC_NONE, EC_NONE)
         .wm(',',' ');
     if (c.computed)
@@ -2212,7 +2221,6 @@ this.emitParams = function(list) {
 
 },
 function(){
-if (false) {
 Emitters['Identifier'] = function(n, prec, flags) {
   return this.emitIdentifierWithValue(n.name);
 };
@@ -2228,8 +2236,8 @@ this.emitIdentifierWithValue = function(value) {
     i++;
   }
 };
-}
 
+if (false) {
 Emitters['Identifier'] = function(n, prec, flags) {
   var paren = false, zero = false;
   var needsTest = false, isV = false;
@@ -2269,6 +2277,7 @@ this.writeTDZ = function(declName, decl) {
 this.writeName = function(name) {
   this.w(name); // TODO: name has to get tested for being an actual identifier
 };
+}
 
 },
 function(){
@@ -2527,6 +2536,52 @@ this.emitCase = function(c) {
 
 },
 function(){
+Emitters['#ResolvedName'] = function(n, prec, flags) {
+  var isV = false;
+  if (n.decl.isLexical() &&
+    n.decl.ref.scope.insideLoop() && n.decl.ref.indirect)
+    isV = true;
+
+  if (n.shouldTest)
+    this.emitResolvedName_tz(n, prec, flags, isV);
+  else
+    this.emitResolvedName_simple(n, prec, flags, isV);
+};
+
+this.emitResolvedName_tz = function(n, prec, flags, isV) {
+  var paren = flags & (EC_NEW_HEAD|EC_EXPR_HEAD|EC_CALL_HEAD);
+  paren && this.w('(');
+  this.writeName(n.decl.ref.scope.scs.getLiquid('tz').synthName)
+      .w('<').writeNumWithVal(n.decl.i).w('?')
+      .jz('tz').wm('(',"'").writeStrWithVal(n.name).wm("'",')').w(':');  
+  if (isV)
+    this.writeVName(n.decl.synthName, EC_NONE);
+  else
+    this.writeName(n.decl.synthName);
+
+  paren && this.w(')');
+};
+
+this.emitResolvedName_simple = function(n, prec, flags, isV) {
+  if (isV) this.writeVName(n.decl.synthName, flags);
+  else this.writeName(n.decl.synthName);
+};
+
+this.writeVName = function(name, flags) {
+  var zero = flags & EC_CALL_HEAD;
+  if (zero) this.wm('(','0',',');
+  this.writeName(name).wm('.','v');
+  zero && this.w(')');
+  return this;
+};
+
+this.writeName = function(name) {
+  this.w(name);
+  return this;
+};
+
+},
+function(){
 Emitters['SequenceStatement'] = function(n, prec, flags) {
   var list = n.expressions, i = 0;
   while (i < list.length) {
@@ -2590,6 +2645,16 @@ Emitters['WhileStatement'] = function(n, prec, flags) {
 },
 function(){
 this.isReserved = function(idString) { return false; };
+
+},
+function(){
+this.writeNumWithVal = function(num) {
+  return this.w(num+"");
+};
+
+this.writeStrWithVal = function(str) {
+  return this.w(str);
+};
 
 }]  ],
 [ErrorString.prototype, [function(){
@@ -2909,7 +2974,7 @@ this.trackScope = function(scope) {
   // var ownerReached = false;
   while (end !== cur) {
     // if (cur === this.scope) ownerReached = true;
-    if (cur.isConcrete()) {
+    if (cur.isConcrete() && !cur.isAnyFnHead()) {
       // if we have tracked a scope, all of its parents have also been tracked
       if (HAS.call(this.crsMap, cur.id))
         break;
@@ -9741,6 +9806,9 @@ this.parseWhileStatement = function () {
    this.enterScope(this.scope.bodyScope());
    var scope = this.scope; 
    this.allow(SA_BREAK|SA_CONTINUE);
+
+   this.scope.mode |= SM_LOOP;
+
    if (!this.ensureStmt_soft())
      this.err('not.stmt');
 
@@ -10313,7 +10381,7 @@ this.calculateScopeMode = function() {
       this.parent.insideStrict())
     m |= SM_STRICT;
 
-  if (this.isLexical() && this.parent.insideLoop())
+  if (!this.isAnyFnComp() && this.parent.insideLoop())
     m |= SM_LOOP;
 
   // catch-heads and non-simple fn-heads
@@ -10617,7 +10685,8 @@ this.handOver_m = function(mname, ref) {
 
   if (this.isCatchComp()||
      this.isBlock() ||
-     this.isLexical() || this.type === ST_BODY) 
+     this.isLexical() ||
+     this.isBare())
     return this.parent.refDirect_m(mname, ref);
 
   if (this.isScript() || this.isModule()) {
@@ -10842,7 +10911,7 @@ this.catchHeadScope = function() {
 };
 
 this.bodyScope = function() {
-  return new LexicalScope(this, ST_BODY);
+  return new LexicalScope(this, ST_BARE|ST_BODY);
 };
 
 this.parenScope = function() {
@@ -10966,6 +11035,23 @@ this.calculateBaseSynthNames = function() {
 
 },
 function(){
+this.calculateRefs = function() {
+  var list = this.refs, i = 0, len = list.length();
+  while (i < len) {
+    var elem = list.at(i++);
+    if (!elem.resolved) {
+      var decl = elem.getDecl();
+      ASSERT.call(this, decl.synthName !== "",
+        'all outer references are expected to have been synthesized upon entering a scope');
+      ASSERT.call(this, !this.containsSynthName(decl.synthName),
+        'a synth ref is colliding with a synth decl -- but how come?');
+      this.trackSynthName(decl.synthName);
+    }
+  }
+};
+
+},
+function(){
 this.synthesizeNamesInto = function(scs) {
   ASSERT.call(this, scs.isConcrete(),
     'synthesis target has to be a concrete scope');
@@ -11072,7 +11158,7 @@ this.isHoistable = function() { return this.isSimpleFnComp() && this.isDecl(); }
 this.isIndirect = function() { return this.isAnyFnComp() || this.isClass(); };
 this.isConcrete = function() { return this.type & ST_CONCRETE; };
 this.isSimpleFnComp = function() { return this.type & ST_FN; };
-this.isBare = function() { return this.isBody() && !(this.isLexical() || this.isAnyFnComp()); };
+this.isBare = function() { return this.type & ST_BARE; };
 this.isCatchBody = function() { return this.isCatchComp() && this.isBody(); };
 this.isCatchHead = function() { return this.isCatchComp() && this.isHead(); };
 this.isHead = function() { return this.type & ST_HEAD; };
@@ -11262,7 +11348,6 @@ this.y = function(n) {
 this.transform = this.tr = function(n, list, isVal) {
   var ntype = n.type;
   switch (ntype) {
-    case 'Identifier':
     case 'Literal':
     case 'This':
     case 'Super':
@@ -11644,6 +11729,8 @@ transform['FunctionDeclaration'] = function(n, pushTarget, isVal) {
   if (this.currentScope.synthNamesUntilNow === null)
     this.currentScope.calculateBaseSynthNames();
 
+  this.currentScope.calculateRefs();
+
   n.body = this.transform(n.body, null, isVal);
   this.currentScope.synthesizeLiquidsInto(this.currentScope);
   this.setScope(ps);
@@ -11663,6 +11750,19 @@ this.addParamAssigPrologueToBody = function(fn) {
 
   return fn.body;
 };
+
+},
+function(){
+transform['Identifier'] = function(n, pushTarget, flags) {
+  var decl = this.currentScope.findRef_m(_m(n.name)).getDecl();
+  var shouldTest = this.currentScope.shouldTest(decl);
+  if (shouldTest) {
+    decl.useTZ();
+    this.currentScope.accessLiquid(decl.ref.scope.scs, 'tz');
+  }
+
+  return synth_ResolvedName(n.name, decl, shouldTest); 
+} 
 
 },
 function(){
@@ -11811,6 +11911,7 @@ transform['YieldExpression'] = function(n, list, isVal) {
 
 
 }]  ],
+null,
 null,
 null,
 null,

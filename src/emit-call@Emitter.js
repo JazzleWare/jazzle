@@ -13,7 +13,7 @@ Emitters['CallExpression'] = function(n, prec, flags) {
     this.w('(');
   }
 
-  this.eH(n.callee, prec, flags);
+  this.eH(n.callee, prec, flags|EC_CALL_HEAD);
   this.w('(');
   this.emitArrayChunk(n.arguments, 0, n.arguments.length-1);
   this.w(')');
@@ -31,8 +31,8 @@ function(n, flags, ri) {
 
   var c = n.callee;
   if (c.type === 'MemberExpression') {
-    this.wm('jz','.','meth','(')
-        .wm('jz','.','b','(')
+    this.jz('meth').w('(')
+        .jz('b').w('(')
         .eN(c.object, PREC_NONE, EC_NONE)
         .wm(',',' ');
     if (c.computed)
