@@ -116,11 +116,15 @@ this.setSynthName = function(synthName) {
 };
 
 this.useTZ = function() {
-  if (!this.hasTZ) {
+  if (this.mightNeedTest() && !this.hasTZ) {
     this.hasTZ = true;
     if (!this.ref.scope.hasTZ)
       this.ref.scope.hasTZ = true;
   }
 
   return this;
+};
+
+this.mightNeedTest = function() {
+  return this.isLexical() && !this.isFunc();
 };

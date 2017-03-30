@@ -33,3 +33,7 @@ this.findRef_m = function(mname, createIfNone, isLiquid) {
   );
   
 };
+
+this.hasUnresolvedRef_m = function(mname) {
+  return this.findRef_m(mname) && !this.findDecl_m(mname);
+};

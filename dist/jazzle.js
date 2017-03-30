@@ -31,6 +31,7 @@ function Decl() {
   this.i = -1;
   this.hasTZ = false;
   this.synthName = "";
+  this.reached = true;
 }
 ;
 function Emitter(spaceString) {
@@ -611,7 +612,9 @@ var DIR_MODULE = 1,
 
 var EC_NONE = 0,
     EC_NEW_HEAD = 1,
-    EC_START_STMT = 2;
+    EC_START_STMT = 2,
+    EC_EXPR_HEAD = EC_START_STMT << 1,
+    EC_CALL_HEAD = EC_EXPR_HEAD << 1;
 
 var PREC_NONE = PREC_WITH_NO_OP;
 
@@ -1689,13 +1692,17 @@ this.setSynthName = function(synthName) {
 };
 
 this.useTZ = function() {
-  if (!this.hasTZ) {
+  if (this.mightNeedTest() && !this.hasTZ) {
     this.hasTZ = true;
     if (!this.ref.scope.hasTZ)
       this.ref.scope.hasTZ = true;
   }
 
   return this;
+};
+
+this.mightNeedTest = function() {
+  return this.isLexical() && !this.isFunc();
 };
 
 },
@@ -2205,6 +2212,7 @@ this.emitParams = function(list) {
 
 },
 function(){
+if (false) {
 Emitters['Identifier'] = function(n, prec, flags) {
   return this.emitIdentifierWithValue(n.name);
 };
@@ -2219,6 +2227,47 @@ this.emitIdentifierWithValue = function(value) {
     else this.writeUnicodeEscapeWithValue(ch);
     i++;
   }
+};
+}
+
+Emitters['Identifier'] = function(n, prec, flags) {
+  var paren = false, zero = false;
+  var needsTest = false, isV = false;
+
+  var name = n.name;
+  var decl = this.findRef(name).getDecl();
+  if (decl.isLexical() && decl.scope.insideLoop() && decl.ref.indirect)
+    isV = true;
+  if (flags & EC_CALL_HEAD)
+    zero = true;
+
+  needsTest = this.currentScope.shouldTest(decl);
+
+  if (zero)
+    paren = true;
+  else if (needsTest)
+    paren = flags & (EC_EXPR_HEAD|EC_CALL_HEAD|EC_NEW_HEAD);
+
+  paren && this.w('(');
+  zero && this.wm('0',',');
+  if (needsTest)
+    this.writeTDZ(decl.synthName, decl);
+  else
+    this.writeName(decl.synthName);
+};
+
+this.writeTDZ = function(declName, decl) {
+  var tdzVar = decl.ref.scope.scs.getLiquid('tz');
+  this.writeName(tdzVar.synthName);
+  this.wm('<');
+  this.writeNumWithVal(decl.i);
+  this.wm('?','jz','.','tz','(','\'').writeStringWithVal(decl.name);
+  this.w('\'').w(')');
+  this.wm(':').writeName(declName);
+};
+
+this.writeName = function(name) {
+  this.w(name); // TODO: name has to get tested for being an actual identifier
 };
 
 },
@@ -10674,6 +10723,10 @@ this.findRef_m = function(mname, createIfNone, isLiquid) {
   
 };
 
+this.hasUnresolvedRef_m = function(mname) {
+  return this.findRef_m(mname) && !this.findDecl_m(mname);
+};
+
 },
 function(){
 this.str = function() {
@@ -11109,6 +11162,23 @@ this.hasHeritage = function() {
     'only classes are allowed to be tested for '+
     'heritage');
   return this.mode & SM_CLS_WITH_SUPER;
+};
+
+},
+function(){
+this.shouldTest = function(decl) {
+  if (!decl.mightNeedTest())
+    return false;
+  if (!decl.reached)
+    return true;
+  if (!this.isAnyFnComp())
+    return false;
+
+  var scope = this;
+  if (scope.isAnyFnBody())
+    scope = scope.funcHead;
+
+  return decl.ref.scope === scope.parent && scope.isDecl();
 };
 
 }]  ],

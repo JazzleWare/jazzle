@@ -165,7 +165,9 @@ var DIR_MODULE = 1,
 
 var EC_NONE = 0,
     EC_NEW_HEAD = 1,
-    EC_START_STMT = 2;
+    EC_START_STMT = 2,
+    EC_EXPR_HEAD = EC_START_STMT << 1,
+    EC_CALL_HEAD = EC_EXPR_HEAD << 1;
 
 var PREC_NONE = PREC_WITH_NO_OP;
 
