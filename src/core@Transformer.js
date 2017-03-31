@@ -12,7 +12,8 @@ this.transform = this.tr = function(n, list, isVal) {
     case 'Unornull':
     case 'ObjIterGet':
     case 'SpecialIdentifier':
-    case 'SynthSequenceExpression':
+    case '#Sequence':
+    case '#Untransformed':
       return n;
     default:
       return transform[n.type].call(this, n, list, isVal);

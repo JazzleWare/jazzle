@@ -438,8 +438,8 @@ function Transformer() {
   this.globalScope = null;
   this.scriptScope = null;
   this.currentScope = null;
+  this.tempStack = [];
 }
-
 ;
 LexicalScope.prototype = createObj(Scope.prototype);
 CatchBodyScope.prototype = createObj(LexicalScope.prototype);
@@ -900,6 +900,7 @@ function agtb(a, b) {
 var NORMALIZE_COMMON = ['li0', 'c0', 'col0', 'li', 'c', 'col', 'loc0', 'loc'];
 ;
 var Emitters = {};
+var UntransformedEmitters = {};
 ;
 // ! ~ - + typeof void delete    % ** * /    - +    << >>
 // > <= < >= in instanceof   === !==    &    ^   |   ?:    =       ...
@@ -1068,11 +1069,7 @@ function _u(name) {
 }
 function _full(nameSpace, name) { return nameSpace+':'+name; }
 ;
-function synth_ResolvedName(name, decl, shouldTest) {
-  return { 
-    type: '#ResolvedName', decl: decl, name: name, shouldTest: shouldTest
-  };
-};
+
 ;
 
 function synth_id_node(name) {
@@ -1768,7 +1765,7 @@ function(n, prec, flags) {
   case 'AssignmentExpression':
   case 'ArrowFunctionExpression':
   case 'SequenceExpression':
-  case 'SynthSequenceExpression':
+  case '#Sequence':
     this.w('(').eA(n, PREC_NONE, EC_NONE).w(')');
     break;
   default: 
@@ -1796,7 +1793,7 @@ this.eA = function(n, prec, startStmt) {
 this.emitNonSeq = function(n, prec, flags) {
   var paren =
     n.type === 'SequenceExpression' ||
-    n.type === 'SynthSequenceExpression';
+    n.type === '#Sequence';
   if (paren) this.w('(');
   this.emitAny(n, prec, flags);
   if (paren) this.w(')');
@@ -1895,6 +1892,11 @@ this.jz = function(name) {
   return this.wm('jz','.',name);
 };
 
+this.emitAsStatement = function(n, prec, flags) {
+  this.emitAny(n, PREC_NONE, EC_START_STMT);
+  this.w(';');
+};
+
 },
 function(){
 Emitters['UpdateExpression'] = function(n, prec, flags) {
@@ -1959,7 +1961,7 @@ this.emitArrayChunk = function(list, from, to) {
 
 },
 function(){
-Emitters['SyntheticAssignment'] =
+Emitters['#SubAssig'] =
 Emitters['AssignmentExpression'] =
 this.emitAssig = function(n, prec, flags) {
   this.emitAssigLeft(n.left, flags);
@@ -2181,9 +2183,12 @@ Emitters['DoWhileStatement'] = function(n, prec, flags) {
 },
 function(){
 Emitters['ExpressionStatement'] = function(n, prec, flags) {
-  this.eA(n.expression, PREC_NONE, EC_START_STMT);
-  if (n.expression.type !== 'SequenceStatement')
+  if (n.expression.type === '#Sequence')
+    this.emitSynthSequence(n.expression, flags, false);
+  else { 
+    this.eA(n.expression, PREC_NONE, EC_START_STMT);
     this.w(';');
+  }
 };
 
 },
@@ -2582,22 +2587,22 @@ this.writeName = function(name) {
 
 },
 function(){
-Emitters['SequenceStatement'] = function(n, prec, flags) {
-  var list = n.expressions, i = 0;
-  while (i < list.length) {
-    if (i > 0) this.l();
-    this.emitAsStmt(list[i++]);
-  }
+Emitters['#Sequence'] = function(n, prec, flags) {
+  this.emitSynthSequence(n, flags, true);
 };
 
-this.emitAsStmt = function(seqElem) {
-  switch (seqElem.type) {
-  case 'AssignmentExpression':
-  case 'SyntheticAssignment':
-  seqElem = synth_exprstmt(seqElem);
-  }
-
-  this.emitAny(seqElem, PREC_NONE, EC_NONE);
+this.emitSynthSequence = function(n, flags, isExpr) {
+  var list = n.elements, i = 0;
+  if (isExpr)
+    while (i < list.length) {
+      i && this.wm(',',' ');
+      this.eN(list[i++]);
+    }
+  else
+    while (i < list.length) {
+      i && this.l();
+      this.emitAsStatement(list[i++]);
+    }
 };
 
 },
@@ -2633,6 +2638,81 @@ this.emitUnaryArgument = function(n) {
     this.emitAny(n, PREC_NONE, EC_NONE);
   else
     this.eH(n, PREC_NONE, EC_NONE);
+};
+
+},
+function(){
+UntransformedEmitters['arr-iter-end'] = function(n, prec, flags) {
+  this.eH(n.iter).wm('.','end','(',')');
+};
+
+},
+function(){
+UntransformedEmitters['arr-iter-get'] = function(n, prec, flags) {
+  this.eH(n.iter).wm('.','get','(',')');
+};
+
+},
+function(){
+UntransformedEmitters['arr-iter'] = function(n, prec, flags) {
+  this.jz('arrIter').w('(').eN(n.iterExpr).w(')');
+};
+
+},
+function(){
+UntransformedEmitters['obj-iter-get'] = function(n, prec, flags) {
+  this.eA(n.iter).wm('.','get','(');
+  if (n.computed)
+    this.eN(n.keyName);
+  else if (n.keyName.type === 'Literal')
+    this.eA(n.keyName);
+  else {
+    ASSERT.call(this, n.keyName.type === 'Identifier',
+      'got a key of the type ' + n.keyName.type);
+    this.w('\'').writeStrWithVal(n.keyName.name).w('\'');
+  }
+  this.w(')');
+};
+
+},
+function(){
+UntransformedEmitters['obj-iter-val'] = function(n, prec, flags) {
+  var zero = flags & EC_CALL_HEAD;
+  zero && this.wm('(','0',',');
+  this.eN(n.iter).wm('.','val');
+  zero && this.w(')');
+};
+
+},
+function(){
+UntransformedEmitters['obj-iter'] = function(n, prec, flags) {
+  this.jz('objIter').w('(').eN(n.iterExpr).w(')');
+};
+
+},
+function(){
+UntransformedEmitters['temp-save'] = function(n, prec, flags) {
+  this.eA(n.left).wm(' ','=',' ').eN(n.right);
+};
+
+},
+function(){
+UntransformedEmitters['temp'] = function(n, prec, flags) {
+  ASSERT.call(this, n.liquid.synthName !== "",
+    'a liquid has to have a synthesized name in order to be emittable');
+  this.w(n.liquid.synthName);
+};
+
+},
+function(){
+UntransformedEmitters['uon'] = function(n, prec, flags) {
+  this.jz('uon').w('(').eN(n.argument).w(')');
+};
+
+},
+function(){
+Emitters['#Untransformed'] = function(n, prec, flags) {
+  return UntransformedEmitters[n.kind].call(this, n, prec, flags);
 };
 
 },
@@ -11355,7 +11435,8 @@ this.transform = this.tr = function(n, list, isVal) {
     case 'Unornull':
     case 'ObjIterGet':
     case 'SpecialIdentifier':
-    case 'SynthSequenceExpression':
+    case '#Sequence':
+    case '#Untransformed':
       return n;
     default:
       return transform[n.type].call(this, n, list, isVal);
@@ -11378,6 +11459,122 @@ this.setScope = function(scope) {
 
 },
 function(){
+this.accessJZ = function() {
+  this.currentScope.accessLiquid(this.scriptScope, 'jz');
+};
+
+},
+function(){
+this.synth_SubAssig = 
+function(left, right) {
+  return {
+    type: '#SubAssig',
+    left: left,
+    right: right,
+    operator: '=',
+    y: -1 
+  };
+};
+
+this.synth_ObjIter =
+function(expr) {
+  this.accessJZ();
+  return {
+    type: '#Untransformed',
+    kind: 'obj-iter',
+    iterExpr: expr
+  };
+};
+
+this.synth_ObjIterGet =
+function(iter, keyName, isComputed) {
+  this.accessJZ();
+  return {
+    type: '#Untransformed',
+    kind: 'obj-iter-get',
+    keyName: keyName,
+    iter: iter,
+    computed: isComputed
+  };
+};
+
+this.synth_ObjIterVal = function(iter) {
+  return {
+    type: '#Untransformed',
+    iter: iter,
+    kind: 'obj-iter-val'
+  };
+};
+
+this.synth_ResolvedName = function(name, decl, shouldTest) {
+  return { 
+    type: '#ResolvedName', decl: decl, name: name, shouldTest: shouldTest
+  };
+};
+
+this.synth_Sequence = function(list) {
+  return {
+    type: '#Sequence',
+    elements: list,
+    y: -1
+  };
+};
+
+this.synth_TempSave = function(temp, expr) {
+  return {
+    left: temp,
+    right: expr,
+    kind: 'temp-save',
+    type: '#Untransformed'
+  };
+};
+
+this.synth_Cond = function(test, consequent, alternate) {
+  return {
+    type: 'ConditionalExpression',
+    test: test,
+    consequent: consequent,
+    alternate: alternate,
+    y: -1
+  };
+};
+
+this.synth_ArrIterEnd = function(iter) {
+  return {
+    type: '#Untransformed',
+    kind: 'arr-iter-end',
+    iter: iter
+  };
+};
+
+this.synth_ArrIter = function(expr) {
+  this.accessJZ();
+  return {
+    type: '#Untransformed',
+    kind: 'arr-iter',
+    iterExpr: expr
+  };
+};
+
+this.synth_UoN = function(expr) {
+  this.accessJZ();
+  return {
+    type: '#Untransformed',
+    kind: 'uon',
+    argument: expr
+  };
+};
+
+this.synth_ArrIterGet = function(iter) {
+  return {
+    type: '#Untransformed',
+    kind: 'arr-iter-get',
+    iter: iter
+  };
+};
+
+},
+function(){
 this.findFAT = function() {
   if (this.tempStack.length === 0)
     this.prepareTemp();
@@ -11396,20 +11593,37 @@ this.ensureFAT = function(t) {
 this.allocTemp = function() {
   if (this.tempStack.length === 0)
     this.prepareTemp();
-  return this.tempStack.pop();
+  var t = this.tempStack.pop();
+  t.occupied = true;
+
+  return t;
 };
 
 this.prepareTemp = function() {
   var t = this.currentScope.accessLiquid(this.currentScope.scs, 't', true);
   t.idealName = 't';
-  this.tempStack.push(t);
+  this.tempStack.push(makeTemp(t));
 };
 
 this.releaseTemp = function(temp, ensureFAT) {
   ASSERT.call(this, temp !== null, 'temp is not allowed to be null');
+  ASSERT.call(this, temp.occupied, 'a temp has to be an occupied temp in order to be released');
   this.tempStack.push(temp);
+  temp.occupied = false;
   if (ensureFAT)
     this.ensureFAT(ensureFAT);
+};
+
+function makeTemp(liquid) {
+  return {
+    type: '#Untransformed', kind: 'temp', name: liquid.name, liquid: liquid, occupied: false
+  };
+}
+
+this.saveInTemp = function(expr, pushTarget) {
+  var t = this.allocTemp();
+  pushTarget.push(this.synth_TempSave(t, expr));
+  return t;
 };
 
 },
@@ -11433,173 +11647,118 @@ transform['ArgsPrologue'] = function(n, pushTarget, isVal) {
 
 },
 function(){
+var assigTransformers = {};
 
-},
-function(){
-var transformAssig = {};
-transform['SyntheticAssignment'] =
-transform['AssignmentExpression'] = function(n, list, isVal) {
-  var transformer = transformAssig[n.left.type], tr = null;
-  if (n.type === 'SyntheticAssignment') {
-    tr = transformer.call(this, n, list, isVal);
-    push_if_assig(tr, list);
-    ASSERT.call(this, !isVal, 'synthetic assignment must not be transformed as a value');
-    return NOEXPR;
-  }
+transform['AssignmentExpression'] = 
+function(n, pushTarget, isVal) {
+  if (this.y(n))
+    return this.transformAssigWithYield(n, pushTarget, isVal);
 
-  // transforms-to-sequence
-  var tts = false;
-  if (!list) { // i.e., list is not a yield container
-    list = [];
-    tts = true;
-  }
-  var rightTemp = n.left.type !== 'Identifier' ? this.allocTemp() : null;
-  this.evalLeft(n.left, n.right, list);
-  rightTemp && this.rl(rightTemp);
-  tr = transformer.call(this, n, list, isVal);
-  if (tts) {
-    if (isVal) push_checked(tr, list);
-    else push_if_assig(tr, list);
-    return synth_seq(list, isVal);
-  }
-  
-  return tr;
+  ASSERT.call(this, pushTarget === null,
+    'pushTarget is not alowed to be non-null');
+
+  pushTarget = [];
+  var transformer = assigTransformers[n.left.type];
+  var result = transformer.call(this, n, pushTarget, isVal);
+  result && pushTarget.push(result);
+
+  return pushTarget.length === 1 ?
+    pushTarget[0] : this.synth_Sequence(pushTarget);
 };
 
-// TODO: things like `[a[yield]] = 12` are currently transformed as:
-// `t1 = a; yield; t2 = sent; t = arrIter(12); t1[t2] = t.get()`
-// from an optimal perspective, this should rather be:
-// `t1 = a; yield; t = arrIter(12); t1[sent] = t.get()`
-// generally speaking, an 'occupySent' should exist, and should be used by any expression
-// that makes use of sent; each call to this hypothetical 'occupySent' will then return 'sent',
-// saving the current expression that is using 'sent' in a temp, and further replacing that expression with
-// the temp it is saved in. 
-// observation: if there are no temps needed for its right, the element need not be saved
-var evalLeft = {};
-this.evalLeft = function(left, right, list) {
-  return evalLeft[left.type].call(this, left, right, list);
+transform['#SubAssig'] =
+function(n, pushTarget, isVal) {
+  ASSERT.call(this, !isVal,
+    'sub-assignments are not allowed to have values');
+
+  if (this.y(n))
+    return this.transformSubAssigWithYield(n, pushTarget, isVal);
+
+  return assigTransformers[n.left.type].call(this, n, pushTarget, isVal);
 };
 
-evalLeft['Identifier'] = function(left, right, list) {
-  return;
-};
-
-transformAssig['Identifier'] = function(n, list, isVal) {
-  n.right = this.tr(n.right, list, true);
+assigTransformers['Identifier'] = function(n, pushTarget, isVal) {
+  n.left = this.transform(n.left, null, true);
+  n.right = this.transform(n.right, null, true);
   return n;
 };
 
-evalLeft['MemberExpression'] = function(left, right, list) {
-  left.object = this.tr(left.object, list, true);
-  if (right === null || this.y(right))
-    left.object = this.save(left.object, list);
-  if (left.computed) {
-    left.property = this.tr(left.property, list, true);
-    if (right === null || this.y(right))
-      left.property = this.save(left.property, list);
-  }
-};
-
-transformAssig['MemberExpression'] = function(n, list, isVal) {
-  var left = n.left;
-  n.right = this.tr(n.right, list, true);
-  
-  // `a()[b()] = (yield a()) * (yield)`, you know
-  this.rlit(left.property);
-  this.rlit(left.object);
+assigTransformers['MemberExpression'] = function(n, pushTarget, isVal) {
+  n.left = this.transform(n.left, null, true);
+  n.right = this.transform(n.right, null, true);
   return n;
 };
 
-var assigPattern = {};
-this.assigPattern = function(left, right, list) {
-  return assigPattern[left.type].call(this, left, right, list);
-};
+assigTransformers['ObjectPattern'] = function(n, pushTarget, isVal) {
+  n.right = this.transform(n.right, null, true);
 
-this.evalProp = function(elem, list) {
-  if (elem.computed) {
-    elem.key = this.tr(elem.key, list, true);
-    elem.key = this.save(elem.key, list);
-  }
-  this.evalLeft(elem.value, null, list);
-};
- 
-evalLeft['ObjectPattern'] = function(left, right, list) {
-  var elems = left.properties, e = 0;
-  while (e < elems.length)
-    this.evalProp(elems[e++], list);
-};
- 
-assigPattern['ObjectPattern'] = function(left, right, list) {
-  var elems = left.properties, e = 0;
-  while (e < elems.length) {
-    var elem = elems[e];
-    this.tr(
-      synth_assig_explicit(elem.value,
-        synth_call_objIter_get(right, getExprKey(elem))
-      ), list, false
+  var temp = this.saveInTemp(this.synth_ObjIter(n.right), pushTarget);
+  var list = n.left.properties;
+  var e = 0;
+  while (e < list.length) {
+    var elem = list[e++];
+    var result = this.transform(
+      this.synth_SubAssig(
+        elem.value,
+        this.synth_ObjIterGet(temp,
+          elem.computed ? this.transform(elem.key, null, true) : elem.key, elem.computed)
+      ),
+      pushTarget,
+      false
     );
-    e++;
+    result && pushTarget.push(result);
   }
+  this.releaseTemp(temp);
+  return isVal ? this.synth_ObjIterVal(temp) : null;
 };
 
-transformAssig['ObjectPattern'] = function(n, list, isVal) {
-  // var iterVal = this.allocTemp();
-  // this.evalLeft(n.left, /* TODO: unnecessary */n.right, list);
-  // this.rl(iterVal);
-  n.right = this.tr(n.right, list, true);
-  var iter = this.save(wrapObjIter(n.right), list);
-  this.assigPattern(n.left, iter, list);
-  this.rl(iter);
-  return isVal ? iterVal(iter) : NOEXPR;
-};
+assigTransformers['AssignmentPattern'] = function(n, pushTarget, isVal) {
+  ASSERT.call(this, !isVal,
+    'assignment-patterns are not allowed to have a transform-value');
+  var l = n.left.left,
+      valDefault = n.left.right,
+      r = n.right;
+  var temp = this.allocTemp(),
+      cond = this.synth_Cond(
+        this.synth_UoN(this.synth_TempSave(temp, r)),
+        valDefault,
+        temp
+      );
+  this.releaseTemp(temp);
 
-evalLeft['ArrayPattern'] = function(left, right, list) {
-  var elems = left.elements, e = 0;
-  while (e < elems.length)
-    this.evalLeft(elems[e++], null, list);
-};
-
-assigPattern['ArrayPattern'] = function(left, right, list) {
-  var elems = left.elements, e = 0;
-  while (e < elems.length) {
-    this.tr(
-      synth_assig_explicit(elems[e],
-        synth_call_arrIter_get(right)
-      ), list, false
-    );
-    e++;
-  }
-};
-
-transformAssig['ArrayPattern'] = function(n, list, isVal) {
-  // var iterVal = this.allocTemp();
-  // this.evalLeft(n.left, /* TODO: unnecessary */n.right, list);
-  // this.rl(iterVal);
-  n.right = this.tr(n.right, list, true);
-  var iter = this.save(wrapArrIter(n.right), list);
-  this.assigPattern(n.left, iter, list);
-  this.rl(iter);
-  return isVal ? iterVal(iter) : NOEXPR;
+  // NOTE: temps allocated while transforming cond never overwrite that of the sub-assig,
+  // because:
+  // * if l is simple, it _might_ share temps with the transformed cond, but
+  //   they have taken effect before cond is evaluated at run-time
+  // * if sub assig is not simple, cond is saved first, in the form of an iter, in a temp that might be
+  //   even among its own allocated names, but it is in the left hand side and will only have a value
+  //   when cond is evaluated (at run-time)
+  return this.transform(
+    this.synth_SubAssig(l, this.transform(cond, pushTarget, true)),
+    pushTarget,
+    false
+  );
 }; 
 
-evalLeft['AssignmentPattern'] = function(left, right, list) {
-  return this.evalLeft(left.left, right, list);
-};
+assigTransformers['ArrayPattern'] = function(n, pushTarget, isVal) {
+  n.right = this.transform(n.right, null, true);
 
-transformAssig['AssignmentPattern'] = function(n, list, isVal) {
-  var assigDefault = null, t = null, left = n.left;
-  t = this.allocTemp();
-  assigDefault = synth_cond(
-       wrapInUnornull(
-         synth_assig_explicit(t,
-           n.right // not transformed -- it's merely a synth call in the form of either #t.get() or #t.get('<string>')
-         ) ), left.right, t );
-  this.rl(t);
-  assigDefault = this.tr(assigDefault, list, true);
-  push_checked(this.tr(synth_assig(left.left, assigDefault), list, isVal), list);
-  return NOEXPR;
-};
+  var t = this.saveInTemp(this.synth_ArrIter(n.right), pushTarget);
+  var list = n.left.elements;
+  var e = 0;
+  while (e < list.length) {
+    var elem = list[e++];
+    var result = this.transform(
+      this.synth_SubAssig(elem, this.synth_ArrIterGet(t)),
+      pushTarget,
+      false
+    );
+    result && pushTarget.push(result);
+  }
+  this.releaseTemp(t);
 
+  return this.synth_ArrIterEnd(t);
+};
 
 },
 function(){
@@ -11761,7 +11920,7 @@ transform['Identifier'] = function(n, pushTarget, flags) {
     this.currentScope.accessLiquid(decl.ref.scope.scs, 'tz');
   }
 
-  return synth_ResolvedName(n.name, decl, shouldTest); 
+  return this.synth_ResolvedName(n.name, decl, shouldTest); 
 } 
 
 },

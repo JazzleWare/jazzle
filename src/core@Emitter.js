@@ -24,7 +24,7 @@ function(n, prec, flags) {
   case 'AssignmentExpression':
   case 'ArrowFunctionExpression':
   case 'SequenceExpression':
-  case 'SynthSequenceExpression':
+  case '#Sequence':
     this.w('(').eA(n, PREC_NONE, EC_NONE).w(')');
     break;
   default: 
@@ -52,7 +52,7 @@ this.eA = function(n, prec, startStmt) {
 this.emitNonSeq = function(n, prec, flags) {
   var paren =
     n.type === 'SequenceExpression' ||
-    n.type === 'SynthSequenceExpression';
+    n.type === '#Sequence';
   if (paren) this.w('(');
   this.emitAny(n, prec, flags);
   if (paren) this.w(')');
@@ -149,4 +149,9 @@ this.findLiquid = function(scope, liquidName) {
 
 this.jz = function(name) {
   return this.wm('jz','.',name);
+};
+
+this.emitAsStatement = function(n, prec, flags) {
+  this.emitAny(n, PREC_NONE, EC_START_STMT);
+  this.w(';');
 };

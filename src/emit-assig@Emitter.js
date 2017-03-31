@@ -1,4 +1,4 @@
-Emitters['SyntheticAssignment'] =
+Emitters['#SubAssig'] =
 Emitters['AssignmentExpression'] =
 this.emitAssig = function(n, prec, flags) {
   this.emitAssigLeft(n.left, flags);

@@ -1,1 +1,2 @@
 var Emitters = {};
+var UntransformedEmitters = {};

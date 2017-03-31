@@ -6,5 +6,5 @@ transform['Identifier'] = function(n, pushTarget, flags) {
     this.currentScope.accessLiquid(decl.ref.scope.scs, 'tz');
   }
 
-  return synth_ResolvedName(n.name, decl, shouldTest); 
+  return this.synth_ResolvedName(n.name, decl, shouldTest); 
 } 

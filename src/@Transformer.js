@@ -28,5 +28,5 @@ function Transformer() {
   this.globalScope = null;
   this.scriptScope = null;
   this.currentScope = null;
+  this.tempStack = [];
 }
-
