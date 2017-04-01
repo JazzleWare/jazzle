@@ -1536,6 +1536,10 @@ function createObj(baseObj) {
   return new E();
 }
 
+function needsConstCheck(n) {
+  return n.type === '#ResolvedName' && n.constCheck;
+}
+
 ;
  (function(){
        var i = 0;
@@ -1903,6 +1907,10 @@ this.emitAsStatement = function(n, prec, flags) {
 },
 function(){
 Emitters['UpdateExpression'] = function(n, prec, flags) {
+  var cc = needsConstCheck(n.argument);
+  cc && this.w('(').jz('cc').wm('(','\'')
+    .writeStrWithVal(n.argument.name).wm('\'',')',',').s();
+
   var o = n.operator;
   if (n.prefix) {
     if (this.code.charCodeAt(this.code.length-1) === o.charCodeAt(0))
@@ -1910,6 +1918,8 @@ Emitters['UpdateExpression'] = function(n, prec, flags) {
     this.w(o).eH(n.argument);
   } else
     this.eH(n.argument, PREC_NONE, flags).w(o);
+
+  cc && this.w(')');
 };
 
 },
@@ -1967,9 +1977,19 @@ function(){
 Emitters['#SubAssig'] =
 Emitters['AssignmentExpression'] =
 this.emitAssig = function(n, prec, flags) {
+  var cc = needsConstCheck(n.left);
+  if (cc)
+    this.w('(').jz('cc').w('(')
+        .w('\'').writeStrWithVal(n.left.name).w('\'')
+        .w(')')
+        .w(',')
+        .s();
+
   this.emitAssigLeft(n.left, flags);
   this.wm(' ',n.operator,' ');
   this.emitAssigRight(n.right);
+
+  cc && this.w(')');
 };
 
 this.emitAssigLeft = function(n, flags) {
@@ -2582,22 +2602,26 @@ this.emitResolvedName_tz = function(n, prec, flags, isV, alternate) {
       .w('<').writeNumWithVal(n.decl.i).w('?')
       .jz('tz').wm('(',"'").writeStrWithVal(n.name).wm("'",')').w(':');  
   if (alternate) {
+    var a = alternate;
+    if (a.type === '#Untransformed' && a.kind === 'const-check')
+      a = alternate.assigner;
+ 
     var core = null;
-    switch (alternate.type) {
+    switch (a.type) {
     case '#SubAssig':
     case 'AssignmentExpression':
-      core = alternate.left;
+      core = a.left;
       break;
     case 'UpdateExpression':
-      core = alternate.argument;
+      core = a.argument;
       break;
     default:
-      ASSERT.call(this, false, 'Unknown alternate has type <'+alternate.type+'>');
+      ASSERT.call(this, false, 'Unknown alternate has type <'+a.type+'>');
     }
     ASSERT.call(this, core === n,
       'alternate must have the same head as the resolved name');
     core.shouldTest = false;
-    this.emitAny(alternate, PREC_NONE, EC_NONE);
+    this.eN(alternate, PREC_NONE, EC_NONE);
   }
   else if (isV)
     this.writeVName(n.decl.synthName, EC_NONE);
@@ -10394,8 +10418,8 @@ this.absorbIndirect = function(anotherRef) {
     this.lors = this.lors.concat(anotherRef.lors);
 
   anotherRef.parent = this;
-  if (this.resolved && anotherRef.scope.isHoistable())
-    this.decl.useTZ();
+//if (this.resolved && anotherRef.scope.isHoistable())
+//  this.decl.useTZ();
 };
 
 this.resolveTo = function(decl) {
@@ -10420,21 +10444,6 @@ this.absorbDirect = function(anotherRef) {
   if (anotherRef.lors.length)
     this.lors = this.lors.concat(anotherRef.lors);
   anotherRef.parent = this;
-  if (anotherRef.synthTarget) {
-    if (this.synthTarget === null) {
-      this.synthTarget = anotherRef.synthTarget;
-      this.idealSynthName = anotherRef.idealSynthName;
-    }
-    else {
-      ASSERT.call(this, this.synthTarget === anotherRef.synthTarget,
-        'synth targets have to match for ' + anotherRef.idealSynthName);
-      ASSERT.call(this, this.idealSynthName === anotherRef.idealSynthName,
-        'current ISN has to match for ' + anotherRef.idealSynthName);
-    }
-  }
-  else
-    ASSERT.call(this, !this.synthTarget,
-      'a ref with a synthTarget is not allowed to absorb a ref without one');
 };
 
 this.getDecl = function() {
@@ -11470,6 +11479,15 @@ this.applyTo = function(obj, noErrIfUndefNull) {
 
 }]  ],
 [Transformer.prototype, [function(){
+this.constCheck = function(resolvedName) {
+  ASSERT.call(this, resolvedName.type === '#ResolvedName',
+    'only resolved names are allowed to get a const-check');
+  this.accessJZ();
+  resolvedName.constCheck = true;
+};
+
+},
+function(){
 this.y = function(n) {
   return this.inGen ? y(n) : 0;
 };
@@ -11557,7 +11575,7 @@ this.synth_ObjIterVal = function(iter) {
 
 this.synth_ResolvedName = function(name, decl, shouldTest) {
   return { 
-    type: '#ResolvedName', decl: decl, name: name, shouldTest: shouldTest
+    type: '#ResolvedName', decl: decl, name: name, shouldTest: shouldTest, constCheck: false
   };
 };
 
@@ -11626,6 +11644,15 @@ this.synth_DeclAssig = function(left, right) {
   return this.synth_SubAssig(left, right, true);
 };
 
+this.synth_ConstCheck = function(n) {
+  this.accessJZ();
+  return {
+    type: '#Untransformed',
+    kind: 'const-check',
+    assigner: n
+  }
+};
+
 },
 function(){
 this.findFAT = function() {
@@ -11687,9 +11714,12 @@ transform['UpdateExpression'] = function(n, pushTarget, isVal) {
   else {
     n.argument = this.transform(n.argument, null, true);
     var arg = n.argument;
-    if (arg.type === '#ResolvedName' && arg.shouldTest) {
-      arg.alternate = n;
-      n = arg;
+    if (arg.type === '#ResolvedName') {
+      this.constCheck(arg);
+      if (arg.shouldTest) {
+        arg.alternate = n;
+        n = arg;
+      }
     }
   }
   return n;
@@ -11782,9 +11812,12 @@ assigTransformers['Identifier'] = function(n, pushTarget, isVal) {
     resolvedName.shouldTest = false;
     resolvedName.decl.reached = true;
   }
-  else if (resolvedName.shouldTest) {
-    resolvedName.alternate = n;
-    return resolvedName;
+  else {
+    this.constCheck(resolvedName);
+    if (resolvedName.shouldTest) {
+      resolvedName.alternate = n;
+      n = resolvedName;
+    }
   }
   return n;
 };

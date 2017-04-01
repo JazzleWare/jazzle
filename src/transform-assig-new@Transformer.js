@@ -74,9 +74,12 @@ assigTransformers['Identifier'] = function(n, pushTarget, isVal) {
     resolvedName.shouldTest = false;
     resolvedName.decl.reached = true;
   }
-  else if (resolvedName.shouldTest) {
-    resolvedName.alternate = n;
-    return resolvedName;
+  else {
+    this.constCheck(resolvedName);
+    if (resolvedName.shouldTest) {
+      resolvedName.alternate = n;
+      n = resolvedName;
+    }
   }
   return n;
 };

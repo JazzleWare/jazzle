@@ -72,3 +72,7 @@ function createObj(baseObj) {
   return new E();
 }
 
+function needsConstCheck(n) {
+  return n.type === '#ResolvedName' && n.constCheck;
+}
+

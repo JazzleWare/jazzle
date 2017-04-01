@@ -4,9 +4,12 @@ transform['UpdateExpression'] = function(n, pushTarget, isVal) {
   else {
     n.argument = this.transform(n.argument, null, true);
     var arg = n.argument;
-    if (arg.type === '#ResolvedName' && arg.shouldTest) {
-      arg.alternate = n;
-      n = arg;
+    if (arg.type === '#ResolvedName') {
+      this.constCheck(arg);
+      if (arg.shouldTest) {
+        arg.alternate = n;
+        n = arg;
+      }
     }
   }
   return n;

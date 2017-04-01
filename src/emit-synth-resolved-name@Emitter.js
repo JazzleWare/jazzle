@@ -17,22 +17,26 @@ this.emitResolvedName_tz = function(n, prec, flags, isV, alternate) {
       .w('<').writeNumWithVal(n.decl.i).w('?')
       .jz('tz').wm('(',"'").writeStrWithVal(n.name).wm("'",')').w(':');  
   if (alternate) {
+    var a = alternate;
+    if (a.type === '#Untransformed' && a.kind === 'const-check')
+      a = alternate.assigner;
+ 
     var core = null;
-    switch (alternate.type) {
+    switch (a.type) {
     case '#SubAssig':
     case 'AssignmentExpression':
-      core = alternate.left;
+      core = a.left;
       break;
     case 'UpdateExpression':
-      core = alternate.argument;
+      core = a.argument;
       break;
     default:
-      ASSERT.call(this, false, 'Unknown alternate has type <'+alternate.type+'>');
+      ASSERT.call(this, false, 'Unknown alternate has type <'+a.type+'>');
     }
     ASSERT.call(this, core === n,
       'alternate must have the same head as the resolved name');
     core.shouldTest = false;
-    this.emitAny(alternate, PREC_NONE, EC_NONE);
+    this.eN(alternate, PREC_NONE, EC_NONE);
   }
   else if (isV)
     this.writeVName(n.decl.synthName, EC_NONE);

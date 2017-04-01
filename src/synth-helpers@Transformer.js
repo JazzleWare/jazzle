@@ -41,7 +41,7 @@ this.synth_ObjIterVal = function(iter) {
 
 this.synth_ResolvedName = function(name, decl, shouldTest) {
   return { 
-    type: '#ResolvedName', decl: decl, name: name, shouldTest: shouldTest
+    type: '#ResolvedName', decl: decl, name: name, shouldTest: shouldTest, constCheck: false
   };
 };
 
@@ -108,4 +108,13 @@ this.synth_ArrIterGet = function(iter) {
 
 this.synth_DeclAssig = function(left, right) {
   return this.synth_SubAssig(left, right, true);
+};
+
+this.synth_ConstCheck = function(n) {
+  this.accessJZ();
+  return {
+    type: '#Untransformed',
+    kind: 'const-check',
+    assigner: n
+  }
 };
