@@ -31,7 +31,7 @@ function Decl() {
   this.i = -1;
   this.hasTZ = false;
   this.synthName = "";
-  this.reached = true;
+  this.reached = false;
 }
 ;
 function Emitter(spaceString) {
@@ -1893,8 +1893,11 @@ this.jz = function(name) {
 };
 
 this.emitAsStatement = function(n, prec, flags) {
-  this.emitAny(n, PREC_NONE, EC_START_STMT);
-  this.w(';');
+  if (n.type === '#Sequence')
+    this.emitSynthSequence(n, flags, false);
+  else {
+    this.emitAny(n, PREC_NONE, EC_START_STMT);
+  }
 };
 
 },
@@ -2076,7 +2079,7 @@ this.emitBlock = function(n, prec, flags) {
     this.i();
     var i = 0;
     while (i < list.length) {
-      this.l().eA(list[i], PREC_NONE, EC_NONE);
+      this.l().emitAsStatement(list[i], PREC_NONE, EC_NONE);
       i++;
     }
     this.u().l();
@@ -2466,7 +2469,7 @@ Emitters['Program'] = function(n, prec, flags) {
   while (i < list.length) {
     var stmt = list[i++];
     i > 0 && this.startLine();
-    this.emitAny(stmt, PREC_NONE, EC_START_STMT);
+    this.emitAsStatement(stmt);
   }
 };
 
@@ -2541,6 +2544,25 @@ this.emitCase = function(c) {
 
 },
 function(){
+Emitters['#DeclAssig'] = function(n, prec, flags) {
+  var decl = n.left.decl;
+  this.w(decl.synthName).s().w('=').s();
+  var isV =
+    decl.isLexical() &&
+    decl.ref.scope.insideLoop() && decl.ref.indirect;
+  isV && this.wm('{','v',':').s();
+  n.right ? this.eN(n.right) : this.wm('void',' ','0');
+  isV && this.w('}');
+  this.w(';');
+  if (decl.hasTZ) {
+    this.l();
+    var tz = decl.ref.scope.scs.getLiquid('tz');
+    this.wm(tz.synthName,' ','=',' ').writeNumWithVal(decl.i).w(';');
+  }
+};
+
+},
+function(){
 Emitters['#ResolvedName'] = function(n, prec, flags) {
   var isV = false;
   if (n.decl.isLexical() &&
@@ -2548,18 +2570,36 @@ Emitters['#ResolvedName'] = function(n, prec, flags) {
     isV = true;
 
   if (n.shouldTest)
-    this.emitResolvedName_tz(n, prec, flags, isV);
+    this.emitResolvedName_tz(n, prec, flags, isV, n.alternate);
   else
     this.emitResolvedName_simple(n, prec, flags, isV);
 };
 
-this.emitResolvedName_tz = function(n, prec, flags, isV) {
+this.emitResolvedName_tz = function(n, prec, flags, isV, alternate) {
   var paren = flags & (EC_NEW_HEAD|EC_EXPR_HEAD|EC_CALL_HEAD);
   paren && this.w('(');
   this.writeName(n.decl.ref.scope.scs.getLiquid('tz').synthName)
       .w('<').writeNumWithVal(n.decl.i).w('?')
       .jz('tz').wm('(',"'").writeStrWithVal(n.name).wm("'",')').w(':');  
-  if (isV)
+  if (alternate) {
+    var core = null;
+    switch (alternate.type) {
+    case '#SubAssig':
+    case 'AssignmentExpression':
+      core = alternate.left;
+      break;
+    case 'UpdateExpression':
+      core = alternate.argument;
+      break;
+    default:
+      ASSERT.call(this, false, 'Unknown alternate has type <'+alternate.type+'>');
+    }
+    ASSERT.call(this, core === n,
+      'alternate must have the same head as the resolved name');
+    core.shouldTest = false;
+    this.emitAny(alternate, PREC_NONE, EC_NONE);
+  }
+  else if (isV)
     this.writeVName(n.decl.synthName, EC_NONE);
   else
     this.writeName(n.decl.synthName);
@@ -2768,7 +2808,7 @@ this.cls = function() {
 
 },
 function(){
-this.acceptsName_m = function(mname, m) {
+this.acceptsName_m = function(mname, m, o) {
   if (this.synthNamesUntilNow === null)
     this.calculateBaseSynthNames();
 
@@ -2777,7 +2817,7 @@ this.acceptsName_m = function(mname, m) {
   if (this.containsSynthName_m(mname))
     return false;
 
-  if (argList.hasScopeName_m(mname))
+  if (argList.hasScopeName_m(mname) && o !== argList.scopeName)
     return false;
 
   if (mname === _m('arguments')) {
@@ -11056,7 +11096,7 @@ this.getSupCall = function() {
 
 },
 function(){
-this.acceptsName_m = function(mname, m) {
+this.acceptsName_m = function(mname, m, o) {
   ASSERT.call(this, this.isScript() || this.isModule(),
     '<'+this.typeString()+'> unsupported');
   ASSERT.call(this, m === ACC_DECL,
@@ -11071,28 +11111,31 @@ this.acceptsName_m = function(mname, m) {
   return true;
 };
 
+if (false) {
 this.acceptsName = function(name, acceptMode) {
   return this.acceptsName_m(_m(name), acceptMode);
 };
+}
 
 },
 function(){
-Scope.newSynthName = function(baseName, declScope, locrs) {
+Scope.newSynthName = function(baseName, declScope, locrs, originalDecl) {
   locrs = locrs || null;
+  originalDecl = originalDecl || null;
   var i = 0, name = baseName;
 
   RENAME:
   for (;; ++i, name = baseName + "" + i) {
     var mname = _m(name);
     if (declScope) {
-      if (!declScope.acceptsName_m(mname, ACC_DECL))
+      if (!declScope.acceptsName_m(mname, ACC_DECL, originalDecl))
         continue RENAME;
     }
 
     if (locrs) {
       var l = 0;
       while (l < locrs.length)
-        if (!locrs[l++].acceptsName_m(mname, ACC_REF))
+        if (!locrs[l++].acceptsName_m(mname, ACC_REF, originalDecl))
           continue RENAME;
     }
 
@@ -11116,10 +11159,16 @@ this.calculateBaseSynthNames = function() {
 },
 function(){
 this.calculateRefs = function() {
-  var list = this.refs, i = 0, len = list.length();
+  var list = this.refs, i = 0, len = list.length(), decl = null;
   while (i < len) {
     var elem = list.at(i++);
-    if (!elem.resolved) {
+    var resolved = elem.resolved;
+    if (!resolved & this.isAnyFnBody()) {
+      decl = elem.getDecl();
+      if (decl === this.funcHead.scopeName)
+        resolved = true;
+    }
+    if (resolved) {
       var decl = elem.getDecl();
       ASSERT.call(this, decl.synthName !== "",
         'all outer references are expected to have been synthesized upon entering a scope');
@@ -11466,9 +11515,9 @@ this.accessJZ = function() {
 },
 function(){
 this.synth_SubAssig = 
-function(left, right) {
+function(left, right, isInitializer) {
   return {
-    type: '#SubAssig',
+    type: isInitializer ? '#DeclAssig' : '#SubAssig',
     left: left,
     right: right,
     operator: '=',
@@ -11573,6 +11622,10 @@ this.synth_ArrIterGet = function(iter) {
   };
 };
 
+this.synth_DeclAssig = function(left, right) {
+  return this.synth_SubAssig(left, right, true);
+};
+
 },
 function(){
 this.findFAT = function() {
@@ -11631,8 +11684,14 @@ function(){
 transform['UpdateExpression'] = function(n, pushTarget, isVal) {
   if (this.y(n.argument))
     n.argument = this.transform(n.argument, pushTarget, true);
-  else
+  else {
     n.argument = this.transform(n.argument, null, true);
+    var arg = n.argument;
+    if (arg.type === '#ResolvedName' && arg.shouldTest) {
+      arg.alternate = n;
+      n = arg;
+    }
+  }
   return n;
 };
 
@@ -11666,6 +11725,34 @@ function(n, pushTarget, isVal) {
     pushTarget[0] : this.synth_Sequence(pushTarget);
 };
 
+transform['#DeclAssig'] = function(n, pushTarget, isVal) {
+  if (this.y(n))
+    return this.transformDeclAssigWithYield(n, pushTarget, isVal);
+
+  ASSERT.call(this, !isVal,
+    'decl-assig is not allowed to be transformed as a value');
+
+  var isTop = false;
+  if (pushTarget === null) {
+    pushTarget = [];
+    isTop = true;
+  }
+  else
+    ASSERT.call(this, n.right, 'subdecls must have initializers');
+
+  var transformer = assigTransformers[n.left.type];
+  var result = transformer.call(this, n, pushTarget, isVal);
+//ASSERT.call(this, result,
+//  'result is not allowed to be null for decl-assig');
+  if (!isTop)
+    return result;
+
+  result && pushTarget.push(result);
+
+  return pushTarget.length === 1 ?
+    pushTarget[0] : this.synth_Sequence(pushTarget);
+};
+
 transform['#SubAssig'] =
 function(n, pushTarget, isVal) {
   ASSERT.call(this, !isVal,
@@ -11678,8 +11765,27 @@ function(n, pushTarget, isVal) {
 };
 
 assigTransformers['Identifier'] = function(n, pushTarget, isVal) {
-  n.left = this.transform(n.left, null, true);
-  n.right = this.transform(n.right, null, true);
+  if (n.type === '#DeclAssig') {
+    n.left = this.transformDeclName(n.left);
+    if (n.right)
+      n.right = this.transform(n.right, null, true);
+  }
+  else {
+    n.left = this.transform(n.left, null, true);
+    ASSERT.call(this, n.right,
+        'assignment must have a right hand side');
+    n.right = this.transform(n.right, null, true);
+  }
+
+  var resolvedName = n.left;
+  if (n.type === '#DeclAssig') {
+    resolvedName.shouldTest = false;
+    resolvedName.decl.reached = true;
+  }
+  else if (resolvedName.shouldTest) {
+    resolvedName.alternate = n;
+    return resolvedName;
+  }
   return n;
 };
 
@@ -11700,8 +11806,12 @@ assigTransformers['ObjectPattern'] = function(n, pushTarget, isVal) {
     var result = this.transform(
       this.synth_SubAssig(
         elem.value,
-        this.synth_ObjIterGet(temp,
-          elem.computed ? this.transform(elem.key, null, true) : elem.key, elem.computed)
+        this.synth_ObjIterGet(
+          temp,
+          elem.computed ? this.transform(elem.key, null, true) : elem.key,
+          elem.computed
+        ),
+        n.type === '#DeclAssig'
       ),
       pushTarget,
       false
@@ -11734,7 +11844,7 @@ assigTransformers['AssignmentPattern'] = function(n, pushTarget, isVal) {
   //   even among its own allocated names, but it is in the left hand side and will only have a value
   //   when cond is evaluated (at run-time)
   return this.transform(
-    this.synth_SubAssig(l, this.transform(cond, pushTarget, true)),
+    this.synth_SubAssig(l, this.transform(cond, pushTarget, true), n.type === '#DeclAssig'),
     pushTarget,
     false
   );
@@ -11745,19 +11855,23 @@ assigTransformers['ArrayPattern'] = function(n, pushTarget, isVal) {
 
   var t = this.saveInTemp(this.synth_ArrIter(n.right), pushTarget);
   var list = n.left.elements;
+  this.assigListToIter(n.type === '#DeclAssig', list, t, pushTarget);
+  this.releaseTemp(t);
+
+  return this.synth_ArrIterEnd(t);
+};
+
+this.assigListToIter = function(isInitializer, list, iter, pushTarget) {
   var e = 0;
   while (e < list.length) {
     var elem = list[e++];
     var result = this.transform(
-      this.synth_SubAssig(elem, this.synth_ArrIterGet(t)),
+      this.synth_SubAssig(elem, this.synth_ArrIterGet(iter), isInitializer),
       pushTarget,
       false
     );
     result && pushTarget.push(result);
   }
-  this.releaseTemp(t);
-
-  return this.synth_ArrIterEnd(t);
 };
 
 },
@@ -11854,7 +11968,32 @@ this.transformConditionalExpressionWithYield = function(n, list, isVal) {
 },
 function(){
 transform['VariableDeclaration'] = function(n, pushTarget, isVal) {
-  return n;
+  if (this.y(n))
+    return this.transformDeclarationWithYield(n, pushTarget, isVal);
+
+  ASSERT.call(this, pushTarget === null, 'pushTarget is not allowed to be non-null');
+  pushTarget = [];
+
+  var list = n.declarations, i = 0;
+  while (i < list.length) {
+    var elem = list[i++], assig = null;
+    if (n.kind === 'var') {
+      if (!elem.init) continue;
+      assig = this.synth_SubAssig(elem.id, elem.init);
+    }
+    else
+      assig = this.synth_DeclAssig(elem.id, elem.init);
+
+    pushTarget.push(this.transform(assig, null, false));
+  }
+
+  return pushTarget.length === 1 ?
+    pushTarget[0] : this.synth_Sequence(pushTarget);
+};
+
+this.transformDeclName = function(id) {
+  var decl = this.currentScope.findDecl_m(_m(id.name));
+  return this.synth_ResolvedName(id.name, decl, false);
 };
 
 },
@@ -11878,11 +12017,13 @@ transform['FunctionDeclaration'] = function(n, pushTarget, isVal) {
   var ps = this.setScope(n.scope);
   if (this.currentScope.isExpr() && this.currentScope.funcHead.scopeName) {
     var scopeName = this.currentScope.funcHead.scopeName;
-    var synthName = Scope.newSynthName(scopeName.name, null, scopeName.ref.lors);
+    var synthName = Scope.newSynthName(scopeName.name, null, scopeName.ref.lors, scopeName);
     if (synthName !== scopeName.name) {
       var l = ps.accessLiquid(ps.scs, scopeName.name, true);
       l.associateWith(scopeName);
     }
+    else
+      scopeName.setSynthName(scopeName.name);
   }
 
   if (this.currentScope.synthNamesUntilNow === null)

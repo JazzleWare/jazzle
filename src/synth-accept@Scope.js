@@ -1,4 +1,4 @@
-this.acceptsName_m = function(mname, m) {
+this.acceptsName_m = function(mname, m, o) {
   ASSERT.call(this, this.isScript() || this.isModule(),
     '<'+this.typeString()+'> unsupported');
   ASSERT.call(this, m === ACC_DECL,
@@ -13,6 +13,8 @@ this.acceptsName_m = function(mname, m) {
   return true;
 };
 
+if (false) {
 this.acceptsName = function(name, acceptMode) {
   return this.acceptsName_m(_m(name), acceptMode);
 };
+}

@@ -17,6 +17,34 @@ function(n, pushTarget, isVal) {
     pushTarget[0] : this.synth_Sequence(pushTarget);
 };
 
+transform['#DeclAssig'] = function(n, pushTarget, isVal) {
+  if (this.y(n))
+    return this.transformDeclAssigWithYield(n, pushTarget, isVal);
+
+  ASSERT.call(this, !isVal,
+    'decl-assig is not allowed to be transformed as a value');
+
+  var isTop = false;
+  if (pushTarget === null) {
+    pushTarget = [];
+    isTop = true;
+  }
+  else
+    ASSERT.call(this, n.right, 'subdecls must have initializers');
+
+  var transformer = assigTransformers[n.left.type];
+  var result = transformer.call(this, n, pushTarget, isVal);
+//ASSERT.call(this, result,
+//  'result is not allowed to be null for decl-assig');
+  if (!isTop)
+    return result;
+
+  result && pushTarget.push(result);
+
+  return pushTarget.length === 1 ?
+    pushTarget[0] : this.synth_Sequence(pushTarget);
+};
+
 transform['#SubAssig'] =
 function(n, pushTarget, isVal) {
   ASSERT.call(this, !isVal,
@@ -29,8 +57,27 @@ function(n, pushTarget, isVal) {
 };
 
 assigTransformers['Identifier'] = function(n, pushTarget, isVal) {
-  n.left = this.transform(n.left, null, true);
-  n.right = this.transform(n.right, null, true);
+  if (n.type === '#DeclAssig') {
+    n.left = this.transformDeclName(n.left);
+    if (n.right)
+      n.right = this.transform(n.right, null, true);
+  }
+  else {
+    n.left = this.transform(n.left, null, true);
+    ASSERT.call(this, n.right,
+        'assignment must have a right hand side');
+    n.right = this.transform(n.right, null, true);
+  }
+
+  var resolvedName = n.left;
+  if (n.type === '#DeclAssig') {
+    resolvedName.shouldTest = false;
+    resolvedName.decl.reached = true;
+  }
+  else if (resolvedName.shouldTest) {
+    resolvedName.alternate = n;
+    return resolvedName;
+  }
   return n;
 };
 
@@ -51,8 +98,12 @@ assigTransformers['ObjectPattern'] = function(n, pushTarget, isVal) {
     var result = this.transform(
       this.synth_SubAssig(
         elem.value,
-        this.synth_ObjIterGet(temp,
-          elem.computed ? this.transform(elem.key, null, true) : elem.key, elem.computed)
+        this.synth_ObjIterGet(
+          temp,
+          elem.computed ? this.transform(elem.key, null, true) : elem.key,
+          elem.computed
+        ),
+        n.type === '#DeclAssig'
       ),
       pushTarget,
       false
@@ -85,7 +136,7 @@ assigTransformers['AssignmentPattern'] = function(n, pushTarget, isVal) {
   //   even among its own allocated names, but it is in the left hand side and will only have a value
   //   when cond is evaluated (at run-time)
   return this.transform(
-    this.synth_SubAssig(l, this.transform(cond, pushTarget, true)),
+    this.synth_SubAssig(l, this.transform(cond, pushTarget, true), n.type === '#DeclAssig'),
     pushTarget,
     false
   );
@@ -96,17 +147,21 @@ assigTransformers['ArrayPattern'] = function(n, pushTarget, isVal) {
 
   var t = this.saveInTemp(this.synth_ArrIter(n.right), pushTarget);
   var list = n.left.elements;
+  this.assigListToIter(n.type === '#DeclAssig', list, t, pushTarget);
+  this.releaseTemp(t);
+
+  return this.synth_ArrIterEnd(t);
+};
+
+this.assigListToIter = function(isInitializer, list, iter, pushTarget) {
   var e = 0;
   while (e < list.length) {
     var elem = list[e++];
     var result = this.transform(
-      this.synth_SubAssig(elem, this.synth_ArrIterGet(t)),
+      this.synth_SubAssig(elem, this.synth_ArrIterGet(iter), isInitializer),
       pushTarget,
       false
     );
     result && pushTarget.push(result);
   }
-  this.releaseTemp(t);
-
-  return this.synth_ArrIterEnd(t);
 };

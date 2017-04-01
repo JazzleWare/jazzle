@@ -1,7 +1,7 @@
 this.synth_SubAssig = 
-function(left, right) {
+function(left, right, isInitializer) {
   return {
-    type: '#SubAssig',
+    type: isInitializer ? '#DeclAssig' : '#SubAssig',
     left: left,
     right: right,
     operator: '=',
@@ -104,4 +104,8 @@ this.synth_ArrIterGet = function(iter) {
     kind: 'arr-iter-get',
     iter: iter
   };
+};
+
+this.synth_DeclAssig = function(left, right) {
+  return this.synth_SubAssig(left, right, true);
 };

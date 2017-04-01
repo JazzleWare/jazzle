@@ -6,5 +6,5 @@ function Decl() {
   this.i = -1;
   this.hasTZ = false;
   this.synthName = "";
-  this.reached = true;
+  this.reached = false;
 }

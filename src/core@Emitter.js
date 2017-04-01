@@ -152,6 +152,9 @@ this.jz = function(name) {
 };
 
 this.emitAsStatement = function(n, prec, flags) {
-  this.emitAny(n, PREC_NONE, EC_START_STMT);
-  this.w(';');
+  if (n.type === '#Sequence')
+    this.emitSynthSequence(n, flags, false);
+  else {
+    this.emitAny(n, PREC_NONE, EC_START_STMT);
+  }
 };

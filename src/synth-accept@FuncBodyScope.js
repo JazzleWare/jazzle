@@ -1,4 +1,4 @@
-this.acceptsName_m = function(mname, m) {
+this.acceptsName_m = function(mname, m, o) {
   if (this.synthNamesUntilNow === null)
     this.calculateBaseSynthNames();
 
@@ -7,7 +7,7 @@ this.acceptsName_m = function(mname, m) {
   if (this.containsSynthName_m(mname))
     return false;
 
-  if (argList.hasScopeName_m(mname))
+  if (argList.hasScopeName_m(mname) && o !== argList.scopeName)
     return false;
 
   if (mname === _m('arguments')) {

@@ -5,18 +5,36 @@ Emitters['#ResolvedName'] = function(n, prec, flags) {
     isV = true;
 
   if (n.shouldTest)
-    this.emitResolvedName_tz(n, prec, flags, isV);
+    this.emitResolvedName_tz(n, prec, flags, isV, n.alternate);
   else
     this.emitResolvedName_simple(n, prec, flags, isV);
 };
 
-this.emitResolvedName_tz = function(n, prec, flags, isV) {
+this.emitResolvedName_tz = function(n, prec, flags, isV, alternate) {
   var paren = flags & (EC_NEW_HEAD|EC_EXPR_HEAD|EC_CALL_HEAD);
   paren && this.w('(');
   this.writeName(n.decl.ref.scope.scs.getLiquid('tz').synthName)
       .w('<').writeNumWithVal(n.decl.i).w('?')
       .jz('tz').wm('(',"'").writeStrWithVal(n.name).wm("'",')').w(':');  
-  if (isV)
+  if (alternate) {
+    var core = null;
+    switch (alternate.type) {
+    case '#SubAssig':
+    case 'AssignmentExpression':
+      core = alternate.left;
+      break;
+    case 'UpdateExpression':
+      core = alternate.argument;
+      break;
+    default:
+      ASSERT.call(this, false, 'Unknown alternate has type <'+alternate.type+'>');
+    }
+    ASSERT.call(this, core === n,
+      'alternate must have the same head as the resolved name');
+    core.shouldTest = false;
+    this.emitAny(alternate, PREC_NONE, EC_NONE);
+  }
+  else if (isV)
     this.writeVName(n.decl.synthName, EC_NONE);
   else
     this.writeName(n.decl.synthName);
