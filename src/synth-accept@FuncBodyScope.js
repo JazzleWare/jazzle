@@ -16,17 +16,17 @@ this.acceptsName_m = function(mname, m, o) {
     if (this.firstNonSimple !== null)
       return false;
 
-    // unnecessary
+    // unnecessary because it has been actually handled at if (m === ACC_REF)
     var a = this.findDecl('arguments');
     if (a && a.ref.indirect)
       return false;
   }
 
-  if (m === ACC_DECL) {
-    var ref = argList.findRef_m(mname);
-    if (ref && !ref.resolved)
-      return false;
-  }
+//if (m === ACC_DECL) {
+//  var ref = argList.findRef_m(mname);
+//  if (ref && !ref.resolved)
+//    return false;
+//}
 
   return true;
 };

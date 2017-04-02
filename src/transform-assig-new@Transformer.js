@@ -139,7 +139,7 @@ assigTransformers['AssignmentPattern'] = function(n, pushTarget, isVal) {
   //   even among its own allocated names, but it is in the left hand side and will only have a value
   //   when cond is evaluated (at run-time)
   return this.transform(
-    this.synth_SubAssig(l, this.transform(cond, pushTarget, true), n.type === '#DeclAssig'),
+    this.synth_SubAssig(l, cond, n.type === '#DeclAssig'),
     pushTarget,
     false
   );
@@ -167,4 +167,17 @@ this.assigListToIter = function(isInitializer, list, iter, pushTarget) {
     );
     result && pushTarget.push(result);
   }
+};
+
+transform['#ArgAssig'] = function(n, pushTarget, isVal) {
+  ASSERT.call(
+    this,
+    pushTarget === null, 'pushTarget must be null');
+  pushTarget = [];
+  ASSERT.call(this, !isVal, 'argument assignments are not allowed to be transformed as values');
+  var t = this.saveInTemp(this.synth_ArgIter(), pushTarget);
+  this.assigListToIter(true, n.elements, t, pushTarget);
+  this.releaseTemp(t);
+  ASSERT.call(this, pushTarget.length > 1, 'length must be > 1');
+  return this.synth_Sequence(pushTarget);
 };

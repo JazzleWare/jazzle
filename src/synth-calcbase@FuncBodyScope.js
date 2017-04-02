@@ -17,6 +17,10 @@ this.synthesizeNamesInto = function(scs) {
   list = this.defs, i = 0, len = list.length();
   while (i < len) {
     elem = list.at(i++);
-    scs.synthDecl(elem);
+    if (elem.ref.scope === this)
+      scs.synthDecl(elem);
+    else
+      ASSERT.call(this, elem.ref.scope === this.funcHead,
+        'fn-level names must either belong to the fn-body or the fn-head');
   }
 };

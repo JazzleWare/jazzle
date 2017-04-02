@@ -235,4 +235,14 @@ if (false) LEXICAL|BODY
 (function /*FN|EXPR|HEAD*/a(FN|EXPR) { FN|EXPR|BODY })
 function a /*FN|DECL|HEAD*/() { FN|DECL|BODY })
 
+var l;
+{
+   let l2, l;
+   (function(a=l) { var l; l2 });
+}
+
+var l;
+{
+  
+
 

@@ -1,5 +1,5 @@
 this.shouldTest = function(decl) {
-  if (!decl.mightNeedTest())
+  if (decl.isVName() || decl.isFunc())
     return false;
   if (!decl.reached)
     return true;

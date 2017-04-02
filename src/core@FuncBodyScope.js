@@ -7,3 +7,10 @@ this.cls = function() {
      'class for its parent');
   return this.parent.parent;
 };
+
+this.setHead = function(head) {
+  ASSERT.call(this, this.funcHead === null,
+    'this fn has got an actual head');
+  this.funcHead = head;
+  this.funcHead.funcBody = this;
+};

@@ -113,7 +113,8 @@ this.parseFunc = function(context, st) {
     body: body,
     loc: { start: startLoc, end: body.loc.end },
     expression: body.type !== 'BlockStatement', params: argList,
-    async: (st & ST_ASYNC) !== 0, scope: scope
+    async: (st & ST_ASYNC) !== 0, scope: scope,
+    argumentPrologue: null
   };
 
   if (isStmt)

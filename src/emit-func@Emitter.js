@@ -13,7 +13,7 @@ Emitters['FunctionDeclaration'] = function(n, prec, flags) {
   this.w('(');
   if (!functionHasNonSimpleParams(n))
     this.emitParams(n.params);
-  this.wm(')',' ').emitAny(n.body, PREC_NONE, EC_NONE);
+  this.wm(')',' ').emitFuncBody(n);
   if (paren) this.w(')');
 };
 
@@ -27,4 +27,33 @@ this.emitParams = function(list) {
     this.writeIdentifierName(elem.name);
     i++;
   }
-}
+};
+
+this.emitFuncBody = function(n) {
+  var body = n.body.body, i = 0;
+  this.w('{').i();
+  while (i < body.length) {
+    if (i) this.l();
+    var elem = body[i];
+    if (elem.type !== 'ExpressionStatement' ||
+        elem.expression.type !== 'Literal' ||
+        typeof elem.expression.value !== STRING_TYPE)
+      break;
+    this.emitAsStatement(elem);
+    i++;
+  }
+
+  if (n.argumentPrologue)
+    this.l().emitAsStatement(n.argumentPrologue);
+
+  while (i < body.length) {
+    if (i) this.l();
+    this.emitAsStatement(body[i++]);
+  }
+
+  this.u();
+  if (i || n.argumentPrologue) 
+    this.l();
+
+  this.w('}');
+};

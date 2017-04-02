@@ -106,6 +106,7 @@ function FuncHeadScope(sParent, st) {
   this.firstEvalOrArguments = null;
   this.mode |= SM_INARGS;
   this.paramMap = {};
+  this.funcBody = null;
 }
 
 ;
@@ -2231,7 +2232,7 @@ Emitters['FunctionDeclaration'] = function(n, prec, flags) {
   this.w('(');
   if (!functionHasNonSimpleParams(n))
     this.emitParams(n.params);
-  this.wm(')',' ').emitAny(n.body, PREC_NONE, EC_NONE);
+  this.wm(')',' ').emitFuncBody(n);
   if (paren) this.w(')');
 };
 
@@ -2245,7 +2246,36 @@ this.emitParams = function(list) {
     this.writeIdentifierName(elem.name);
     i++;
   }
-}
+};
+
+this.emitFuncBody = function(n) {
+  var body = n.body.body, i = 0;
+  this.w('{').i();
+  while (i < body.length) {
+    if (i) this.l();
+    var elem = body[i];
+    if (elem.type !== 'ExpressionStatement' ||
+        elem.expression.type !== 'Literal' ||
+        typeof elem.expression.value !== STRING_TYPE)
+      break;
+    this.emitAsStatement(elem);
+    i++;
+  }
+
+  if (n.argumentPrologue)
+    this.l().emitAsStatement(n.argumentPrologue);
+
+  while (i < body.length) {
+    if (i) this.l();
+    this.emitAsStatement(body[i++]);
+  }
+
+  this.u();
+  if (i || n.argumentPrologue) 
+    this.l();
+
+  this.w('}');
+};
 
 },
 function(){
@@ -2706,6 +2736,12 @@ this.emitUnaryArgument = function(n) {
 
 },
 function(){
+UntransformedEmitters['arguments-iter'] = function(n, prec, flags) {
+  this.jz('argIter').wm('.','apply','(','this',',',' ','arguments',')');
+};
+
+},
+function(){
 UntransformedEmitters['arr-iter-end'] = function(n, prec, flags) {
   this.eH(n.iter).wm('.','end','(',')');
 };
@@ -2830,6 +2866,13 @@ this.cls = function() {
   return this.parent.parent;
 };
 
+this.setHead = function(head) {
+  ASSERT.call(this, this.funcHead === null,
+    'this fn has got an actual head');
+  this.funcHead = head;
+  this.funcHead.funcBody = this;
+};
+
 },
 function(){
 this.acceptsName_m = function(mname, m, o) {
@@ -2850,17 +2893,17 @@ this.acceptsName_m = function(mname, m, o) {
     if (this.firstNonSimple !== null)
       return false;
 
-    // unnecessary
+    // unnecessary because it has been actually handled at if (m === ACC_REF)
     var a = this.findDecl('arguments');
     if (a && a.ref.indirect)
       return false;
   }
 
-  if (m === ACC_DECL) {
-    var ref = argList.findRef_m(mname);
-    if (ref && !ref.resolved)
-      return false;
-  }
+//if (m === ACC_DECL) {
+//  var ref = argList.findRef_m(mname);
+//  if (ref && !ref.resolved)
+//    return false;
+//}
 
   return true;
 };
@@ -2888,7 +2931,11 @@ this.synthesizeNamesInto = function(scs) {
   list = this.defs, i = 0, len = list.length();
   while (i < len) {
     elem = list.at(i++);
-    scs.synthDecl(elem);
+    if (elem.ref.scope === this)
+      scs.synthDecl(elem);
+    else
+      ASSERT.call(this, elem.ref.scope === this.funcHead,
+        'fn-level names must either belong to the fn-body or the fn-head');
   }
 };
 
@@ -6845,7 +6892,8 @@ this.parseFunc = function(context, st) {
     body: body,
     loc: { start: startLoc, end: body.loc.end },
     expression: body.type !== 'BlockStatement', params: argList,
-    async: (st & ST_ASYNC) !== 0, scope: scope
+    async: (st & ST_ASYNC) !== 0, scope: scope,
+    argumentPrologue: null
   };
 
   if (isStmt)
@@ -10118,7 +10166,8 @@ this.declare = function(id) {
        this.err('lexical.name.is.let');
    }
 
-   this.scope.declare(id.name, this.declMode).s(id);
+   var decl = this.scope.declare(id.name, this.declMode);
+   decl && decl.s(id);
 };
 
 this.enterScope = function(scope) {
@@ -10673,11 +10722,17 @@ this.declareVarLike_m = function(mname, mode) {
   if (dest === null) {
     dest = this.scs;
     varDecl = dest.findDecl_m(mname);
+    if (varDecl === null && dest.isAnyFnBody()) {
+      varDecl = dest.findDecl_m(mname);
+      if (varDecl)
+        dest = dest.funcHead;
+    }
+
     if (varDecl) {
       if (!varDecl.isVarLike())
         this.err('var.can.not.override.nonvarlike');
-      if (!varDecl.isFunc() && (mode & DM_FUNC))
-        varDecl.mode = mode;
+      if (!varDecl.isFunc() && (mode & DM_FUNCTION))
+        varDecl.mode |= mode;
     }
   }
 
@@ -10704,7 +10759,7 @@ this.declareVarLike_m = function(mname, mode) {
     dest.insertDecl_m(mname, newDecl);
   }
 
-  return newDecl;
+  return newDecl.scope === this ? newDecl : null;
 };
 
 this.findDecl_m = function(mname) {
@@ -11172,13 +11227,14 @@ this.calculateRefs = function() {
   while (i < len) {
     var elem = list.at(i++);
     var resolved = elem.resolved;
-    if (!resolved & this.isAnyFnBody()) {
+    if (!resolved && this.isAnyFnBody()) {
       decl = elem.getDecl();
-      if (decl === this.funcHead.scopeName)
+      // it is a really unresolved reference only if it refers to something beyond the function itself
+      if (decl === this.funcHead.scopeName || decl.ref.scope === this.funcHead)
         resolved = true;
     }
-    if (resolved) {
-      var decl = elem.getDecl();
+    if (!resolved) {
+      decl = elem.getDecl();
       ASSERT.call(this, decl.synthName !== "",
         'all outer references are expected to have been synthesized upon entering a scope');
       ASSERT.call(this, !this.containsSynthName(decl.synthName),
@@ -11391,7 +11447,7 @@ this.hasHeritage = function() {
 },
 function(){
 this.shouldTest = function(decl) {
-  if (!decl.mightNeedTest())
+  if (decl.isVName() || decl.isFunc())
     return false;
   if (!decl.reached)
     return true;
@@ -11483,7 +11539,8 @@ this.constCheck = function(resolvedName) {
   ASSERT.call(this, resolvedName.type === '#ResolvedName',
     'only resolved names are allowed to get a const-check');
   this.accessJZ();
-  resolvedName.constCheck = true;
+  if (resolvedName.decl.isCName())
+    resolvedName.constCheck = true;
 };
 
 },
@@ -11504,6 +11561,7 @@ this.transform = this.tr = function(n, list, isVal) {
     case 'SpecialIdentifier':
     case '#Sequence':
     case '#Untransformed':
+    case '#ResolvedName':
       return n;
     default:
       return transform[n.type].call(this, n, list, isVal);
@@ -11653,6 +11711,20 @@ this.synth_ConstCheck = function(n) {
   }
 };
 
+this.synth_ArgAssig = function(paramList) {
+  return {
+    type: '#ArgAssig',
+    elements: paramList
+  }
+};
+
+this.synth_ArgIter = function() {
+  return {
+    type: '#Untransformed',
+    kind: 'arguments-iter'
+  }
+};
+
 },
 function(){
 this.findFAT = function() {
@@ -11727,12 +11799,7 @@ transform['UpdateExpression'] = function(n, pushTarget, isVal) {
 
 },
 function(){
-transform['ArgsPrologue'] = function(n, pushTarget, isVal) {
-  var synthLeft = { type: 'ArrayPattern', elements: n.left, y: 0 };
-  var synthAssig = { type: 'AssignmentExpression', left: synthLeft, right: n.right, y: 0 };
-  var synthStmt = { type: 'ExpressionStatement', expression: synthAssig, y: 0 };
-  return this.transform(synthStmt, null, false);
-};
+
 
 },
 function(){
@@ -11877,7 +11944,7 @@ assigTransformers['AssignmentPattern'] = function(n, pushTarget, isVal) {
   //   even among its own allocated names, but it is in the left hand side and will only have a value
   //   when cond is evaluated (at run-time)
   return this.transform(
-    this.synth_SubAssig(l, this.transform(cond, pushTarget, true), n.type === '#DeclAssig'),
+    this.synth_SubAssig(l, cond, n.type === '#DeclAssig'),
     pushTarget,
     false
   );
@@ -11905,6 +11972,19 @@ this.assigListToIter = function(isInitializer, list, iter, pushTarget) {
     );
     result && pushTarget.push(result);
   }
+};
+
+transform['#ArgAssig'] = function(n, pushTarget, isVal) {
+  ASSERT.call(
+    this,
+    pushTarget === null, 'pushTarget must be null');
+  pushTarget = [];
+  ASSERT.call(this, !isVal, 'argument assignments are not allowed to be transformed as values');
+  var t = this.saveInTemp(this.synth_ArgIter(), pushTarget);
+  this.assigListToIter(true, n.elements, t, pushTarget);
+  this.releaseTemp(t);
+  ASSERT.call(this, pushTarget.length > 1, 'length must be > 1');
+  return this.synth_Sequence(pushTarget);
 };
 
 },
@@ -12043,7 +12123,7 @@ function(){
 transform['FunctionExpression'] =
 transform['FunctionDeclaration'] = function(n, pushTarget, isVal) {
   if (functionHasNonSimpleParams(n))
-    n.body = this.addParamAssigPrologueToBody(n);
+    n.argumentPrologue = this.synth_ArgAssig(n.params);
   if (n.generator)
     return this.transformGenerator(n, null, isVal);
 
@@ -12064,24 +12144,18 @@ transform['FunctionDeclaration'] = function(n, pushTarget, isVal) {
 
   this.currentScope.calculateRefs();
 
+  if (n.argumentPrologue !== null) {
+    var bs = this.setScope(this.currentScope.funcHead);
+    n.argumentPrologue = this.transform(n.argumentPrologue, null, false);
+    this.setScope(bs);
+  }
+
   n.body = this.transform(n.body, null, isVal);
   this.currentScope.synthesizeLiquidsInto(this.currentScope);
+  this.currentScope.funcHead.synthesizeLiquidsInto(this.currentScope);
   this.setScope(ps);
 
   return n;
-};
-
-this.addParamAssigPrologueToBody = function(fn) {
-  var prolog = {
-    type: 'ArgsPrologue',
-    left: fn.params,
-    right: synth_jz_arguments_to_array(),
-  };
-
-  // TODO: make it more low-power
-  fn.body.body = [prolog].concat(fn.body.body);
-
-  return fn.body;
 };
 
 },

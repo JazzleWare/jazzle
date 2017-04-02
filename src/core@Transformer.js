@@ -14,6 +14,7 @@ this.transform = this.tr = function(n, list, isVal) {
     case 'SpecialIdentifier':
     case '#Sequence':
     case '#Untransformed':
+    case '#ResolvedName':
       return n;
     default:
       return transform[n.type].call(this, n, list, isVal);

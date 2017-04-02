@@ -3,13 +3,14 @@ this.calculateRefs = function() {
   while (i < len) {
     var elem = list.at(i++);
     var resolved = elem.resolved;
-    if (!resolved & this.isAnyFnBody()) {
+    if (!resolved && this.isAnyFnBody()) {
       decl = elem.getDecl();
-      if (decl === this.funcHead.scopeName)
+      // it is a really unresolved reference only if it refers to something beyond the function itself
+      if (decl === this.funcHead.scopeName || decl.ref.scope === this.funcHead)
         resolved = true;
     }
-    if (resolved) {
-      var decl = elem.getDecl();
+    if (!resolved) {
+      decl = elem.getDecl();
       ASSERT.call(this, decl.synthName !== "",
         'all outer references are expected to have been synthesized upon entering a scope');
       ASSERT.call(this, !this.containsSynthName(decl.synthName),

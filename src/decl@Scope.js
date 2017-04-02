@@ -133,11 +133,17 @@ this.declareVarLike_m = function(mname, mode) {
   if (dest === null) {
     dest = this.scs;
     varDecl = dest.findDecl_m(mname);
+    if (varDecl === null && dest.isAnyFnBody()) {
+      varDecl = dest.findDecl_m(mname);
+      if (varDecl)
+        dest = dest.funcHead;
+    }
+
     if (varDecl) {
       if (!varDecl.isVarLike())
         this.err('var.can.not.override.nonvarlike');
-      if (!varDecl.isFunc() && (mode & DM_FUNC))
-        varDecl.mode = mode;
+      if (!varDecl.isFunc() && (mode & DM_FUNCTION))
+        varDecl.mode |= mode;
     }
   }
 
@@ -164,7 +170,7 @@ this.declareVarLike_m = function(mname, mode) {
     dest.insertDecl_m(mname, newDecl);
   }
 
-  return newDecl;
+  return newDecl.scope === this ? newDecl : null;
 };
 
 this.findDecl_m = function(mname) {

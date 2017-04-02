@@ -118,3 +118,17 @@ this.synth_ConstCheck = function(n) {
     assigner: n
   }
 };
+
+this.synth_ArgAssig = function(paramList) {
+  return {
+    type: '#ArgAssig',
+    elements: paramList
+  }
+};
+
+this.synth_ArgIter = function() {
+  return {
+    type: '#Untransformed',
+    kind: 'arguments-iter'
+  }
+};

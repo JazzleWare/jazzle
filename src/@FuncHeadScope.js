@@ -7,5 +7,6 @@ function FuncHeadScope(sParent, st) {
   this.firstEvalOrArguments = null;
   this.mode |= SM_INARGS;
   this.paramMap = {};
+  this.funcBody = null;
 }
 

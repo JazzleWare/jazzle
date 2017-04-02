@@ -288,6 +288,7 @@ mex.ej_adjust = function(e, j, name) {
   delete j.ifScope;
   delete j.scope;
   delete j.tokens;
+  delete j.argumentPrologue;
 
   if (e.tokens) {
     e.tokens = mex.clearComments(e.tokens);

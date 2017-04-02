@@ -1,7 +1,7 @@
 transform['FunctionExpression'] =
 transform['FunctionDeclaration'] = function(n, pushTarget, isVal) {
   if (functionHasNonSimpleParams(n))
-    n.body = this.addParamAssigPrologueToBody(n);
+    n.argumentPrologue = this.synth_ArgAssig(n.params);
   if (n.generator)
     return this.transformGenerator(n, null, isVal);
 
@@ -22,22 +22,16 @@ transform['FunctionDeclaration'] = function(n, pushTarget, isVal) {
 
   this.currentScope.calculateRefs();
 
+  if (n.argumentPrologue !== null) {
+    var bs = this.setScope(this.currentScope.funcHead);
+    n.argumentPrologue = this.transform(n.argumentPrologue, null, false);
+    this.setScope(bs);
+  }
+
   n.body = this.transform(n.body, null, isVal);
   this.currentScope.synthesizeLiquidsInto(this.currentScope);
+  this.currentScope.funcHead.synthesizeLiquidsInto(this.currentScope);
   this.setScope(ps);
 
   return n;
-};
-
-this.addParamAssigPrologueToBody = function(fn) {
-  var prolog = {
-    type: 'ArgsPrologue',
-    left: fn.params,
-    right: synth_jz_arguments_to_array(),
-  };
-
-  // TODO: make it more low-power
-  fn.body.body = [prolog].concat(fn.body.body);
-
-  return fn.body;
 };
