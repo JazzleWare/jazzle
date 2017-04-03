@@ -10,7 +10,11 @@ Emitters['#DeclAssig'] = function(n, prec, flags) {
   this.w(';');
   if (decl.hasTZ) {
     this.l();
-    var tz = decl.ref.scope.scs.getLiquid('tz');
+    var liquidSource = decl.ref.scope.scs;
+    if (liquidSource.isAnyFnHead())
+      liquidSource = liquidSource.funcBody;
+
+    var tz = liquidSource.getLiquid('tz');
     this.wm(tz.synthName,' ','=',' ').writeNumWithVal(decl.i).w(';');
   }
 };

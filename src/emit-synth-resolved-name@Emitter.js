@@ -13,7 +13,11 @@ Emitters['#ResolvedName'] = function(n, prec, flags) {
 this.emitResolvedName_tz = function(n, prec, flags, isV, alternate) {
   var paren = flags & (EC_NEW_HEAD|EC_EXPR_HEAD|EC_CALL_HEAD);
   paren && this.w('(');
-  this.writeName(n.decl.ref.scope.scs.getLiquid('tz').synthName)
+  var liquidSource = n.decl.ref.scope.scs;
+  if (liquidSource.isAnyFnHead())
+    liquidSource = liquidSource.funcBody; 
+
+  this.writeName(liquidSource.getLiquid('tz').synthName)
       .w('<').writeNumWithVal(n.decl.i).w('?')
       .jz('tz').wm('(',"'").writeStrWithVal(n.name).wm("'",')').w(':');  
   if (alternate) {

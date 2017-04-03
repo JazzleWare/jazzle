@@ -1,9 +1,8 @@
-this.trackScope = function(scope) {
-  if (scope.isAnyFnHead())
-    scope = scope.funcBody;
-  var cur = scope, end = this.scope.scs;
-  if (end.isAnyFnHead())
-    end = end.funcBody;
+this.trackScope = function(from, to) {
+  if (from.isAnyFnHead())
+    from = from.funcBody;
+  var cur = from, end = to || this.scope.scs;
+
 
   // var ownerReached = false;
   while (end !== cur) {
@@ -18,7 +17,7 @@ this.trackScope = function(scope) {
     }
     cur = cur.parent;
     ASSERT.call(this, cur !== null,
-      'scope '+scope.id+' is not included in the scs for scope '+this.scope.id+
+      'scope '+from.id+' is not included in the scs for scope '+end+
       ' (a liquid is only allowed to be accessed in descendant scopes)');
   }
 };

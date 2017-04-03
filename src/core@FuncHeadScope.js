@@ -70,19 +70,3 @@ this.findDecl_m = function(mname) {
     return this.special.arguments;
   return null;
 };
-
-if (false) {
-this.writeTo = function(emitter) {
-  var list = this.paramList, i = 0;
-  emitter.w(this.headI+':<arglist type="'+this.typeString()+'">');
-  if (list.length !== 0) {
-    emitter.i();
-    while (i < list.length) {
-      emitter.l();
-      list[i++].writeTo(emitter);
-    }
-    emitter.u().l();
-  }
-  emitter.w(this.tailI+':</arglist>');
-};
-}

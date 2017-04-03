@@ -3,11 +3,12 @@ this.hasLiquid = function(name) {
 };
 
 this.accessLiquid = function(targetScope, targetName, createNew) {
-  if (targetScope.isAnyFnHead())
-    targetScope = targetScope.funcBody;
+  var liquidSource = targetScope;
+  if (liquidSource.isAnyFnHead())
+    liquidSource = liquidSource.funcBody;
 
-  var liquid = targetScope.getLiquid(targetName, createNew);
-  liquid.trackScope(this);
+  var liquid = liquidSource.getLiquid(targetName, createNew);
+  liquid.trackScope(this, targetScope);
   return liquid;
 };
 

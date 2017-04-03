@@ -89,7 +89,12 @@ this.r = function(ref) {
   if (ref.indirect || ref.direct)
     this.useTZ();
 
-  this.i = this.ref.scope.diRef.v++;
+  var diRoot = this.ref.scope.scs;
+
+  if (diRoot.isAnyFnBody())
+    diRoot = diRoot.funcHead;
+
+  this.i = diRoot.diRef.v++;
 
   return this;
 };

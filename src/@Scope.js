@@ -25,11 +25,17 @@ function Scope(sParent, sType) {
   this.idRef = this.parent ? this.parent.idRef : {v: 0};
   this.id = this.idRef.v++;
 
-  this.diRef = this !== this.scs ? this.scs.diRef : {v: 0};
-  this.di = this.diRef.v++;
+  this.diRef =
+    this.isConcrete() ?
+      this.isAnyFnBody() ? 
+        null :
+        {v: 0} :
+      this.scs.diRef;
+  this.di = this.scs.isAnyFnBody() ? -1 : this.diRef.v++;
 
   this.funcDecls = [];
 
   this.parser = this.parent ? this.parent.parser : null;
+
   this.hasTZ = false;
 }
