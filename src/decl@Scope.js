@@ -134,7 +134,7 @@ this.declareVarLike_m = function(mname, mode) {
     dest = this.scs;
     varDecl = dest.findDecl_m(mname);
     if (varDecl === null && dest.isAnyFnBody()) {
-      varDecl = dest.findDecl_m(mname);
+      varDecl = dest.funcHead.findDecl_m(mname);
       if (varDecl)
         dest = dest.funcHead;
     }

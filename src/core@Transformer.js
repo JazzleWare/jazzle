@@ -34,3 +34,9 @@ this.setScope = function(scope) {
   this.currentScope = scope;
   return currentScope;
 };
+
+this.setTempStack = function(tempStack) {
+  var ts = this.tempStack;
+  this.tempStack = tempStack;
+  return ts;
+};

@@ -2937,6 +2937,12 @@ this.bootSynthesis = function() {
   list = this.defs, i = 0, len = list.length();
   while (i < len) {
     elem = list.at(i++);
+    if (!this.ownsDecl(elem)) {
+      ASSERT.call(this, elem.ref.scope === this.funcHead,
+        'foreign decls that are in fn-body must belong to fn-head');
+      continue;
+    }
+
     ASSERT.call(
       this,
       !HAS.call(this.funcHead.paramMap, _m(elem.name)),
@@ -10676,6 +10682,9 @@ this.setName = function(name) {
   this.scopeName = name;
 };
 
+this.ownsDecl = function(decl) {
+  return decl.ref.scope === this;
+};
 
 },
 function(){
@@ -10815,7 +10824,7 @@ this.declareVarLike_m = function(mname, mode) {
     dest = this.scs;
     varDecl = dest.findDecl_m(mname);
     if (varDecl === null && dest.isAnyFnBody()) {
-      varDecl = dest.findDecl_m(mname);
+      varDecl = dest.funcHead.findDecl_m(mname);
       if (varDecl)
         dest = dest.funcHead;
     }
@@ -11709,6 +11718,12 @@ this.setScope = function(scope) {
   return currentScope;
 };
 
+this.setTempStack = function(tempStack) {
+  var ts = this.tempStack;
+  this.tempStack = tempStack;
+  return ts;
+};
+
 },
 function(){
 this.accessJZ = function() {
@@ -12255,6 +12270,8 @@ transform['FunctionDeclaration'] = function(n, pushTarget, isVal) {
     return this.transformGenerator(n, null, isVal);
 
   var ps = this.setScope(n.scope);
+  var ts = this.setTempStack([]);
+
   if (this.currentScope.isExpr() && this.currentScope.funcHead.scopeName) {
     var scopeName = this.currentScope.funcHead.scopeName;
     var synthName = Scope.newSynthName(scopeName.name, null, scopeName.ref.lors, scopeName);
@@ -12269,14 +12286,16 @@ transform['FunctionDeclaration'] = function(n, pushTarget, isVal) {
   this.currentScope.startupSynthesis();
 
   if (n.argumentPrologue !== null) {
-    var bs = this.setScope(this.currentScope.funcHead);
+    var hs = this.setScope(this.currentScope.funcHead);
     n.argumentPrologue = this.transform(n.argumentPrologue, null, false);
-    this.setScope(bs);
+    this.setScope(hs);
   }
 
   n.body = this.transform(n.body, null, isVal);
   this.currentScope.endSynthesis();
+
   this.setScope(ps);
+  this.setTempStack(ts);
 
   return n;
 };
@@ -12376,6 +12395,8 @@ transform['Program'] = function(n, list, isVal) {
   this.globalScope = this.scriptScope.parent;
 
   var ps = this.setScope(this.scriptScope);
+  var ts = this.setTempStack([]);
+
   this.currentScope.startupSynthesis();
   while (i < b.length) {
     b[i] = this.transform(b[i], null, false);
@@ -12387,6 +12408,8 @@ transform['Program'] = function(n, list, isVal) {
     this.currentScope.synthesizeThis();
 
   this.setScope(ps);
+  this.setTempStack(ts);
+
   return n;
 };
 

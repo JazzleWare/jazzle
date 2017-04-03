@@ -4,6 +4,8 @@ transform['Program'] = function(n, list, isVal) {
   this.globalScope = this.scriptScope.parent;
 
   var ps = this.setScope(this.scriptScope);
+  var ts = this.setTempStack([]);
+
   this.currentScope.startupSynthesis();
   while (i < b.length) {
     b[i] = this.transform(b[i], null, false);
@@ -15,5 +17,7 @@ transform['Program'] = function(n, list, isVal) {
     this.currentScope.synthesizeThis();
 
   this.setScope(ps);
+  this.setTempStack(ts);
+
   return n;
 };

@@ -6,6 +6,8 @@ transform['FunctionDeclaration'] = function(n, pushTarget, isVal) {
     return this.transformGenerator(n, null, isVal);
 
   var ps = this.setScope(n.scope);
+  var ts = this.setTempStack([]);
+
   if (this.currentScope.isExpr() && this.currentScope.funcHead.scopeName) {
     var scopeName = this.currentScope.funcHead.scopeName;
     var synthName = Scope.newSynthName(scopeName.name, null, scopeName.ref.lors, scopeName);
@@ -20,14 +22,16 @@ transform['FunctionDeclaration'] = function(n, pushTarget, isVal) {
   this.currentScope.startupSynthesis();
 
   if (n.argumentPrologue !== null) {
-    var bs = this.setScope(this.currentScope.funcHead);
+    var hs = this.setScope(this.currentScope.funcHead);
     n.argumentPrologue = this.transform(n.argumentPrologue, null, false);
-    this.setScope(bs);
+    this.setScope(hs);
   }
 
   n.body = this.transform(n.body, null, isVal);
   this.currentScope.endSynthesis();
+
   this.setScope(ps);
+  this.setTempStack(ts);
 
   return n;
 };

@@ -22,6 +22,12 @@ this.bootSynthesis = function() {
   list = this.defs, i = 0, len = list.length();
   while (i < len) {
     elem = list.at(i++);
+    if (!this.ownsDecl(elem)) {
+      ASSERT.call(this, elem.ref.scope === this.funcHead,
+        'foreign decls that are in fn-body must belong to fn-head');
+      continue;
+    }
+
     ASSERT.call(
       this,
       !HAS.call(this.funcHead.paramMap, _m(elem.name)),

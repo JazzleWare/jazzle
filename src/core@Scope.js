@@ -71,3 +71,6 @@ this.setName = function(name) {
   this.scopeName = name;
 };
 
+this.ownsDecl = function(decl) {
+  return decl.ref.scope === this;
+};
