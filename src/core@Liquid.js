@@ -1,5 +1,10 @@
 this.trackScope = function(scope) {
+  if (scope.isAnyFnHead())
+    scope = scope.funcBody;
   var cur = scope, end = this.scope.scs;
+  if (end.isAnyFnHead())
+    end = end.funcBody;
+
   // var ownerReached = false;
   while (end !== cur) {
     // if (cur === this.scope) ownerReached = true;

@@ -126,5 +126,20 @@ this.useTZ = function() {
 };
 
 this.mightNeedTest = function() {
-  return this.isLexical() && !this.isFunc();
+  return !this.isVName() && !this.isFunc();
+};
+
+this.associateWithLiquid = function(liquid) {
+  ASSERT.call(this, this.liquid === null,
+    'this decl has already been associated with a liquid');
+  liquid.associateWith(this);
+  this.liquid = liquid;
+};
+
+this.isActuallyLiquid = function() {
+  return this.liquid !== null;
+};
+
+this.isInsignificant = function() {
+  return this.type & DM_INSIGNIFICANT_NAME;
 };

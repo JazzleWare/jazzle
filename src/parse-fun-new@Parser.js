@@ -99,7 +99,7 @@ this.parseFunc = function(context, st) {
 
   this.enterScope(this.scope.fnBodyScope(st));
   var scope = this.scope; 
-  this.scope.funcHead = fnHeadScope;
+  this.scope.setHead(fnHeadScope);
   var body = this.parseFuncBody(context & CTX_FOR);
   this.exitScope(); // body
   this.exitScope(); // head

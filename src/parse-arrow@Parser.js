@@ -66,7 +66,7 @@ this.parseArrowFunctionExpression = function(arg, context)   {
 
   this.enterScope(this.scope.fnBodyScope(st));
   var scope = this.scope;
-  this.scope.funcHead = funcHead;
+  this.scope.setHead(funcHead);
 
   if (this.nl)
     this.err('arrow.newline');

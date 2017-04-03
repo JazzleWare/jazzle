@@ -3,12 +3,19 @@ this.hasLiquid = function(name) {
 };
 
 this.accessLiquid = function(targetScope, targetName, createNew) {
+  if (targetScope.isAnyFnHead())
+    targetScope = targetScope.funcBody;
+
   var liquid = targetScope.getLiquid(targetName, createNew);
   liquid.trackScope(this);
   return liquid;
 };
 
+// NOTE: createNew will create an new entry anyway
 this.getLiquid = function(name, createNew) {
+  ASSERT.call(this, !this.isAnyFnHead(),
+    'it is not valid to ask fn-head for a liquid');
+
   var fullName = _full(this.id, name),
       scs = this.scs;
 

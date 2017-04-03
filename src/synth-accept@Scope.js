@@ -5,7 +5,7 @@ this.acceptsName_m = function(mname, m, o) {
     'a script scope will only respond to <accept-decl> requests, no <accept-refs>');
 
   if (this.synthNamesUntilNow === null)
-    this.calculateBaseSynthNames();
+    this.bootSynthesis();
 
   if (this.containsSynthName_m(mname))
     return false;

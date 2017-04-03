@@ -33,12 +33,12 @@ this.emitFuncBody = function(n) {
   var body = n.body.body, i = 0;
   this.w('{').i();
   while (i < body.length) {
-    if (i) this.l();
     var elem = body[i];
     if (elem.type !== 'ExpressionStatement' ||
         elem.expression.type !== 'Literal' ||
         typeof elem.expression.value !== STRING_TYPE)
       break;
+    this.l();
     this.emitAsStatement(elem);
     i++;
   }
@@ -47,7 +47,7 @@ this.emitFuncBody = function(n) {
     this.l().emitAsStatement(n.argumentPrologue);
 
   while (i < body.length) {
-    if (i) this.l();
+    this.l();
     this.emitAsStatement(body[i++]);
   }
 

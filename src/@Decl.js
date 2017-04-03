@@ -7,4 +7,5 @@ function Decl() {
   this.hasTZ = false;
   this.synthName = "";
   this.reached = false;
+  this.liquid = null;
 }

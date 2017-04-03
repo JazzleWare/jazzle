@@ -2,8 +2,12 @@ this.absorbIndirect = function(anotherRef) {
   ASSERT.call(this, !anotherRef.resolved,
     'absorbing a reference that has been resolved is not a valid action');
   this.indirect += anotherRef.total();
-  if (anotherRef.scope.isConcrete() && !anotherRef.scope.isAnyFnHead())
-    this.lors.push(anotherRef.scope);
+  if (anotherRef.scope.isConcrete())
+    this.lors.push(
+      anotherRef.scope.isAnyFnHead() ?
+      anotherRef.scope.funcBody :
+      anotherRef.scope
+    );
   if (anotherRef.lors.length)
     this.lors = this.lors.concat(anotherRef.lors);
 
@@ -29,8 +33,12 @@ this.absorbDirect = function(anotherRef) {
     'absorbing a reference that has been resolved is not a valid action');
   this.direct += anotherRef.direct;
   this.indirect += anotherRef.indirect;
-  if (anotherRef.scope.isConcrete() && !anotherRef.scope.isAnyFnHead())
-    this.lors.push(anotherRef.scope);
+  if (anotherRef.scope.isConcrete())
+    this.lors.push(
+      anotherRef.scope.isAnyFnHead() ? 
+      anotherRef.scope.funcBody :
+      anotherRef.scope
+    );
   if (anotherRef.lors.length)
     this.lors = this.lors.concat(anotherRef.lors);
   anotherRef.parent = this;

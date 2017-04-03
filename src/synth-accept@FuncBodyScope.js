@@ -1,6 +1,6 @@
 this.acceptsName_m = function(mname, m, o) {
   if (this.synthNamesUntilNow === null)
-    this.calculateBaseSynthNames();
+    this.bootSynthesis();
 
   var argList = this.funcHead;
 

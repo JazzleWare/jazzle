@@ -70,7 +70,13 @@ var DM_CLS = 1,
     DM_CALLSUP = DM_MEMSUP << 1,
     DM_GLOBAL = DM_CALLSUP << 1,
     DM_LIQUID = DM_GLOBAL << 1,
-    DM_NONE = 0;
+    DM_NONE = 0,
+    DM_INSIGNIFICANT_NAME =
+      DM_ARGUMENTS|
+      DM_NEW_TARGET|
+      DM_LTHIS|
+      DM_MEMSUP|
+      DM_CALLSUP;
 
 var RS_ARGUMENTS = _m('arguments'),
     RS_SMEM = _m('special:supermem'),

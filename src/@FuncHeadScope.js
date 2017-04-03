@@ -1,5 +1,7 @@
 function FuncHeadScope(sParent, st) {
   Scope.call(this, sParent, st|ST_HEAD);
+  this.liquidDefs = null;
+
   this.paramList = [];
   this.firstNonSimple = null;
   this.scopeName = null;

@@ -17,10 +17,7 @@ transform['FunctionDeclaration'] = function(n, pushTarget, isVal) {
       scopeName.setSynthName(scopeName.name);
   }
 
-  if (this.currentScope.synthNamesUntilNow === null)
-    this.currentScope.calculateBaseSynthNames();
-
-  this.currentScope.calculateRefs();
+  this.currentScope.startupSynthesis();
 
   if (n.argumentPrologue !== null) {
     var bs = this.setScope(this.currentScope.funcHead);
@@ -29,8 +26,7 @@ transform['FunctionDeclaration'] = function(n, pushTarget, isVal) {
   }
 
   n.body = this.transform(n.body, null, isVal);
-  this.currentScope.synthesizeLiquidsInto(this.currentScope);
-  this.currentScope.funcHead.synthesizeLiquidsInto(this.currentScope);
+  this.currentScope.endSynthesis();
   this.setScope(ps);
 
   return n;
