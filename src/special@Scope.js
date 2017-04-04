@@ -23,9 +23,16 @@ this.getThis = function(ref) {
     this,
     this.isModule() || this.isAnyFnBody() || this.isScript(),
     'a this is only reachable through a module, fnbody, or script');
-  if (!this.special.lexicalThis)
+  if (!this.special.lexicalThis) {
     this.special.lexicalThis =
-      new Decl().m(DM_LTHIS).n(_u(RS_THIS)).r(ref);
+      new Decl().m(DM_LTHIS).n(_u(RS_THIS)).r(ref || new Ref(this));
+    var tl = this.getLiquid('<this>');
+    if (tl.idealName === "")
+      tl.idealName = 'this_';
+
+    this.special.lexicalThis.associateWithLiquid(tl);
+    
+  }
 
   return this.special.lexicalThis;
 };

@@ -15,7 +15,7 @@ this.emitBlock = function(n, prec, flags) {
     this.i();
     var i = 0;
     while (i < list.length) {
-      this.l().emitAsStatement(list[i], PREC_NONE, EC_NONE);
+      this.l().emitAny(list[i], true, EC_START_STMT);
       i++;
     }
     this.u().l();

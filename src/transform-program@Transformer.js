@@ -6,15 +6,14 @@ transform['Program'] = function(n, list, isVal) {
   var ps = this.setScope(this.scriptScope);
   var ts = this.setTempStack([]);
 
+  this.currentScope.synthGlobals();
   this.currentScope.startupSynthesis();
+
   while (i < b.length) {
     b[i] = this.transform(b[i], null, false);
     i++;
   }
   this.currentScope.endSynthesis();
-
-  if (this.currentScope.special.lexicalThis)
-    this.currentScope.synthesizeThis();
 
   this.setScope(ps);
   this.setTempStack(ts);

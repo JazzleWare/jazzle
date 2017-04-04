@@ -42,11 +42,15 @@ this.associateWith = function(decl) {
   ASSERT.call(this, this.associatedDecl === null,
     'this liquid has already got an associate');
   this.associatedDecl = decl;
-  var list = this.associatedDecl.ref.lors, i = 0;
+  this.updateCRSList(this.associatedDecl.ref.lors);
+};
+
+this.updateCRSList = function(list) {
+  var i = 0;
   while (i < list.length) {
     var rs = list[i++];
-    if (!HAS.call(this.crsMap, rs)) {
-      this.crsMap[i] = rs;
+    if (!HAS.call(this.crsMap, rs.id)) {
+      this.crsMap[rs.id] = rs;
       this.crsList.push(rs);
     }
   }

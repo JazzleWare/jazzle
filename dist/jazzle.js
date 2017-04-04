@@ -115,6 +115,7 @@ function FuncHeadScope(sParent, st) {
 ;
 function GlobalScope() {
   Scope.call(this, null, ST_GLOBAL);  
+  this.scriptScope = null;
 }
 
 ;
@@ -534,9 +535,13 @@ var CH_1 = char2int('1'),
     CH_GREATER_THAN = char2int('>')
  ;
 
-var INTBITLEN = (function() { var i = 0;
-  while ( 0 < (1 << (i++)))
-     if (i >= 512) return 8;
+var INTBITLEN = (function() {
+  var allOnes = ~0;
+  var i = 0;
+  while (allOnes) {
+    allOnes >>>= 1;
+    i++;
+  }
 
   return i;
 }());
@@ -624,7 +629,8 @@ var EC_NONE = 0,
     EC_NEW_HEAD = 1,
     EC_START_STMT = 2,
     EC_EXPR_HEAD = EC_START_STMT << 1,
-    EC_CALL_HEAD = EC_EXPR_HEAD << 1;
+    EC_CALL_HEAD = EC_EXPR_HEAD << 1,
+    EC_NON_SEQ = EC_CALL_HEAD << 1;
 
 var PREC_NONE = PREC_WITH_NO_OP;
 
@@ -1656,6 +1662,10 @@ this.isName = function() {
     (DM_VAR|DM_LET|DM_CONST);
 };
 
+this.isGlobal = function() {
+  return this.mode & DM_GLOBAL;
+};
+
 this.absorbDirect = function(otherRef) {
   ASSERT.call(this, !otherRef.resolved,
     'a resolved reference must not be absorbed by a declref');
@@ -1730,7 +1740,7 @@ this.useTZ = function() {
 };
 
 this.mightNeedTest = function() {
-  return !this.isVName() && !this.isFunc();
+  return !this.isVName() && !this.isFunc() && !this.isGlobal();
 };
 
 this.associateWithLiquid = function(liquid) {
@@ -1794,53 +1804,32 @@ this.l = function() {
 };
 
 this.emitHead =
-function(n, prec, flags) {
-  switch (n.type) {
-  case 'ConditionalExpression':
-  case 'UnaryExpression':
-  case 'BinaryExpression':
-  case 'LogicalExpression':
-  case 'UpdateExpression':
-  case 'ConditionalExpression':
-  case 'AssignmentExpression':
-  case 'ArrowFunctionExpression':
-  case 'SequenceExpression':
-  case '#Sequence':
-    this.w('(').eA(n, PREC_NONE, EC_NONE).w(')');
-    break;
-  default: 
-    this.emitAny(n, prec, flags|EC_EXPR_HEAD);
-    break;
-  }
+function(n, isStmt, flags) {
+  return this.emitAny(n, isStmt, flags|EC_EXPR_HEAD|EC_NON_SEQ);
 };
 
-this.eH = function(n, prec, flags) {
-  this.emitHead(n, prec, flags);
+this.eH = function(n, isStmt, flags) {
+  this.emitHead(n, isStmt, flags);
   return this;
 };
 
-this.emitAny = function(n, prec, startStmt) {
+this.emitAny = function(n, isStmt, startStmt) {
   if (HAS.call(Emitters, n.type))
-    return Emitters[n.type].call(this, n, prec, startStmt);
+    return Emitters[n.type].call(this, n, isStmt, startStmt);
   this.err('unknow.node');
 };
 
-this.eA = function(n, prec, startStmt) {
-  this.emitAny(n, prec, startStmt); 
+this.eA = function(n, isStmt, startStmt) {
+  this.emitAny(n, isStmt, startStmt); 
   return this; 
 };
 
-this.emitNonSeq = function(n, prec, flags) {
-  var paren =
-    n.type === 'SequenceExpression' ||
-    n.type === '#Sequence';
-  if (paren) this.w('(');
-  this.emitAny(n, prec, flags);
-  if (paren) this.w(')');
+this.emitNonSeq = function(n, isStmt, flags) {
+  this.emitAny(n, isStmt, flags|EC_NON_SEQ);
 };
 
-this.eN = function(n, prec, flags) {
-  this.emitNonSeq(n, prec, flags);
+this.eN = function(n, isStmt, flags) {
+  this.emitNonSeq(n, isStmt, flags);
   return this;
 };
 
@@ -1922,45 +1911,43 @@ this.noWrap = function() {
   return this;
 };
 
-this.findLiquid = function(scope, liquidName) {
-  var fullLiquidName = _full(scope.id, liquidName);
-  return scope.liquidDefs.has(fullLiquidName) ?
-    scope.synthLiquids.get(fullLiquidName) : null;
-};
-
 this.jz = function(name) {
   return this.wm('jz','.',name);
 };
 
-this.emitAsStatement = function(n, prec, flags) {
-  if (n.type === '#Sequence')
-    this.emitSynthSequence(n, flags, false);
-  else {
-    this.emitAny(n, PREC_NONE, EC_START_STMT);
-  }
+this.emitCallHead = function(n, isStmt, flags) {
+  return this.eH(n, isStmt, flags|EC_CALL_HEAD);
+};
+
+this.emitNewHead = function(n, isStmt, flags) {
+  return this.eH(n, isStmt, flags|EC_NEW_HEAD);
 };
 
 },
 function(){
-Emitters['UpdateExpression'] = function(n, prec, flags) {
+Emitters['UpdateExpression'] = function(n, isStmt, flags) {
+  var paren = flags & EC_EXPR_HEAD;
   var cc = needsConstCheck(n.argument);
-  cc && this.w('(').jz('cc').wm('(','\'')
+  if (!paren) { paren = cc; }
+  if (paren) { this.w('('); flags = EC_NONE; }
+
+  cc && this.jz('cc').wm('(','\'')
     .writeStrWithVal(n.argument.name).wm('\'',')',',').s();
 
   var o = n.operator;
   if (n.prefix) {
     if (this.code.charCodeAt(this.code.length-1) === o.charCodeAt(0))
       this.s();
-    this.w(o).eH(n.argument);
+    this.w(o).eH(n.argument, false, EC_NONE);
   } else
-    this.eH(n.argument, PREC_NONE, flags).w(o);
+    this.eH(n.argument, false, flags).w(o);
 
-  cc && this.w(')');
+  paren && this.w(')');
 };
 
 },
 function(){
-Emitters['ArrayExpression'] = function(n, prec, flags) {
+Emitters['ArrayExpression'] = function(n, isStmt, flags) {
   var list = n.elements, i = 0;
   var si = spreadIdx(list, 0);
   if (si !== -1)
@@ -2012,10 +1999,13 @@ this.emitArrayChunk = function(list, from, to) {
 function(){
 Emitters['#SubAssig'] =
 Emitters['AssignmentExpression'] =
-this.emitAssig = function(n, prec, flags) {
+this.emitAssig = function(n, isStmt, flags) {
+  var paren = flags & EC_EXPR_HEAD;
   var cc = needsConstCheck(n.left);
+  if (!paren) { paren = cc; }
+  if (paren) { this.w('('); flags = EC_NONE; }
   if (cc)
-    this.w('(').jz('cc').w('(')
+    this.jz('cc').w('(')
         .w('\'').writeStrWithVal(n.left.name).w('\'')
         .w(')')
         .w(',')
@@ -2025,15 +2015,16 @@ this.emitAssig = function(n, prec, flags) {
   this.wm(' ',n.operator,' ');
   this.emitAssigRight(n.right);
 
-  cc && this.w(')');
+  paren && this.w(')');
+  isStmt && this.w(';');
 };
 
 this.emitAssigLeft = function(n, flags) {
-  return this.emitHead(n, PREC_NONE, flags);
+  return this.emitHead(n, false, flags);
 };
 
 this.emitAssigRight = function(n) {
-  this.eN(n, PREC_NONE, EC_NONE);
+  this.eN(n, false, EC_NONE);
 };
 
 },
@@ -2041,6 +2032,8 @@ function(){
 Emitters['BinaryExpression'] =
 Emitters['LogicalExpression'] =
 this.emitBinary = function(n, prec, flags) {
+  var paren = flags & EC_EXPR_HEAD;
+  if (paren) { this.w('('); flags = EC_NONE; }
   var o = n.operator;
   if (o === '**')
     return this.emitPow(n, flags);
@@ -2057,6 +2050,8 @@ this.emitBinary = function(n, prec, flags) {
   if (isBinaryExpression(right))
     this.emitRight(right, o, EC_NONE);
   else this.emitBinaryExpressionComponent(right, EC_NONE);
+
+  paren && this.w(')');
 };
 
 function isBinaryExpression(n) {
@@ -2071,9 +2066,9 @@ function isBinaryExpression(n) {
 
 this.emitBinaryExpressionComponent = function(n, flags) {
   if (n.type === 'UnaryExpression' || n.type === 'UpdateExpression')
-    return this.emitAny(n, PREC_NONE, flags);
+    return this.emitAny(n, false, flags);
     
-  return this.emitHead(n, PREC_NONE, flags);
+  return this.emitHead(n, false, flags);
 };
 
 this.emitRight = function(n, ownerO, flags) {
@@ -2086,6 +2081,8 @@ this.emitRight = function(n, ownerO, flags) {
   // previous op has higher prec because it is the previous op
   else if (bp(childO) === bp(ownerO))
     paren = isLeftAssoc(ownerO);
+
+  if (!paren) { paren = flags & EC_EXPR_HEAD; }
 
   if (paren) { flags = EC_NONE; this.w('('); }
   this.emitBinary(n, PREC_NONE, flags);
@@ -2135,7 +2132,7 @@ this.emitBlock = function(n, prec, flags) {
     this.i();
     var i = 0;
     while (i < list.length) {
-      this.l().emitAsStatement(list[i], PREC_NONE, EC_NONE);
+      this.l().emitAny(list[i], true, EC_START_STMT);
       i++;
     }
     this.u().l();
@@ -2145,9 +2142,6 @@ this.emitBlock = function(n, prec, flags) {
 
 },
 function(){
-Emitters['ObjIterGet'] =
-Emitters['Unornull'] =
-Emitters['ArrIterGet'] =
 Emitters['CallExpression'] = function(n, prec, flags) {
   var ri = spreadIdx(n.arguments, 0); 
   if (ri !== -1)
@@ -2155,12 +2149,11 @@ Emitters['CallExpression'] = function(n, prec, flags) {
   
   var paren = flags & EC_NEW_HEAD;
   if (paren) {
-    prec = PREC_NONE;
     flags = EC_NONE;
     this.w('(');
   }
 
-  this.eH(n.callee, prec, flags|EC_CALL_HEAD);
+  this.eH(n.callee, false, flags|EC_CALL_HEAD);
   this.w('(');
   this.emitArrayChunk(n.arguments, 0, n.arguments.length-1);
   this.w(')');
@@ -2207,10 +2200,13 @@ Emitters['ClassDeclaration'] = function(n, prec, flags) {
 
 },
 function(){
-Emitters['ConditionalExpression'] = function(n, prec, flags) {
+Emitters['ConditionalExpression'] = function(n, isStmt, flags) {
+  var paren = flags & EC_EXPR_HEAD;
+  if (paren) { this.w('('); flags = EC_NONE; }
   this.emitCondTest(n.test, flags);
-  this.wm(' ','?',' ').eN(n.consequent, PREC_NONE, EC_NONE);
-  this.wm(' ',':',' ').eN(n.alternate, PREC_NONE, EC_NONE);
+  this.wm(' ','?',' ').eN(n.consequent, false, EC_NONE);
+  this.wm(' ',':',' ').eN(n.alternate, false, EC_NONE);
+  paren && this.w(')');
 };
 
 this.emitCondTest = function(n, prec, flags) {
@@ -2222,7 +2218,7 @@ this.emitCondTest = function(n, prec, flags) {
   }
 
   if (paren) { this.w('('); flags = EC_NONE; }
-  this.eN(n, PREC_NONE, flags);
+  this.eN(n, false, flags);
   if (paren) this.w(')');
 };
 
@@ -2236,16 +2232,16 @@ Emitters['DoWhileStatement'] = function(n, prec, flags) {
   this.w('do').emitDependentStmt(n.body);
   if (n.body.type !== 'BlockStatement')
     this.l();
-  this.wm('while',' ','(').eA(n.test, PREC_NONE, EC_NONE).w(')');
+  this.wm('while',' ','(').eA(n.test, false, EC_NONE).w(')');
 };
 
 },
 function(){
-Emitters['ExpressionStatement'] = function(n, prec, flags) {
+Emitters['ExpressionStatement'] = function(n, isStmt, flags) {
   if (n.expression.type === '#Sequence')
-    this.emitSynthSequence(n.expression, flags, false);
+    this.emitSynthSequence(n.expression, true, EC_NONE);
   else { 
-    this.eA(n.expression, PREC_NONE, EC_START_STMT);
+    this.eA(n.expression, false, EC_START_STMT);
     this.w(';');
   }
 };
@@ -2293,16 +2289,16 @@ this.emitFuncBody = function(n) {
         typeof elem.expression.value !== STRING_TYPE)
       break;
     this.l();
-    this.emitAsStatement(elem);
+    this.emitAny(elem, true, EC_START_STMT);
     i++;
   }
 
   if (n.argumentPrologue)
-    this.l().emitAsStatement(n.argumentPrologue);
+    this.l().emitAny(n.argumentPrologue, true, EC_START_STMT);
 
   while (i < body.length) {
     this.l();
-    this.emitAsStatement(body[i++]);
+    this.emitAny(body[i++], true, EC_START_STMT);
   }
 
   this.u();
@@ -2379,12 +2375,12 @@ function(svRaw) {
 function(){
 Emitters['MemberExpression'] = function(n, prec, flags) {
   var objParen = false;
-  this.eH(n.object, prec, flags);
+  this.eH(n.object, false, flags);
 
   if (n.computed)
-    this.w('[').eA(n.property, PREC_NONE, EC_NONE).w(']');
+    this.w('[').eA(n.property, false, EC_NONE).w(']');
   else if (this.isReserved(n.property.name)) {
-    this.w('[').emitStringLiteralWithRawValue("'"+n.property.name+"'");
+    this.w('[').w('\'').writeStringWithVal(n.property.name).w('\'');
     this.w(']');
   }
   else {
@@ -2396,7 +2392,7 @@ Emitters['MemberExpression'] = function(n, prec, flags) {
 },
 function(){
 Emitters['NewExpression'] = function(n, prec, flags) {
-  this.wm('new',' ').eH(n.callee, PREC_NONE, EC_NEW_HEAD);
+  this.wm('new',' ').emitNewHead(n.callee);
   this.w('(').emitArgList(n.arguments);
   this.w(')');
 };
@@ -2405,7 +2401,7 @@ this.emitArgList = function(argList) {
   var i = 0;
   while (i < argList.length) {
     if (i>0) this.w(',',' ');
-    this.eN(argList[i], PREC_NONE, EC_NONE);
+    this.eN(argList[i], false, EC_NONE);
     i++;
   }
 };
@@ -2512,7 +2508,7 @@ Emitters['Program'] = function(n, prec, flags) {
   while (i < list.length) {
     var stmt = list[i++];
     i > 0 && this.startLine();
-    this.emitAsStatement(stmt);
+    this.emitAny(stmt, true, EC_START_STMT);
   }
 };
 
@@ -2521,7 +2517,7 @@ function(){
 Emitters['ReturnStatement'] = function(n, prec, flags) {
   this.w('return');
   if (n.argument)
-    this.noWrap().s().emitAny(n.argument);
+    this.noWrap().s().emitAny(n.argument, false, EC_NONE);
   this.w(';');
 };
 
@@ -2529,35 +2525,27 @@ Emitters['ReturnStatement'] = function(n, prec, flags) {
 function(){
 Emitters['SynthSequenceExpression'] =
 Emitters['SequenceExpression'] = function(n, prec, flags) {
+  var paren = flags & EC_NON_SEQ;
+  if (paren) { this.w('('); flags = EC_NONE; }
   var list = n.expressions, i = 0;
   this.eN(list[i], prec, flags);
   i++;
   while (i < list.length) {
-    this.wm(',',' ').eN(list[i], PREC_NONE, EC_NONE);
+    this.wm(',',' ').eN(list[i], false, EC_NONE);
     i++;
   }
+  paren && this.w(')');
 };
 
 },
 function(){
-Emitters['SpecialIdentifier'] = function(n, prec, flags) {
-  switch (n.kind) {
-  case 'tempVar':
-    return this.writeIdentifierName(n.name);
-  case 'unornull':
-    this.wm('jz','.','uon');
-    return;
-  default:
-    this.writeIdentifierName(n.kind);
-    return;
-  }
-};
+
 
 },
 function(){
 Emitters['SwitchStatement'] = function(n, prec, flags) {
   this.wm('switch',' ','(')
-      .eA(n.discriminant, PREC_NONE, EC_NONE)
+      .eA(n.discriminant, false, EC_NONE)
       .wm(')',' ','{');
   var list = n.cases, i = 0;
   if (list.length > 0) {
@@ -2571,7 +2559,7 @@ Emitters['SwitchStatement'] = function(n, prec, flags) {
 this.emitCase = function(c) {
   if (c.test) {
     this.wm('case',' ')
-        .eA(c.test, PREC_NONE, EC_NONE)
+        .eA(c.test, false, EC_NONE)
         .w(':');
   } else
     this.wm('default',':');
@@ -2664,6 +2652,7 @@ this.emitResolvedName_tz = function(n, prec, flags, isV, alternate) {
 
 this.emitResolvedName_simple = function(n, prec, flags, isV) {
   if (isV) this.writeVName(n.decl.synthName, flags);
+  else if (n.decl.isGlobal) this.writeGName(n.decl, flags);
   else this.writeName(n.decl.synthName);
 };
 
@@ -2675,6 +2664,18 @@ this.writeVName = function(name, flags) {
   return this;
 };
 
+this.writeGName = function(decl, flags) {
+  var zero = false;
+  if (decl.synthName === '<global>') {
+    zero = flags & EC_CALL_HEAD;
+    zero && this.wm('(','0',',');
+    this.wm(decl.ref.scope.scriptScope.findLiquid('<this>').synthName,'.',decl.name);
+    zero && this.w(')');
+  }
+  else
+    this.writeName(decl.synthName);
+};
+
 this.writeName = function(name) {
   this.w(name);
   return this;
@@ -2682,22 +2683,26 @@ this.writeName = function(name) {
 
 },
 function(){
-Emitters['#Sequence'] = function(n, prec, flags) {
-  this.emitSynthSequence(n, flags, true);
+Emitters['#Sequence'] = function(n, isStmt, flags) {
+  this.emitSynthSequence(n, isStmt, flags);
 };
 
-this.emitSynthSequence = function(n, flags, isExpr) {
+this.emitSynthSequence = function(n, isStmt, flags) {
   var list = n.elements, i = 0;
-  if (isExpr)
-    while (i < list.length) {
-      i && this.wm(',',' ');
-      this.eN(list[i++]);
-    }
-  else
+  if (isStmt)
     while (i < list.length) {
       i && this.l();
-      this.emitAsStatement(list[i++]);
+      this.emitAny(list[i++], true, EC_START_STMT);
     }
+  else {
+    var paren = flags & (EC_EXPR_HEAD|EC_NON_SEQ);
+    paren && this.w('(');
+    while (i < list.length) {
+      i && this.wm(',',' ');
+      this.eN(list[i++], false, EC_NONE);
+    }
+    paren && this.w(')');
+  }
 };
 
 },
@@ -2730,9 +2735,9 @@ Emitters['UnaryExpression'] = function(n, prec, flags) {
 
 this.emitUnaryArgument = function(n) {
   if (n.type === 'UnaryExpression' || n.type === 'UpdateExpression')
-    this.emitAny(n, PREC_NONE, EC_NONE);
+    this.emitAny(n, false, EC_NONE);
   else
-    this.eH(n, PREC_NONE, EC_NONE);
+    this.eH(n, false, EC_NONE);
 };
 
 },
@@ -2743,14 +2748,16 @@ UntransformedEmitters['arguments-iter'] = function(n, prec, flags) {
 
 },
 function(){
-UntransformedEmitters['arr-iter-end'] = function(n, prec, flags) {
+UntransformedEmitters['arr-iter-end'] = function(n, isStmt, flags) {
   this.eH(n.iter).wm('.','end','(',')');
+  isStmt && this.w(';');
 };
 
 },
 function(){
-UntransformedEmitters['arr-iter-get'] = function(n, prec, flags) {
+UntransformedEmitters['arr-iter-get'] = function(n, isStmt, flags) {
   this.eH(n.iter).wm('.','get','(',')');
+  isStmt && this.w(';');
 };
 
 },
@@ -2792,8 +2799,9 @@ UntransformedEmitters['obj-iter'] = function(n, prec, flags) {
 
 },
 function(){
-UntransformedEmitters['temp-save'] = function(n, prec, flags) {
+UntransformedEmitters['temp-save'] = function(n, isStmt, flags) {
   this.eA(n.left).wm(' ','=',' ').eN(n.right);
+  isStmt && this.w(';');
 };
 
 },
@@ -3290,11 +3298,15 @@ this.associateWith = function(decl) {
   ASSERT.call(this, this.associatedDecl === null,
     'this liquid has already got an associate');
   this.associatedDecl = decl;
-  var list = this.associatedDecl.ref.lors, i = 0;
+  this.updateCRSList(this.associatedDecl.ref.lors);
+};
+
+this.updateCRSList = function(list) {
+  var i = 0;
   while (i < list.length) {
     var rs = list[i++];
-    if (!HAS.call(this.crsMap, rs)) {
-      this.crsMap[i] = rs;
+    if (!HAS.call(this.crsMap, rs.id)) {
+      this.crsMap[rs.id] = rs;
       this.crsList.push(rs);
     }
   }
@@ -9048,6 +9060,8 @@ this.parseProgram = function () {
   this.clearAllStrictErrors();
 
   this.scope = new Scope(globalScope, ST_SCRIPT);
+  globalScope.scriptScope = this.scope;
+
   this.scope.parser = this;
   if (!this.isScript)
     this.scope.enterStrict();
@@ -10875,11 +10889,15 @@ this.insertDecl_m = function(mname, decl) {
 this.getGlobal_m = function(mname, ref) {
   ASSERT.call(this, this.isGlobal(),
     'global scope was expected');
+  var newRef = new Ref(this);
+  newRef.absorbDirect(ref);
   var decl = this.findDecl_m(mname);
   if (!decl) {
     decl = new Decl()
       .m(DM_GLOBAL)
-      .r(ref);
+      .r(newRef)
+      .n(_u(mname));
+
     this.insertDecl_m(mname, decl);
   }
   return decl;
@@ -11013,7 +11031,7 @@ this.accessLiquid = function(targetScope, targetName, createNew) {
   return liquid;
 };
 
-// NOTE: createNew will create an new entry anyway
+// NOTE: createNew will create a new entry anyway
 this.getLiquid = function(name, createNew) {
   ASSERT.call(this, !this.isAnyFnHead(),
     'it is not valid to ask fn-head for a liquid');
@@ -11044,7 +11062,13 @@ this.getLiquid = function(name, createNew) {
 };
 
 this.hasLiquid_m = function(mname) {
-  return this.liquidRefs.has(mname);
+  return this.liquidDefs.has(mname);
+};
+
+this.findLiquid = function(name) {
+  var fullName = _full(this.id, name);
+  return this.liquidDefs.has(fullName) ?
+    this.liquidDefs.get(fullName) : null;
 };
 
 },
@@ -11224,9 +11248,16 @@ this.getThis = function(ref) {
     this,
     this.isModule() || this.isAnyFnBody() || this.isScript(),
     'a this is only reachable through a module, fnbody, or script');
-  if (!this.special.lexicalThis)
+  if (!this.special.lexicalThis) {
     this.special.lexicalThis =
-      new Decl().m(DM_LTHIS).n(_u(RS_THIS)).r(ref);
+      new Decl().m(DM_LTHIS).n(_u(RS_THIS)).r(ref || new Ref(this));
+    var tl = this.getLiquid('<this>');
+    if (tl.idealName === "")
+      tl.idealName = 'this_';
+
+    this.special.lexicalThis.associateWithLiquid(tl);
+    
+  }
 
   return this.special.lexicalThis;
 };
@@ -11258,8 +11289,8 @@ function(){
 this.acceptsName_m = function(mname, m, o) {
   ASSERT.call(this, this.isScript() || this.isModule(),
     '<'+this.typeString()+'> unsupported');
-  ASSERT.call(this, m === ACC_DECL,
-    'a script scope will only respond to <accept-decl> requests, no <accept-refs>');
+//ASSERT.call(this, m === ACC_DECL,
+//  'a script scope will only respond to <accept-decl> requests, no <accept-refs>');
 
   if (this.synthNamesUntilNow === null)
     this.bootSynthesis();
@@ -11331,6 +11362,32 @@ this.endSynthesis = function() {
   while (i < len)
     this.synthLiquid(list.at(i++));
 };
+
+},
+function(){
+this.synthGlobals = function() {
+  ASSERT.call(this, this.isScript() || this.isModule(),
+    'globals are not allowed to be synthesized in any other scope than a script or a module');
+
+  var globalScope = this.parent;
+  ASSERT.call(this, globalScope.isGlobal(),
+    'the script scope must have a global parent');
+
+  var list = globalScope.defs, i = 0, len = list.length();
+  while (i < len) {
+    var globalDef = list.at(i++);
+    var synthName = Scope.newSynthName(globalDef.name, null, globalDef.ref.lors);
+    if (synthName === globalDef.name) {
+      globalDef.setSynthName(synthName);
+      this.trackSynthName(synthName);
+    }
+    else {
+      globalDef.synthName = '<global>';
+      this.getThis().liquid.updateCRSList(globalDef.ref.lors);
+    }
+  }
+};
+
 
 },
 function(){
@@ -11583,7 +11640,7 @@ this.hasHeritage = function() {
 },
 function(){
 this.shouldTest = function(decl) {
-  if (decl.isVName() || decl.isFunc())
+  if (decl.isVName() || decl.isFunc() || decl.isGlobal())
     return false;
   if (!decl.reached)
     return true;
@@ -12107,11 +12164,14 @@ this.assigListToIter = function(isInitializer, list, iter, pushTarget) {
   var e = 0;
   while (e < list.length) {
     var elem = list[e++];
-    var result = this.transform(
-      this.synth_SubAssig(elem, this.synth_ArrIterGet(iter), isInitializer),
-      pushTarget,
-      false
-    );
+    var result =
+      elem === null ?
+        this.synth_ArrIterGet(iter):
+        this.transform(
+          this.synth_SubAssig(elem, this.synth_ArrIterGet(iter), isInitializer),
+          pushTarget,
+          false
+        );
     result && pushTarget.push(result);
   }
 };
@@ -12397,15 +12457,14 @@ transform['Program'] = function(n, list, isVal) {
   var ps = this.setScope(this.scriptScope);
   var ts = this.setTempStack([]);
 
+  this.currentScope.synthGlobals();
   this.currentScope.startupSynthesis();
+
   while (i < b.length) {
     b[i] = this.transform(b[i], null, false);
     i++;
   }
   this.currentScope.endSynthesis();
-
-  if (this.currentScope.special.lexicalThis)
-    this.currentScope.synthesizeThis();
 
   this.setScope(ps);
   this.setTempStack(ts);
@@ -12432,6 +12491,12 @@ transform['SequenceExpression'] = function(n, pushTarget, isVal) {
 function(){
 transform['SpreadElement'] = function(n, pushTarget, isVal) {
   n.argument = this.transform(n.argument, pushTarget, isVal);
+  return n;
+};
+
+},
+function(){
+transform['ThisExpression'] = function(n, pushTarget, isVal) {
   return n;
 };
 

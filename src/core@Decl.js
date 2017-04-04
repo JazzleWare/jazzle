@@ -57,6 +57,10 @@ this.isName = function() {
     (DM_VAR|DM_LET|DM_CONST);
 };
 
+this.isGlobal = function() {
+  return this.mode & DM_GLOBAL;
+};
+
 this.absorbDirect = function(otherRef) {
   ASSERT.call(this, !otherRef.resolved,
     'a resolved reference must not be absorbed by a declref');
@@ -131,7 +135,7 @@ this.useTZ = function() {
 };
 
 this.mightNeedTest = function() {
-  return !this.isVName() && !this.isFunc();
+  return !this.isVName() && !this.isFunc() && !this.isGlobal();
 };
 
 this.associateWithLiquid = function(liquid) {

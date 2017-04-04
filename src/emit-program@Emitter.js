@@ -4,6 +4,6 @@ Emitters['Program'] = function(n, prec, flags) {
   while (i < list.length) {
     var stmt = list[i++];
     i > 0 && this.startLine();
-    this.emitAsStatement(stmt);
+    this.emitAny(stmt, true, EC_START_STMT);
   }
 };

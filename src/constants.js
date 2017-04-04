@@ -73,9 +73,13 @@ var CH_1 = char2int('1'),
     CH_GREATER_THAN = char2int('>')
  ;
 
-var INTBITLEN = (function() { var i = 0;
-  while ( 0 < (1 << (i++)))
-     if (i >= 512) return 8;
+var INTBITLEN = (function() {
+  var allOnes = ~0;
+  var i = 0;
+  while (allOnes) {
+    allOnes >>>= 1;
+    i++;
+  }
 
   return i;
 }());
@@ -167,7 +171,8 @@ var EC_NONE = 0,
     EC_NEW_HEAD = 1,
     EC_START_STMT = 2,
     EC_EXPR_HEAD = EC_START_STMT << 1,
-    EC_CALL_HEAD = EC_EXPR_HEAD << 1;
+    EC_CALL_HEAD = EC_EXPR_HEAD << 1,
+    EC_NON_SEQ = EC_CALL_HEAD << 1;
 
 var PREC_NONE = PREC_WITH_NO_OP;
 

@@ -1,6 +1,6 @@
 Emitters['SwitchStatement'] = function(n, prec, flags) {
   this.wm('switch',' ','(')
-      .eA(n.discriminant, PREC_NONE, EC_NONE)
+      .eA(n.discriminant, false, EC_NONE)
       .wm(')',' ','{');
   var list = n.cases, i = 0;
   if (list.length > 0) {
@@ -14,7 +14,7 @@ Emitters['SwitchStatement'] = function(n, prec, flags) {
 this.emitCase = function(c) {
   if (c.test) {
     this.wm('case',' ')
-        .eA(c.test, PREC_NONE, EC_NONE)
+        .eA(c.test, false, EC_NONE)
         .w(':');
   } else
     this.wm('default',':');

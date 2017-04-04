@@ -13,53 +13,32 @@ this.l = function() {
 };
 
 this.emitHead =
-function(n, prec, flags) {
-  switch (n.type) {
-  case 'ConditionalExpression':
-  case 'UnaryExpression':
-  case 'BinaryExpression':
-  case 'LogicalExpression':
-  case 'UpdateExpression':
-  case 'ConditionalExpression':
-  case 'AssignmentExpression':
-  case 'ArrowFunctionExpression':
-  case 'SequenceExpression':
-  case '#Sequence':
-    this.w('(').eA(n, PREC_NONE, EC_NONE).w(')');
-    break;
-  default: 
-    this.emitAny(n, prec, flags|EC_EXPR_HEAD);
-    break;
-  }
+function(n, isStmt, flags) {
+  return this.emitAny(n, isStmt, flags|EC_EXPR_HEAD|EC_NON_SEQ);
 };
 
-this.eH = function(n, prec, flags) {
-  this.emitHead(n, prec, flags);
+this.eH = function(n, isStmt, flags) {
+  this.emitHead(n, isStmt, flags);
   return this;
 };
 
-this.emitAny = function(n, prec, startStmt) {
+this.emitAny = function(n, isStmt, startStmt) {
   if (HAS.call(Emitters, n.type))
-    return Emitters[n.type].call(this, n, prec, startStmt);
+    return Emitters[n.type].call(this, n, isStmt, startStmt);
   this.err('unknow.node');
 };
 
-this.eA = function(n, prec, startStmt) {
-  this.emitAny(n, prec, startStmt); 
+this.eA = function(n, isStmt, startStmt) {
+  this.emitAny(n, isStmt, startStmt); 
   return this; 
 };
 
-this.emitNonSeq = function(n, prec, flags) {
-  var paren =
-    n.type === 'SequenceExpression' ||
-    n.type === '#Sequence';
-  if (paren) this.w('(');
-  this.emitAny(n, prec, flags);
-  if (paren) this.w(')');
+this.emitNonSeq = function(n, isStmt, flags) {
+  this.emitAny(n, isStmt, flags|EC_NON_SEQ);
 };
 
-this.eN = function(n, prec, flags) {
-  this.emitNonSeq(n, prec, flags);
+this.eN = function(n, isStmt, flags) {
+  this.emitNonSeq(n, isStmt, flags);
   return this;
 };
 
@@ -141,20 +120,14 @@ this.noWrap = function() {
   return this;
 };
 
-this.findLiquid = function(scope, liquidName) {
-  var fullLiquidName = _full(scope.id, liquidName);
-  return scope.liquidDefs.has(fullLiquidName) ?
-    scope.synthLiquids.get(fullLiquidName) : null;
-};
-
 this.jz = function(name) {
   return this.wm('jz','.',name);
 };
 
-this.emitAsStatement = function(n, prec, flags) {
-  if (n.type === '#Sequence')
-    this.emitSynthSequence(n, flags, false);
-  else {
-    this.emitAny(n, PREC_NONE, EC_START_STMT);
-  }
+this.emitCallHead = function(n, isStmt, flags) {
+  return this.eH(n, isStmt, flags|EC_CALL_HEAD);
+};
+
+this.emitNewHead = function(n, isStmt, flags) {
+  return this.eH(n, isStmt, flags|EC_NEW_HEAD);
 };

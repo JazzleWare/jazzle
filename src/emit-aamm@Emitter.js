@@ -1,15 +1,19 @@
-Emitters['UpdateExpression'] = function(n, prec, flags) {
+Emitters['UpdateExpression'] = function(n, isStmt, flags) {
+  var paren = flags & EC_EXPR_HEAD;
   var cc = needsConstCheck(n.argument);
-  cc && this.w('(').jz('cc').wm('(','\'')
+  if (!paren) { paren = cc; }
+  if (paren) { this.w('('); flags = EC_NONE; }
+
+  cc && this.jz('cc').wm('(','\'')
     .writeStrWithVal(n.argument.name).wm('\'',')',',').s();
 
   var o = n.operator;
   if (n.prefix) {
     if (this.code.charCodeAt(this.code.length-1) === o.charCodeAt(0))
       this.s();
-    this.w(o).eH(n.argument);
+    this.w(o).eH(n.argument, false, EC_NONE);
   } else
-    this.eH(n.argument, PREC_NONE, flags).w(o);
+    this.eH(n.argument, false, flags).w(o);
 
-  cc && this.w(')');
+  paren && this.w(')');
 };

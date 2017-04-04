@@ -185,11 +185,15 @@ this.insertDecl_m = function(mname, decl) {
 this.getGlobal_m = function(mname, ref) {
   ASSERT.call(this, this.isGlobal(),
     'global scope was expected');
+  var newRef = new Ref(this);
+  newRef.absorbDirect(ref);
   var decl = this.findDecl_m(mname);
   if (!decl) {
     decl = new Decl()
       .m(DM_GLOBAL)
-      .r(ref);
+      .r(newRef)
+      .n(_u(mname));
+
     this.insertDecl_m(mname, decl);
   }
   return decl;

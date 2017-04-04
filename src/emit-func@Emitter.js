@@ -39,16 +39,16 @@ this.emitFuncBody = function(n) {
         typeof elem.expression.value !== STRING_TYPE)
       break;
     this.l();
-    this.emitAsStatement(elem);
+    this.emitAny(elem, true, EC_START_STMT);
     i++;
   }
 
   if (n.argumentPrologue)
-    this.l().emitAsStatement(n.argumentPrologue);
+    this.l().emitAny(n.argumentPrologue, true, EC_START_STMT);
 
   while (i < body.length) {
     this.l();
-    this.emitAsStatement(body[i++]);
+    this.emitAny(body[i++], true, EC_START_STMT);
   }
 
   this.u();

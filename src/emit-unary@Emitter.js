@@ -11,7 +11,7 @@ Emitters['UnaryExpression'] = function(n, prec, flags) {
 
 this.emitUnaryArgument = function(n) {
   if (n.type === 'UnaryExpression' || n.type === 'UpdateExpression')
-    this.emitAny(n, PREC_NONE, EC_NONE);
+    this.emitAny(n, false, EC_NONE);
   else
-    this.eH(n, PREC_NONE, EC_NONE);
+    this.eH(n, false, EC_NONE);
 };

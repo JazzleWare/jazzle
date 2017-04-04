@@ -11,6 +11,8 @@ this.parseProgram = function () {
   this.clearAllStrictErrors();
 
   this.scope = new Scope(globalScope, ST_SCRIPT);
+  globalScope.scriptScope = this.scope;
+
   this.scope.parser = this;
   if (!this.isScript)
     this.scope.enterStrict();

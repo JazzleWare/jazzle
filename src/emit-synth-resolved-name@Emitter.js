@@ -52,6 +52,7 @@ this.emitResolvedName_tz = function(n, prec, flags, isV, alternate) {
 
 this.emitResolvedName_simple = function(n, prec, flags, isV) {
   if (isV) this.writeVName(n.decl.synthName, flags);
+  else if (n.decl.isGlobal) this.writeGName(n.decl, flags);
   else this.writeName(n.decl.synthName);
 };
 
@@ -61,6 +62,18 @@ this.writeVName = function(name, flags) {
   this.writeName(name).wm('.','v');
   zero && this.w(')');
   return this;
+};
+
+this.writeGName = function(decl, flags) {
+  var zero = false;
+  if (decl.synthName === '<global>') {
+    zero = flags & EC_CALL_HEAD;
+    zero && this.wm('(','0',',');
+    this.wm(decl.ref.scope.scriptScope.findLiquid('<this>').synthName,'.',decl.name);
+    zero && this.w(')');
+  }
+  else
+    this.writeName(decl.synthName);
 };
 
 this.writeName = function(name) {

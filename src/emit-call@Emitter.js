@@ -1,6 +1,3 @@
-Emitters['ObjIterGet'] =
-Emitters['Unornull'] =
-Emitters['ArrIterGet'] =
 Emitters['CallExpression'] = function(n, prec, flags) {
   var ri = spreadIdx(n.arguments, 0); 
   if (ri !== -1)
@@ -8,12 +5,11 @@ Emitters['CallExpression'] = function(n, prec, flags) {
   
   var paren = flags & EC_NEW_HEAD;
   if (paren) {
-    prec = PREC_NONE;
     flags = EC_NONE;
     this.w('(');
   }
 
-  this.eH(n.callee, prec, flags|EC_CALL_HEAD);
+  this.eH(n.callee, false, flags|EC_CALL_HEAD);
   this.w('(');
   this.emitArrayChunk(n.arguments, 0, n.arguments.length-1);
   this.w(')');

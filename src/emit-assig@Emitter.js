@@ -1,9 +1,12 @@
 Emitters['#SubAssig'] =
 Emitters['AssignmentExpression'] =
-this.emitAssig = function(n, prec, flags) {
+this.emitAssig = function(n, isStmt, flags) {
+  var paren = flags & EC_EXPR_HEAD;
   var cc = needsConstCheck(n.left);
+  if (!paren) { paren = cc; }
+  if (paren) { this.w('('); flags = EC_NONE; }
   if (cc)
-    this.w('(').jz('cc').w('(')
+    this.jz('cc').w('(')
         .w('\'').writeStrWithVal(n.left.name).w('\'')
         .w(')')
         .w(',')
@@ -13,13 +16,14 @@ this.emitAssig = function(n, prec, flags) {
   this.wm(' ',n.operator,' ');
   this.emitAssigRight(n.right);
 
-  cc && this.w(')');
+  paren && this.w(')');
+  isStmt && this.w(';');
 };
 
 this.emitAssigLeft = function(n, flags) {
-  return this.emitHead(n, PREC_NONE, flags);
+  return this.emitHead(n, false, flags);
 };
 
 this.emitAssigRight = function(n) {
-  this.eN(n, PREC_NONE, EC_NONE);
+  this.eN(n, false, EC_NONE);
 };

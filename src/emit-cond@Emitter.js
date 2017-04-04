@@ -1,7 +1,10 @@
-Emitters['ConditionalExpression'] = function(n, prec, flags) {
+Emitters['ConditionalExpression'] = function(n, isStmt, flags) {
+  var paren = flags & EC_EXPR_HEAD;
+  if (paren) { this.w('('); flags = EC_NONE; }
   this.emitCondTest(n.test, flags);
-  this.wm(' ','?',' ').eN(n.consequent, PREC_NONE, EC_NONE);
-  this.wm(' ',':',' ').eN(n.alternate, PREC_NONE, EC_NONE);
+  this.wm(' ','?',' ').eN(n.consequent, false, EC_NONE);
+  this.wm(' ',':',' ').eN(n.alternate, false, EC_NONE);
+  paren && this.w(')');
 };
 
 this.emitCondTest = function(n, prec, flags) {
@@ -13,6 +16,6 @@ this.emitCondTest = function(n, prec, flags) {
   }
 
   if (paren) { this.w('('); flags = EC_NONE; }
-  this.eN(n, PREC_NONE, flags);
+  this.eN(n, false, flags);
   if (paren) this.w(')');
 };

@@ -1,4 +1,4 @@
-Emitters['ArrayExpression'] = function(n, prec, flags) {
+Emitters['ArrayExpression'] = function(n, isStmt, flags) {
   var list = n.elements, i = 0;
   var si = spreadIdx(list, 0);
   if (si !== -1)

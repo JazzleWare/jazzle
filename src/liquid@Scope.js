@@ -12,7 +12,7 @@ this.accessLiquid = function(targetScope, targetName, createNew) {
   return liquid;
 };
 
-// NOTE: createNew will create an new entry anyway
+// NOTE: createNew will create a new entry anyway
 this.getLiquid = function(name, createNew) {
   ASSERT.call(this, !this.isAnyFnHead(),
     'it is not valid to ask fn-head for a liquid');
@@ -43,5 +43,11 @@ this.getLiquid = function(name, createNew) {
 };
 
 this.hasLiquid_m = function(mname) {
-  return this.liquidRefs.has(mname);
+  return this.liquidDefs.has(mname);
+};
+
+this.findLiquid = function(name) {
+  var fullName = _full(this.id, name);
+  return this.liquidDefs.has(fullName) ?
+    this.liquidDefs.get(fullName) : null;
 };
