@@ -1,4 +1,3 @@
-Emitters['FunctionExpression'] =
 Emitters['FunctionDeclaration'] = function(n, prec, flags) {
   if (n.generator)
     return this.emitGenerator(n, prec, flags);

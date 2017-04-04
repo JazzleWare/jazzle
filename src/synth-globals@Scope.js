@@ -12,7 +12,6 @@ this.synthGlobals = function() {
     var synthName = Scope.newSynthName(globalDef.name, null, globalDef.ref.lors);
     if (synthName === globalDef.name) {
       globalDef.setSynthName(synthName);
-      this.trackSynthName(synthName);
     }
     else {
       globalDef.synthName = '<global>';

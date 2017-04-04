@@ -160,11 +160,20 @@ this.assigListToIter = function(isInitializer, list, iter, pushTarget) {
   var e = 0;
   while (e < list.length) {
     var elem = list[e++];
+    var rest = false;
+    if (elem && elem.type === 'RestElement') {
+      elem = elem.argument;
+      rest = true;
+    }
     var result =
       elem === null ?
-        this.synth_ArrIterGet(iter):
+        this.synth_ArrIterGet(iter, rest):
         this.transform(
-          this.synth_SubAssig(elem, this.synth_ArrIterGet(iter), isInitializer),
+          this.synth_SubAssig(
+            elem,
+            this.synth_ArrIterGet(iter, rest),
+            isInitializer
+          ),
           pushTarget,
           false
         );

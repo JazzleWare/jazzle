@@ -6,6 +6,7 @@ transform['Program'] = function(n, list, isVal) {
   var ps = this.setScope(this.scriptScope);
   var ts = this.setTempStack([]);
 
+  this.accessJZ();
   this.currentScope.synthGlobals();
   this.currentScope.startupSynthesis();
 

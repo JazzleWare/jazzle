@@ -11,7 +11,6 @@ function(left, right, isInitializer) {
 
 this.synth_ObjIter =
 function(expr) {
-  this.accessJZ();
   return {
     type: '#Untransformed',
     kind: 'obj-iter',
@@ -21,7 +20,6 @@ function(expr) {
 
 this.synth_ObjIterGet =
 function(iter, keyName, isComputed) {
-  this.accessJZ();
   return {
     type: '#Untransformed',
     kind: 'obj-iter-get',
@@ -81,7 +79,6 @@ this.synth_ArrIterEnd = function(iter) {
 };
 
 this.synth_ArrIter = function(expr) {
-  this.accessJZ();
   return {
     type: '#Untransformed',
     kind: 'arr-iter',
@@ -90,7 +87,6 @@ this.synth_ArrIter = function(expr) {
 };
 
 this.synth_UoN = function(expr) {
-  this.accessJZ();
   return {
     type: '#Untransformed',
     kind: 'uon',
@@ -98,11 +94,12 @@ this.synth_UoN = function(expr) {
   };
 };
 
-this.synth_ArrIterGet = function(iter) {
+this.synth_ArrIterGet = function(iter, isRest) {
   return {
     type: '#Untransformed',
     kind: 'arr-iter-get',
-    iter: iter
+    iter: iter,
+    rest: isRest ? true : false
   };
 };
 
@@ -111,7 +108,6 @@ this.synth_DeclAssig = function(left, right) {
 };
 
 this.synth_ConstCheck = function(n) {
-  this.accessJZ();
   return {
     type: '#Untransformed',
     kind: 'const-check',

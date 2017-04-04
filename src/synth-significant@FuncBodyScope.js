@@ -2,7 +2,8 @@ this.hasSignificantRef = function(ref) {
   if (ref.resolved)
     return false;
 
-  if (ref.parent.scope === this.funcHead)
+  if (this.isAnyFnBody() && 
+    ref.parent.scope === this.funcHead)
     return false;
 
   var decl = ref.getDecl();

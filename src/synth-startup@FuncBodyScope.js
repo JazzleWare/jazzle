@@ -7,14 +7,14 @@ this.startupSynthesis = function() {
 
   while (i < len) {
     elem = list.at(i++);
-    if (this.hasSignificantRef(elem))
+    if (this.funcHead.hasSignificantRef(elem))
       this.trackSynthName(elem.getDecl().synthName);
   }
 
-  list = this.refs, i = 0, len = list.length();
-  while (i < len) {
-    elem = list.at(i++);
-    if (this.hasSignificantRef(elem))
-      this.trackSynthName(elem.getDecl().synthName);
-  }
+//list = this.refs, i = 0, len = list.length();
+//while (i < len) {
+//  elem = list.at(i++);
+//  if (this.hasSignificantRef(elem))
+//    this.trackSynthName(elem.getDecl().synthName);
+//}
 };

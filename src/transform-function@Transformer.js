@@ -8,6 +8,8 @@ transform['FunctionDeclaration'] = function(n, pushTarget, isVal) {
   var ps = this.setScope(n.scope);
   var ts = this.setTempStack([]);
 
+  this.accessJZ();
+
   if (this.currentScope.isExpr() && this.currentScope.funcHead.scopeName) {
     var scopeName = this.currentScope.funcHead.scopeName;
     var synthName = Scope.newSynthName(scopeName.name, null, scopeName.ref.lors, scopeName);

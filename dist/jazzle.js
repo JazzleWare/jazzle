@@ -2248,7 +2248,29 @@ Emitters['ExpressionStatement'] = function(n, isStmt, flags) {
 
 },
 function(){
-Emitters['FunctionExpression'] =
+Emitters['FunctionExpression'] = function(n, isStmt, flags) {
+  var paren = flags & EC_START_STMT,
+      altName = false,
+      scopeName = n.scope.funcHead.scopeName;
+
+  if (scopeName && scopeName.name !== scopeName.synthName)
+    altName = true;
+
+  if (!paren)
+    paren = altName && (flags & EC_EXPR_HEAD);
+
+  if (paren) { this.w('('); flags = EC_NONE; }
+  if (altName)
+    this.wm(scopeName.synthName,' ','=',' ');
+
+  var fnName = n.id ? n.id.name : "";
+  this.emitFn(n, fnName, flags);
+
+  paren && this.w(')');
+};
+
+},
+function(){
 Emitters['FunctionDeclaration'] = function(n, prec, flags) {
   if (n.generator)
     return this.emitGenerator(n, prec, flags);
@@ -2756,7 +2778,7 @@ UntransformedEmitters['arr-iter-end'] = function(n, isStmt, flags) {
 },
 function(){
 UntransformedEmitters['arr-iter-get'] = function(n, isStmt, flags) {
-  this.eH(n.iter).wm('.','get','(',')');
+  this.eH(n.iter).wm('.',(n.rest ? 'rest' : 'get'),'(',')');
   isStmt && this.w(';');
 };
 
@@ -2829,6 +2851,70 @@ function(){
 Emitters['WhileStatement'] = function(n, prec, flags) {
   this.wm('while',' ','(').eA(n.test, PREC_NONE, EC_NONE)
       .w(')').emitDependentStmt(n.body, false);
+};
+
+},
+function(){
+this.emitFn = function(n, fnName, flags) {
+  var paren = false,
+      loopLexicals = this.getLoopLexicalRefList(n.scope);
+
+  if (loopLexicals) paren = flags & EC_NEW_HEAD;
+  if (paren) { this.w('('); flags = EC_NONE; }
+
+  loopLexicals && this.writeClosureHead(loopLexicals);
+  this.emitRawFn(n, fnName);
+  loopLexicals && this.writeClosureTail(loopLexicals);
+
+  paren && this.w(')');
+};
+
+this.getLoopLexicalRefList = function(scope) {
+  var loopLexicals = null;
+  ASSERT.call(this, scope.isAnyFnBody(),
+    'fnbody was actually expected to extract poosible loop lexical names from');
+
+  var head = scope.funcHead,
+      list = head.refs,
+      len = list.length(),
+      e = 0;
+
+  while (e < len) {
+    var elem = list.at(e++);
+    if (head.hasSignificantRef(elem)) {
+      if (!loopLexicals) loopLexicals = [];
+      loopLexicals.push(elem.getDecl());
+    }
+  }
+
+  return loopLexicals;
+};
+  
+this.emitRawFn = function(n, fnName) {
+  this.wm('function').s().w(fnName).w('(');
+  if (!functionHasNonSimpleParams(n))
+    this.emitParams(n.params);
+  this.wm(')',' ').emitFuncBody(n);
+};
+
+this.writeClosureTail = function(loopLexicals) {
+  this.u().l().wm('}','(');
+  var e = 0;
+  while (e < loopLexicals.length) {
+    e && this.wm(',',' ');
+    this.w(loopLexicals[e++].synthName);
+  }
+  this.w(')');
+};
+
+this.writeClosureHead = function(loopLexicals) {
+  this.wm('function','(');
+  var e = 0;
+  while (e < loopLexicals.length) {
+    e && this.wm(',',' ');
+    this.w(loopLexicals[e++].synthName);
+  }
+  this.wm(')',' ','{').i().l().wm('return',' ');
 };
 
 },
@@ -2977,7 +3063,8 @@ this.hasSignificantRef = function(ref) {
   if (ref.resolved)
     return false;
 
-  if (ref.parent.scope === this.funcHead)
+  if (this.isAnyFnBody() && 
+    ref.parent.scope === this.funcHead)
     return false;
 
   var decl = ref.getDecl();
@@ -3013,16 +3100,16 @@ this.startupSynthesis = function() {
 
   while (i < len) {
     elem = list.at(i++);
-    if (this.hasSignificantRef(elem))
+    if (this.funcHead.hasSignificantRef(elem))
       this.trackSynthName(elem.getDecl().synthName);
   }
 
-  list = this.refs, i = 0, len = list.length();
-  while (i < len) {
-    elem = list.at(i++);
-    if (this.hasSignificantRef(elem))
-      this.trackSynthName(elem.getDecl().synthName);
-  }
+//list = this.refs, i = 0, len = list.length();
+//while (i < len) {
+//  elem = list.at(i++);
+//  if (this.hasSignificantRef(elem))
+//    this.trackSynthName(elem.getDecl().synthName);
+//}
 };
 
 }]  ],
@@ -3115,7 +3202,23 @@ this.endSynthesis = function() {
 },
 function(){
 this.hasSignificantRef = function(ref) {
-  ASSERT.cal(this, false, 'ref significant has to be handled by fn body');
+  if (ref.resolved)
+    return false;
+
+  var decl = ref.getDecl();
+  if (decl.isActuallyLiquid())
+    return false;
+
+  if (decl.isInsignificant())
+    return false;
+
+  if (decl === this.scopeName) {
+    ASSERT.call(this, this.isExpr(),
+      'only a fnexpr must have a resolvable name');
+    return false;
+  }
+
+  return true;
 };
 
 },
@@ -11379,7 +11482,6 @@ this.synthGlobals = function() {
     var synthName = Scope.newSynthName(globalDef.name, null, globalDef.ref.lors);
     if (synthName === globalDef.name) {
       globalDef.setSynthName(synthName);
-      this.trackSynthName(synthName);
     }
     else {
       globalDef.synthName = '<global>';
@@ -11784,7 +11886,11 @@ this.setTempStack = function(tempStack) {
 },
 function(){
 this.accessJZ = function() {
-  this.currentScope.accessLiquid(this.scriptScope, 'jz');
+  this.currentScope.accessLiquid(this.scriptScope, '<jz>');
+};
+
+this.accessTZ = function() {
+  this.currentScope.accessLiquid(decl.ref.scope.scs, '<tz>');
 };
 
 },
@@ -11802,7 +11908,6 @@ function(left, right, isInitializer) {
 
 this.synth_ObjIter =
 function(expr) {
-  this.accessJZ();
   return {
     type: '#Untransformed',
     kind: 'obj-iter',
@@ -11812,7 +11917,6 @@ function(expr) {
 
 this.synth_ObjIterGet =
 function(iter, keyName, isComputed) {
-  this.accessJZ();
   return {
     type: '#Untransformed',
     kind: 'obj-iter-get',
@@ -11872,7 +11976,6 @@ this.synth_ArrIterEnd = function(iter) {
 };
 
 this.synth_ArrIter = function(expr) {
-  this.accessJZ();
   return {
     type: '#Untransformed',
     kind: 'arr-iter',
@@ -11881,7 +11984,6 @@ this.synth_ArrIter = function(expr) {
 };
 
 this.synth_UoN = function(expr) {
-  this.accessJZ();
   return {
     type: '#Untransformed',
     kind: 'uon',
@@ -11889,11 +11991,12 @@ this.synth_UoN = function(expr) {
   };
 };
 
-this.synth_ArrIterGet = function(iter) {
+this.synth_ArrIterGet = function(iter, isRest) {
   return {
     type: '#Untransformed',
     kind: 'arr-iter-get',
-    iter: iter
+    iter: iter,
+    rest: isRest ? true : false
   };
 };
 
@@ -11902,7 +12005,6 @@ this.synth_DeclAssig = function(left, right) {
 };
 
 this.synth_ConstCheck = function(n) {
-  this.accessJZ();
   return {
     type: '#Untransformed',
     kind: 'const-check',
@@ -12164,11 +12266,20 @@ this.assigListToIter = function(isInitializer, list, iter, pushTarget) {
   var e = 0;
   while (e < list.length) {
     var elem = list[e++];
+    var rest = false;
+    if (elem && elem.type === 'RestElement') {
+      elem = elem.argument;
+      rest = true;
+    }
     var result =
       elem === null ?
-        this.synth_ArrIterGet(iter):
+        this.synth_ArrIterGet(iter, rest):
         this.transform(
-          this.synth_SubAssig(elem, this.synth_ArrIterGet(iter), isInitializer),
+          this.synth_SubAssig(
+            elem,
+            this.synth_ArrIterGet(iter, rest),
+            isInitializer
+          ),
           pushTarget,
           false
         );
@@ -12332,6 +12443,8 @@ transform['FunctionDeclaration'] = function(n, pushTarget, isVal) {
   var ps = this.setScope(n.scope);
   var ts = this.setTempStack([]);
 
+  this.accessJZ();
+
   if (this.currentScope.isExpr() && this.currentScope.funcHead.scopeName) {
     var scopeName = this.currentScope.funcHead.scopeName;
     var synthName = Scope.newSynthName(scopeName.name, null, scopeName.ref.lors, scopeName);
@@ -12367,7 +12480,7 @@ transform['Identifier'] = function(n, pushTarget, flags) {
   var shouldTest = this.currentScope.shouldTest(decl);
   if (shouldTest) {
     decl.useTZ();
-    this.currentScope.accessLiquid(decl.ref.scope.scs, 'tz');
+    this.accessTZ();
   }
 
   return this.synth_ResolvedName(n.name, decl, shouldTest); 
@@ -12457,6 +12570,7 @@ transform['Program'] = function(n, list, isVal) {
   var ps = this.setScope(this.scriptScope);
   var ts = this.setTempStack([]);
 
+  this.accessJZ();
   this.currentScope.synthGlobals();
   this.currentScope.startupSynthesis();
 
