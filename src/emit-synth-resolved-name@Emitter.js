@@ -17,7 +17,7 @@ this.emitResolvedName_tz = function(n, prec, flags, isV, alternate) {
   if (liquidSource.isAnyFnHead())
     liquidSource = liquidSource.funcBody; 
 
-  this.writeName(liquidSource.getLiquid('tz').synthName)
+  this.writeName(liquidSource.findLiquid('<tz>').synthName)
       .w('<').writeNumWithVal(n.decl.i).w('?')
       .jz('tz').wm('(',"'").writeStrWithVal(n.name).wm("'",')').w(':');  
   if (alternate) {

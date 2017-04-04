@@ -1834,6 +1834,9 @@ this.eN = function(n, isStmt, flags) {
 };
 
 this.write = function(rawStr) {
+  ASSERT.call(this, rawStr !== "",
+    'not allowed to write empty strings to output');
+
   if (this.lineStarted) {
     this.code += this.getOrCreateIndent(this.indentLevel);
     this.lineStarted = false;
@@ -2639,7 +2642,7 @@ this.emitResolvedName_tz = function(n, prec, flags, isV, alternate) {
   if (liquidSource.isAnyFnHead())
     liquidSource = liquidSource.funcBody; 
 
-  this.writeName(liquidSource.getLiquid('tz').synthName)
+  this.writeName(liquidSource.findLiquid('<tz>').synthName)
       .w('<').writeNumWithVal(n.decl.i).w('?')
       .jz('tz').wm('(',"'").writeStrWithVal(n.name).wm("'",')').w(':');  
   if (alternate) {
@@ -2882,6 +2885,9 @@ this.getLoopLexicalRefList = function(scope) {
   while (e < len) {
     var elem = list.at(e++);
     if (head.hasSignificantRef(elem)) {
+      var decl = elem.getDecl();
+      if (!decl.isLexical() || !decl.ref.scope.insideLoop())
+        continue;
       if (!loopLexicals) loopLexicals = [];
       loopLexicals.push(elem.getDecl());
     }
@@ -11889,8 +11895,10 @@ this.accessJZ = function() {
   this.currentScope.accessLiquid(this.scriptScope, '<jz>');
 };
 
-this.accessTZ = function() {
-  this.currentScope.accessLiquid(decl.ref.scope.scs, '<tz>');
+this.accessTZ = function(scope) {
+  var tz = this.currentScope.accessLiquid(scope, '<tz>');
+  if (tz.idealName === "")
+    tz.idealName = 'tz';
 };
 
 },
@@ -12480,7 +12488,7 @@ transform['Identifier'] = function(n, pushTarget, flags) {
   var shouldTest = this.currentScope.shouldTest(decl);
   if (shouldTest) {
     decl.useTZ();
-    this.accessTZ();
+    this.accessTZ(decl.ref.scope.scs);
   }
 
   return this.synth_ResolvedName(n.name, decl, shouldTest); 

@@ -25,6 +25,9 @@ this.getLoopLexicalRefList = function(scope) {
   while (e < len) {
     var elem = list.at(e++);
     if (head.hasSignificantRef(elem)) {
+      var decl = elem.getDecl();
+      if (!decl.isLexical() || !decl.ref.scope.insideLoop())
+        continue;
       if (!loopLexicals) loopLexicals = [];
       loopLexicals.push(elem.getDecl());
     }

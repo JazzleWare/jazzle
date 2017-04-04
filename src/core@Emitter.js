@@ -43,6 +43,9 @@ this.eN = function(n, isStmt, flags) {
 };
 
 this.write = function(rawStr) {
+  ASSERT.call(this, rawStr !== "",
+    'not allowed to write empty strings to output');
+
   if (this.lineStarted) {
     this.code += this.getOrCreateIndent(this.indentLevel);
     this.lineStarted = false;

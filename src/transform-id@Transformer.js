@@ -3,7 +3,7 @@ transform['Identifier'] = function(n, pushTarget, flags) {
   var shouldTest = this.currentScope.shouldTest(decl);
   if (shouldTest) {
     decl.useTZ();
-    this.accessTZ();
+    this.accessTZ(decl.ref.scope.scs);
   }
 
   return this.synth_ResolvedName(n.name, decl, shouldTest); 
