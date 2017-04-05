@@ -2623,6 +2623,31 @@ Emitters['#DeclAssig'] = function(n, prec, flags) {
 
 },
 function(){
+Emitters['#ResolvedFn'] = function(n, isStmt, flags) {
+  var decl = n.decl,
+      isV = false,
+      withVar = false;
+
+  if (decl.isLexical() && decl.ref.scope.insideLoop() && decl.ref.indirect)
+    isV = true;
+
+  if (isV || decl.synthName !== decl.name)
+    withVar = !decl.isFuncArg();
+
+  if (withVar) {
+    this.w('var').s();
+    this.wm(decl.synthName,' ','=').s();
+    isV && this.wm('{','v',':').s();
+  }
+
+  this.emitFn(n.fn, decl.name, EC_NONE);
+
+  isV && this.w('}');
+  withVar && this.w(';');
+};
+
+},
+function(){
 Emitters['#ResolvedName'] = function(n, prec, flags) {
   var isV = false;
   if (n.decl.isLexical() &&
@@ -2985,9 +3010,6 @@ this.acceptsName_m = function(mname, m, o) {
   if (this.containsSynthName_m(mname))
     return false;
 
-  if (argList.hasScopeName_m(mname) && o !== argList.scopeName)
-    return false;
-
   if (mname === _m('arguments')) {
     if (m === ACC_REF)
       return false;
@@ -3000,6 +3022,21 @@ this.acceptsName_m = function(mname, m, o) {
       return false;
   }
 
+  var decl =
+    this.findDecl_m(mname) ||
+    this.funcHead.findDecl_m(mname) ||
+    (this.funcHead.scopeName && _m(this.funcHead.scopeName.name) === mname && this.funcHead.scopeName);
+
+  if (decl === this.funcHead.scopeName) {
+    if (this.isExpr() && o === decl) return true;
+    if (this.isDecl() && o === decl) {
+      if (decl.isLexical() && decl.ref.scope.insideLoop() && decl.ref.indirect)
+        return false;
+    }
+  }
+
+  if (m === ACC_REF && this.isMem() && this.funcHead.scopeName && mname === _m(this.funcHead.scopeName.name))
+    return false;
 //if (m === ACC_DECL) {
 //  var ref = argList.findRef_m(mname);
 //  if (ref && !ref.resolved)
@@ -3087,8 +3124,10 @@ this.hasSignificantRef = function(ref) {
     'fn-body must not have an unresolved own decl');
 
   if (decl === this.funcHead.scopeName) {
-    ASSERT.call(this, this.isExpr(),
-      'only a fnexpr must have a resolvable name');
+    if (this.isExpr())
+      return false;
+    ASSERT.call(this, this.isDecl(),
+      'only an fnexpr requires a resolvable name');
     return false;
   }
 
@@ -3219,9 +3258,11 @@ this.hasSignificantRef = function(ref) {
     return false;
 
   if (decl === this.scopeName) {
-    ASSERT.call(this, this.isExpr(),
+    if (this.isExpr())
+      return false;
+
+    ASSERT.call(this, this.isDecl(),
       'only a fnexpr must have a resolvable name');
-    return false;
   }
 
   return true;
@@ -7080,6 +7121,8 @@ this.parseFunc = function(context, st) {
   this.enterScope(this.scope.fnHeadScope(st));
   if (fnName && this.scope.isExpr())
     this.scope.setScopeName(fnName.name);
+  else if (fnName && this.scope.isDecl())
+    this.scope.scopeName = this.scope.parent.findDecl_m(_m(fnName.name));
 
   this.declMode = DM_FNARG;
   var argList = this.parseArgs(argLen);
@@ -7106,9 +7149,6 @@ this.parseFunc = function(context, st) {
     async: (st & ST_ASYNC) !== 0, scope: scope,
     argumentPrologue: null
   };
-
-  if (isStmt)
-    this.scope.insertFn(n);
 
   if (isStmt)
     this.foundStatement = true;
@@ -11059,7 +11099,7 @@ this.fnBodyHandOver_m = function(mname, ref) {
 this.fnHeadHandOver_m = function(mname, ref) {
   if (isArguments(mname))
     return this.getArguments(ref);
-  if (this.hasScopeName_m(mname) && !this.isMem())
+  if (this.hasScopeName_m(mname) && !this.isDecl() && !this.isMem())
     return this.scopeName.absorbDirect(ref);
   this.parent.refIndirect_m(mname, ref);
 };
@@ -11544,7 +11584,7 @@ this.synthDecl = function(decl) {
   var baseName = decl.name;
   ASSERT.call(this, baseName !== "",
     'the decl has to have a name');
-  var synthName = Scope.newSynthName(baseName, this, decl.ref.lors);
+  var synthName = Scope.newSynthName(baseName, this, decl.ref.lors, decl);
   decl.setSynthName(synthName);
   this.trackSynthName(synthName);
 };
@@ -12034,6 +12074,14 @@ this.synth_ArgIter = function() {
   }
 };
 
+this.synth_ResolvedFn = function(fn, decl) {
+  return {
+    type: '#ResolvedFn',
+    decl: decl,
+    fn: fn
+  };
+};
+
 },
 function(){
 this.findFAT = function() {
@@ -12401,6 +12449,9 @@ this.transformConditionalExpressionWithYield = function(n, list, isVal) {
 
 },
 function(){
+
+},
+function(){
 transform['VariableDeclaration'] = function(n, pushTarget, isVal) {
   if (this.y(n))
     return this.transformDeclarationWithYield(n, pushTarget, isVal);
@@ -12478,7 +12529,17 @@ transform['FunctionDeclaration'] = function(n, pushTarget, isVal) {
   this.setScope(ps);
   this.setTempStack(ts);
 
+  if (n.type === 'FunctionDeclaration') {
+    n = this.asResolvedFn(n);
+    ps.funcDecls.push(n);
+  }
+
   return n;
+};
+
+this.asResolvedFn = function(fn) {
+  var fnName = fn.id.name;
+  return this.synth_ResolvedFn(fn, this.currentScope.findDecl(fnName));
 };
 
 },

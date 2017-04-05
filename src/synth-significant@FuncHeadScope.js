@@ -10,9 +10,11 @@ this.hasSignificantRef = function(ref) {
     return false;
 
   if (decl === this.scopeName) {
-    ASSERT.call(this, this.isExpr(),
+    if (this.isExpr())
+      return false;
+
+    ASSERT.call(this, this.isDecl(),
       'only a fnexpr must have a resolvable name');
-    return false;
   }
 
   return true;

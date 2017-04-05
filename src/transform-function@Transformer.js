@@ -35,5 +35,15 @@ transform['FunctionDeclaration'] = function(n, pushTarget, isVal) {
   this.setScope(ps);
   this.setTempStack(ts);
 
+  if (n.type === 'FunctionDeclaration') {
+    n = this.asResolvedFn(n);
+    ps.funcDecls.push(n);
+  }
+
   return n;
+};
+
+this.asResolvedFn = function(fn) {
+  var fnName = fn.id.name;
+  return this.synth_ResolvedFn(fn, this.currentScope.findDecl(fnName));
 };

@@ -20,8 +20,10 @@ this.hasSignificantRef = function(ref) {
     'fn-body must not have an unresolved own decl');
 
   if (decl === this.funcHead.scopeName) {
-    ASSERT.call(this, this.isExpr(),
-      'only a fnexpr must have a resolvable name');
+    if (this.isExpr())
+      return false;
+    ASSERT.call(this, this.isDecl(),
+      'only an fnexpr requires a resolvable name');
     return false;
   }
 

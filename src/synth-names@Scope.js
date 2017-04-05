@@ -43,7 +43,7 @@ this.synthDecl = function(decl) {
   var baseName = decl.name;
   ASSERT.call(this, baseName !== "",
     'the decl has to have a name');
-  var synthName = Scope.newSynthName(baseName, this, decl.ref.lors);
+  var synthName = Scope.newSynthName(baseName, this, decl.ref.lors, decl);
   decl.setSynthName(synthName);
   this.trackSynthName(synthName);
 };

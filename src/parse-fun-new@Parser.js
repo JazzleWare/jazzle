@@ -90,6 +90,8 @@ this.parseFunc = function(context, st) {
   this.enterScope(this.scope.fnHeadScope(st));
   if (fnName && this.scope.isExpr())
     this.scope.setScopeName(fnName.name);
+  else if (fnName && this.scope.isDecl())
+    this.scope.scopeName = this.scope.parent.findDecl_m(_m(fnName.name));
 
   this.declMode = DM_FNARG;
   var argList = this.parseArgs(argLen);
@@ -116,9 +118,6 @@ this.parseFunc = function(context, st) {
     async: (st & ST_ASYNC) !== 0, scope: scope,
     argumentPrologue: null
   };
-
-  if (isStmt)
-    this.scope.insertFn(n);
 
   if (isStmt)
     this.foundStatement = true;

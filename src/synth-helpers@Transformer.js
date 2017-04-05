@@ -128,3 +128,11 @@ this.synth_ArgIter = function() {
     kind: 'arguments-iter'
   }
 };
+
+this.synth_ResolvedFn = function(fn, decl) {
+  return {
+    type: '#ResolvedFn',
+    decl: decl,
+    fn: fn
+  };
+};
