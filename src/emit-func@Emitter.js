@@ -31,19 +31,19 @@ this.emitParams = function(list) {
 this.emitFuncBody = function(n) {
   var body = n.body.body, i = 0;
   this.w('{').i();
-  while (i < body.length) {
-    var elem = body[i];
-    if (elem.type !== 'ExpressionStatement' ||
-        elem.expression.type !== 'Literal' ||
-        typeof elem.expression.value !== STRING_TYPE)
-      break;
-    this.l();
-    this.emitAny(elem, true, EC_START_STMT);
-    i++;
-  }
+
+  i = this.emitPrologue(body, true);
+
+  this.emitTemps(n, true);
+  this.emitTZ(n, true);
+  this.emitThis(n, true);
+  this.emitArguments(n, true);
 
   if (n.argumentPrologue)
     this.l().emitAny(n.argumentPrologue, true, EC_START_STMT);
+
+  this.emitVars(n, true);
+  this.emitFuncs(n, true);
 
   while (i < body.length) {
     this.l();

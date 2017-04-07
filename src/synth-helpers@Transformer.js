@@ -136,3 +136,28 @@ this.synth_ResolvedFn = function(fn, decl) {
     fn: fn
   };
 };
+
+this.synth_ResolvedThis = function(decl, verbatim) {
+  return {
+    type: '#ResolvedThis',
+    decl: decl,
+    verbatim: verbatim
+  };
+};
+
+this.synth_ArgAt = function(idx) {
+  return {
+    type: '#Untransformed',
+    kind: 'arg-at',
+    idx: idx
+  };
+};
+
+this.synth_ArgRest = function(target, idx) {
+  return {
+    type: '#Untransformed',
+    kind: 'arg-rest',
+    target: target,
+    idx: idx
+  };
+};

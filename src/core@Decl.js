@@ -61,6 +61,10 @@ this.isGlobal = function() {
   return this.mode & DM_GLOBAL;
 };
 
+this.isScopeName = function() {
+  return this.mode & DM_SCOPENAME;
+};
+
 this.absorbDirect = function(otherRef) {
   ASSERT.call(this, !otherRef.resolved,
     'a resolved reference must not be absorbed by a declref');

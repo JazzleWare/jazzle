@@ -19,11 +19,14 @@ this.allocTemp = function() {
   var t = this.tempStack.pop();
   t.occupied = true;
 
+  // TODO: track this scope; will implement after revamping the FuncHeadScope/FuncBodyScope into
+  // one
+
   return t;
 };
 
 this.prepareTemp = function() {
-  var t = this.currentScope.accessLiquid(this.currentScope.scs, 't', true);
+  var t = this.currentScope.accessLiquid(this.currentScope.scs, '<t>', true);
   t.idealName = 't';
   this.tempStack.push(makeTemp(t));
 };

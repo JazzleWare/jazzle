@@ -44,21 +44,23 @@ this.emitRawFn = function(n, fnName) {
 };
 
 this.writeClosureTail = function(loopLexicals) {
-  this.u().l().wm('}','(');
+  this.wm('}','(');
   var e = 0;
-  while (e < loopLexicals.length) {
-    e && this.wm(',',' ');
-    this.w(loopLexicals[e++].synthName);
-  }
+  if (loopLexicals)
+    while (e < loopLexicals.length) {
+      e && this.wm(',',' ');
+      this.w(loopLexicals[e++].synthName);
+    }
   this.w(')');
 };
 
 this.writeClosureHead = function(loopLexicals) {
   this.wm('function','(');
   var e = 0;
-  while (e < loopLexicals.length) {
-    e && this.wm(',',' ');
-    this.w(loopLexicals[e++].synthName);
-  }
-  this.wm(')',' ','{').i().l().wm('return',' ');
+  if (loopLexicals)
+    while (e < loopLexicals.length) {
+      e && this.wm(',',' ');
+      this.w(loopLexicals[e++].synthName);
+    }
+  this.wm(')',' ','{');
 };

@@ -11,8 +11,11 @@ Emitters['BlockStatement'] =
 this.emitBlock = function(n, prec, flags) {
   this.w('{');
   var list = n.body;
-  if (list.length > 0) {
+  if (list.length > 0 || n.scope.defs.length()) {
     this.i();
+    if (n.scope.defs.length())
+      this.l().emitDefs(n.scope.defs);
+
     var i = 0;
     while (i < list.length) {
       this.l().emitAny(list[i], true, EC_START_STMT);

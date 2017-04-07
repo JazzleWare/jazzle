@@ -187,9 +187,38 @@ transform['#ArgAssig'] = function(n, pushTarget, isVal) {
     pushTarget === null, 'pushTarget must be null');
   pushTarget = [];
   ASSERT.call(this, !isVal, 'argument assignments are not allowed to be transformed as values');
-  var t = this.saveInTemp(this.synth_ArgIter(), pushTarget);
-  this.assigListToIter(true, n.elements, t, pushTarget);
-  this.releaseTemp(t);
-  ASSERT.call(this, pushTarget.length > 1, 'length must be > 1');
+  var list = n.elements, i = 0, result = null;
+  while (i < list.length) {
+    var elem = list[i]; 
+    if (elem.type === 'RestElement') {
+      if (elem.argument.type === 'Identifier') {
+        var argDecl = elem.argument = this.transformDeclName(elem.argument);
+        pushTarget.push(this.synth_ArgRest(elem.argument, i));
+        argDecl.decl.reached = true;
+      }
+      else {
+        var t = this.allocTemp();
+        pushTarget.push(this.synth_ArgRest(t, i));
+        this.releaseTemp(t);
+        result = this.transform(
+          this.synth_SubAssig(elem.argument, t, true),
+          pushTarget,
+          false
+        );
+        result && pushTarget.push(result);
+      }
+    }
+    else {
+      result = this.transform(
+        this.synth_SubAssig(elem, this.synth_ArgAt(i), true),
+        pushTarget,
+        false
+      );
+      result && pushTarget.push(result);
+    }
+    i++;
+  }
+
+//ASSERT.call(this, pushTarget.length > 1, 'length must be > 1');
   return this.synth_Sequence(pushTarget);
 };
