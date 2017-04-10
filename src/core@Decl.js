@@ -156,3 +156,8 @@ this.isActuallyLiquid = function() {
 this.isInsignificant = function() {
   return this.type & DM_INSIGNIFICANT_NAME;
 };
+
+// Loop Lexical In Need Of Special Attention y'know
+this.isLlinosa = function() {
+  return this.isLexical() && this.ref.scope.insideLoop() && this.ref.indirect;
+};

@@ -15,7 +15,8 @@ transform['VariableDeclaration'] = function(n, pushTarget, isVal) {
     else
       assig = this.synth_DeclAssig(elem.id, elem.init);
 
-    pushTarget.push(this.transform(assig, null, false));
+    var result = this.transform(assig, pushTarget, false);
+    result && pushTarget.push(result);
   }
 
   return pushTarget.length === 1 ?

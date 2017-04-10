@@ -25,3 +25,18 @@ while (fasle) {BODY|BLOCK}
 ({ *a(OBJMEM|GEN|HEAD) {OBJMEM|GEN|BODY} });
 
 ASYNC, HEAD, OBJMEM, DECL, FN, CTOR, CLS, GEN, ARROW, CATCH, 
+
+Scope {
+  parent, type, refs, defs, scopeID,
+  scs, diStart, allowedActions, misc,
+  hasTZCheckpoint
+}
+
+ConcreteScope < Scope {
+  liquidDefs,
+  synthNamesUntilNow
+}
+
+FunScope < ConcreteScope {
+  argList
+}

@@ -33,7 +33,7 @@ function Scope(sParent, sType) {
       this.scs.diRef;
   this.di = this.scs.isAnyFnBody() ? -1 : this.diRef.v++;
 
-  this.funcDecls = [];
+  this.funcDecls = new SortedObj();
 
   this.parser = this.parent ? this.parent.parser : null;
 

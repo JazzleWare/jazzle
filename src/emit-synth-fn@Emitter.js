@@ -1,4 +1,5 @@
 Emitters['#ResolvedFn'] = function(n, isStmt, flags) {
+  return;
   var decl = n.decl,
       isV = false;
 

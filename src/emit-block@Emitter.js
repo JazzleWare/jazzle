@@ -14,7 +14,7 @@ this.emitBlock = function(n, prec, flags) {
   if (list.length > 0 || n.scope.defs.length()) {
     this.i();
     if (n.scope.defs.length())
-      this.l().emitDefs(n.scope.defs);
+      this.l().emitLexicalBindings(n.scope, false);
 
     var i = 0;
     while (i < list.length) {

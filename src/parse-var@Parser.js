@@ -32,7 +32,9 @@ this.parseVariableDeclaration = function(context) {
   }
 
   this.declMode = kind === 'var' ? 
-    DM_VAR : DM_LET;
+    DM_VAR : 
+    kind === 'let' ?
+      DM_LET : DM_CONST;
   
   if (kind === 'let' &&
       this.lttype === 'Identifier' &&

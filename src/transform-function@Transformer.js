@@ -32,7 +32,7 @@ transform['FunctionDeclaration'] = function(n, pushTarget, isVal) {
 
   if (n.type === 'FunctionDeclaration') {
     n = this.asResolvedFn(n);
-    ps.funcDecls.push(n);
+    ps.addFunc(n.fn.id.name, n);
   }
 
   return n;

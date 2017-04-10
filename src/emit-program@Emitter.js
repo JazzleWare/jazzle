@@ -1,4 +1,6 @@
 Emitters['Program'] = function(n, prec, flags) {
+  this.emitTopLevelBindings(n.scope);
+
   var list = n.body, i = 0;
 
   while (i < list.length) {

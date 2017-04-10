@@ -29,15 +29,17 @@ this.emitParams = function(list) {
 };
 
 this.emitFuncBody = function(n) {
-  var body = n.body.body, i = 0;
+  var body = n.body.body;
   this.w('{').i();
 
-  i = this.emitPrologue(body, true);
+  var needsNL = true;
+  var e = this.emitPrologue(body, true);
+  needsNL = !e;
 
-  this.emitTemps(n, true);
-  this.emitTZ(n, true);
-  this.emitThis(n, true);
-  this.emitArguments(n, true);
+  needsNL = !this.emitTemps(n, needsNL);
+  needsNL = !this.emitTZ(n, needsNL);
+  needsNL = !this.emitThis(n, needsNL);
+  needsNL = !this.emitArguments(n, needsNL);
 
   if (n.argumentPrologue)
     this.l().emitAny(n.argumentPrologue, true, EC_START_STMT);
@@ -45,13 +47,13 @@ this.emitFuncBody = function(n) {
   this.emitVars(n, true);
   this.emitFuncs(n, true);
 
-  while (i < body.length) {
+  while (e < body.length) {
     this.l();
-    this.emitAny(body[i++], true, EC_START_STMT);
+    this.emitAny(body[e++], true, EC_START_STMT);
   }
 
   this.u();
-  if (i || n.argumentPrologue) 
+  if (e || n.argumentPrologue) 
     this.l();
 
   this.w('}');

@@ -3,10 +3,11 @@ this.shouldTest = function(decl) {
     return false;
   if (!decl.reached)
     return true;
-  if (!this.isAnyFnComp())
+
+  var scope = this.scs;
+  if (!scope.isAnyFnComp())
     return false;
 
-  var scope = this;
   if (scope.isAnyFnBody())
     scope = scope.funcHead;
 

@@ -29,8 +29,8 @@ transform['#DeclAssig'] = function(n, pushTarget, isVal) {
     pushTarget = [];
     isTop = true;
   }
-  else
-    ASSERT.call(this, n.right, 'subdecls must have initializers');
+  else if (n.left.type !== 'Identifier')
+    ASSERT.call(this, n.right, 'nonsimple subdecls must have initializers');
 
   var transformer = assigTransformers[n.left.type];
   var result = transformer.call(this, n, pushTarget, isVal);

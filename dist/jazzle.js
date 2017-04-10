@@ -324,7 +324,7 @@ function Scope(sParent, sType) {
       this.scs.diRef;
   this.di = this.scs.isAnyFnBody() ? -1 : this.diRef.v++;
 
-  this.funcDecls = [];
+  this.funcDecls = new SortedObj();
 
   this.parser = this.parent ? this.parent.parser : null;
 
@@ -1762,6 +1762,11 @@ this.isInsignificant = function() {
   return this.type & DM_INSIGNIFICANT_NAME;
 };
 
+// Loop Lexical In Need Of Special Attention y'know
+this.isLlinosa = function() {
+  return this.isLexical() && this.ref.scope.insideLoop() && this.ref.indirect;
+};
+
 },
 function(){
 this.str = function() {
@@ -2138,7 +2143,7 @@ this.emitBlock = function(n, prec, flags) {
   if (list.length > 0 || n.scope.defs.length()) {
     this.i();
     if (n.scope.defs.length())
-      this.l().emitDefs(n.scope.defs);
+      this.l().emitLexicalBindings(n.scope, false);
 
     var i = 0;
     while (i < list.length) {
@@ -2262,6 +2267,136 @@ Emitters['DoWhileStatement'] = function(n, prec, flags) {
 
 },
 function(){
+this.emitTopLevelBindings = function(scope, needsNL) {
+  var emitted = false;
+  ASSERT.call(this, scope.isScript() || scope.isModule(),
+    'a script or module was actually expected but got <'+scope.typeString()+'>');
+  var list = scope.funcDecls, i = 0, len = list.length(), elem = null;
+  while (i < len) {
+    if (i === 0 && needsNL) { this.l(); needsNL = false }
+    else if (i > 0) this.l();
+    this.emitTopLevelFnList(list.at(i++));
+  }
+    
+  needsNL = emitted = len > 0;
+
+  list = scope.defs,
+  i = 0,
+  len = list.length(),
+  elem = null;
+  var b = 0;
+
+  while (i < len) {
+    elem = list.at(i++);
+    if (elem.isVName()) {
+      if (b === 0) {
+        if (needsNL) { this.l(); needsNL = false; }
+        this.w('var').s();
+      }
+      else this.w(',').s();
+      this.w(elem.synthName);
+      b++;
+    }
+  }
+  b && this.w(';');
+  return emitted || b !== 0;
+}; 
+
+this.emitTopLevelFnList = function(fnList) {
+  var i = 0;
+  while (i < fnList.length) {
+    i && this.l();
+    this.emitTopLevelFn(fnList[i], i === 0);
+    i++;
+  }
+};
+
+this.emitTopLevelFn = function(n, isFirst) {
+  var fn = n.fn, decl = n.decl, hasVar = false;
+  if (decl.name !== decl.synthName && isFirst) {
+    hasVar = true;
+    isFirst = false;
+  }
+  if (isFirst)
+    this.emitRawFn(fn, decl.name);
+  else {
+    hasVar && this.wm('var',' ');
+    this.w(decl.synthName)
+      .wm(' ','=',' ')
+      .emitRawFn(fn, decl.name);
+    this.w(';');
+  }
+};
+
+this.emitLexicalBindings = function(scope, needsNL) {
+  var list = scope.defs, i = 0, len = list.length(), elem = null, b = 0;
+  while (i < len) {
+    elem = list.at(i++);
+    if (!scope.ownsDecl(elem) || !elem.isLlinosa())
+      continue;
+    if (b === 0) {
+      if (needsNL) { this.l(); needsNL = false; }
+      this.wm('var',' ');
+    }
+    else if (b > 0) 
+      this.wm(',',' ');
+
+    this.emitLlinosa(elem);
+    b++;
+  }
+
+  var emitted = b > 0;
+  if (emitted) {
+    this.w(';');
+    needsNL = true;
+  }
+
+  list = scope.funcDecls, i = 0, len = list.length();
+  while (i < len) {
+    elem = list.at(i);
+    ASSERT.call(this, elem.length === 1,
+      'lexical fns are not allowed to have more than a single defsite');
+
+    if (i === 0 && needsNL) { this.l(); needsNL = false; }
+    else if (i > 0) this.l();
+    this.emitLexicalFn(elem[0]);
+    i++;
+  }
+
+  if (!emitted) emitted = !i;
+  return emitted;
+};
+
+this.emitLlinosa = function(llinosa) {
+  this.w(llinosa.synthName).s().w('=').s().wm('{','v',':',' ','void',' ','0','}');
+};
+
+this.emitLexicalFn = function(n) {
+  var fn = n.fn, decl = n.decl;
+  var isV = decl.isLlinosa(), loopLexicals = null;
+
+  if (!isV) this.wm('var').s();
+  this.w(decl.synthName);
+  if (isV) this.wm('.','v');
+
+  this.s().w('=').s();
+
+  loopLexicals = this.getLoopLexicalRefList(fn.scope);
+  if (loopLexicals) {
+    this.writeClosureHead(loopLexicals);
+    this.i().l().w('return').s();
+    this.emitRawFn(fn, decl.name);
+    this.w(';').u().l();
+    this.writeClosureTail(loopLexicals);
+  }
+  else
+    this.emitRawFn(fn, decl.name);
+
+  this.w(';');
+};
+
+},
+function(){
 Emitters['ExpressionStatement'] = function(n, isStmt, flags) {
   if (n.expression.type === '#Sequence')
     this.emitSynthSequence(n.expression, true, EC_NONE);
@@ -2340,15 +2475,17 @@ this.emitParams = function(list) {
 };
 
 this.emitFuncBody = function(n) {
-  var body = n.body.body, i = 0;
+  var body = n.body.body;
   this.w('{').i();
 
-  i = this.emitPrologue(body, true);
+  var needsNL = true;
+  var e = this.emitPrologue(body, true);
+  needsNL = !e;
 
-  this.emitTemps(n, true);
-  this.emitTZ(n, true);
-  this.emitThis(n, true);
-  this.emitArguments(n, true);
+  needsNL = !this.emitTemps(n, needsNL);
+  needsNL = !this.emitTZ(n, needsNL);
+  needsNL = !this.emitThis(n, needsNL);
+  needsNL = !this.emitArguments(n, needsNL);
 
   if (n.argumentPrologue)
     this.l().emitAny(n.argumentPrologue, true, EC_START_STMT);
@@ -2356,13 +2493,13 @@ this.emitFuncBody = function(n) {
   this.emitVars(n, true);
   this.emitFuncs(n, true);
 
-  while (i < body.length) {
+  while (e < body.length) {
     this.l();
-    this.emitAny(body[i++], true, EC_START_STMT);
+    this.emitAny(body[e++], true, EC_START_STMT);
   }
 
   this.u();
-  if (i || n.argumentPrologue) 
+  if (e || n.argumentPrologue) 
     this.l();
 
   this.w('}');
@@ -2372,12 +2509,13 @@ this.emitFuncBody = function(n) {
 function(){
 this.emitTZ = function(fn, needsNL) {
   var s = fn.scope;
-  if (!s.hasTZ) return;
+  if (!s.hasTZ) return false;
   needsNL && this.l();
 //if (s.isConcrete())
 //  this.wm('var',' ');
   var tz = s.scs.findLiquid('<tz>');
   this.w(tz.synthName).s().w('=').s().writeNumWithVal(s.di).w(';');
+  return true;
 };
 
 this.emitTemps = function(fn, needsNL) {
@@ -2392,19 +2530,18 @@ this.emitTemps = function(fn, needsNL) {
     this.w(elem.synthName);
   }
   e && this.w(';');
+  return e !== 0;
 };
 
 this.emitThis = function(fn, needsNL) {
   var s = fn.scope; 
   var _this = s.special.lexicalThis;
-  if (_this === null)
-    return;
-
-  if (!_this.ref.indirect)
-    return;
-
+  if (_this === null || !_this.ref.indirect)
+    return false;
   needsNL && this.l();
   this.wm(_this.synthName,' ','=',' ','this',';');
+
+  return true;
 };
 
 this.emitPrologue = function(list, needsNL) {
@@ -2623,6 +2760,8 @@ function findComputed(list) {
 },
 function(){
 Emitters['Program'] = function(n, prec, flags) {
+  this.emitTopLevelBindings(n.scope);
+
   var list = n.body, i = 0;
 
   while (i < list.length) {
@@ -2697,16 +2836,24 @@ this.emitCase = function(c) {
 function(){
 Emitters['#DeclAssig'] = function(n, prec, flags) {
   var decl = n.left.decl;
+  var isV =
+    decl.isLexical() &&
+    decl.ref.scope.insideLoop() && decl.ref.indirect;
+  if (!isV) {
+    if (decl.isFuncArg() || decl.isLexical())
+      this.wm('var',' ');
+  }
+  this.w(decl.synthName);
+  if (isV)
+    this.wm('.','v');
   if (n.right) {
-    this.w(decl.synthName);
-    var isV =
-      decl.isLexical() &&
-      decl.ref.scope.insideLoop() && decl.ref.indirect;
-    isV && this.wm('.','v');
     this.s().w('=').s();
     this.eN(n.right);
-    this.w(';');
   }
+  else if (decl.ref.scope.insideLoop())
+    this.wm(' ','=',' ','void',' ','0');
+
+  this.w(';');
   if (decl.hasTZ) {
     this.l();
     var liquidSource = decl.ref.scope.scs;
@@ -2721,6 +2868,7 @@ Emitters['#DeclAssig'] = function(n, prec, flags) {
 },
 function(){
 Emitters['#ResolvedFn'] = function(n, isStmt, flags) {
+  return;
   var decl = n.decl,
       isV = false;
 
@@ -10261,7 +10409,9 @@ this.parseVariableDeclaration = function(context) {
   }
 
   this.declMode = kind === 'var' ? 
-    DM_VAR : DM_LET;
+    DM_VAR : 
+    kind === 'let' ?
+      DM_LET : DM_CONST;
   
   if (kind === 'let' &&
       this.lttype === 'Identifier' &&
@@ -10896,6 +11046,23 @@ this.total = function() {
 
 }]  ],
 [Scope.prototype, [function(){
+this.addFunc = function(name, resolvedFn) {
+  var fnList = this.getFuncList(name);
+  fnList.push(resolvedFn);
+};
+
+this.getFuncList_m = function(mname) {
+  return this.funcDecls.has(mname) ?
+    this.funcDecls.get(mname) :
+    this.funcDecls.set(mname, []);
+};
+
+this.getFuncList = function(name) {
+  return this.getFuncList_m(_m(name));
+};
+
+},
+function(){
 this.calculateSpecial = function() {
   if (this.isClass())
     return {supMem: null, supCall: null};
@@ -11916,10 +12083,11 @@ this.shouldTest = function(decl) {
     return false;
   if (!decl.reached)
     return true;
-  if (!this.isAnyFnComp())
+
+  var scope = this.scs;
+  if (!scope.isAnyFnComp())
     return false;
 
-  var scope = this;
   if (scope.isAnyFnBody())
     scope = scope.funcHead;
 
@@ -12343,8 +12511,8 @@ transform['#DeclAssig'] = function(n, pushTarget, isVal) {
     pushTarget = [];
     isTop = true;
   }
-  else
-    ASSERT.call(this, n.right, 'subdecls must have initializers');
+  else if (n.left.type !== 'Identifier')
+    ASSERT.call(this, n.right, 'nonsimple subdecls must have initializers');
 
   var transformer = assigTransformers[n.left.type];
   var result = transformer.call(this, n, pushTarget, isVal);
@@ -12650,7 +12818,8 @@ transform['VariableDeclaration'] = function(n, pushTarget, isVal) {
     else
       assig = this.synth_DeclAssig(elem.id, elem.init);
 
-    pushTarget.push(this.transform(assig, null, false));
+    var result = this.transform(assig, pushTarget, false);
+    result && pushTarget.push(result);
   }
 
   return pushTarget.length === 1 ?
@@ -12707,7 +12876,7 @@ transform['FunctionDeclaration'] = function(n, pushTarget, isVal) {
 
   if (n.type === 'FunctionDeclaration') {
     n = this.asResolvedFn(n);
-    ps.funcDecls.push(n);
+    ps.addFunc(n.fn.id.name, n);
   }
 
   return n;

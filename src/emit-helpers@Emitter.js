@@ -1,11 +1,12 @@
 this.emitTZ = function(fn, needsNL) {
   var s = fn.scope;
-  if (!s.hasTZ) return;
+  if (!s.hasTZ) return false;
   needsNL && this.l();
 //if (s.isConcrete())
 //  this.wm('var',' ');
   var tz = s.scs.findLiquid('<tz>');
   this.w(tz.synthName).s().w('=').s().writeNumWithVal(s.di).w(';');
+  return true;
 };
 
 this.emitTemps = function(fn, needsNL) {
@@ -20,19 +21,18 @@ this.emitTemps = function(fn, needsNL) {
     this.w(elem.synthName);
   }
   e && this.w(';');
+  return e !== 0;
 };
 
 this.emitThis = function(fn, needsNL) {
   var s = fn.scope; 
   var _this = s.special.lexicalThis;
-  if (_this === null)
-    return;
-
-  if (!_this.ref.indirect)
-    return;
-
+  if (_this === null || !_this.ref.indirect)
+    return false;
   needsNL && this.l();
   this.wm(_this.synthName,' ','=',' ','this',';');
+
+  return true;
 };
 
 this.emitPrologue = function(list, needsNL) {
