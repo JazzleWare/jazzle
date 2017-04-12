@@ -15,6 +15,7 @@ this. parseClass = function(context) {
 
   this.next(); // 'class'
 
+  var scopeName = null;
   var st = ST_NONE;
   if (isStmt) {
     st = ST_DECL;
@@ -23,6 +24,7 @@ this. parseClass = function(context) {
     if (this.lttype === 'Identifier' && this.ltval !== 'extends') {
       this.declMode = DM_CLS;
       name = this.parsePattern();
+      scopeName = this.scope.findDecl_m(_m(name.name));
     }
     else if (!(context & CTX_DEFAULT))
       this.err('class.decl.has.no.name', {c0:startc,loc0:startLoc});
@@ -45,6 +47,8 @@ this. parseClass = function(context) {
 
   if (name && this.scope.isExpr())
     this.scope.setScopeName(name.name);
+  else
+    this.scope.scopeName = scopeName;
 
   if (superClass)
     this.scope.mode |= SM_CLS_WITH_SUPER;

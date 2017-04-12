@@ -34,9 +34,249 @@ Scope {
 
 ConcreteScope < Scope {
   liquidDefs,
-  synthNamesUntilNow
+  synthNamesUntilNow,
+  special::{ _this }
 }
 
 FunScope < ConcreteScope {
-  argList
+  argList, argMap, argRefs, prologue, scopeName
+  firstNonSimple, firstDup, firstEvalOrArguments,
+  inBody, special::{ _this, _arguments },
+}
+
+ClassScope < Scope {
+  scopeName,
+  special:: { _memSuper, _callSuper }
+}
+
+CatchScope {
+  argList, argMap, argRefs, argsIsSimple, argsIsSignificant,
+  inBody
+}
+
+`hasSignificantNames() {
+  if `isFunc(): return true
+  if `isCatch(): return `argsIsSimple && `argsIsSignificant
+  if `isScript() || `isModule(): return true
+  return false
+}
+
+different names to synthesize:
+
+script var not named 'arguments'
+script var named 'arguments'
+fn var not named 'arguments'
+fn var named 'arguments'
+class-expr name
+fn-expr name
+
+createLiquid(scope, group, idealName)
+gocLiquid(scope, name, group, idealName)
+findLiquid(scope, name)
+
+script-accept(name, mode) {
+  if !`booted(): `boot()
+  return name in `synthNamesUntilNow
+}
+
+fn-accept(name, mode) {
+  !`booted() && `boot()
+  if name in `synthNamesUntilNow: return false
+  if name == 'arguments' && mode == Acc.REF: return false
+  if name == 'arguments' && `firstNonSimple != null: return false
+}
+
+Decl#attachLiquid(liquid) {
+  liquid.updateCRSList(`ref.lors)
+  `liquid = liquid
+}
+
+a refname is accepted into a scope if that scopes resolves refname to the original decl the refname belongs to
+
+(class a extends e { constructor() { this.a = super(a) } e() { return a } })
+
+(t = {v: null}, t.v = jz
+.ctorMC(function(t) { return (function(m,c) { return (
+  function a() {
+    this.a = c.call(this, t.v)
+  }
+)})}(t))
+.mem(function(t) { return (
+  function e() {
+    return t.v;
+  }
+)}(t))
+.cls
+
+while (false) {
+  let l = 5;
+  (class a { constructor() { this.a = super(a, l); } });
+}
+
+while (false) {
+  var l = {v: null};
+  l.v = 5;
+  (
+    t = {v: null},
+    t.v = jz.ctorMC(function(t,l) { return (function (m,c) { return (
+      function a() {
+        this.a = c.call(this, t.v, l.v);
+      }
+    )})}(t,l)).cls
+  );
+}
+
+while (false) {
+  var l = {v: void 0};
+  l.v = 5;
+  t = {v: null};
+  t.v = jz.cls()
+    .ctormc(function(t,l) {return function(m,c) { return (
+      function a() { this.a = c.call(this, t.v, l.v); }
+    )}}(t, l))
+    .cls;
+}
+
+function jz() {
+var o = {};
+function cls() { this.m = null; this.c = null; }
+var cp = cls.prototype;
+cp.ctor = function(c) {}
+
+(class a extends b { constructor() { super(); this.a = a } a() { return a } })
+
+t = b;
+t1 = jz.cr(t);
+t2 = t1.constructor = function(t,t1,t2) {
+  return function a() { t.call(this); this.a = t2 }
+}(t,t1,t2);
+t1.a = function(t,t1,t2) {
+  return function a() { return t2 }
+)(t,t1,t2);
+t2.prototype = t1;
+
+while (false) {
+  let l = class a extends b { constructor() { super(a, l) } }
+}
+
+while (false) {
+  var l = {v: null};
+  l.v = (
+    t = {v: null}, // cls
+    t1 = b, // super
+    t2 = jz.cr(b), // cls.prototype
+    t.v = t2.constructor = function(t,t1,t2,l) { return (
+      function a() { t1.call(this, t.v, l); }
+    )}(t,t1,t2,l),
+    t2.constructor.prototype = t2,
+    t.v
+  );
+}
+
+while (false) { (class a extends b { constructor() { super(a); } }); }
+while (false) {
+  (function(c,m) {
+    var cls = function a() { c.call(this, cls); }
+    m.constructor = cls;
+    cls.prototype = m;
+    return cls;
+  )(c = b, m = jz.from(c));
+}
+
+(class a extends yield { constructor() { super(a); } [yield]() { return super.l(a) } })
+yield
+t1 = sent
+t2 = jz.from(t1)
+cls = (function(c,m) {
+  var cls = function a() { c.call(this, cls); };
+  m.constructor = cls;
+  cls.prototype = m;
+  return cls;
+})(t1, t2));
+yield
+t2[sent] = function(cls, m) {
+  return m.l.call(this, cls);
+}(cls,m);
+
+while (false) {
+  var l = {v: null};
+  l.v = (
+    t = {v: null},
+    t.v = jz.cls()
+      .ctormc(
+
+t = b;
+t1 = function(t, t1) {
+  function a() { t.call(this); this.a = t1 }
+}(t, t1);
+t2 = t1.prototype; 
+
+cp.ctor = function() {
+  var hs = arguments.length>1;
+  this.c = hs ? arguments[0] : null;
+  this.m = hs ? cr(this.c) : null;
+}
+
+`parseWhile() {
+  var leading = `suck(), afterWhile = null;
+  `next(); // 'while'
+  afterWhile = `suck(); `expect('(')
+  var test = `parseExpr(); `spew()
+  `expect(')')
+}
+
+class A extends B {
+  constructor() { super(super.l()) }
+  [this.a](b,e) { return l }
+}
+
+var A = function(c,m) {
+  var ctor = function A() { c.call(this, m.l.call(this)) };
+  m.constructor = ctor;
+  m[this_.a] = function() { return l; };
+  ctor.prototype = m;
+  return ctor;
+}(B, jz.from(B));
+
+class A extends B {
+  constructor() { super.l(A) }
+  [this.l()]() { return A }
+}
+
+var A1 = function(c,m) {
+  var ctor = function A() { m.l.call(this, A1) };
+  m.constructor = ctor;
+  m[this_.l()] = function() { return A1; }
+  ctor.prototype = m;
+  return ctor;
+}(B, jz.from(B));
+
+while (false) {
+  class A extends B { constructor() { super(A) } }
+}
+
+while (false) {
+  var A1 = {v: void 0};
+  A1.v = function(c,m,A1) {
+    var ctor = function A() { c.call(A1.v) };
+    m.constructor = ctor;
+    ctor.prototype = m;
+    return ctor;
+  }(B, jz.from(B), A1);
+}
+
+while (false) {
+  e(class A extends B { constructor() { super(A) } });
+}
+
+while (false) {
+  e((
+    t = {v: void},
+    function(m,c,A1) {
+      var ctor = function A() { c.call(this, A1.v) };
+      m.constructor = ctor;
+      ctor.prototype = m;
+      return ctor;
+    }(B, jz.from(b), t)
+  ));
 }

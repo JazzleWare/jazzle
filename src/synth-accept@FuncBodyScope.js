@@ -20,8 +20,8 @@ this.acceptsName_m = function(mname, m, o) {
   }
 
   var decl =
-    this.findDecl_m(mname) ||
-    this.funcHead.findDecl_m(mname) ||
+//  this.findDecl_m(mname) ||
+//  this.funcHead.findDecl_m(mname) ||
     (this.funcHead.scopeName && _m(this.funcHead.scopeName.name) === mname && this.funcHead.scopeName);
 
   if (decl === this.funcHead.scopeName) {
@@ -34,6 +34,13 @@ this.acceptsName_m = function(mname, m, o) {
 
   if (m === ACC_REF && this.isMem() && this.funcHead.scopeName && mname === _m(this.funcHead.scopeName.name))
     return false;
+
+  if (m === ACC_REF && this.isCtorComp()) {
+    var cls = this.isHead() ? this.parent : this.parent.parent;
+    if (cls.scopeName && mname === _m(scopeName.name))
+      return false;
+  }
+
 //if (m === ACC_DECL) {
 //  var ref = argList.findRef_m(mname);
 //  if (ref && !ref.resolved)

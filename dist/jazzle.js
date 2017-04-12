@@ -1066,6 +1066,7 @@ var DM_CLS = 1,
     DM_CALLSUP = DM_MEMSUP << 1,
     DM_GLOBAL = DM_CALLSUP << 1,
     DM_LIQUID = DM_GLOBAL << 1,
+    DM_CLSNAME = DM_LIQUID << 1,
     DM_NONE = 0,
     DM_INSIGNIFICANT_NAME =
       DM_ARGUMENTS|
@@ -3295,8 +3296,8 @@ this.acceptsName_m = function(mname, m, o) {
   }
 
   var decl =
-    this.findDecl_m(mname) ||
-    this.funcHead.findDecl_m(mname) ||
+//  this.findDecl_m(mname) ||
+//  this.funcHead.findDecl_m(mname) ||
     (this.funcHead.scopeName && _m(this.funcHead.scopeName.name) === mname && this.funcHead.scopeName);
 
   if (decl === this.funcHead.scopeName) {
@@ -3309,6 +3310,13 @@ this.acceptsName_m = function(mname, m, o) {
 
   if (m === ACC_REF && this.isMem() && this.funcHead.scopeName && mname === _m(this.funcHead.scopeName.name))
     return false;
+
+  if (m === ACC_REF && this.isCtorComp()) {
+    var cls = this.isHead() ? this.parent : this.parent.parent;
+    if (cls.scopeName && mname === _m(scopeName.name))
+      return false;
+  }
+
 //if (m === ACC_DECL) {
 //  var ref = argList.findRef_m(mname);
 //  if (ref && !ref.resolved)
@@ -6132,6 +6140,7 @@ this. parseClass = function(context) {
 
   this.next(); // 'class'
 
+  var scopeName = null;
   var st = ST_NONE;
   if (isStmt) {
     st = ST_DECL;
@@ -6140,6 +6149,7 @@ this. parseClass = function(context) {
     if (this.lttype === 'Identifier' && this.ltval !== 'extends') {
       this.declMode = DM_CLS;
       name = this.parsePattern();
+      scopeName = this.scope.findDecl_m(_m(name.name));
     }
     else if (!(context & CTX_DEFAULT))
       this.err('class.decl.has.no.name', {c0:startc,loc0:startLoc});
@@ -6162,6 +6172,8 @@ this. parseClass = function(context) {
 
   if (name && this.scope.isExpr())
     this.scope.setScopeName(name.name);
+  else
+    this.scope.scopeName = scopeName;
 
   if (superClass)
     this.scope.mode |= SM_CLS_WITH_SUPER;
@@ -11406,7 +11418,7 @@ this.clsHandOver_m = function(mname, ref) {
   if (isArguments(mname) || isThis(mname))
     return this.parent.refIndirect_m(mname, ref);
 
-  if (this.hasScopeName_m(mname))
+  if (this.isExpr() && this.hasScopeName_m(mname))
     return this.scopeName.absorbDirect(ref);
 
   return this.parent.refDirect_m(mname, ref);
