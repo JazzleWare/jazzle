@@ -6,7 +6,7 @@ Emitters['FunctionExpression'] = function(n, isStmt, flags) {
   if (scopeName && scopeName.name !== scopeName.synthName)
     altName = true;
 
-  var loopLexicals = this.getLoopLexicalRefList(n.scope);
+  var loopLexicals = n.scope.getLoopLexicalRefList();
 
   if (altName || loopLexicals) {
     if (!paren) paren = flags & EC_NEW_HEAD;

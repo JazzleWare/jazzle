@@ -112,7 +112,7 @@ this.emitLexicalFn = function(n) {
 
   this.s().w('=').s();
 
-  loopLexicals = this.getLoopLexicalRefList(fn.scope);
+  loopLexicals = fn.scope.getLoopLexicalRefList();
   if (loopLexicals) {
     this.writeClosureHead(loopLexicals);
     this.i().l().w('return').s();

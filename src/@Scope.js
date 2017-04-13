@@ -1,41 +1,23 @@
-function Scope(sParent, sType) {
+function Scope(sParent, type) {
   this.parent = sParent;
-  this.type = sType;
+  this.type = type;
+  this.refs = new SortedObj();
+  this.defs = new SortedObj();
+  this.hasTZCheckPoint = false;
   this.scs = this.isConcrete() ?
     this :
     this.parent.scs;
-  
-  this.defs = new SortedObj();
-  this.liquidDefs = this.isConcrete() ? new SortedObj() : null;
-  this.refs = new SortedObj();
 
-  this.synthNamesUntilNow = null;
+  this.allowedActions = this.determineActions();
+  this.misc = this.determineMisc();
 
-  this.allowed = this.calculateAllowedActions();
-  this.mode = this.calculateScopeMode();
-  if (this.isCtorComp() && this.isBody() && !this.cls().hasHeritage())
-    this.allowed &= ~SA_CALLSUP;
+  this.scopeID_ref = this.parent ?
+    this.parent.scopeID_ref : {v: 0};
+  this.scopeID = this.scopeID_ref.v++;
 
-  this.ch = [];
-  if (this.parent)
-    this.parent.ch.push(this);
+  this.parser = this.parent && this.parent.parser;
 
-  this.special = this.calculateSpecial();
-
-  this.idRef = this.parent ? this.parent.idRef : {v: 0};
-  this.id = this.idRef.v++;
-
-  this.diRef =
-    this.isConcrete() ?
-      this.isAnyFnBody() ? 
-        null :
-        {v: 0} :
-      this.scs.diRef;
-  this.di = this.scs.isAnyFnBody() ? -1 : this.diRef.v++;
-
-  this.funcDecls = new SortedObj();
-
-  this.parser = this.parent ? this.parent.parser : null;
-
-  this.hasTZ = false;
-}
+  this.di_ref = this.isConcrete() ?
+    {v: 0} : this.parent.diRef;
+  this.di0 = this.di_ref.v++;
+};

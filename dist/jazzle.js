@@ -90,6 +90,23 @@ ErrorString.from = function(str) {
   return error;
 };
 ;
+function FunScope(parent, type) {
+  ConcreteScope.call(this, parent, type);
+
+  this.argList = [];
+  this.argMap = {};
+  this.argRefs = new SortedObj();
+  this.prologue = [];
+  this.scopeName = null;
+  this.firstNonSimple = 
+  this.firstDup =
+  this.firstEvalOrArguments = null;
+  this.inBody = false;
+  this.special = { _this: null, _arguments: null };
+
+  this.refs = this.argRefs;
+}
+;
 function FuncBodyScope(sParent, sType) {
   Scope.call(this, sParent, sType|ST_BODY);
 
@@ -171,6 +188,37 @@ function Liquid(scope, name) {
   this.synthName = "";
   this.associatedDecl = null;
 }
+;
+function NewConcreteScope(parent, type) {
+  Scope.call(this, parent, type);
+
+  this.liquidDefs = new SortedObj();
+  this.synthNamesUntilNow = new SortedObj();
+}
+;
+function NewScope(sParent, type) {
+  this.parent = sParent;
+  this.type = type;
+  this.refs = new SortedObj();
+  this.defs = new SortedObj();
+  this.hasTZCheckPoint = false;
+  this.scs = this.isConcrete() ?
+    this :
+    this.parent.scs;
+
+  this.allowedActions = this.determineActions();
+  this.misc = this.determineMisc();
+
+  this.scopeID_ref = this.parent ?
+    this.parent.scopeID_ref : {v: 0};
+  this.scopeID = this.scopeID_ref.v++;
+
+  this.parser = this.parent && this.parent.parser;
+
+  this.di_ref = this.isConcrete() ?
+    {v: 0} : this.parent.diRef;
+  this.di0 = this.di_ref.v++;
+};
 ;
 function ParenScope(sParent) {
   Scope.call(this, sParent, ST_PAREN);
@@ -2382,7 +2430,7 @@ this.emitLexicalFn = function(n) {
 
   this.s().w('=').s();
 
-  loopLexicals = this.getLoopLexicalRefList(fn.scope);
+  loopLexicals = fn.scope.getLoopLexicalRefList();
   if (loopLexicals) {
     this.writeClosureHead(loopLexicals);
     this.i().l().w('return').s();
@@ -2417,7 +2465,7 @@ Emitters['FunctionExpression'] = function(n, isStmt, flags) {
   if (scopeName && scopeName.name !== scopeName.synthName)
     altName = true;
 
-  var loopLexicals = this.getLoopLexicalRefList(n.scope);
+  var loopLexicals = n.scope.getLoopLexicalRefList();
 
   if (altName || loopLexicals) {
     if (!paren) paren = flags & EC_NEW_HEAD;
@@ -3156,7 +3204,7 @@ Emitters['WhileStatement'] = function(n, prec, flags) {
 function(){
 this.emitFn = function(n, fnName, flags) {
   var paren = false,
-      loopLexicals = this.getLoopLexicalRefList(n.scope);
+      loopLexicals = n.scope.getLoopLexicalRefList();
 
   if (loopLexicals) paren = flags & EC_NEW_HEAD;
   if (paren) { this.w('('); flags = EC_NONE; }
@@ -3167,38 +3215,7 @@ this.emitFn = function(n, fnName, flags) {
 
   paren && this.w(')');
 };
-
-this.getLoopLexicalRefList = function(scope) {
-  var loopLexicals = null;
-  ASSERT.call(this, scope.isAnyFnBody(),
-    'fnbody was actually expected to extract poosible loop lexical names from');
-
-  var head = scope.funcHead,
-      list = head.refs,
-      len = list.length(),
-      e = 0;
-
-  while (e < len) {
-    var elem = list.at(e++);
-    if (head.hasSignificantRef(elem)) {
-      var decl = elem.getDecl();
-      if (!decl.isLexical() || !decl.ref.scope.insideLoop())
-        continue;
-      if (!loopLexicals) loopLexicals = [];
-      loopLexicals.push(elem.getDecl());
-    }
-  }
-
-  return loopLexicals;
-};
-  
-this.emitRawFn = function(n, fnName) {
-  this.wm('function').s().w(fnName).w('(');
-  if (!functionHasNonSimpleParams(n))
-    this.emitParams(n.params);
-  this.wm(')',' ').emitFuncBody(n);
-};
-
+ 
 this.writeClosureTail = function(loopLexicals) {
   this.wm('}','(');
   var e = 0;
@@ -3219,6 +3236,13 @@ this.writeClosureHead = function(loopLexicals) {
       this.w(loopLexicals[e++].synthName);
     }
   this.wm(')',' ','{');
+};
+
+this.emitRawFn = function(n, fnName) {
+  this.wm('function').s().w(fnName).w('(');
+  if (!functionHasNonSimpleParams(n))
+    this.emitParams(n.params);
+  this.wm(')',' ').emitFuncBody(n);
 };
 
 },
@@ -3254,6 +3278,7 @@ this.applyTo = function(obj) {
 
 
 }]  ],
+null,
 [FuncBodyScope.prototype, [function(){
 this.cls = function() {
   ASSERT.call(this, this.isClassMem(),
@@ -3270,6 +3295,32 @@ this.setHead = function(head) {
     'this fn has got an actual head');
   this.funcHead = head;
   this.funcHead.funcBody = this;
+};
+
+},
+function(){
+this.getLoopLexicalRefList = function() {
+  var loopLexicals = null;
+  ASSERT.call(this, this.isAnyFnBody(),
+    'fnbody was actually expected to extract poosible loop lexical names from');
+
+  var head = this.funcHead,
+      list = head.refs,
+      len = list.length(),
+      e = 0;
+
+  while (e < len) {
+    var elem = list.at(e++);
+    if (head.hasSignificantRef(elem)) {
+      var decl = elem.getDecl();
+      if (!decl.isLexical() || !decl.ref.scope.insideLoop())
+        continue;
+      if (!loopLexicals) loopLexicals = [];
+      loopLexicals.push(elem.getDecl());
+    }
+  }
+
+  return loopLexicals;
 };
 
 },
@@ -3743,6 +3794,8 @@ this.updateCRSList = function(list) {
 };
 
 }]  ],
+null,
+null,
 [ParenScope.prototype, [function(){
 this.dissolve = function() {
   var list = this.paramList,
