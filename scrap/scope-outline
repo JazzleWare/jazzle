@@ -280,3 +280,10 @@ while (false) {
     }(B, jz.from(b), t)
   ));
 }
+
+ConcreteScope::`{
+  findLiquid(scope, name, createIfNone, <:idealName:>, <:category:>)
+  createLiquid(scope, <:idealName:>, <:category:>)
+}
+
+Scope::`accessLiquid(scope, name, createIfNone, idealName, category)

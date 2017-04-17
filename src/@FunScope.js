@@ -10,6 +10,7 @@ function FunScope(parent, type) {
   this.firstDup =
   this.firstEvalOrArguments = null;
   this.inBody = false;
+  this.bodyRefs = new SortedObj();
   this.special = { _this: null, _arguments: null };
 
   this.refs = this.argRefs;

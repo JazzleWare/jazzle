@@ -1,0 +1,107 @@
+Scope {
+  parent, type, refs, defs, scopeID,
+  scs, diStart, allowedActions, misc,
+  hasTZCheckpoint
+}
+
+ConcreteScope < Scope {
+  liquidDefs,
+  synthNamesUntilNow,
+  special::{ _this }
+}
+
+FunScope < ConcreteScope {
+  argList, argMap, argRefs, prologue, scopeName
+  firstNonSimple, firstDup, firstEvalOrArguments,
+  inBody, special::{ _this, _arguments },
+}
+
+ClassScope < Scope {
+  scopeName,
+  special:: { _memSuper, _callSuper }
+}
+
+CatchScope {
+  argList, argMap, argRefs, argsIsSimple, argsIsSignificant,
+  inBody
+}
+
+Decl {
+  ref, liquid, name, hasTZCheck, liquid, reached,
+  site, idx
+}
+
+Ref {
+  i, lors, scope, d, targetDecl, isResolved, parentDecl 
+}
+
+Scope::`{
+  isAnyFn,
+  isCatch,
+  isScript,
+  isModule,
+  isClass
+  isGen,
+  isAsync,
+  isAccessor,
+  isGetter,
+  isSetter,
+  isObjMem,
+  isArrow,
+  isClassMem,
+  isCtor,
+  isBlock,
+  isExpr,
+  isDecl,
+  isStaticMem,
+  isBare,
+  isSoft, // i.e, not an fn
+  isConcrete,
+
+  insideIf,
+  insideLoop,
+  insideStrict,
+  insideUniqueArgs,
+  insideFnArgs,
+  insideForInit,
+
+  canContinue,
+  canReturn,
+  canBreak,
+  canDeclareLetOrClass,
+  canDeclareFunc,
+  canYield,
+  canAwait,
+  canCallSuper,
+  canMemSuper,
+  canDup,
+
+  hasNewTarget,
+  hasHeritage,
+
+  enterForInit/exitForInit,
+  enterStrict/exitStrict,
+
+  yieldIsKW,
+  awaitIsKW,
+
+  spawnCatch,
+  spawnBare,
+  spawnFn,
+  spawnParen,
+  spawnCls,
+
+  declare,
+  reference,
+
+  hasSignificantNames
+}
+
+ConcreteScope {
+  synthBoot
+`hasSignificantNames() {
+  if `isFunc(): return true
+  if `isCatch(): return `argsIsSimple && `argsIsSignificant
+  if `isScript() || `isModule(): return true
+  return false
+}
