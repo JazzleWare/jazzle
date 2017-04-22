@@ -3,8 +3,8 @@ function CatchScope(sParent) {
 
   this.args = new SortedObj();
   this.argRefs = new SortedObj();
-  this.argsIsSimple = false;
-  this.argsIsSignificant = false;
+  this.argIsSimple = false;
+  this.argIsSignificant = false;
   this.inBody = false;
   this.bodyRefs = new SortedObj();
 

@@ -65,7 +65,7 @@ this.next = function () {
            this. prec = PREC_OP_ASSIG;
            this.ltraw += '=';
          }
-         this.c=c;
+         this.setsimpoff(c);
          break ;
 
       case CH_MODULO:
@@ -80,7 +80,7 @@ this.next = function () {
            this. prec = PREC_MUL;
            this.ltraw = '%';
          }
-         this.c=c;
+         this.setsimpoff(c);
          break ;
 
       case CH_EXCLAMATION:
@@ -99,12 +99,12 @@ this.next = function () {
            this .lttype = 'u' ;
            this.ltraw = '!';
          }
-         this.c=c;
+         this.setsimpoff(c);
          break ;
 
       case CH_COMPLEMENT:
             c++;
-            this.c=c;
+            this.setsimpoff(c);
             this.ltraw = '~';
             this.lttype = 'u';
             break ;
@@ -129,7 +129,7 @@ this.next = function () {
                  this.ltraw = '|';
                  break ;
          }
-         this.c=c;
+         this.setsimpoff(c);
          break;
 
       case CH_AND:
@@ -153,7 +153,7 @@ this.next = function () {
                this.ltraw = '&';
                break ;
          }
-         this.c=c;
+         this.setsimpoff(c);
          break ;
 
       case CH_XOR:
@@ -168,7 +168,7 @@ this.next = function () {
           this.  prec = PREC_XOR;
           this.ltraw = '^';
         }
-        this.c=c  ;
+        this.setsimpoff(c);
         break;
 
       default:

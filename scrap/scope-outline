@@ -287,3 +287,12 @@ ConcreteScope::`{
 }
 
 Scope::`accessLiquid(scope, name, createIfNone, idealName, category)
+
+a()[b()] ** e()
+jz.ex(a()[b()], e())
+
+a()[b()] **= e()
+(t=a())[t1=b()] = jz.ex(t[t1], e())
+
+([a]=b())[[e]=l()] **= L()
+(t=arrIter(b()), a=t.get(), t = t.end())[t1=arrIter(l()), e=t1.get(), t1=e.end())] = jz.ex(t[t1], L())

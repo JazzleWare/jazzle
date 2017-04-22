@@ -1,11 +1,8 @@
 function Decl() {
-  this.mode = DM_NONE;
   this.ref = null;
+  this.idx = -1;
   this.name = "";
   this.site = null;
-  this.i = -1;
-  this.hasTZ = false;
-  this.synthName = "";
+  this.hasTZCheck = false;
   this.reached = false;
-  this.liquid = null;
 }

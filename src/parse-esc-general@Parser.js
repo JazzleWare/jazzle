@@ -1,27 +1,29 @@
-this.readEsc = function ()  {
+this.readEsc = function () {
   var src = this.src, b0 = 0, b = 0, start = this.c;
-  switch ( src.charCodeAt ( ++this.c ) ) {
-   case CH_BACK_SLASH: return '\\';
-   case CH_MULTI_QUOTE: return'\"' ;
-   case CH_SINGLE_QUOTE: return '\'' ;
-   case CH_b: return '\b' ;
-   case CH_v: return '\v' ;
-   case CH_f: return '\f' ;
-   case CH_t: return '\t' ;
-   case CH_r: return '\r' ;
-   case CH_n: return '\n' ;
+  var c = this.c, val = '';
+  switch (this.scat(++c)) {
+   case CH_BACK_SLASH: val = '\\'; break;
+   case CH_MULTI_QUOTE: val = '\"'; break;
+   case CH_SINGLE_QUOTE: val = '\''; break;
+   case CH_b: val = '\b'; break;
+   case CH_v: val = '\v'; break;
+   case CH_f: val = '\f'; break;
+   case CH_t: val = '\t'; break;
+   case CH_r: val = '\r'; break;
+   case CH_n: val = '\n'; break;
    case CH_u:
+      this.setsimpoff(c);
       b0 = this.peekUSeq();
       if ( b0 >= 0x0D800 && b0 <= 0x0DBFF ) {
-        this.c++;
-        return String.fromCharCode(b0, this.peekTheSecondByte());
+        this.setsimpoff(this.c+1);
+        val = String.fromCharCode(b0, this.peekTheSecondByte());
       }
-      return fromcode(b0);
+      else val = fromcode(b0);
+      break;
 
    case CH_x :
-      b0 = toNum(this.src.charCodeAt(++this.c));
-      if ( b0 === -1 && this.err('hex.esc.byte.not.hex') )
-        return this.errorHandlerOutput;
+      b0 = toNum(this.scat(++this.c));
+      b0 === -1 && this.err('hex.esc.byte.not.hex');
       b = toNum(this.src.charCodeAt(++this.c));
       if ( b === -1 && this.err('hex.esc.byte.not.hex') )
         return this.errorHandlerOutput;

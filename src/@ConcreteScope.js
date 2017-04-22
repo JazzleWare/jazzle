@@ -3,4 +3,6 @@ function ConcreteScope(parent, type) {
 
   this.liquidDefs = new SortedObj();
   this.synthNamesUntilNow = new SortedObj();
+
+  this.spThis = null;
 }

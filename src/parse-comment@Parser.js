@@ -8,9 +8,7 @@ this.readMultiComment = function () {
     switch (r = l.charCodeAt(c++ ) ) {
     case CH_MUL:
       if (l.charCodeAt(c) === CH_DIV) {
-        c++;
-        this.col += (c-start);
-        this.c = c;
+        this.setsimpoff(c);
         if (this.onComment_ !== null)
           this.onComment(true,c0,{line:li0,column:col0},
             this.c,{line:this.li,column:this.col});
@@ -25,11 +23,9 @@ this.readMultiComment = function () {
     case CH_LINE_FEED:
     case 0x2028:
     case 0x2029:
-      start = c;
       if (n)
         n = false;
-      this.col = 0;
-      this.li++;
+      this.setnewloff(c);
       continue;
 
 //  default : if ( r >= 0x0D800 && r <= 0x0DBFF ) this.col-- ;
@@ -37,9 +33,7 @@ this.readMultiComment = function () {
     }
   }
 
-  this.col += (c-start);
-  this.c = c;
-
+  this.setsimpoff(c);
   this.err( 'comment.multi.unfinished',{extra:{c0:c0,li0:li0,col0:col0}});
 };
 
@@ -58,16 +52,12 @@ this.readLineComment = function() {
     case CH_LINE_FEED :
     case 0x2028:
     case 0x2029 :
-      col = this.col;
-      li = this.li;
-      this.col = 0 ;
-      this.li++;
       break L;
     
 //  default : if ( r >= 0x0D800 && r <= 0x0DBFF ) this.col-- ;
     }
 
-   this.c=c;
+   this.setsimpoff(c);
 
    if (this.onComment_ !== null) {
      if (li === -1) { li = this.li; col = this.col; }

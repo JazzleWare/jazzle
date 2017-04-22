@@ -9,7 +9,7 @@ function Scope(sParent, type) {
     this.parent.scs;
 
   this.allowedActions = this.determineActions();
-  this.misc = this.determineMisc();
+  this.flags = this.determineFlags();
 
   this.scopeID_ref = this.parent ?
     this.parent.scopeID_ref : {v: 0};
@@ -20,4 +20,4 @@ function Scope(sParent, type) {
   this.di_ref = this.isConcrete() ?
     {v: 0} : this.parent.diRef;
   this.di0 = this.di_ref.v++;
-};
+}
