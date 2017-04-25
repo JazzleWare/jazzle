@@ -22,15 +22,7 @@ function(t) { // is it a template escape?
   case CH_n: c+=2; v = '\n'; break;
 
   case CH_u:
-    ch1 = this.readBS();
-    if (ch2 >= 0x0D800 && ch2 <= 0x0DBFF) {
-      ch2 = this.readSurrogateTail();
-      v = String.fromCharCode(ch1) +
-          String.fromCharCode(ch2);
-    }
-    else
-      v = cp2sp(ch1);
-
+    v = cp2sp(this.readBS());
     setoff = false;
     break;
 

@@ -1509,13 +1509,14 @@ function arguments_or_eval(l) {
   return false;
 };
 
-function fromcode(codePoint )  {
+function cp2sp(codePoint )  {
   if ( codePoint <= 0xFFFF)
     return String.fromCharCode(codePoint) ;
 
-  return String.fromCharCode(((codePoint-0x10000 )>>10)+0x0D800,
-                             ((codePoint-0x10000 )&(1024-1))+0x0DC00);
-
+  return String.fromCharCode(
+    ((codePoint-0x10000 )>>10)+0x0D800,
+    ((codePoint-0x10000 )&(1024-1))+0x0DC00
+  );
 }
 
 function core(n) { return n.type === PAREN ? n.expr : n; };
@@ -1535,6 +1536,16 @@ function needsConstCheck(n) {
   return n.type === '#ResolvedName' && n.constCheck;
 }
 
+function octStr2num(octStr) {
+  var v = 0, e = 0;
+  while (e < octStr.length)
+    v = (v<<3)|(octStr.charCodeAt(e++)-CH_0);
+  return v;
+}
+
+function surrogate(ch1, ch2) {
+  return ((ch1-0x0d800)<<10)+(ch2-0x0dc00)+0x010000;
+}
 ;
  (function(){
        var i = 0;
@@ -3187,143 +3198,6 @@ function() {
   this.lpn.trailingComments = this.commentBuf;
   this.commentBuf = null;
   this.lpn = null;
-};
-
-},
-function(){
-this.onComment = function(isBlock,c0,loc0,c,loc) {
-  var start_comment = -1, end_comment = -1;
-  var start_val = -1, end_val = -1;
-  if (isBlock) {
-    start_comment = c0 - 2; end_comment = c;
-    start_val = c0; end_val = c - 2;
-    loc0.column -= 2;
-  }
-  else {
-    var stepBack = -1;
-    switch (this.src.charCodeAt(c0-1)) {
-    case CH_DIV: // i.e, // comment
-      stepBack = 2;
-      break;
-    case CH_GREATER_THAN: // i.e, --> comment
-      stepBack = 1 + 2;
-      break;
-    case CH_MIN: // i.e, <!-- comment
-      stepBack = 2 + 2;
-      break;
-    }
-
-    start_comment = c0 - stepBack;
-    end_comment = c;
-    start_val = c0;
-    end_val = c;
-    loc0.column -= stepBack;
-  
-  }
-
-  var comment = this.onComment_,
-      value = this.src.substring(start_val,end_val);
-
-  if (typeof comment === FUNCTION_TYPE) {
-    comment(isBlock,value,c0,c,loc0,loc);
-  }
-  else {
-    comment.push({
-      type: isBlock ? 'Block' : 'Line',
-      value: value,
-      start: start_comment,
-      end: end_comment,
-      loc: { start: loc0, end: loc }
-    });
-  }
-};
-
-this.onToken = function(token) {
-  if (token === null) {
-    var ttype = "", tval = "";
-    switch (this.lttype) {
-    case 'op':
-    case '--':
-    case '-':
-    case '/':
-      ttype = 'Punctuator';
-      tval = this.ltraw;
-      break;
-
-    case 'yield':
-    case 'Keyword':
-      ttype = 'Keyword';
-      tval = this.ltval;
-      break;
-
-    case 'u':
-      ttype = 'Punctuator';
-      tval = this.ltraw;
-      break;
-
-    case 'Literal':
-      ttype = typeof this.ltval === NUMBER_TYPE ?
-        'Numeric' : 'String';
-      tval = this.ltraw;
-      break;
-
-    case 'Identifier':
-      ttype = 'Identifier';
-      tval = this.ltraw;
-      switch (tval) {
-      case 'static':
-        if (!this.scope.insideStrict()) 
-          break;
-      case 'in':
-      case 'instanceof':
-        ttype = 'Keyword';
-      }
-      break;
-
-    case 'Boolean':
-    case 'Null':
-      ttype = this.lttype;
-      tval = this.ltval;
-      break;
-
-    default:
-      ttype = 'Punctuator';
-      tval = this.lttype;
-      break;
-    }
-
-    token = { type: ttype, value: tval, start: this.c0, end: this.c,
-      loc: {
-        start: { line: this.li0, column: this.col0 },
-        end: { line: this.li, column: this.col } } };
-  }
-  else {
-    if (token.type === 'Identifier' &&
-       token.value === 'static')
-      token.type = 'Keyword';
-  }
-
-  var onToken_ = this.onToken_;
-  if (typeof onToken_ === FUNCTION_TYPE) {
-    onToken_(token);
-  }
-  else
-    onToken_.push(token);
-
-};
-
-this.onToken_kw = function(c0,loc0,val) {
-  // TODO: val must=== raw
-  this.onToken({
-    type: 'Keyword',
-    value: val,
-    start: c0,
-    end: c0+val.length,
-    loc: {
-      start: loc0,
-      end: { line: loc0.line, column: loc0.column + val.length }
-    }
-  });
 };
 
 },
@@ -8471,15 +8345,6 @@ function(startChar) {
       v += this.readEsc(false);
       c = luo = this.c;
     }
-    else if (ch >= 0x0D800 && ch <= 0x0DBFF) {
-      if (luo < c)
-        v += s.substring(luo,c);
-      this.setsimpoff(c);
-      surrogateTail = this.readSurrogateTail();
-      v += String.fromCharCode(ch);
-      v += String.fromCharCode(surrogateTail);
-      c = luo = this.c;
-    }
     else if (ch !== startChar)
       c++;
     else {
@@ -9438,15 +9303,7 @@ function(t) { // is it a template escape?
   case CH_n: c+=2; v = '\n'; break;
 
   case CH_u:
-    ch1 = this.readBS();
-    if (ch2 >= 0x0D800 && ch2 <= 0x0DBFF) {
-      ch2 = this.readSurrogateTail();
-      v = String.fromCharCode(ch1) +
-          String.fromCharCode(ch2);
-    }
-    else
-      v = cp2sp(ch1);
-
+    v = cp2sp(this.readBS());
     setoff = false;
     break;
 
@@ -9540,13 +9397,12 @@ this.readID_bs =
 function() {
   var bsc = this.readBS();
   var ccode = bsc;
-  var head = String.fromCharCode(bsc);
-  if (bsc >= 0x0D800 && bsc <= 0x0DBFF) {
-    var secondByte = this.readSecondByte();
-    ccode = surrogate(bsc, secondByte);
-    head += String.fromCharCode(secondByte);
-  }
+  if (bsc >= 0x0D800 && bsc <= 0x0DBFF)
+    this.err('id.head.is.surrogate');
+  else if (!isIDHead(bsc))
+    this.err('id.head.esc.not.idstart');
 
+  var head = String.fromCharCode(bsc);
   return this.readID_withHead(head);
 };
 
@@ -9563,31 +9419,30 @@ function(v) {
   while (c < l) {
     var ch = s.charCodeAt(c);
     if (isIDBody(ch)) c++;
-    else {
-      var bs = false;
-      if (ch === CH_BACK_SLASH) {
-        if (luo < c)
-          v += s.substring(luo,c);
-
-        this.setsimpoff(c);
-        ch = this.readBS();
-        bs = true;
-      }
-      if (ch >= 0x0D800 && ch <= 0x0DBFF) {
-        surrogateTail = this.readSurrogateTail();
-        ccode = surrogate(ch, surrogateTail);
-        !isIDBody(ccode) && this.err('surrogate.not.an.id.body');
-        v += String.fromCharCode(ch) + String.fromCharCode(surrogateTail);
-      }
-      else if (bs)
-        v += ch > 0xFFFF ?
-          cp2sp(ch) :
-          String.fromCharCode(ch);
-      else
-        break;
-
+    else if (ch === CH_BACK_SLASH) {
+      if (luo < c)
+        v += s.substring(luo,c);
+      this.setsimpoff(c);
+      ch = this.readBS();
+      if (!isIDBody(ch))
+        this.err('id.body.esc.not.idbody');
+      v += cp2sp(ch);
       c = luo = this.c;
     }
+    else if (ch >= 0x0D800 && ch <= 0x0DBFF) {
+      c++;
+      if (c>=l)
+        this.err('id.body.got.eof.surrogate');
+      surrogateTail = s.charCodeAt(c);
+      if (surrogateTail < 0x0dc00 || surrogateTail > 0x0dfff)
+        this.err('id.body.surrogate.not.in.range');
+      ch = surrogate(ch, surrogateTail);
+      if (!isIDBody(ch))
+        this.err('id.body.surrogate.not.idbody');
+      c++;
+    }
+    else
+      break;
   }
 
   if (luo < c)
@@ -9613,14 +9468,18 @@ function() {
 function(){
 this.readID_surrogate =
 function(sc) {
-  var secondByte = this.readSecondByte();
-  var ccode = surrogate(sc, secondByte);
+  if (this.c+1 >= this.src.length)
+    this.err('id.head.got.eof.surrogate');
+
+  var surrogateTail = this.src.charCodeAt(this.c+1);
+  var ccode = surrogate(sc, surrogateTail);
   if (!isIDHead(ccode))
     this.err('surrogate.not.id.head');
 
+  this.c += 2;
   return this.readID_withHead(
     String.fromCharCode(sc) +
-    String.fromCharCode(secondByte)
+    String.fromCharCode(surrogateTail)
   );
 };
 
@@ -9689,10 +9548,8 @@ function() {
     return NUM0_NONDEC;
 
   default:
-    if (isNum(ch)) {
-      this.readNum_octLegacy(ch);
-      return NUM0_DEC;
-    }
+    if (isNum(ch))
+      return this.readNum_octLegacy(ch);
 
     return NUM0_ZERO;
   }
@@ -9723,7 +9580,7 @@ function() {
     if (!isNum(ch))
       break;
     if (ch === CH_0 || ch === CH_1)
-      v = (v << 1)|(CH_0);
+      v = (v << 1)|(ch-CH_0);
     else
       this.err('bin.but.got.nonbin');
     c++;
@@ -9750,7 +9607,10 @@ function(ch) {
   if (!dec) {
     this.ltraw = this.c0_to_c();
     this.ltval = octStr2num(this.ltraw);
+    return NUM0_NONDEC;
   }
+
+  return NUM0_DEC;
 };
 
 this.readNum_tail =
@@ -10473,9 +10333,6 @@ function() {
     surrogateTail = this.readBS();
   else
     mustSetOff = true;
-
-  if (surrogateTail<0x0DC00 || surrogateTail>0x0DFFF)
-    this.err('surrogate.tail.not.in.range');
 
   mustSetOff && this.setsimpoff(c+1);
 

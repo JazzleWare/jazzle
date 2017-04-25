@@ -83,3 +83,7 @@ function octStr2num(octStr) {
     v = (v<<3)|(octStr.charCodeAt(e++)-CH_0);
   return v;
 }
+
+function surrogate(ch1, ch2) {
+  return ((ch1-0x0d800)<<10)+(ch2-0x0dc00)+0x010000;
+}

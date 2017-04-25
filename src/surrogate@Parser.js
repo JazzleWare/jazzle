@@ -8,9 +8,6 @@ function() {
   else
     mustSetOff = true;
 
-  if (surrogateTail<0x0DC00 || surrogateTail>0x0DFFF)
-    this.err('surrogate.tail.not.in.range');
-
   mustSetOff && this.setsimpoff(c+1);
 
   return surrogateTail;

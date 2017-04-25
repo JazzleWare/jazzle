@@ -12,15 +12,6 @@ function(startChar) {
       v += this.readEsc(false);
       c = luo = this.c;
     }
-    else if (ch >= 0x0D800 && ch <= 0x0DBFF) {
-      if (luo < c)
-        v += s.substring(luo,c);
-      this.setsimpoff(c);
-      surrogateTail = this.readSurrogateTail();
-      v += String.fromCharCode(ch);
-      v += String.fromCharCode(surrogateTail);
-      c = luo = this.c;
-    }
     else if (ch !== startChar)
       c++;
     else {

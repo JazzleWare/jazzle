@@ -61,10 +61,8 @@ function() {
     return NUM0_NONDEC;
 
   default:
-    if (isNum(ch)) {
-      this.readNum_octLegacy(ch);
-      return NUM0_DEC;
-    }
+    if (isNum(ch))
+      return this.readNum_octLegacy(ch);
 
     return NUM0_ZERO;
   }
@@ -95,7 +93,7 @@ function() {
     if (!isNum(ch))
       break;
     if (ch === CH_0 || ch === CH_1)
-      v = (v << 1)|(CH_0);
+      v = (v << 1)|(ch-CH_0);
     else
       this.err('bin.but.got.nonbin');
     c++;
@@ -122,7 +120,10 @@ function(ch) {
   if (!dec) {
     this.ltraw = this.c0_to_c();
     this.ltval = octStr2num(this.ltraw);
+    return NUM0_NONDEC;
   }
+
+  return NUM0_DEC;
 };
 
 this.readNum_tail =
