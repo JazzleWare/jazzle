@@ -40,8 +40,6 @@ var PREC_EX = nextl(PREC_MUL); // **
 var PREC_UNARY = nextr(PREC_EX); // delete, void, -, +, typeof; not really a right-associative thing
 var PREC_UP = nextr(PREC_UNARY); // ++, --; not really a right-associative thing
 
-var FL_LEGACY = 1,
-    FL_SIMPLE_NON0 = FL_LEGACY + 1,
-    FL_SIMPLE_0 = FL_SIMPLE_NON0 + 1,
-    FL_NONE = 0;
-
+var FL_HEADLESS_FLOAT = 0,
+    FL_SIMPLE_FLOAT = 1,
+    FL_GET_E = 2;

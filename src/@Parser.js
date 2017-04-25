@@ -71,10 +71,9 @@ var Parser = function (src, o) {
 
   this.parenAsync = null; // so that things like (async)(a,b)=>12 will not get to parse.
 
+  this.commentBuf = null;
   this.errorListener = this; // any object with an `onErr(errType "string", errParams {*})` will do
 
-  this.onToken_ = null;
-  this.onComment_ = null;
 //this.core = MAIN_CORE;
   this.misc = {
     alloHashBang: false,

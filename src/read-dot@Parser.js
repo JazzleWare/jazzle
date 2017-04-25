@@ -4,6 +4,8 @@ function() {
   if (ch === CH_SINGLEDOT)
     return this.readEllipsis();
   
-  this.readNum_floatTail(FL_NONE);
+  this.readNum_tail(FL_HEADLESS_FLOAT);
+
+  this.ltval = parseFloat(this.ltraw = this.c0_to_c());
   this.lttype = TK_NUM;
 };

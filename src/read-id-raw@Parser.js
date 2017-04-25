@@ -26,7 +26,9 @@ function(v) {
         v += String.fromCharCode(ch) + String.fromCharCode(surrogateTail);
       }
       else if (bs)
-        v += String.fromCharCode(ch);
+        v += ch > 0xFFFF ?
+          cp2sp(ch) :
+          String.fromCharCode(ch);
       else
         break;
 

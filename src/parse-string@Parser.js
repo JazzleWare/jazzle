@@ -1,49 +1,49 @@
-this.readStrLiteral = function (start) {
-  var c = this.c += 1,
-      l = this.src,
-      e = l.length,
-      i = 0,
-      v = "",
-      v_start = c,
-      startC =  c-1;
+this.parseString =
+function(startChar) {
+  var c = this.c, s = this.src, l = s.length, v = "";
+  var luo = c, surrogateTail = -1, ch = -1;
 
-  if (this.nl && (this.directive & DIR_MAYBE)) {
-    this.gotDirective(this.dv, this.directive);
-    this.directive |= DIR_HANDLED_BY_NEWLINE;
-  }
-
-  while (c < e && (i = l.charCodeAt(c)) !== start) {
-    switch ( i ) {
-     case CH_BACK_SLASH :
-        v  += l.slice(v_start,c );
-        this.col += ( c - startC ) ;
-        startC =  this.c = c;
-        v  += this.readEsc()  ;
-        c  = this.c;
-        if ( this.col === 0 ) startC = c   +  1   ;
-        else  { this.col += ( c - startC  )  ; startC = c ;   }
-        v_start = ++c ;
-        continue ;
-
-     case CH_CARRIAGE_RETURN: if ( l.charCodeAt(c + 1 ) === CH_LINE_FEED ) c++ ;
-     case CH_LINE_FEED :
-     case 0x2028 :
-     case 0x2029 :
-           if ( this.err('str.newline',{c0:c,col0:this.col+(c-startC)}) )
-             return this.errorHandlerOutput ;
+  while (c<l) {
+    ch = s.charCodeAt(c);
+    if (ch === CH_BACK_SLASH) {
+      if (luo < c)
+        v += s.substring(luo,c);
+      this.setsimpoff(c);
+      v += this.readEsc(false);
+      c = luo = this.c;
     }
-    c++;
+    else if (ch >= 0x0D800 && ch <= 0x0DBFF) {
+      if (luo < c)
+        v += s.substring(luo,c);
+      this.setsimpoff(c);
+      surrogateTail = this.readSurrogateTail();
+      v += String.fromCharCode(ch);
+      v += String.fromCharCode(surrogateTail);
+      c = luo = this.c;
+    }
+    else if (ch !== startChar)
+      c++;
+    else {
+      if (luo < c)
+        v += s.substring(luo,c);
+      c++;
+      break;
+    }
   }
 
-  if ( v_start !== c ) { v += l.slice(v_start,c ) ; }
-  if (!(c < e && (l.charCodeAt(c)) === start) &&
-       this.err('str.unfinished',{c0:c,col0:this.col+(c-startC)}) ) return this.errorHandlerOutput;
+  this.setsimpoff(c);
+  if (ch !== startChar)
+    this.err('str.unfinished');
 
-  this.c = c + 1 ;
-  this.col += (this. c - startC   )  ;
-  this.lttype = 'Literal'  ;
-  this.ltraw =  l.slice (this.c0, this.c);
-  this.ltval = v ;
+  return {
+    type: 'Literal',
+    value: v,
+    start: this.c0,
+    end: c,
+    raw: this.c0_to_c(),
+    loc: {
+      start: { line: this.li0, column: this.col0 },
+      end: { line: this.li, column: this.col }
+    }
+  };
 };
-
-

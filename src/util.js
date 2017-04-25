@@ -50,13 +50,14 @@ function arguments_or_eval(l) {
   return false;
 };
 
-function fromcode(codePoint )  {
+function cp2sp(codePoint )  {
   if ( codePoint <= 0xFFFF)
     return String.fromCharCode(codePoint) ;
 
-  return String.fromCharCode(((codePoint-0x10000 )>>10)+0x0D800,
-                             ((codePoint-0x10000 )&(1024-1))+0x0DC00);
-
+  return String.fromCharCode(
+    ((codePoint-0x10000 )>>10)+0x0D800,
+    ((codePoint-0x10000 )&(1024-1))+0x0DC00
+  );
 }
 
 function core(n) { return n.type === PAREN ? n.expr : n; };
@@ -76,3 +77,9 @@ function needsConstCheck(n) {
   return n.type === '#ResolvedName' && n.constCheck;
 }
 
+function octStr2num(octStr) {
+  var v = 0, e = 0;
+  while (e < octStr.length)
+    v = (v<<3)|(octStr.charCodeAt(e++)-CH_0);
+  return v;
+}

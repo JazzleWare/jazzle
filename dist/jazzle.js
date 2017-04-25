@@ -242,10 +242,9 @@ var Parser = function (src, o) {
 
   this.parenAsync = null; // so that things like (async)(a,b)=>12 will not get to parse.
 
+  this.commentBuf = null;
   this.errorListener = this; // any object with an `onErr(errType "string", errParams {*})` will do
 
-  this.onToken_ = null;
-  this.onComment_ = null;
 //this.core = MAIN_CORE;
   this.misc = {
     alloHashBang: false,
@@ -916,11 +915,9 @@ var PREC_EX = nextl(PREC_MUL); // **
 var PREC_UNARY = nextr(PREC_EX); // delete, void, -, +, typeof; not really a right-associative thing
 var PREC_UP = nextr(PREC_UNARY); // ++, --; not really a right-associative thing
 
-var FL_LEGACY = 1,
-    FL_SIMPLE_NON0 = FL_LEGACY + 1,
-    FL_SIMPLE_0 = FL_SIMPLE_NON0 + 1,
-    FL_NONE = 0;
-
+var FL_HEADLESS_FLOAT = 0,
+    FL_SIMPLE_FLOAT = 1,
+    FL_GET_E = 2;
 ;
 // ! ~ - + typeof void delete    % ** * /    - +    << >>
 // > <= < >= in instanceof   === !==    &    ^   |   ?:    =       ...
@@ -3178,6 +3175,22 @@ this.ensureSpreadToRestArgument_soft = function(head) {
 
 },
 function(){
+this.suck =
+function() {
+  var commentBuf = this.commentBuf;
+  this.commentBuf = null;
+  return commentBuf;
+};
+
+this.spew =
+function() {
+  this.lpn.trailingComments = this.commentBuf;
+  this.commentBuf = null;
+  this.lpn = null;
+};
+
+},
+function(){
 this.onComment = function(isBlock,c0,loc0,c,loc) {
   var start_comment = -1, end_comment = -1;
   var start_val = -1, end_val = -1;
@@ -5219,78 +5232,6 @@ this.parseSuper = function() {
 
 },
 function(){
-this.readMultiComment = function () {
-  var c = this.c, l = this.src, e = l.length,
-      r = -1, n = true, start = c;
-
-  var c0 = c, li0 = this.li, col0 = this.col;
-
-  while (c < e) {
-    switch (r = l.charCodeAt(c++ ) ) {
-    case CH_MUL:
-      if (l.charCodeAt(c) === CH_DIV) {
-        this.setsimpoff(c);
-        if (this.onComment_ !== null)
-          this.onComment(true,c0,{line:li0,column:col0},
-            this.c,{line:this.li,column:this.col});
-
-        return n;
-      }
-      continue ;
-
-    case CH_CARRIAGE_RETURN:
-      if (CH_LINE_FEED === l.charCodeAt(c))
-        c++;
-    case CH_LINE_FEED:
-    case 0x2028:
-    case 0x2029:
-      if (n)
-        n = false;
-      this.setnewloff(c);
-      continue;
-
-//  default : if ( r >= 0x0D800 && r <= 0x0DBFF ) this.col-- ;
-
-    }
-  }
-
-  this.setsimpoff(c);
-  this.err( 'comment.multi.unfinished',{extra:{c0:c0,li0:li0,col0:col0}});
-};
-
-this.readLineComment = function() {
-  var c = this.c, l = this.src,
-      e = l.length, r = -1;
-
-  var c0 = c, li0 = this.li, col0 = this.col, li = -1, col = -1;
-
-  L:
-  while ( c < e )
-    switch (r = l.charCodeAt(c++ ) ) {
-    case CH_CARRIAGE_RETURN:
-      if (CH_LINE_FEED === l.charCodeAt(c))
-        c++;
-    case CH_LINE_FEED :
-    case 0x2028:
-    case 0x2029 :
-      break L;
-    
-//  default : if ( r >= 0x0D800 && r <= 0x0DBFF ) this.col-- ;
-    }
-
-   this.setsimpoff(c);
-
-   if (this.onComment_ !== null) {
-     if (li === -1) { li = this.li; col = this.col; }
-     this.onComment(false,c0,{line:li0,column:col0},
-       this.c,{line:li,column:col+(c-c0)});
-   }
-
-   return;
-};
-
-},
-function(){
 this.parseCond = function(cond, context) {
   this.next();
   var seq =
@@ -5471,256 +5412,6 @@ this .parseEmptyStatement = function() {
   this.next();
   return n;
 };
-
-},
-function(){
-this.readEsc = function () {
-  var src = this.src, b0 = 0, b = 0, start = this.c;
-  var c = this.c, val = '';
-  switch (this.scat(++c)) {
-   case CH_BACK_SLASH: val = '\\'; break;
-   case CH_MULTI_QUOTE: val = '\"'; break;
-   case CH_SINGLE_QUOTE: val = '\''; break;
-   case CH_b: val = '\b'; break;
-   case CH_v: val = '\v'; break;
-   case CH_f: val = '\f'; break;
-   case CH_t: val = '\t'; break;
-   case CH_r: val = '\r'; break;
-   case CH_n: val = '\n'; break;
-   case CH_u:
-      this.setsimpoff(c);
-      b0 = this.peekUSeq();
-      if ( b0 >= 0x0D800 && b0 <= 0x0DBFF ) {
-        this.setsimpoff(this.c+1);
-        val = String.fromCharCode(b0, this.peekTheSecondByte());
-      }
-      else val = fromcode(b0);
-      break;
-
-   case CH_x :
-      b0 = toNum(this.scat(++this.c));
-      b0 === -1 && this.err('hex.esc.byte.not.hex');
-      b = toNum(this.src.charCodeAt(++this.c));
-      if ( b === -1 && this.err('hex.esc.byte.not.hex') )
-        return this.errorHandlerOutput;
-      return String.fromCharCode((b0<<4)|b);
-
-   case CH_0: case CH_1: case CH_2:
-   case CH_3:
-       b0 = src.charCodeAt(this.c);
-       if ( this.scope.insideStrict() ) {
-          if ( b0 === CH_0 ) {
-               b0 = src.charCodeAt(this.c +  1);
-               if ( b0 < CH_0 || b0 >= CH_8 )
-                 return '\0';
-          }
-          if ( this.err('strict.oct.str.esc') )
-            return this.errorHandlerOutput
-       }
-       else if (this.directive !== DIR_NONE) {
-         if (this.esct === ERR_NONE_YET) {
-           this.eloc.c0 = this.c;
-           this.eloc.li0 = this.li;
-           this.eloc.col0 = this.col + (this.c-start);
-           this.esct = ERR_PIN_OCTAL_IN_STRICT;
-         }
-       }
-
-       b = b0 - CH_0;
-       b0 = src.charCodeAt(this.c + 1 );
-       if ( b0 >= CH_0 && b0 < CH_8 ) {
-          this.c++;
-          b <<= 3;
-          b += (b0-CH_0);
-          b0 = src.charCodeAt(this.c+1);
-          if ( b0 >= CH_0 && b0 < CH_8 ) {
-             this.c++;
-             b <<= 3;
-             b += (b0-CH_0);
-          }
-       }
-       return String.fromCharCode(b)  ;
-
-    case CH_4: case CH_5: case CH_6: case CH_7:
-       if (this.scope.insideStrict())
-         this.err('strict.oct.str.esc');
-       else if (this.directive !== DIR_NONE) {
-         if (this.esct === ERR_NONE_YET) {
-           this.eloc.c0 = this.c;
-           this.eloc.li0 = this.li;
-           this.eloc.col0 = this.col + (this.c-start);
-           this.esct = ERR_PIN_OCTAL_IN_STRICT;
-         }
-       }
-
-       b0 = src.charCodeAt(this.c);
-       b  = b0 - CH_0;
-       b0 = src.charCodeAt(this.c + 1 );
-       if ( b0 >= CH_0 && b0 < CH_8 ) {
-          this.c++; 
-          b <<= 3; 
-          b += (b0-CH_0);
-       }
-       return String.fromCharCode(b)  ;
-
-   case CH_8:
-   case CH_9:
-       if ( this.err('esc.8.or.9') ) 
-         return this.errorHandlerOutput ;
-       return '';
-
-   case CH_CARRIAGE_RETURN:
-      if ( src.charCodeAt(this.c + 1) === CH_LINE_FEED ) this.c++;
-   case CH_LINE_FEED:
-   case 0x2028:
-   case 0x2029:
-      start = this.c;
-      this.col = 0;
-      this.li++;
-      return '';
-
-   default:
-      return src.charAt(this.c) ;
-  }
-};
-
-this.readStrictEsc = function ()  {
-  var src = this.src, b0 = 0, b = 0;
-  switch ( src.charCodeAt ( ++this.c ) ) {
-   case CH_BACK_SLASH: return '\\';
-   case CH_MULTI_QUOTE: return'\"' ;
-   case CH_SINGLE_QUOTE: return '\'' ;
-   case CH_b: return '\b' ;
-   case CH_v: return '\v' ;
-   case CH_f: return '\f' ;
-   case CH_t: return '\t' ;
-   case CH_r: return '\r' ;
-   case CH_n: return '\n' ;
-   case CH_u:
-      b0 = this.peekUSeq();
-      if ( b0 >= 0x0D800 && b0 <= 0x0DBFF ) {
-        this.c++;
-        return String.fromCharCode(b0, this.peekTheSecondByte());
-      }
-      return fromcode(b0);
-
-   case CH_x :
-      b0 = toNum(this.src.charCodeAt(++this.c));
-      if ( b0 === -1 && this.err('hex.esc.byte.not.hex') )
-        return this.errorHandlerOutput;
-      b = toNum(this.src.charCodeAt(++this.c));
-      if ( b0 === -1 && this.err('hex.esc.byte.not.hex') )
-        return this.errorHandlerOutput;
-      return String.fromCharCode((b0<<4)|b);
-
-   case CH_0: case CH_1: case CH_2:
-   case CH_3:
-       b0 = src.charCodeAt(this.c);
-       if ( b0 === CH_0 ) {
-            b0 = src.charCodeAt(this.c +  1);
-            if ( b0 < CH_0 || b0 >= CH_8 )
-              return '\0';
-       }
-       if ( this.err('strict.oct.str.esc.templ') )
-         return this.errorHandlerOutput
-
-    case CH_4: case CH_5: case CH_6: case CH_7:
-       if (this.err('strict.oct.str.esc.templ') )
-         return this.errorHandlerOutput  ;
-
-   case CH_8:
-   case CH_9:
-       if ( this.err('esc.8.or.9') ) 
-         return this.errorHandlerOutput ;
-
-   case CH_CARRIAGE_RETURN:
-      if ( src.charCodeAt(this.c + 1) === CH_LINE_FEED ) this.c++;
-   case CH_LINE_FEED:
-   case 0x2028:
-   case 0x2029:
-      this.col = 0;
-      this.li++;
-      return '';
-
-   default:
-      return src.charAt(this.c) ;
-  }
-};
-
-
-
-},
-function(){
-
-this.peekTheSecondByte = function () {
-  var e = this.src.charCodeAt(this.c), start = this.c;
-  if (CH_BACK_SLASH === e) {
-    if (CH_u !== this.src.charCodeAt(++this.c) &&
-        this.err('u.second.esc.not.u') )
-      return this.errorHandlerOutput ;
-
-    e = (this.peekUSeq());
-  }
-//  else this.col--;
-  if ( (e < 0x0DC00 || e > 0x0DFFF) && this.err('u.second.not.in.range',{extra:start}) )
-    return this.errorHandlerOutput;
-
-  return e;
-};
-
-this.peekUSeq = function () {
-  var c = ++this.c, l = this.src, e = l.length;
-  var byteVal = 0;
-  var n = l.charCodeAt(c);
-  if (CH_LCURLY === n) { // u{ 
-    ++c;
-    n = l.charCodeAt(c);
-    do {
-      n = toNum(n);
-      if ( n === - 1 && this.err('u.esc.hex',{c0:c}) )
-        return this.errorHandlerOutput ;
-
-      byteVal <<= 4;
-      byteVal += n;
-      if (byteVal > 0x010FFFF && this.err('u.curly.not.in.range',{c0:c}) )
-        return this.errorHandler ;
-
-      n = l.charCodeAt( ++ c);
-    } while (c < e && n !== CH_RCURLY);
-
-    if ( n !== CH_RCURLY && this.err('u.curly.is.unfinished',{c0:c}) ) 
-      return this.errorHandlerOutput ;
-
-    this.c = c;
-    return byteVal;
-  }
- 
-  n = toNum(l.charCodeAt(c));
-  if ( n === -1 && this.err('u.esc.hex',{c0:c}) )
-    return this.errorHandlerOutput;
-  byteVal = n;
-  c++ ;
-  n = toNum(l.charCodeAt(c));
-  if ( n === -1 && this.err('u.esc.hex',{c0:c}) )
-    return this.errorHandlerOutput;
-  byteVal <<= 4; byteVal += n;
-  c++ ;
-  n = toNum(l.charCodeAt(c));
-  if ( n === -1 && this.err('u.esc.hex',{c0:c}) )
-    return this.errorHandlerOutput;
-  byteVal <<= 4; byteVal += n;
-  c++ ;
-  n = toNum(l.charCodeAt(c));
-  if ( n === -1 && this.err('u.esc.hex',{c0:c}) )
-    return this.errorHandlerOutput;
-  byteVal <<= 4; byteVal += n;
-
-  this.c = c;
-
-  return byteVal;
-};
-
-
 
 },
 function(){
@@ -6822,91 +6513,6 @@ this.id = function() {
   };
   this.next() ;
   return id;
-};
-
-
-
-},
-function(){
-this.readAnIdentifierToken = function (v) {
-  var c = this.c, src = this.src, len = src.length, peek, start = c;
-  c++; // start reading the body
-
-  var byte2, startSlice = c; // the head is already supplied in v
-
-  while ( c < len ) {
-    peek = src.charCodeAt(c); 
-    if ( isIDBody(peek) ) {
-      c++;
-      continue;
-    }
-
-    if ( peek === CH_BACK_SLASH ) {
-      if (this.esct === ERR_NONE_YET) {
-        this.esct = ERR_PIN_UNICODE_IN_RESV;
-        this.eloc.c0 = c;
-        this.eloc.li0 = this.li;
-        this.eloc.col0 = this.col + (c-start);
-      }
-      if ( !v ) // if all previous characters have been non-u characters 
-        v = src.charAt (startSlice-1); // v = IDHead
-
-      if ( startSlice < c ) // if there are any non-u characters behind the current '\'
-        v += src.slice(startSlice,c) ; // v = v + those characters
-
-      this.c = ++c;
-      (CH_u !== src.charCodeAt(c) && this.err('id.u.not.after.slash'));
-
-      peek = this. peekUSeq() ;
-      if (peek >= 0x0D800 && peek <= 0x0DBFF ) {
-        this.c++;
-        byte2 = this.peekTheSecondByte();
-        if (!isIDBody(((peek-0x0D800)<<10) + (byte2-0x0DC00) + 0x010000) &&
-             this.err('id.multi.must.be.idbody',{extra:[peek,byte2]}) )
-          return this.errorHandlerOutput ;
-
-        v += String.fromCharCode(peek, byte2);
-      }
-      else {
-         if ( !isIDBody(peek) &&
-               this.err('id.esc.must.be.idbody',{extra:peek}) )
-           return this.errorHandlerOutput;
-     
-         v += fromcode(peek);
-      }
-      c = this.c;
-      c++;
-      startSlice = c;
-    }
-    else if (peek >= 0x0D800 && peek <= 0x0DBFF ) {
-       if ( !v ) { v = src.charAt(startSlice-1); }
-       if ( startSlice < c ) v += src.slice(startSlice,c) ;
-       c++;
-       this.c = c; 
-       byte2 = this.peekTheSecondByte() ;
-       if (!isIDBody(((peek-0x0D800 ) << 10) + (byte2-0x0DC00) + 0x010000) &&
-            this.err('id.multi.must.be.idbody') )
-         return this.errorHandlerOutput ;
-
-       v += String.fromCharCode(peek, byte2);
-       c = this.c ;
-       c++;
-       startSlice = c;
-    }
-    else { break ; } 
-   }
-   if ( v ) { // if we have come across at least one u character
-      if ( startSlice < c ) // but all others that came after the last u-character have not been u-characters
-        v += src.slice(startSlice,c); // then append all those characters
-
-      this.ltraw = src.slice(this.c0,c);
-      this.ltval = v  ;
-   }
-   else {
-      this.ltval = this.ltraw = v = src.slice(startSlice-1,c);
-   }
-   this.c = c;
-   this.lttype= 'Identifier';
 };
 
 
@@ -8851,55 +8457,55 @@ this.parseStatement = function ( allowNull ) {
 
 },
 function(){
-this.readStrLiteral = function (start) {
-  var c = this.c += 1,
-      l = this.src,
-      e = l.length,
-      i = 0,
-      v = "",
-      v_start = c,
-      startC =  c-1;
+this.parseString =
+function(startChar) {
+  var c = this.c, s = this.src, l = s.length, v = "";
+  var luo = c, surrogateTail = -1, ch = -1;
 
-  if (this.nl && (this.directive & DIR_MAYBE)) {
-    this.gotDirective(this.dv, this.directive);
-    this.directive |= DIR_HANDLED_BY_NEWLINE;
-  }
-
-  while (c < e && (i = l.charCodeAt(c)) !== start) {
-    switch ( i ) {
-     case CH_BACK_SLASH :
-        v  += l.slice(v_start,c );
-        this.col += ( c - startC ) ;
-        startC =  this.c = c;
-        v  += this.readEsc()  ;
-        c  = this.c;
-        if ( this.col === 0 ) startC = c   +  1   ;
-        else  { this.col += ( c - startC  )  ; startC = c ;   }
-        v_start = ++c ;
-        continue ;
-
-     case CH_CARRIAGE_RETURN: if ( l.charCodeAt(c + 1 ) === CH_LINE_FEED ) c++ ;
-     case CH_LINE_FEED :
-     case 0x2028 :
-     case 0x2029 :
-           if ( this.err('str.newline',{c0:c,col0:this.col+(c-startC)}) )
-             return this.errorHandlerOutput ;
+  while (c<l) {
+    ch = s.charCodeAt(c);
+    if (ch === CH_BACK_SLASH) {
+      if (luo < c)
+        v += s.substring(luo,c);
+      this.setsimpoff(c);
+      v += this.readEsc(false);
+      c = luo = this.c;
     }
-    c++;
+    else if (ch >= 0x0D800 && ch <= 0x0DBFF) {
+      if (luo < c)
+        v += s.substring(luo,c);
+      this.setsimpoff(c);
+      surrogateTail = this.readSurrogateTail();
+      v += String.fromCharCode(ch);
+      v += String.fromCharCode(surrogateTail);
+      c = luo = this.c;
+    }
+    else if (ch !== startChar)
+      c++;
+    else {
+      if (luo < c)
+        v += s.substring(luo,c);
+      c++;
+      break;
+    }
   }
 
-  if ( v_start !== c ) { v += l.slice(v_start,c ) ; }
-  if (!(c < e && (l.charCodeAt(c)) === start) &&
-       this.err('str.unfinished',{c0:c,col0:this.col+(c-startC)}) ) return this.errorHandlerOutput;
+  this.setsimpoff(c);
+  if (ch !== startChar)
+    this.err('str.unfinished');
 
-  this.c = c + 1 ;
-  this.col += (this. c - startC   )  ;
-  this.lttype = 'Literal'  ;
-  this.ltraw =  l.slice (this.c0, this.c);
-  this.ltval = v ;
+  return {
+    type: 'Literal',
+    value: v,
+    start: this.c0,
+    end: c,
+    raw: this.c0_to_c(),
+    loc: {
+      start: { line: this.li0, column: this.col0 },
+      end: { line: this.li, column: this.col }
+    }
+  };
 };
-
-
 
 },
 function(){
@@ -9717,14 +9323,215 @@ function(c) {
 
 },
 function(){
+this.readComment_line =
+function() {
+  var c = this.c, s = this.src, l = s.length;
+  var li0 = this.li, col0 = this.col, c0 = c;
+
+  COMMENT:
+  while (c<l)
+    switch (s.charCodeAt(c)) {
+    case CH_CARRIAGE_RETURN:
+    case CH_LINE_FEED:
+    case 0x2028:
+    case 0x2029:
+      break COMMENT;
+    default: c++;
+    }
+
+  this.setsimpoff(c);
+  this.foundComment(c0,li0,col0,'Line');
+};
+
+this.readComment_multi =
+function() {
+  var c = this.c, s = this.src, l = s.length;
+  var li0 = this.li, col0 = this.col, c0 = c, hasNL = false, finished = false;
+  
+  COMMENT:
+  while (c<l)
+    switch (s.charCodeAt(c)) {
+    case CH_CARRIAGE_RETURN:
+      if (c+1<l && s.charCodeAt(c+1) === CH_LINE_FEED)
+        c++;
+    case CH_LINE_FEED:
+    case 0x2028: case 0x2029:
+      c++;
+      this.setnewloff(c);
+      if (!hasNL)
+        hasNL = true;
+      continue;
+
+    case CH_MUL:
+      if (c+1<l && s.charCodeAt(c+1) === CH_DIV) {
+        c += 2; // '*/'
+        finished = true;
+        break COMMENT;
+      }
+    default: c++;
+    }
+
+  this.setsimpoff(c);
+  if (!finished)
+    this.err('comment.multi.is.unfinished');
+
+  this.foundComment(c0,li0,col0,'Block');
+  return hasNL;
+};
+
+this.foundComment =
+function(c0,li0,col0,t) {
+  var c = this.c, li = this.li, col = this.col;
+  if (this.commentBuf === null)
+    this.commentBuf = [];
+  this.commentBuf.push(
+    {
+      type: t,
+      value: this.src.substring(c0, t === 'Line' ? c : c-2),
+      start: c0,
+      end: c,
+      loc: {
+        start: { line: li0, column: col0 },
+        end: { line: li, column: col }
+      }
+    }
+  );
+};
+
+},
+function(){
 this.read_dot =
 function() {
   var ch = this.scat(this.c+1);
   if (ch === CH_SINGLEDOT)
     return this.readEllipsis();
   
-  this.readNum_floatTail(FL_NONE);
+  this.readNum_tail(FL_HEADLESS_FLOAT);
+
+  this.ltval = parseFloat(this.ltraw = this.c0_to_c());
   this.lttype = TK_NUM;
+};
+
+},
+function(){
+this.readEsc =
+function(t) { // is it a template escape?
+  var c = this.c,
+      s = this.src,
+      l = s.length,
+      v = '',
+      setoff = true;
+
+  if (c+1>=l)
+    this.err('slash.eof');
+
+  var ch1 = -1, ch2 = -1;
+  switch (s.charCodeAt(c+1)) {
+  case CH_BACH_SLASH: c+=2; v = '\\'; break;
+  case CH_MULTI_QUOTE: c+=2; v = '\"'; break;
+  case CH_SINGLE_QUOTE: c+=2; v = '\''; break;
+  case CH_v: c+=2; v = '\v'; break;
+  case CH_b: c+=2; v = '\b'; break;
+  case CH_f: c+=2; v = '\f'; break;
+  case CH_t: c+=2; v = '\t'; break;
+  case CH_r: c+=2; v = '\r'; break;
+  case CH_n: c+=2; v = '\n'; break;
+
+  case CH_u:
+    ch1 = this.readBS();
+    if (ch2 >= 0x0D800 && ch2 <= 0x0DBFF) {
+      ch2 = this.readSurrogateTail();
+      v = String.fromCharCode(ch1) +
+          String.fromCharCode(ch2);
+    }
+    else
+      v = cp2sp(ch1);
+
+    setoff = false;
+    break;
+
+  case CH_x:
+    c+=2; // \x
+    if (c>=l)
+      this.err('x.esc.first.got.eof');
+    ch1 = hex2num(s.charCodeAt(c));
+    if (ch1 === -1)
+      this.err('x.esc.first.got.nonhex');
+    c++;
+    if (c>=l)
+      this.err('x.esc.next.got.eof');
+    ch2 = hex2num(s.charCodeAt(c));
+    if (ch2 === -1)
+      this.err('x.esc.next.got.nonhex');
+    c++;
+    v = String.fromCharCode((ch1<<4)|ch2);
+    break;
+
+  case CH_0:
+    if (c+2>=l ||
+       (ch1=s.charCodeAt(c+2), ch1 < CH_0 || ch1 >= CH_8)) {
+      c += 2;
+      v = '\0';
+      break;
+    }
+  case CH_1:
+  case CH_2:
+  case CH_3:
+  case CH_4:
+  case CH_5:
+  case CH_6:
+  case CH_7:
+    t && this.err('template.esc.is.legacy');
+    v = this.readEsc_legacy();
+    setoff = false;
+    break;
+
+  case CH_8:
+  case CH_9:
+    this.err('esc.8.or.9');
+    break;
+
+  case CH_CARRIAGE_RETURN:
+    if (
+      c+3<l &&
+      s.charCodeAt(c+3) === CH_LINE_FEED
+    ) c++;
+  case CH_LINE_FEED:
+  case 0x2028: case 0x2029:
+    this.setnewloff(c+2);
+    v = '';
+    setoff = false;
+    break;
+
+  default:
+    v = src.charAt(c+1);
+    c+=2;
+  }
+
+  if (setoff)
+    this.setsimpoff(c);
+
+  return v;
+};
+
+this.readEsc_legacy =
+function() {
+  if (this.scope.insideStrict())
+    this.err('esc.legacy.not.allowed.in.strict.mode');
+
+  var c = this.c+1, s = this.src, l = s.length, v = -1;
+
+  v = s.charCodeAt(c) - CH_0;
+  var max = v >= 4 ? 1 : 2;
+  c++;
+  while (c<l && max--) {
+    var ch = s.charCodeAt(c);
+    if (ch < CH_0 || ch >= CH_8)
+      break;
+    v = (v<<3)|(ch-CH_0);
+  }
+
+  return String.fromCharCode(v);
 };
 
 },
@@ -9773,7 +9580,9 @@ function(v) {
         v += String.fromCharCode(ch) + String.fromCharCode(surrogateTail);
       }
       else if (bs)
-        v += String.fromCharCode(ch);
+        v += ch > 0xFFFF ?
+          cp2sp(ch) :
+          String.fromCharCode(ch);
       else
         break;
 
@@ -9817,11 +9626,21 @@ function(sc) {
 
 },
 function(){
+var NUM0_NONDEC = 0,
+    NUM0_DEC = 1,
+    NUM0_ZERO = 2;
+
 this.readNum_raw = function(ch) {
-  if (ch === CH_0)
-    this.readNum_0();
+  var c = this.c+1, s = this.src, l = s.length;
+  var legacy = false, deci = false, fl = false;
+  if (ch === CH_0) {
+    var t0 = this.readNum_0();
+    deci = t0 !== NUM0_NONDEC;
+    legacy = t0 === NUM0_DEC;
+    c = this.c;
+  }
   else {
-    var c = this.c+1, s = this.src, l = s.length;
+    deci = true;
     while (c < l) {
       ch = s.charCodeAt(c);
       if (isNum(ch))
@@ -9830,12 +9649,24 @@ this.readNum_raw = function(ch) {
         break;
     }
     this.setsimpoff(c);
-    if (ch === CH_SINGLEDOT)
-      this.readNum_floatTail(FL_SIMPLE_NON0);
-    else {
-      this.ltraw = this.c0_to_c();
-      this.ltval = parseInt(this.ltraw);
+  }
+
+  if (deci) {
+    if (c < l && s.charCodeAt(c) === CH_SINGLEDOT) {
+      this.readNum_tail(FL_SIMPLE_FLOAT);
+      fl = true;
+      c = this.c;
     }
+    if (c < l) {
+      ch = s.charCodeAt(c);
+      if (ch === CH_E || ch === CH_e) {
+        fl = true;
+        this.readNum_tail(FL_GET_E);
+      }
+    }
+    this.ltraw = this.c0_to_c();
+    this.ltval = (fl ? parseFloat : parseInt)(
+      legacy ? this.ltraw.substring(1) : this.ltraw);
   }
 
   this.lttype = TK_NUM;
@@ -9847,27 +9678,23 @@ function() {
   switch (ch) {
   case CH_X: case CH_x:
     this.readNum_0x();
-    break;
+    return NUM0_NONDEC;
 
   case CH_B: case CH_b:
     this.readNum_0b();
-    break;
+    return NUM0_NONDEC;
 
   case CH_O: case CH_o:
     this.readNum_0o();
-    break;
-
-  case CH_SINGLEDOT:
-    this.readNum_floatTail(FL_SIMPLE_0);
-    break;
+    return NUM0_NONDEC;
 
   default:
-    if (isNum(ch))
+    if (isNum(ch)) {
       this.readNum_octLegacy(ch);
-    else {
-      this.ltval = 0;
-      this.ltraw = '0';
+      return NUM0_DEC;
     }
+
+    return NUM0_ZERO;
   }
 };
 
@@ -9920,38 +9747,38 @@ function(ch) {
   } while (isNum(ch));
 
   this.setsimpoff(c);
-  if (dec && ch === CH_SINGLEDOT)
-    this.readNum_floatTail(FL_LEGACY);
-  else {
+  if (!dec) {
     this.ltraw = this.c0_to_c();
-    this.ltval = parseInt(dec ? this.ltraw : this.ltraw.substring(1));
+    this.ltval = octStr2num(this.ltraw);
   }
 };
 
-this.readNum_floatTail =
-function(headtype) {
+this.readNum_tail =
+function(fl) {
   var c = this.c,
       s = this.src,
       l = s.length,
-      digitsNeeded = headtype === FL_NONE,
       hasSign = false,
       ch = -1;
 
-  c++; // '.'
-  if (digitsNeeded) {
-    if (c >= l || !isNum(s.charCodeAt(c)))
-      this.err('float.tail.is.headless.must.have.digits');
-    c++;
+  if (fl !== FL_GET_E) {
+    c++; // '.'
+    if (fl === FL_HEADLESS_FLOAT) {
+      if (c >= l || !isNum(s.charCodeAt(c)))
+        this.err('float.tail.is.headless.must.have.digits');
+      c++;
+    }
+    while (c<l && isNum(s.charCodeAt(c)))
+      c++;
+
+    if (c<l) {
+      ch = s.charCodeAt(c);
+      if (ch === CH_E || ch === CH_e)
+        fl = FL_GET_E;
+    }
   }
-  while (c<l && isNum(s.charCodeAt(c)))
-    c++;
 
-  MANTISSA:
-  if (c<l) {
-    ch = s.charCodeAt(c);
-    if (ch !== CH_E && ch !== CH_e)
-      break MANTISSA;
-
+  if (fl === FL_GET_E) {
     c++;
     if (c >= l)
       this.err('float.nothing.after.e');
@@ -9971,12 +9798,69 @@ function(headtype) {
   }
 
   this.setsimpoff(c);
+};
 
+this.readNum_0x =
+function() {
+  var c = this.c+2, // '0x'
+      s = this.src,
+      l = s.length,
+      v = 0;
+
+  if (c>=l) {
+    this.setsimpoff(c);
+    this.err('hex.expected.got.eof');
+  }
+
+  var ch = hex2num(s.charCodeAt(c));
+  if (ch === -1)
+    this.err('hex.expected.got.somthing.else');
+
+  v = ch;
+  c++;
+  while (c<l) {
+    ch = hex2num(s.charCodeAt(c));
+    if (ch === -1)
+      break;
+    v = (v<<4)|ch;
+    c++;
+  }
+
+  this.setsimpoff(c);
   this.ltraw = this.c0_to_c();
-  this.ltval = parseFloat(
-    headtype === FL_LEGACY ?
-      this.ltraw.substring(1) :
-      this.ltraw);
+  this.ltval = v;
+};
+
+this.readNum_0o =
+function() {
+  var c = this.c+2,
+      s = this.src,
+      l = s.length,
+      v = 0;
+
+  if (c>=l) {
+    this.setsimpoff(c);
+    this.err('oct.expected.got.eof');
+  }
+
+  var ch = s.charCodeAt(c);
+  if (ch < CH_0 || ch >= CH_8)
+    this.err('oct.expected.got.somthing.else');
+
+  v = ch - CH_0;
+  c++;
+  while (c<l) {
+    ch = s.charCodeAt(c);
+    if (!isNum(ch))
+      break;
+    if (ch < CH_0 || ch >= CH_8)
+      this.err('oct.expected.got.somthing.else');
+    v = (v<<3)|(ch-CH_0);
+  }
+
+  this.setsimpoff(c);
+  this.ltraw = this.c0_to_c();
+  this.ltval = v;
 };
 
 },
