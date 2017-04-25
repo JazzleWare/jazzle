@@ -11,7 +11,7 @@ this.Transformer = Transformer;
 this.Scope = Scope;
 this.Hitmap = Hitmap;
 this.GlobalScope = GlobalScope;
-
+/*
 this.ST_GLOBAL  = ST_GLOBAL ;
 this.ST_MODULE  = ST_MODULE ;
 this.ST_SCRIPT  = ST_SCRIPT ;
@@ -91,3 +91,4 @@ this.RS_SMEM  = RS_SMEM ;
 this.RS_SCALL  = RS_SCALL ;
 this.RS_NTARGET  = RS_NTARGET ;
 this.RS_THIS = RS_THIS;
+*/

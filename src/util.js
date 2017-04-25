@@ -61,7 +61,7 @@ function fromcode(codePoint )  {
 
 function core(n) { return n.type === PAREN ? n.expr : n; };
 
-function toNum (n) {
+function hex2num(n) {
   return (n >= CH_0 && n <= CH_9) ? n - CH_0 :
          (n <= CH_f && n >= CH_a) ? 10 + n - CH_a :
          (n >= CH_A && n <= CH_F) ? 10 + n - CH_A : -1;

@@ -37,5 +37,5 @@ function() {
 this.scat =
 function(offset) {
   return offset < this.src.length ?
-    this.src.charCode(offset) : -1;
+    this.src.charCodeAt(offset) : -1;
 };

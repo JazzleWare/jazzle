@@ -21,6 +21,8 @@ var Parser = function (src, o) {
   this.li = 1;
   this.col = 0;
   this.c = 0;
+
+  this.luo = 0; // latest used offset
   
   this.canBeStatement = false;
   this.foundStatement = false;

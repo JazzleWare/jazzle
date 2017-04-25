@@ -1,38 +1,42 @@
 (function(){
 "use strict";
 ;
-function CatchBodyScope(sParent) {
-  LexicalScope.call(this, sParent, ST_CATCH|ST_BODY);
-  
-  this.paramList = new SortedObj();
-  this.hasSimpleList = true;
-  this.catchVarName = "";
+function CatchScope(sParent) {
+  Scope.call(this, sParent, ST_CATCH);
+
+  this.args = new SortedObj();
+  this.argRefs = new SortedObj();
+  this.argIsSimple = false;
+  this.argIsSignificant = false;
+  this.inBody = false;
+  this.bodyRefs = new SortedObj();
+
+  this.refs = this.argRefs;
 }
-
-;
-function CatchHeadScope(sParent) {
-  Scope.call(this, sParent, ST_CATCH|ST_HEAD);
-
-  this.paramsAreSimple = false;
-  this.synthParamName = null;
-}
-
 ;
 function ClassScope(sParent, sType) {
   Scope.call(this, sParent, sType|ST_CLS);  
+
   this.scopeName = null;
+  this.clsTemp = null;
+}
+;
+function ConcreteScope(parent, type) {
+  Scope.call(this, parent, type);
+
+  this.liquidDefs = new SortedObj();
+  this.synthNamesUntilNow = new SortedObj();
+
+  this.spThis = null;
 }
 ;
 function Decl() {
-  this.mode = DM_NONE;
   this.ref = null;
+  this.idx = -1;
   this.name = "";
   this.site = null;
-  this.i = -1;
-  this.hasTZ = false;
-  this.synthName = "";
+  this.hasTZCheck = false;
   this.reached = false;
-  this.liquid = null;
 }
 ;
 function Emitter(spaceString) {
@@ -102,33 +106,13 @@ function FunScope(parent, type) {
   this.firstDup =
   this.firstEvalOrArguments = null;
   this.inBody = false;
-  this.special = { _this: null, _arguments: null };
+  this.bodyRefs = new SortedObj();
 
   this.refs = this.argRefs;
-}
-;
-function FuncBodyScope(sParent, sType) {
-  Scope.call(this, sParent, sType|ST_BODY);
 
-  this.prologue = null;
-  this.funcHead = null;
-  this.special = { newTarget: null, lexicalThis: null };
+  this.spArguments = null;
+  this.spSuperCall = null;
 }
-;
-function FuncHeadScope(sParent, st) {
-  Scope.call(this, sParent, st|ST_HEAD);
-  this.liquidDefs = null;
-
-  this.paramList = [];
-  this.firstNonSimple = null;
-  this.scopeName = null;
-  this.firstDup = null;
-  this.firstEvalOrArguments = null;
-  this.mode |= SM_INARGS;
-  this.paramMap = {};
-  this.funcBody = null;
-}
-
 ;
 function GlobalScope() {
   Scope.call(this, null, ST_GLOBAL);  
@@ -164,69 +148,23 @@ function LabelTracker(parent) {
   this.target = null;
 }
 ;
-function LexicalScope(sParent, sType) {
-  Scope.call(this, sParent, sType);
+function Liquid(category) {
+  Decl.call(this);
 
-  this.synthName = "";
-  this.childBindings = null;
-  
-  var surroundingCatch =
-    sParent.isCatchBody() ?
-      sParent :
-      sParent.isLexical() ?
-        sParent.surroundingCatch :
-        null;
-}
-
-;
-function Liquid(scope, name) {
-  this.name = name;
-  this.scope = scope;
-  this.crsList = [];
-  this.crsMap = {};
-  this.idealName = "";
-  this.synthName = "";
-  this.associatedDecl = null;
+  this.rsMap = {};
+  this.category = category;
 }
 ;
-function NewConcreteScope(parent, type) {
-  Scope.call(this, parent, type);
+function ModuleScope(sParent, type) {
+  Scope.call(this, sParent, type);
 
-  this.liquidDefs = new SortedObj();
-  this.synthNamesUntilNow = new SortedObj();
+  this.inNames = new SortedObj();
+  this.outNames = new SortedObj();
 }
-;
-function NewScope(sParent, type) {
-  this.parent = sParent;
-  this.type = type;
-  this.refs = new SortedObj();
-  this.defs = new SortedObj();
-  this.hasTZCheckPoint = false;
-  this.scs = this.isConcrete() ?
-    this :
-    this.parent.scs;
-
-  this.allowedActions = this.determineActions();
-  this.misc = this.determineMisc();
-
-  this.scopeID_ref = this.parent ?
-    this.parent.scopeID_ref : {v: 0};
-  this.scopeID = this.scopeID_ref.v++;
-
-  this.parser = this.parent && this.parent.parser;
-
-  this.di_ref = this.isConcrete() ?
-    {v: 0} : this.parent.diRef;
-  this.di0 = this.di_ref.v++;
-};
 ;
 function ParenScope(sParent) {
   Scope.call(this, sParent, ST_PAREN);
-
-  this.paramList = [];
-  this.firstDup = null;
-  this.firstNonSimple = null;
-  this.paramMap = {};
+  this.ch = [];
 }
 
 ParenScope.prototype = createObj(Scope.prototype);
@@ -254,6 +192,8 @@ var Parser = function (src, o) {
   this.li = 1;
   this.col = 0;
   this.c = 0;
+
+  this.luo = 0; // latest used offset
   
   this.canBeStatement = false;
   this.foundStatement = false;
@@ -321,62 +261,38 @@ var Parser = function (src, o) {
 };
 
 ;
-function Ref(scope) {
-  this.lors = [];
-  this.indirect = 0;
-  this.scope = scope;
-  this.direct = 0;
-  this.resolved = false;
-  this.synthTarget = null;
-  this.idealSynthName = "";
-  this.decl = null;
+function Ref() {
+  this.i = 0;
+  this.rsList = [];
+  this.scope = null;
+  this.d = 0;
+  this.targetDecl = null;
+  this.isResolved = false;
+  this.parentRef = null;
 }
 ;
-function RefCount() {
-  this.fw = 0;
-  this.ex = 0;
-}
-;
-function Scope(sParent, sType) {
+function Scope(sParent, type) {
   this.parent = sParent;
-  this.type = sType;
+  this.type = type;
+  this.refs = new SortedObj();
+  this.defs = new SortedObj();
+  this.hasTZCheckPoint = false;
   this.scs = this.isConcrete() ?
     this :
     this.parent.scs;
-  
-  this.defs = new SortedObj();
-  this.liquidDefs = this.isConcrete() ? new SortedObj() : null;
-  this.refs = new SortedObj();
 
-  this.synthNamesUntilNow = null;
+  this.allowedActions = this.determineActions();
+  this.flags = this.determineFlags();
 
-  this.allowed = this.calculateAllowedActions();
-  this.mode = this.calculateScopeMode();
-  if (this.isCtorComp() && this.isBody() && !this.cls().hasHeritage())
-    this.allowed &= ~SA_CALLSUP;
+  this.scopeID_ref = this.parent ?
+    this.parent.scopeID_ref : {v: 0};
+  this.scopeID = this.scopeID_ref.v++;
 
-  this.ch = [];
-  if (this.parent)
-    this.parent.ch.push(this);
+  this.parser = this.parent && this.parent.parser;
 
-  this.special = this.calculateSpecial();
-
-  this.idRef = this.parent ? this.parent.idRef : {v: 0};
-  this.id = this.idRef.v++;
-
-  this.diRef =
-    this.isConcrete() ?
-      this.isAnyFnBody() ? 
-        null :
-        {v: 0} :
-      this.scs.diRef;
-  this.di = this.scs.isAnyFnBody() ? -1 : this.diRef.v++;
-
-  this.funcDecls = new SortedObj();
-
-  this.parser = this.parent ? this.parent.parser : null;
-
-  this.hasTZ = false;
+  this.di_ref = this.isConcrete() ?
+    {v: 0} : this.parent.diRef;
+  this.di0 = this.di_ref.v++;
 }
 ;
 function SortedObj(obj) {
@@ -499,14 +415,6 @@ function Transformer() {
   this.currentScope = null;
   this.tempStack = [];
 }
-;
-LexicalScope.prototype = createObj(Scope.prototype);
-CatchBodyScope.prototype = createObj(LexicalScope.prototype);
-CatchHeadScope.prototype = createObj(LexicalScope.prototype);
-GlobalScope.prototype = createObj(Scope.prototype);
-FuncHeadScope.prototype = createObj(Scope.prototype);
-FuncBodyScope.prototype = createObj(Scope.prototype);
-ClassScope.prototype = createObj(Scope.prototype);
 ;
 var CH_1 = char2int('1'),
     CH_2 = char2int('2'),
@@ -809,7 +717,7 @@ yList['YieldExpression'] =
 yList['WhileStatement'] =
   function() { return this.y !== -1 ? this.y : this.y = y(this.test) + y(this.body); };
 ;
-function num(c) {
+function isNum(c) {
   return (c >= CH_0 && c <= CH_9);
 }
 
@@ -966,6 +874,54 @@ var NORMALIZE_COMMON = ['li0', 'c0', 'col0', 'li', 'c', 'col', 'loc0', 'loc'];
 var Emitters = {};
 var UntransformedEmitters = {};
 ;
+var VDT_VOID = 1;
+var VDT_TYPEOF = 2;
+var VDT_NONE = 0;
+var VDT_DELETE = 4;
+var VDT_AWAIT = 8;
+
+var TK_NONE = 0;
+var TK_EOF = 1 << 8;
+var TK_QUOTE = TK_EOF << 1;
+var TK_NUM = TK_QUOTE << 1;
+var TK_ID = TK_NUM << 1;
+var TK_SIMP_ASSIG = TK_ID << 1;
+var TK_UNARY = TK_SIMP_ASSIG << 1;
+var TK_SIMP_BINARY = TK_UNARY << 1;
+var TK_AA_MM = TK_SIMP_BINARY << 1;
+var TK_OP_ASSIG = TK_AA_MM << 1;
+var TK_DIV = TK_OP_ASSIG << 1;
+var TK_UNBIN = TK_SIMP_BINARY|TK_UNARY;
+var TK_ANY_ASSIG = TK_SIMP_ASSIG|TK_OP_ASSIG;
+var TK_ANY_BINARY = TK_SIMP_BINARY|TK_ANY_ASSIG;
+
+function nextl(nPrec) { return (nPrec&1) ? nPrec + 1 : nPrec + 2; }
+function nextr(nPrec) { return (nPrec&1) ? nPrec + 2 : nPrec + 1; }
+
+var PREC_NONE = 0; // [<start>]
+var PREC_COMMA = nextl(PREC_NONE); // ,
+var PREC_ASSIG = nextr(PREC_COMMA); // =, [<op>]=
+var PREC_COND = nextl(PREC_ASSIG); // ?:
+var PREC_LOG_OR = nextl(PREC_COND); // ||
+var PREC_LOG_AND = nextl(PREC_LOG_OR); // &&
+var PREC_BIT_OR = nextl(PREC_LOG_AND); // |
+var PREC_BIT_XOR = nextl(PREC_BIT_OR); // ^
+var PREC_BIT_AND = nextl(PREC_BIT_XOR); // &
+var PREC_EQ = nextl(PREC_BIT_AND); // !=, ===, ==, !==
+var PREC_COMP = nextl(PREC_EQ); // >, <=, <, >=, instanceof, in
+var PREC_SH = nextl(PREC_COMP); // >>>, >>, <<
+var PREC_ADD = nextl(PREC_SH); // +, -
+var PREC_MUL = nextl(PREC_ADD); // *, /
+var PREC_EX = nextl(PREC_MUL); // **
+var PREC_UNARY = nextr(PREC_EX); // delete, void, -, +, typeof; not really a right-associative thing
+var PREC_UP = nextr(PREC_UNARY); // ++, --; not really a right-associative thing
+
+var FL_LEGACY = 1,
+    FL_SIMPLE_NON0 = FL_LEGACY + 1,
+    FL_SIMPLE_0 = FL_SIMPLE_NON0 + 1,
+    FL_NONE = 0;
+
+;
 // ! ~ - + typeof void delete    % ** * /    - +    << >>
 // > <= < >= in instanceof   === !==    &    ^   |   ?:    =       ...
 
@@ -1045,92 +1001,63 @@ function isThis(mname) {
 var ST_GLOBAL = 1,
     ST_MODULE = ST_GLOBAL << 1,
     ST_SCRIPT = ST_MODULE << 1,
-    ST_DECL = ST_SCRIPT << 1,
-    ST_CLS = ST_DECL << 1,
-    ST_FN = ST_CLS << 1,
-    ST_CLSMEM = ST_FN << 1,
-    ST_SETTER = ST_CLSMEM << 1,
+    ST_EXPR = ST_SCRIPT << 1,
+    ST_DECL = ST_EXPR << 1,
+    ST_OBJ = ST_DECL << 1,
+    ST_FN = ST_OBJ << 1,
+    ST_CLS = ST_FN << 1,
+    ST_CLSMEM = ST_CLS << 1,
+    ST_STATICMEM = ST_CLSMEM << 1,
+    ST_OBJMEM = ST_STATICMEM << 1,
+    ST_METH = ST_OBJMEM << 1,
+    ST_CTOR = ST_METH << 1,
+    ST_SETTER = ST_CTOR << 1,
     ST_GETTER = ST_SETTER << 1,
-    ST_STATICMEM = ST_GETTER << 1,
-    ST_CTOR = ST_STATICMEM << 1,
-    ST_OBJMEM = ST_CTOR << 1,
-    ST_ARROW = ST_OBJMEM << 1,
-    ST_BLOCK = ST_ARROW << 1,
-    ST_CATCH = ST_BLOCK << 1,
-    ST_ASYNC = ST_CATCH << 1,
-    ST_BARE = ST_ASYNC << 1,
-    ST_BODY = ST_BARE << 1,
-    ST_METH = ST_BODY << 1,
-    ST_EXPR = ST_METH << 1,
-    ST_GEN = ST_EXPR << 1,
-    ST_HEAD = ST_GEN << 1,
-    ST_PAREN = ST_HEAD << 1,
-
-    ST_ACCESSOR = ST_GETTER|ST_SETTER,
-    ST_SPECIAL = ST_ACCESSOR|ST_ASYNC|ST_GEN,
-    ST_MEM_FN = ST_CTOR|ST_METH|ST_SPECIAL,
-    ST_TOP = ST_GLOBAL|ST_MODULE|ST_SCRIPT,
-    ST_LEXICAL = ST_BLOCK|ST_CATCH,
-    ST_HOISTABLE = ST_DECL,
-    ST_ANY_FN = ST_MEM_FN|ST_FN|ST_CTOR|ST_ARROW,
-    ST_CONCRETE = ST_TOP|ST_ANY_FN,
+    ST_ARROW = ST_GETTER << 1,
+    ST_GEN = ST_ARROW << 1,
+    ST_ASYNC = ST_GEN << 1,
+    ST_BLOCK = ST_ASYNC << 1,
+    ST_BARE = ST_BLOCK << 1,
+    ST_CATCH = ST_BARE << 1,
+    ST_PAREN = ST_CATCH << 1,
     ST_NONE = 0;
-
-var SM_LOOP = 1,
-    SM_UNIQUE = SM_LOOP << 1,
-    SM_STRICT = SM_UNIQUE << 1,
-    SM_INARGS = SM_STRICT << 1,
-    SM_INBLOCK = SM_INARGS << 1,
-    SM_INSIDE_IF = SM_INBLOCK << 1,
-    SM_CLS_WITH_SUPER = SM_INSIDE_IF << 1,
-    SM_FOR_INIT = SM_CLS_WITH_SUPER << 1,
-    SM_YIELD_KW = SM_FOR_INIT << 1,
-    SM_AWAIT_KW = SM_YIELD_KW << 1,
-    SM_NONE = 0;
 
 var SA_THROW = 1,
     SA_AWAIT = SA_THROW << 1,
     SA_BREAK = SA_AWAIT << 1,
-    SA_RETURN = SA_BREAK << 1,
-    SA_YIELD = SA_RETURN << 1,
-    SA_CONTINUE = SA_YIELD << 1,
-    SA_CALLSUP = SA_CONTINUE << 1,
-    SA_MEMSUP = SA_CALLSUP << 1,
+    SA_YIELD = SA_BREAK << 1,
+    SA_RETURN = SA_YIELD << 1,
+    SA_CONTINUE = SA_RETURN << 1,
+    SA_CALLSUPER = SA_CONTINUE << 1,
+    SA_MEMSUPER = SA_CALLSUPER << 1,
     SA_NONE = 0;
 
-var DM_CLS = 1,
-    DM_FUNCTION = DM_CLS << 1,
-    DM_LET = DM_FUNCTION << 1,
-    DM_TEMP = DM_LET << 1,
-    DM_VAR = DM_TEMP << 1,
-    DM_CONST = DM_VAR << 1,
-    DM_SCOPENAME = DM_CONST << 1,
-    DM_CATCHARG = DM_SCOPENAME << 1,
-    DM_FNARG = DM_CATCHARG << 1,
-    DM_ARGUMENTS = DM_FNARG << 1,
-    DM_NEW_TARGET = DM_ARGUMENTS << 1,
-    DM_LTHIS = DM_NEW_TARGET << 1,
-    DM_MEMSUP = DM_LTHIS << 1,
-    DM_CALLSUP = DM_MEMSUP << 1,
-    DM_GLOBAL = DM_CALLSUP << 1,
-    DM_LIQUID = DM_GLOBAL << 1,
-    DM_CLSNAME = DM_LIQUID << 1,
-    DM_NONE = 0,
-    DM_INSIGNIFICANT_NAME =
-      DM_ARGUMENTS|
-      DM_NEW_TARGET|
-      DM_LTHIS|
-      DM_MEMSUP|
-      DM_CALLSUP;
+var SF_LOOP = 1,
+    SF_UNIQUE = SF_LOOP << 1,
+    SF_STRICT = SF_UNIQUE << 1,
+    SF_ARGS = SF_STRICT << 1,
+    SF_IF = SF_ARGS << 1,
+    SF_COND = SF_IF << 1,
+    SF_FORINIT = SF_COND << 1,
+    SF_WITH_SCALL = SF_FORINIT << 1,
+    SF_WITH_SMEM = SF_WITH_SCALL << 1,
+    SF_NONE = 0;
 
-var RS_ARGUMENTS = _m('arguments'),
-    RS_SMEM = _m('special:supermem'),
-    RS_SCALL = _m('special:supercall'),
-    RS_NTARGET = _m('new.target'),
-    RS_THIS = _m('special:this');
-
-var ACC_DECL = 1,
-    ACC_REF = 2;
+var DT_CLS = 1,
+    DT_FN = DT_CLS << 1,
+    DT_CONST = DT_FN << 1,
+    DT_VAR = DT_CONST << 1,
+    DT_CATCHARG = DT_VAR << 1,
+    DT_SPECIAL = DT_CATCHARG << 1,
+    DT_LIQUID = DT_SPECIAL << 1,
+    DT_LET = DT_LIQUID << 1,
+    DT_ARGUMENTS = DT_LET << 1,
+    DT_FNARG = DT_ARGUMENTS << 1,
+    DT_CLSNAME = DT_FNARG << 1,
+    DT_FNNAME = DT_CLSNAME << 1,
+    DT_GLOBAL = DT_FNNAME << 1,
+    DT_INFERRED = DT_GLOBAL << 1,
+    DT_NONE = 0;
 ;
 function _m(name) { return name+'%'; }
 function _u(name) {
@@ -1596,7 +1523,7 @@ function fromcode(codePoint )  {
 
 function core(n) { return n.type === PAREN ? n.expr : n; };
 
-function toNum (n) {
+function hex2num(n) {
   return (n >= CH_0 && n <= CH_9) ? n - CH_0 :
          (n <= CH_f && n >= CH_a) ? 10 + n - CH_a :
          (n >= CH_A && n <= CH_F) ? 10 + n - CH_A : -1;
@@ -1622,230 +1549,10 @@ function needsConstCheck(n) {
              def[1][e++].call(def[0]);
        }
      }).call([
-[CatchBodyScope.prototype, [function(){
-this.findCatchVar_m = function(mname) {
-  var varDecl = this.findDecl_m(mname);
-  if (varDecl && varDecl.isCatchVar())
-    return varDecl;
-
-  return null;
-};
-
-}]  ],
 null,
-[ClassScope.prototype, [function(){
-this.hasScopeName_m = function(mname) {
-  return this.scopeName &&
-    this.scopeName.name === _u(mname); 
-};
-
-this.setScopeName = function(name) {
-  ASSERT.call(this, !this.scopeName,
-    'this scope has already got a name');
-  this.scopeName =
-    new Decl().m(DM_SCOPENAME)
-              .r(new Ref(this))
-              .n(name);
-
-  return this.scopeName;
-};
-
-}]  ],
-[Decl.prototype, [function(){
-this.isHoistedInItsScope = function() {
-  return this.mode & DM_FUNCTION;
-};
-
-this.isVarLike = function() {
-  if (this.isFunc())
-    return this.ref.scope.isConcrete();
-  return this.isVName() ||
-         this.isFuncArg();
-};
-
-this.isLexical = function() {
-  if (this.isFunc())
-    return this.ref.scope.isLexical();
-  return this.isClass() ||
-         this.isLName() ||
-         this.isCName();
-};
-
-this.isTopmostInItsScope = function() {
-  return this.isFuncArg() ||
-         this.isCatchArg() ||
-         this.isHoistedInItsScope() ||
-         this.isVarLike();
-};
-
-this.isClass = function() {
-  return this.mode & DM_CLS;
-};
-
-this.isCatchArg = function() {
-  return this.mode & DM_CATCHARG;
-};
-
-this.isFunc = function() {
-  return this.mode & DM_FUNCTION;
-};
-
-this.isFuncArg = function() {
-  return this.mode & DM_FNARG;
-};
-
-this.isVName = function() {
-  return this.mode & DM_VAR;
-};
-
-this.isLName = function() {
-  return this.mode & DM_LET;
-};
-
-this.isCName = function() {
-  return this.mode & DM_CONST;
-};
-
-this.isName = function() {
-  return this.mode &
-    (DM_VAR|DM_LET|DM_CONST);
-};
-
-this.isGlobal = function() {
-  return this.mode & DM_GLOBAL;
-};
-
-this.isScopeName = function() {
-  return this.mode & DM_SCOPENAME;
-};
-
-this.absorbDirect = function(otherRef) {
-  ASSERT.call(this, !otherRef.resolved,
-    'a resolved reference must not be absorbed by a declref');
-
-  var cur = this.ref;
-  cur.absorbDirect(otherRef);
-  return cur;
-};
-
-this.absorbIndirect = function(otherRef) {
-  ASSERT.call(this, !otherRef.resolved,
-    'a resolved reference must not be absorbed by a declref');
-
-  var cur = this.ref;
-  cur.absorbIndirect(otherRef);
-  return cur;
-};
-
-this.m = function(mode) {
-  ASSERT.call(this, this.mode === DM_NONE,
-    'can not change mode');
-  this.mode = mode;
-  return this;
-};
-
-this.r = function(ref) {
-  ASSERT.call(this, this.ref === null,
-    'can not change ref');
-  this.ref = ref.resolveTo(this);
-  if (ref.indirect || ref.direct)
-    this.useTZ();
-
-  var diRoot = this.ref.scope.scs;
-
-  if (diRoot.isAnyFnBody())
-    diRoot = diRoot.funcHead;
-
-  this.i = diRoot.diRef.v++;
-
-  return this;
-};
-
-this.n = function(name) {
-  ASSERT.call(this, this.name === "",
-    'can not change name');
-  this.name = name;
-  return this;
-};
-
-this.s = function(site) {
-  ASSERT.call(this, this.site === null,
-    'can not change site');
-  this.site = site;
-  return this;
-};
-
-this.setSynthName = function(synthName) {
-  ASSERT.call(this, this.synthName === "",
-    'this decl has already got a synth-name');
-  this.synthName = synthName;
-  return this;
-};
-
-this.useTZ = function() {
-  if (this.mightNeedTest() && !this.hasTZ) {
-    this.hasTZ = true;
-    if (!this.ref.scope.hasTZ)
-      this.ref.scope.hasTZ = true;
-  }
-
-  return this;
-};
-
-this.mightNeedTest = function() {
-  return !this.isVName() && !this.isFunc() && !this.isGlobal();
-};
-
-this.associateWithLiquid = function(liquid) {
-  ASSERT.call(this, this.liquid === null,
-    'this decl has already been associated with a liquid');
-  liquid.associateWith(this);
-  this.liquid = liquid;
-};
-
-this.isActuallyLiquid = function() {
-  return this.liquid !== null;
-};
-
-this.isInsignificant = function() {
-  return this.type & DM_INSIGNIFICANT_NAME;
-};
-
-// Loop Lexical In Need Of Special Attention y'know
-this.isLlinosa = function() {
-  return this.isLexical() && this.ref.scope.insideLoop() && this.ref.indirect;
-};
-
-},
-function(){
-this.str = function() {
-
-  return this.i+':<decl type="'+
-         this.typeString()+'">'+
-         this.name+'[d:'+this.ref.direct+';i:'+this.ref.indirect+']</decl>';
-};
-
-this.typeString = function() {
-  var str = "";
-
-  if (this.mode & DM_CLS) str += ":class";
-  if (this.mode & DM_FUNCTION) str += ":func";
-  if (this.mode & DM_LET) str += ":let";
-  if (this.mode & DM_TEMP) str += ":temp";
-  if (this.mode & DM_VAR) str += ":var";
-  if (this.mode & DM_CONST) str += ":const";
-  if (this.mode & DM_SCOPENAME) str += ":scopename";
-  if (this.mode & DM_CATCHARG) str += ":catcharg"; 
-  if (this.mode & DM_FNARG) str += ":fnarg";  
-
-  return str;
-};
-
-this.writeTo = function(emitter) {
-  emitter.w(this.str());
-};
-
-}]  ],
+null,
+null,
+null,
 [Emitter.prototype, [function(){
 this.indent = function() {
   this.indentLevel++; 
@@ -3278,344 +2985,58 @@ this.applyTo = function(obj) {
 
 
 }]  ],
-null,
-[FuncBodyScope.prototype, [function(){
-this.cls = function() {
-  ASSERT.call(this, this.isClassMem(),
-     'scopes that are not classmems can not have '+
-     'class');
-  ASSERT.call(this, this.parent.parent.isClass(),
-     'this scope is a classmem and must have a '+
-     'class for its parent');
-  return this.parent.parent;
+[FunScope.prototype, [function(){
+this.insideUniqueArgs =
+function() { return this.flags & SF_UNIQUE; };
+
+this.verifyForUniqueArgs =
+function() { this.firstDup && this.parser.err('argsdup'); };
+
+this.exitUniqueArgs =
+function() {
+  ASSERT.call(this, !this.inBody,
+    'must be in args');
+  ASSERT.call(this, this.insideUniqueArgs(),
+    'must be in unique args');
+  this.flags &= ~SF_UNIQUE;
 };
 
-this.setHead = function(head) {
-  ASSERT.call(this, this.funcHead === null,
-    'this fn has got an actual head');
-  this.funcHead = head;
-  this.funcHead.funcBody = this;
-};
-
-},
-function(){
-this.getLoopLexicalRefList = function() {
-  var loopLexicals = null;
-  ASSERT.call(this, this.isAnyFnBody(),
-    'fnbody was actually expected to extract poosible loop lexical names from');
-
-  var head = this.funcHead,
-      list = head.refs,
-      len = list.length(),
-      e = 0;
-
-  while (e < len) {
-    var elem = list.at(e++);
-    if (head.hasSignificantRef(elem)) {
-      var decl = elem.getDecl();
-      if (!decl.isLexical() || !decl.ref.scope.insideLoop())
-        continue;
-      if (!loopLexicals) loopLexicals = [];
-      loopLexicals.push(elem.getDecl());
-    }
-  }
-
-  return loopLexicals;
-};
-
-},
-function(){
-this.acceptsName_m = function(mname, m, o) {
-  if (this.synthNamesUntilNow === null)
-    this.bootSynthesis();
-
-  var argList = this.funcHead;
-
-  if (this.containsSynthName_m(mname))
-    return false;
-
-  if (mname === _m('arguments')) {
-    if (m === ACC_REF)
-      return false;
-    if (this.firstNonSimple !== null)
-      return false;
-
-    // unnecessary because it has been actually handled at if (m === ACC_REF)
-    var a = this.findDecl('arguments');
-    if (a && a.ref.indirect)
-      return false;
-  }
-
-  var decl =
-//  this.findDecl_m(mname) ||
-//  this.funcHead.findDecl_m(mname) ||
-    (this.funcHead.scopeName && _m(this.funcHead.scopeName.name) === mname && this.funcHead.scopeName);
-
-  if (decl === this.funcHead.scopeName) {
-    if (this.isExpr() && o === decl) return true;
-    if (this.isDecl() && o === decl) {
-      if (decl.isLexical() && decl.ref.scope.insideLoop() && decl.ref.indirect)
-        return false;
-    }
-  }
-
-  if (m === ACC_REF && this.isMem() && this.funcHead.scopeName && mname === _m(this.funcHead.scopeName.name))
-    return false;
-
-  if (m === ACC_REF && this.isCtorComp()) {
-    var cls = this.isHead() ? this.parent : this.parent.parent;
-    if (cls.scopeName && mname === _m(scopeName.name))
-      return false;
-  }
-
-//if (m === ACC_DECL) {
-//  var ref = argList.findRef_m(mname);
-//  if (ref && !ref.resolved)
-//    return false;
-//}
-
-  return true;
-};
-
-
-
-},
-function(){
-this.bootSynthesis = function() {
-  if (this.synthNamesUntilNow)
+this.makeArgsUnique =
+function() {
+  if (!this.canDup())
     return;
 
-  this.synthNamesUntilNow = new SortedObj();
-
-  var list = this.funcHead.paramList,
-      i = 0,
-      elem = null,
-      alreadyUsed = {},
-      len = list.length;
-
-  while (i < len) {
-    elem = list[i++];
-    if (HAS.call(alreadyUsed, _m(elem.name)))
-      continue;
-
-    this.synthDecl(elem);
-    alreadyUsed[_m(elem.name)] = true;
-  }
-
-  list = this.defs, i = 0, len = list.length();
-  while (i < len) {
-    elem = list.at(i++);
-    if (!this.ownsDecl(elem)) {
-      ASSERT.call(this, elem.ref.scope === this.funcHead,
-        'foreign decls that are in fn-body must belong to fn-head');
-      continue;
-    }
-
-    ASSERT.call(
-      this,
-      !HAS.call(this.funcHead.paramMap, _m(elem.name)),
-      'arg list should not have anything in common with var list'
-    );
-    this.synthDecl(elem);
-  } 
+  this.verifyForUniqueArgs();
+  this.flags |= SF_UNIQUE;
 };
 
 },
 function(){
-this.endSynthesis = function() {
-  ASSERT.call(this, this.funcHead.liquidDefs === null,
-    'fn head is not allowed to have a liquid def-list');
-
-  var list = this.liquidDefs, i = 0, len = list.length();
-  while (i < len)
-    this.synthLiquid(list.at(i++));
+this.canDup =
+function() {
+  ASSERT.call(this, !this.inBody,
+    'canDup allowed in args only');
+  return !this.insideUniqueArgs() &&
+         !this.isStrict();
 };
 
 },
 function(){
-this.hasSignificantRef = function(ref) {
-  if (ref.resolved)
-    return false;
-
-  if (this.isAnyFnBody() && 
-    ref.parent.scope === this.funcHead)
-    return false;
-
-  var decl = ref.getDecl();
-  if (decl.isActuallyLiquid())
-    return false;
-
-  if (decl.isInsignificant())
-    return false;
-
-  if (decl.ref.scope === this.funcHead)
-    return false;
-
-  ASSERT.call(this, decl.ref.scope !== this,
-    'fn-body must not have an unresolved own decl');
-
-  if (decl === this.funcHead.scopeName) {
-    if (this.isExpr())
-      return false;
-    ASSERT.call(this, this.isDecl(),
-      'only an fnexpr requires a resolvable name');
-    return false;
-  }
-
-  return true;
-};
-
-},
-function(){
-this.startupSynthesis = function() {
-  this.bootSynthesis();
-  var list = this.funcHead.refs,
-      i = 0,
-      len = list.length(),
-      elem = null;
-
-  while (i < len) {
-    elem = list.at(i++);
-    if (this.funcHead.hasSignificantRef(elem))
-      this.trackSynthName(elem.getDecl().synthName);
-  }
-
-//list = this.refs, i = 0, len = list.length();
-//while (i < len) {
-//  elem = list.at(i++);
-//  if (this.hasSignificantRef(elem))
-//    this.trackSynthName(elem.getDecl().synthName);
-//}
-};
-
-}]  ],
-[FuncHeadScope.prototype, [function(){
-this.verifyForStrictness = function() {
-  if (this.firstDup)
-    this.parser.err('argsdup');
-  if (this.firstNonSimple)
-    this.parser.err('non.simple');
-
+this.verifyForStrictness =
+function() {
+  this.verifyForUniqueArgs();
   var list = this.paramList, i = 0;
   while (i < list.length) {
-    var elem = list[i];
+    var elem = list[i++];
     if (arguments_or_eval(elem.name))
-      this.err('binding.eval.or.arguments.name');
-    this.parser.validateID(elem.name);
-    i++ ;
+      this.parser.err('binding.to.arguments.or.eval');
+    if (this.validateID(elem.name))
+      this.parser.err('invalid.argument.in.strict.mode');
   }
 };
 
-this.exitUniqueArgs = function() {
-  ASSERT.call(this, this.insideUniqueArgs(),
-    'can not unset unique when it has not been set');
-
-  this.mode &= ~SM_UNIQUE;
-};
-
-this.enterUniqueArgs = function() {
-  if (this.firstDup)
-    this.parser.err('argsdup');
-  if (this.insideUniqueArgs())
-    return;
-
-  this.mode |= SM_UNIQUE;
-};
-
-this.absorb = function(parenScope) {
-  ASSERT.call(this, this.isArrowComp() && this.isHead(),
-    'the only scope allowed to take in a paren is an arrow-head');
-  ASSERT.call(this, parenScope.isParen(),
-    'the only scope that can be absorbed into an arrow-head is a paren');
-
-  this.refs = parenScope.refs;
- 
-  var list = this.refs, i = 0;
-  while (i < list.keys.length)
-    list.at(i++).scope = this;
-
-  list = parenScope.ch, i = 0;
-  while (i < list.length)
-    list[i++].parent = this;
-};
-
-this.hasScopeName_m = function(mname) {
-  return this.scopeName &&
-    this.scopeName.name === _u(mname); 
-};
-
-this.setScopeName = function(name) {
-  ASSERT.call(this, !this.scopeName,
-    'this scope has already got a name');
-  this.scopeName =
-    new Decl().m(DM_SCOPENAME)
-              .r(new Ref(this))
-              .n(name);
-
-  return this.scopeName;
-};
-
-this.findDecl_m = function(mname) {
-  if (HAS.call(this.paramMap, mname))
-    return this.paramMap[mname];
-  if (mname === RS_ARGUMENTS)
-    return this.special.arguments;
-  return null;
-};
-
-},
-function(){
-this.bootSynthesis = function() {
-  ASSERT.call(this, false, 'synthesis must be booted from the fn body');
-};
-
-},
-function(){
-this.endSynthesis = function() {
-  ASSERT.call(this, false, 'synthesis has to end in the fn body');
-};
-
-},
-function(){
-this.hasSignificantRef = function(ref) {
-  if (ref.resolved)
-    return false;
-
-  var decl = ref.getDecl();
-  if (decl.isActuallyLiquid())
-    return false;
-
-  if (decl.isInsignificant())
-    return false;
-
-  if (decl === this.scopeName) {
-    if (this.isExpr())
-      return false;
-
-    ASSERT.call(this, this.isDecl(),
-      'only a fnexpr must have a resolvable name');
-  }
-
-  return true;
-};
-
-},
-function(){
-this.startupSynthesis = function() {
-  ASSERT.call(this, false, 'synthesis must start on fn-body');
-};
-
 }]  ],
-[GlobalScope.prototype, [function(){
-this.moduleScope = function() {
-  return new Scope(this, ST_MODULE);
-};
-
-this.scriptScope = function() {
-  return new Scope(this, ST_SCRIPT);
-};
-
-}]  ],
+null,
 [Hitmap.prototype, [function(){
 this.isValidName = function(name) {
   return this.isValidName_m(name+'%');
@@ -3730,95 +3151,9 @@ this.newSynthLabelName = function(baseLabelName) {
 };
 
 }]  ],
-[LexicalScope.prototype, [function(){
-
-
-}]  ],
-[Liquid.prototype, [function(){
-this.trackScope = function(from, to) {
-  if (from.isAnyFnHead())
-    from = from.funcBody;
-  var cur = from, end = to || this.scope.scs;
-
-
-  // var ownerReached = false;
-  while (end !== cur) {
-    // if (cur === this.scope) ownerReached = true;
-    if (cur.isConcrete() && !cur.isAnyFnHead()) {
-      // if we have tracked a scope, all of its parents have also been tracked
-      if (HAS.call(this.crsMap, cur.id))
-        break;
-
-       this.crsMap[cur.id] = cur;
-       this.crsList.push(cur);
-    }
-    cur = cur.parent;
-    ASSERT.call(this, cur !== null,
-      'scope '+from.id+' is not included in the scs for scope '+end+
-      ' (a liquid is only allowed to be accessed in descendant scopes)');
-  }
-};
-
-this.i = function(idealName) {
-  ASSERT.call(this, this.idealName === "",
-    'an ideal name has already been set on this liquid');
-  this.idealName = idealName;
-  return this;
-};
-
-this.setSynthName = function(synthName) {
-  ASSERT.call(this, this.synthName === "",
-    'this liquid has already got a synth-name');
-  this.synthName = synthName;
-  if (this.associatedDecl)
-    this.associatedDecl.setSynthName(synthName);
-  return this;
-};
-
-this.associateWith = function(decl) {
-  ASSERT.call(this, this.associatedDecl === null,
-    'this liquid has already got an associate');
-  this.associatedDecl = decl;
-  this.updateCRSList(this.associatedDecl.ref.lors);
-};
-
-this.updateCRSList = function(list) {
-  var i = 0;
-  while (i < list.length) {
-    var rs = list[i++];
-    if (!HAS.call(this.crsMap, rs.id)) {
-      this.crsMap[rs.id] = rs;
-      this.crsList.push(rs);
-    }
-  }
-};
-
-}]  ],
 null,
 null,
-[ParenScope.prototype, [function(){
-this.dissolve = function() {
-  var list = this.paramList,
-      i = 0,
-      ref = null,
-      elem = null;
-
-  var refs = this.refs, parent = this.parent;
-  list = refs.keys, i = 0;
-  while (i < list.length) {
-    var mname = list[i];
-    parent.refDirect_m(mname, refs.get(mname));
-    i++;
-  }
-
-  list = this.ch, i = 0;
-  while (i < list.length)
-    list[i++].parent = this.parent;
-};
-
-this.finish = function() {};
-
-}]  ],
+null,
 [Parser.prototype, [function(){
 this .ensureSimpAssig_soft = function(head) {
   switch(head.type) {
@@ -4945,542 +4280,113 @@ this.locOn = function(l) { return { line: this.li, column: this.col - l }; };
 
 },
 function(){
-this.next = function () {
-  if (this.onToken_ !== null) {
-    switch (this.lttype) {
-    case "eof":
-    case "":
-      break;
-    default:
-      this.onToken(null);
-    }
-  }
+this.next =
+function() {
 
-  if ( this.skipS() ) return;
+  this.skipWS();
   if (this.c >= this.src.length) {
-      this. lttype =  'eof' ;
-      this.ltraw=  '<<EOF>>';
-      return ;
+    this.lttype = 'eof';
+    this.ltraw = '<<EOF>>';
+    return;
   }
-  var c = this.c,
-      l = this.src,
-      e = l.length,
-      r = 0,
-      peek = -1,
-      start =  c;
 
-  this.c0 = c;
-  this.col0 = this.col;
+  this.c0 = this.c;
   this.li0 = this.li;
+  this.col0 = this.col;
 
-  peek  = this.src.charCodeAt(start);
-  if ( isIDHead(peek) ) {
-    if (this.directive !== DIR_NONE)
-      this.directive = DIR_NONE;
+  var ch = this.src.charCodeAt(this.c);
+  if (isIDHead(ch))
+    return this.readID_simple();
+  if (isNum(ch))
+    return this.readNum_raw(ch);
 
-    this.esct = ERR_NONE_YET;
-    this.readAnIdentifierToken('');
+  switch (ch) {
+  case CH_MIN:
+    return this.readOp_min();
+  case CH_ADD:
+    return this.readOp_add();
+  case CH_MULTI_QUOTE:
+    return this.read_multiQ();
+  case CH_SINGLE_QUOTE:
+    return this.read_singleQ();
+  case CH_SINGLEDOT:
+    return this.read_dot();
+  case CH_EQUALITY_SIGN:
+    return this.readOp_eq();
+  case CH_LESS_THAN:
+    return this.readOp_lt();
+  case CH_GREATER_THAN:
+    return this.readOp_gt();
+  case CH_MUL:
+    return this.readOp_mul();
+  case CH_MODULO:
+    return this.readOp_mod();
+  case CH_EXCLAMATION:
+    return this.readOp_exclam();
+  case CH_COMPLEMENT:
+    return this.readOp_compl();
+  case CH_OR:
+    return this.readOp_or();
+  case CH_AND:
+    return this.readOp_and();
+  case CH_XOR:
+    return this.readOp_xor();
+  case CH_BACK_SLASH:
+    return this.readID_bs();
+
+  default:
+    if (ch >= 0x0D800 && ch <= 0x0DBFF)
+      return this.readID_surrogate(ch);
+
+    return this.readSingleChar();
   }
-  else if (num(peek))this.readNumberLiteral(peek);
-  else {
+};
 
-    switch (peek) {
-      case CH_MIN: this.opMin(); break;
-      case CH_ADD: this.opAdd() ; break;
-      case CH_MULTI_QUOTE:
-      case CH_SINGLE_QUOTE:
-        return this.readStrLiteral(peek);
-      case CH_SINGLEDOT: this.readDot () ; break ;
-      case CH_EQUALITY_SIGN:  this.opEq () ;   break ;
-      case CH_LESS_THAN: this.opLess() ;   break ;
-      case CH_GREATER_THAN: this.opGrea() ;   break ;
-      case CH_MUL:
-         this.prec = PREC_MUL;
-         this.lttype = 'op';
-         this.ltraw = '*';
-         c++ ;
-         if ( l.charCodeAt(c) === peek) {
-           if (this.v <= 5)
-             this.err('ver.**');
+this.c0_to_c =
+function() { return this.src.substring(this.c0,this.c); };
 
-           this.ltraw = '**';
-           this.prec = PREC_EX;
-           c++ ;
-         }
-         if (l.charCodeAt(c) === CH_EQUALITY_SIGN) {
-           c++;
-           this. prec = PREC_OP_ASSIG;
-           this.ltraw += '=';
-         }
-         this.c=c;
-         break ;
+},
+function(){
+this.setsimpoff =
+function(offset) {
+  this.col += (this.c = offset) - this.luo;
+  // TODO: will luo remain relevant even if
+  // we only use this.c at the start and end of a lexere routine
+  this.luo = offset;
+};
 
-      case CH_MODULO:
-         this.lttype = 'op';
-         c++ ;
-         if (l.charCodeAt(c) === CH_EQUALITY_SIGN) {
-           c++;
-           this. prec = PREC_OP_ASSIG;
-           this.ltraw = '%=';
-         }
-         else {
-           this. prec = PREC_MUL;
-           this.ltraw = '%';
-         }
-         this.c=c;
-         break ;
+this.setnewloff =
+function(offset) {
+  this.luo = offset;
+  this.c = offset;
+  this.col = 0;
+  this.li++;
+};
 
-      case CH_EXCLAMATION:
-         c++ ;
-         if ( l.charCodeAt(c) === CH_EQUALITY_SIGN ) {
-           this. lttype = 'op';
-           c++;
-           this.prec = PREC_EQUAL;
-           if ( l.charCodeAt(c) === CH_EQUALITY_SIGN ) {
-             this.ltraw = '!==';
-             c++;
-           }
-           else this.ltraw = '!=' ;
-         }
-         else {
-           this .lttype = 'u' ;
-           this.ltraw = '!';
-         }
-         this.c=c;
-         break ;
-
-      case CH_COMPLEMENT:
-            c++;
-            this.c=c;
-            this.ltraw = '~';
-            this.lttype = 'u';
-            break ;
-
-      case CH_OR:
-         c++;
-         this.lttype = 'op' ;
-         switch ( l.charCodeAt(c) ) {
-            case CH_EQUALITY_SIGN:
-                 c++;
-                 this.prec = PREC_OP_ASSIG ;
-                 this.ltraw = '|=';
-                 break ;
-
-            case CH_OR:
-                 c++;
-                 this.prec = PREC_BOOL_OR;
-                 this.ltraw = '||'; break ;
-
-            default:
-                 this.prec = PREC_BIT_OR;
-                 this.ltraw = '|';
-                 break ;
-         }
-         this.c=c;
-         break;
-
-      case CH_AND:
-          c++ ;
-          this.lttype = 'op';
-          switch ( l.charCodeAt(c) ) {
-            case CH_EQUALITY_SIGN:
-               c++;
-               this. prec = PREC_OP_ASSIG;
-               this.ltraw = '&=';
-               break;
-
-            case CH_AND:
-               c ++;
-               this.prec = PREC_BOOL_AND;
-               this.ltraw = '&&';
-               break ;
-
-            default:
-               this.prec = PREC_BIT_AND;
-               this.ltraw = '&';
-               break ;
-         }
-         this.c=c;
-         break ;
-
-      case CH_XOR:
-        c++;
-        this.lttype = 'op';
-        if ( l.charCodeAt(c) === CH_EQUALITY_SIGN ) {
-          c++;
-          this.prec = PREC_OP_ASSIG;
-          this.ltraw = '^=';
-        }
-        else  {
-          this.  prec = PREC_XOR;
-          this.ltraw = '^';
-        }
-        this.c=c  ;
-        break;
-
-      default:
-
-        var mustBeAnID = 0 ;
-
-        if (CH_BACK_SLASH === peek) {
-          this.esct = ERR_PIN_UNICODE_IN_RESV;
-          this.eloc.c0 = this.c;
-          this.eloc.li0 = this.li;
-          this.eloc.col0 = this.col;
-
-          mustBeAnID = 1;
-          peek = l.charCodeAt(++ this.c);
-          if (peek !== CH_u )
-              return this.err('id.u.not.after.slash');
-          
-          else
-             peek = this.peekUSeq();
-
-          if (peek >= 0x0D800 && peek <= 0x0DBFF )
-            this.err('id.name.has.surrogate.pair');
-        }
-        if (peek >= 0x0D800 && peek <= 0x0DBFF ) {
-            mustBeAnID = 2 ;
-            this.c++;
-            r = this.peekTheSecondByte();
-        }
-        if (mustBeAnID) {
-          if (!isIDHead(mustBeAnID === 1 ? peek :
-             ((peek - 0x0D800)<<10) + (r-0x0DC00) + (0x010000) ) ) {
-            if ( mustBeAnID === 1 ) return this.err('id.esc.must.be.idhead',{extra:peek});
-            else return this.err('id.multi.must.be.idhead',{extra:[peek,r]});
-          }
- 
-          this.readAnIdentifierToken( mustBeAnID === 2 ?
-              String.fromCharCode( peek, r ) :
-              fromcode( peek )
-          );
-        }
-        else 
-          this.readMisc();
-    }
-
-    if (this.directive !== DIR_NONE)
-      this.directive = DIR_NONE;
+this.autosetoff =
+function(offset) {
+  var ch = this.scat(offset);
+  switch (ch) {
+  case CH_CARRIAGE_RETURN:
+  case CH_LINE_FEED:
+  case 0x2028:
+  case 0x2029:
+    this.setnewloff(offset);
+  default:
+    if (ch !== -1)
+      this.setsimpoff(offset);
   }
-
-  this.col += ( this.c - start );
 };
 
-this . opEq = function()  {
-    var c = this.c;
-    var l = this.src;
-    this.lttype = 'op';
-    c++ ;
-
-    if ( l.charCodeAt(c) === CH_EQUALITY_SIGN ) {
-      c++;
-      this.prec = PREC_EQUAL ;
-      if ( l.charCodeAt(c ) === CH_EQUALITY_SIGN ){
-        c++ ;
-        this.ltraw = '===';
-      }
-      else this.ltraw = '==';
-    }
-    else {
-        this.prec = PREC_SIMP_ASSIG;
-        if ( l.charCodeAt(c) === CH_GREATER_THAN) {
-          c++;
-          this. ltraw = '=>';
-        }
-        else  this.ltraw = '=' ;
-    }
-
-    this.c=c;
+this.peekch =
+function() {
+  return this.scat(this.c);
 };
 
-this . opMin = function() {
-   var c = this.c;
-   var l = this.src;
-   c++;
-
-   switch( l.charCodeAt(c) ) {
-      case  CH_EQUALITY_SIGN:
-         c++;
-         this.prec = PREC_OP_ASSIG;
-         this. lttype = 'op';
-         this.ltraw = '-=';
-         break ;
-
-      case  CH_MIN:
-         c++;
-         this.prec = PREC_OO;
-         this. lttype = this.ltraw = '--';
-         break ;
-
-      default:
-         this.ltraw = this.lttype = '-';
-         break ;
-   }
-   this.c=c;
-};
-
-this . opLess = function () {
-  var c = this.c;
-  var l = this.src;
-  this.lttype = 'op';
-  c++ ;
-
-  if ( l.charCodeAt(c ) === CH_LESS_THAN ) {
-     c++;
-     if ( l.charCodeAt(c) === CH_EQUALITY_SIGN ) {
-        c++;
-        this. prec = PREC_OP_ASSIG ;
-        this. ltraw = '<<=' ;
-     }
-     else {
-        this.ltraw = '<<';
-        this. prec = PREC_SH ;
-     }
-  }
-  else  {
-     this. prec = PREC_COMP ;
-     if ( l.charCodeAt(c) === CH_EQUALITY_SIGN ) {
-        c++ ;
-        this.ltraw = '<=';
-     }
-     else this.ltraw = '<';
-  }
-
-  this.c=c;
-};
-
-this . opAdd = function() {
-   var c = this.c;
-   var l = this.src;
-   c++ ;
-
-   switch ( l.charCodeAt(c) ) {
-       case CH_EQUALITY_SIGN:
-         c ++ ;
-         this. prec = PREC_OP_ASSIG;
-         this. lttype = 'op';
-         this.ltraw = '+=';
-
-         break ;
-
-       case CH_ADD:
-         c++ ;
-         this. prec = PREC_OO;
-         this. lttype = '--';
-         this.ltraw = '++';
-         break ;
-
-       default: this. ltraw = '+' ; this. lttype = '-';
-   }
-   this.c=c;
-};
-
-this . opGrea = function()   {
-  var c = this.c;
-  var l = this.src;
-  this.lttype = 'op';
-  c++ ;
-
-  if ( l.charCodeAt(c) === CH_GREATER_THAN ) {
-    c++;
-    if ( l.charCodeAt(c) === CH_GREATER_THAN ) {
-       c++;
-       if ( l.charCodeAt(c) === CH_EQUALITY_SIGN ) {
-         c++ ;
-         this. prec = PREC_OP_ASSIG;
-         this. ltraw = '>>>=';
-       }
-       else {
-         this. ltraw = '>>>';
-         this. prec = PREC_SH;
-       }
-    }
-    else if ( l.charCodeAt(c) === CH_EQUALITY_SIGN ) {
-       c++ ;
-       this. prec = PREC_OP_ASSIG;
-       this.ltraw = '>>=';
-    }
-    else {
-       this. prec=  PREC_SH;
-       this. ltraw    = '>>';
-    }
-  }
-  else  {
-    this. prec = PREC_COMP  ;
-    if ( l.charCodeAt(c) === CH_EQUALITY_SIGN ) {
-      c++ ;
-      this. ltraw = '>=';
-    }
-    else  this. ltraw = '>';
-  }
-  this.c=c;
-};
-
-this.skipS = function() {
-  var noNewLine = true,
-      startOffset = this.c,
-      c = this.c,
-      l = this.src,
-      e = l.length,
-      start = c;
-
-  while ( c < e ) {
-    switch ( l.charCodeAt ( c ) ) {
-    case CH_WHITESPACE :
-      while ( ++c < e &&  l.charCodeAt(c) === CH_WHITESPACE );
-      continue ;
-    case CH_CARRIAGE_RETURN : if ( CH_LINE_FEED === l.charCodeAt( c + 1 ) ) c ++;
-    case CH_LINE_FEED :
-      if ( noNewLine ) noNewLine = false ;
-      start = ++ c ;
-      this.li ++ ;
-      this.col = ( 0)
-      continue ;
-
-    case CH_VTAB:
-    case CH_TAB:
-    case CH_FORM_FEED: c++ ; continue ;  
-
-    case CH_DIV:
-      switch ( l.charCodeAt ( c + ( 1) ) ) {
-      case CH_DIV:
-        c += 2;
-        this.col += (c-start) ;
-        this.c=c;
-        this.readLineComment () ;
-        if (noNewLine) noNewLine = false ;
-        start = c = this.c ;
-        continue ;
-
-      case CH_MUL:
-        c += 2;
-        this.col += (c-start) ;
-        this.c = c ;
-        noNewLine = this. readMultiComment () && noNewLine ;
-        start = c = this.c ;
-        continue ;
-
-      default:
-        this.c0 = c;
-        this.col0 = this.col + (c-start);
-        this.li0 = this.li;
-        c++ ;
-        this.nl = ! noNewLine ;
-        this.col += (c-start) ;
-        this.c=c ;
-        this.prec  = 0xAD ;
-        this.lttype =  '/';
-        this.ltraw = '/' ;
-        return true;
-      }
-
-    case 0x0020:case 0x00A0:case 0x1680:case 0x2000:
-    case 0x2001:case 0x2002:case 0x2003:case 0x2004:
-    case 0x2005:case 0x2006:case 0x2007:case 0x2008:
-    case 0x2009:case 0x200A:case 0x202F:case 0x205F:
-    case 0x3000:case 0xFEFF: c ++ ; continue ;
-
-    case 0x2028:
-    case 0x2029:
-      if ( noNewLine ) noNewLine = false ;
-      start = ++c ;
-      this.col = 0 ;
-      this.li ++ ;
-      continue;
-
-    case CH_LESS_THAN:
-      if ( this.v > 5 && this.isScript &&
-        l.charCodeAt(c+1) === CH_EXCLAMATION &&
-        l.charCodeAt(c+2) === CH_MIN &&
-        l.charCodeAt(c+1+2) === CH_MIN
-      ) {
-        this.c = c + 4;
-        this.col += (this.c-start) ;
-        this.readLineComment();
-        c = this.c;
-        continue;
-      }
-      this.col += (c-start ) ;
-      this.c=c;
-      this.nl = !noNewLine ;
-      return ;
- 
-    case CH_MIN:
-      if (this.v > 5 && (!noNewLine || startOffset === 0) &&
-           this.isScript &&
-           l.charCodeAt(c+1) === CH_MIN && l.charCodeAt(c+2) === CH_GREATER_THAN ) {
-        this.c = c + 1 + 2;
-        this.col += (this.c-start) ;
-        this.readLineComment();
-        c = this.c;
-        continue;
-      }
-  
-    default :
-      this.col += (c-start ) ;
-      this.c=c;
-      this.nl = !noNewLine ;
-      return ;
-    }
-  }
-
-  this.col += (c-start ) ;
-  this.c = c ;
-  this.nl = !noNewLine ;
-};
-
-this.readDot = function() {
-   ++this.c;
-   if( this.src.charCodeAt(this.c)===CH_SINGLEDOT) {
-     if (this.src.charCodeAt(++ this.c) === CH_SINGLEDOT) { this.lttype = '...' ;   ++this.c; return ; }
-     this.err('Unexpectd ') ;
-   }
-   else if ( num(this.src.charCodeAt(this.c))) {
-       this.lttype = 'Literal' ;
-       this.c0  = this.c - 1;
-       this.li0 = this.li;
-       this.col0= this.col ;
-
-       this.frac( -1 ) ;
-       return;
-   }
-   this. ltraw = this.lttype = '.' ;
-};
-
-this.readMisc = function () { this.lttype = this.  src.   charAt (   this.c ++  )    ; };
-
-this.expectID = function (n) {
-  if (this.lttype === 'Identifier' && this.ltval === n)
-    return this.next();
-  
-  if (this.lttype !== 'Identifier')
-    this.err('an.id.was.expected',{extra:n});
- 
-  this.err('unexpected.id',{extra:n});
-};
-
-this.expectType_soft = function (n)  {
-  if (this.lttype === n ) {
-      this.next();
-      return true;
-  }
-
-  return false;
-};
-
-this.expectID_soft = function (n) {
-  if (this.lttype === 'Identifier' && this.ltval === n) {
-     this.next();
-     return true;
-  }
-
-  return false;
-};
-
-this.kw = function() {
-  if (this.onToken_)
-    this.lttype = 'Keyword';
+this.scat =
+function(offset) {
+  return offset < this.src.length ?
+    this.src.charCodeAt(offset) : -1;
 };
 
 },
@@ -6323,9 +5229,7 @@ this.readMultiComment = function () {
     switch (r = l.charCodeAt(c++ ) ) {
     case CH_MUL:
       if (l.charCodeAt(c) === CH_DIV) {
-        c++;
-        this.col += (c-start);
-        this.c = c;
+        this.setsimpoff(c);
         if (this.onComment_ !== null)
           this.onComment(true,c0,{line:li0,column:col0},
             this.c,{line:this.li,column:this.col});
@@ -6340,11 +5244,9 @@ this.readMultiComment = function () {
     case CH_LINE_FEED:
     case 0x2028:
     case 0x2029:
-      start = c;
       if (n)
         n = false;
-      this.col = 0;
-      this.li++;
+      this.setnewloff(c);
       continue;
 
 //  default : if ( r >= 0x0D800 && r <= 0x0DBFF ) this.col-- ;
@@ -6352,9 +5254,7 @@ this.readMultiComment = function () {
     }
   }
 
-  this.col += (c-start);
-  this.c = c;
-
+  this.setsimpoff(c);
   this.err( 'comment.multi.unfinished',{extra:{c0:c0,li0:li0,col0:col0}});
 };
 
@@ -6373,16 +5273,12 @@ this.readLineComment = function() {
     case CH_LINE_FEED :
     case 0x2028:
     case 0x2029 :
-      col = this.col;
-      li = this.li;
-      this.col = 0 ;
-      this.li++;
       break L;
     
 //  default : if ( r >= 0x0D800 && r <= 0x0DBFF ) this.col-- ;
     }
 
-   this.c=c;
+   this.setsimpoff(c);
 
    if (this.onComment_ !== null) {
      if (li === -1) { li = this.li; col = this.col; }
@@ -6578,30 +5474,32 @@ this .parseEmptyStatement = function() {
 
 },
 function(){
-this.readEsc = function ()  {
+this.readEsc = function () {
   var src = this.src, b0 = 0, b = 0, start = this.c;
-  switch ( src.charCodeAt ( ++this.c ) ) {
-   case CH_BACK_SLASH: return '\\';
-   case CH_MULTI_QUOTE: return'\"' ;
-   case CH_SINGLE_QUOTE: return '\'' ;
-   case CH_b: return '\b' ;
-   case CH_v: return '\v' ;
-   case CH_f: return '\f' ;
-   case CH_t: return '\t' ;
-   case CH_r: return '\r' ;
-   case CH_n: return '\n' ;
+  var c = this.c, val = '';
+  switch (this.scat(++c)) {
+   case CH_BACK_SLASH: val = '\\'; break;
+   case CH_MULTI_QUOTE: val = '\"'; break;
+   case CH_SINGLE_QUOTE: val = '\''; break;
+   case CH_b: val = '\b'; break;
+   case CH_v: val = '\v'; break;
+   case CH_f: val = '\f'; break;
+   case CH_t: val = '\t'; break;
+   case CH_r: val = '\r'; break;
+   case CH_n: val = '\n'; break;
    case CH_u:
+      this.setsimpoff(c);
       b0 = this.peekUSeq();
       if ( b0 >= 0x0D800 && b0 <= 0x0DBFF ) {
-        this.c++;
-        return String.fromCharCode(b0, this.peekTheSecondByte());
+        this.setsimpoff(this.c+1);
+        val = String.fromCharCode(b0, this.peekTheSecondByte());
       }
-      return fromcode(b0);
+      else val = fromcode(b0);
+      break;
 
    case CH_x :
-      b0 = toNum(this.src.charCodeAt(++this.c));
-      if ( b0 === -1 && this.err('hex.esc.byte.not.hex') )
-        return this.errorHandlerOutput;
+      b0 = toNum(this.scat(++this.c));
+      b0 === -1 && this.err('hex.esc.byte.not.hex');
       b = toNum(this.src.charCodeAt(++this.c));
       if ( b === -1 && this.err('hex.esc.byte.not.hex') )
         return this.errorHandlerOutput;
@@ -10751,6 +9649,674 @@ this .parseO = function(context ) {
 
 },
 function(){
+this.readBS = function() {
+  var c = this.c, s = this.src, l = s.length;
+  c++; // \
+  if (c >= l)
+    this.err('u.expected.got.eof');
+
+  c++;
+  if (s.charCodeAt(c) === CH_LCURLY)
+    return this.readBS_lcurly(c);
+
+  var val = 0;
+  var c0 = c;
+  while (c-c0 < 4) {
+    if (c >= l) {
+      this.setsimpoff(c);
+      this.err('hex.expected.got.eof');
+    }
+
+    var b = hex2num(s.charCodeAt(c));
+    if (b === -1) {
+      this.setsimpoff(c);
+      this.err('hex.expected.got.something.else');
+    }
+
+    val = (val<<4)|b;
+    c++;
+  }
+
+  this.setsimpoff(c);
+  return val;
+};
+
+this.readBS_lcurly =
+function(c) {
+  var s = this.src, l = s.length;
+  c++; // {
+  if (c >= l) {
+    this.setsimpoff(c);
+    this.err('hex.expected.got.eof');
+  }
+
+  var val = 0;
+  var b = s.charCodeAt(c);
+  while (true) {
+    b = hex2num(b);
+    if (b === -1) {
+      this.setsimpoff(c);
+      this.err('hex.expected.got.something.else');
+    }
+    val = (val<<4)|b;
+    c++;
+    if (c >= l) {
+      this.setsimpoff(c);
+      this.err('curly.expected.got.eof');
+    }
+    b = s.charCodeAt(c);
+    if (b === CH_RCURLY)
+      break;
+  }
+
+  c++; // }
+  this.setsimpoff(c);
+
+  return val;
+};
+
+},
+function(){
+this.read_dot =
+function() {
+  var ch = this.scat(this.c+1);
+  if (ch === CH_SINGLEDOT)
+    return this.readEllipsis();
+  
+  this.readNum_floatTail(FL_NONE);
+  this.lttype = TK_NUM;
+};
+
+},
+function(){
+this.readID_bs =
+function() {
+  var bsc = this.readBS();
+  var ccode = bsc;
+  var head = String.fromCharCode(bsc);
+  if (bsc >= 0x0D800 && bsc <= 0x0DBFF) {
+    var secondByte = this.readSecondByte();
+    ccode = surrogate(bsc, secondByte);
+    head += String.fromCharCode(secondByte);
+  }
+
+  return this.readID_withHead(head);
+};
+
+},
+function(){
+this.readID_withHead = 
+function(v) {
+  var c = this.c,
+      s = this.src,
+      l = s.length,
+      surrogateTail = -1,
+      luo = c, ccode = -1;
+
+  while (c < l) {
+    var ch = s.charCodeAt(c);
+    if (isIDBody(ch)) c++;
+    else {
+      var bs = false;
+      if (ch === CH_BACK_SLASH) {
+        if (luo < c)
+          v += s.substring(luo,c);
+
+        this.setsimpoff(c);
+        ch = this.readBS();
+        bs = true;
+      }
+      if (ch >= 0x0D800 && ch <= 0x0DBFF) {
+        surrogateTail = this.readSurrogateTail();
+        ccode = surrogate(ch, surrogateTail);
+        !isIDBody(ccode) && this.err('surrogate.not.an.id.body');
+        v += String.fromCharCode(ch) + String.fromCharCode(surrogateTail);
+      }
+      else if (bs)
+        v += String.fromCharCode(ch);
+      else
+        break;
+
+      c = luo = this.c;
+    }
+  }
+
+  if (luo < c)
+    v += s.substring(luo,c);
+
+  this.setsimpoff(c);
+
+  this.ltval = v;
+  this.ltraw = this.c0_to_c();
+  this.lttype = TK_ID;
+};
+
+},
+function(){
+this.readID_simple =
+function() {
+  return this.readID_withHead(
+    this.src.charAt(this.c++)
+  );
+};
+
+},
+function(){
+this.readID_surrogate =
+function(sc) {
+  var secondByte = this.readSecondByte();
+  var ccode = surrogate(sc, secondByte);
+  if (!isIDHead(ccode))
+    this.err('surrogate.not.id.head');
+
+  return this.readID_withHead(
+    String.fromCharCode(sc) +
+    String.fromCharCode(secondByte)
+  );
+};
+
+},
+function(){
+this.readNum_raw = function(ch) {
+  if (ch === CH_0)
+    this.readNum_0();
+  else {
+    var c = this.c+1, s = this.src, l = s.length;
+    while (c < l) {
+      ch = s.charCodeAt(c);
+      if (isNum(ch))
+        c++;
+      else
+        break;
+    }
+    this.setsimpoff(c);
+    if (ch === CH_SINGLEDOT)
+      this.readNum_floatTail(FL_SIMPLE_NON0);
+    else {
+      this.ltraw = this.c0_to_c();
+      this.ltval = parseInt(this.ltraw);
+    }
+  }
+
+  this.lttype = TK_NUM;
+};
+
+this.readNum_0 =
+function() {
+  var ch = this.scat(this.c+1);
+  switch (ch) {
+  case CH_X: case CH_x:
+    this.readNum_0x();
+    break;
+
+  case CH_B: case CH_b:
+    this.readNum_0b();
+    break;
+
+  case CH_O: case CH_o:
+    this.readNum_0o();
+    break;
+
+  case CH_SINGLEDOT:
+    this.readNum_floatTail(FL_SIMPLE_0);
+    break;
+
+  default:
+    if (isNum(ch))
+      this.readNum_octLegacy(ch);
+    else {
+      this.ltval = 0;
+      this.ltraw = '0';
+    }
+  }
+};
+
+this.readNum_0b =
+function() {
+  var c = this.c+2, // '0b'
+      s = this.src,
+      l = s.length,
+      v = 0;
+
+  if (c >= l) {
+    this.setsimpoff(c);
+    this.err('bin.expected.got.eof');
+  }
+
+  var ch = s.charCodeAt(c);
+  if (ch !== CH_0 && ch !== CH_1) {
+    this.setsimpoff(c);
+    this.err('bin.expected.got.something.else');
+  }
+
+  v = ch - CH_0;
+  c++;
+  while (c<l) {
+    ch = s.charCodeAt(c);
+    if (!isNum(ch))
+      break;
+    if (ch === CH_0 || ch === CH_1)
+      v = (v << 1)|(CH_0);
+    else
+      this.err('bin.but.got.nonbin');
+    c++;
+  }
+
+  this.setsimpoff(c);
+  this.ltval = v;
+  this.ltraw = this.c0_to_c();
+};
+
+this.readNum_octLegacy =
+function(ch) {
+  var c = this.c+2, s = this.src, l = s.length, dec = false;
+  do {
+    if (!dec && ch >= CH_8)
+      dec = true;
+    c++;
+    if (c >= l)
+      break;
+    ch = s.charCodeAt(c);
+  } while (isNum(ch));
+
+  this.setsimpoff(c);
+  if (dec && ch === CH_SINGLEDOT)
+    this.readNum_floatTail(FL_LEGACY);
+  else {
+    this.ltraw = this.c0_to_c();
+    this.ltval = parseInt(dec ? this.ltraw : this.ltraw.substring(1));
+  }
+};
+
+this.readNum_floatTail =
+function(headtype) {
+  var c = this.c,
+      s = this.src,
+      l = s.length,
+      digitsNeeded = headtype === FL_NONE,
+      hasSign = false,
+      ch = -1;
+
+  c++; // '.'
+  if (digitsNeeded) {
+    if (c >= l || !isNum(s.charCodeAt(c)))
+      this.err('float.tail.is.headless.must.have.digits');
+    c++;
+  }
+  while (c<l && isNum(s.charCodeAt(c)))
+    c++;
+
+  MANTISSA:
+  if (c<l) {
+    ch = s.charCodeAt(c);
+    if (ch !== CH_E && ch !== CH_e)
+      break MANTISSA;
+
+    c++;
+    if (c >= l)
+      this.err('float.nothing.after.e');
+    ch = s.charCodeAt(c);
+    if (ch === CH_MIN || ch === CH_ADD) {
+      c++;
+      if (c >= l)
+        this.err('float.nothing.after.sign');
+      ch = s.charCodeAt(c);
+      hasSign = true;
+    }
+    if (!isNum(ch))
+      this.err('float.needs.a.mantissa');
+    c++;
+    while (c<l && isNum(s.charCodeAt(c)))
+      c++;
+  }
+
+  this.setsimpoff(c);
+
+  this.ltraw = this.c0_to_c();
+  this.ltval = parseFloat(
+    headtype === FL_LEGACY ?
+      this.ltraw.substring(1) :
+      this.ltraw);
+};
+
+},
+function(){
+this.readOp_add = function() {
+  var c = this.c; c++ // '+'
+  var ch = this.scat(c);
+  if (ch === CH_ADD) {
+    c++;
+    this.lttype = TK_AA_MM;
+    this.ltraw = '++';
+  }
+  else if (ch === CH_EQUALITY_SIGN) {
+    c++;
+    this.lttype = TK_OP_ASSIG;
+    this.prec = PREC_ASSIG;
+    this.ltraw = '+=';
+  }
+  else {
+    this.lttype = TK_UNBIN;
+    this.ltraw = '+';
+  }
+
+  this.setsimpoff(c);
+};
+
+},
+function(){
+this.readOp_and = 
+function() {
+  var c = this.c; c++;
+  var ch = this.scat(c);
+
+  this.lttype = TK_SIMP_BINARY;
+  if (ch === CH_EQUALITY_SIGN) {
+    c++; this.prec = PREC_ASSIG;
+    this.ltraw = '&=';
+  }
+  else if (ch === CH_AND) {
+    c++; this.prec = PREC_LOG_AND;
+    this.ltraw = '&&';
+  }
+  else {
+    this.prec = PREC_BIT_AND;
+    this.ltraw = '&';
+  }
+
+  this.setsimpoff(c);
+};
+
+},
+function(){
+this.readOp_compl =
+function() {
+  this.lttype = TK_UNARY;
+  this.ltraw = '~';
+  this.setsimpoff(this.c+1);
+};
+
+},
+function(){
+this.readOp_eq =
+function() {
+  var c = this.c; c++; // '='
+  var ch = this.scat(c);
+
+  this.lttype = TK_SIMP_BINARY;
+  if (ch === CH_EQUALITY_SIGN) {
+    c++; this.prec = PREC_EQ;
+    ch = this.scat(c);
+    if (ch === CH_EQUALITY_SIGN) {
+      c++;
+      this.ltraw = '===';
+    }
+    else this.ltraw = '==';
+  }
+  else if (ch === CH_GREATER_THAN) {
+    c++; this.prec = PREC_ASSIG;
+    this.ltraw = '=>';
+  }
+  else {
+    this.prec = PREC_ASSIG;
+    this.ltraw = '=';
+  }
+
+  this.setsimpoff(c);
+};
+
+},
+function(){
+this.readOp_exclam =
+function() {
+  var c = this.c; c++; // '!';
+  var ch = this.scat(c);
+
+  if (ch === CH_EQUALITY_SIGN) {
+    this.prec = PREC_EQ;
+    this.lttype = TK_SIMP_BINARY;
+    c++;
+    ch = this.scat(c);
+    if (ch === CH_EQUALITY_SIGN) {
+      c++; this.ltraw = '!==';
+    }
+    else this.ltraw = '!=';
+  }
+  else {
+    this.lttype = TK_UNARY;
+    this.ltraw = '!';
+  }
+
+  this.setsimpoff(c);
+};
+
+},
+function(){
+this.readOp_gt =
+function() {
+  var c = this.c; c++; // '>';
+  var ch = this.scat(c);
+
+  this.lttype = TK_SIMP_BINARY;
+  if (ch === CH_EQUALITY_SIGN) {
+    c++;
+    this.prec = PREC_COMP;
+    this.ltraw = '>=';
+  }
+  else if (ch === CH_GREATER_THAN) {
+    c++;
+    ch = this.scat(c);
+    if (ch === CH_EQUALITY_SIGN) {
+      c++; this.prec = PREC_ASSIG;
+      this.ltraw = '>>=';
+    }
+    else if (ch === CH_GREATER_THAN) {
+      c++;
+      ch = this.scat(c);
+      if (ch === CH_EQUALITY_SIGN) {
+        c++; this.prec = PREC_ASSIG;
+        this.ltraw = '>>>=';
+      }
+      else {
+        this.prec = PREC_SH;
+        this.ltraw = '>>>';
+      }
+    }
+    else {
+      this.prec = PREC_SH;
+      this.ltraw = '>>';
+    }
+  }
+  else {
+    this.prec = PREC_COMP;
+    this.ltraw = '>';
+  }
+
+  this.setsimpoff(c);
+};
+
+},
+function(){
+this.readOp_lt =
+function() {
+  var c = this.c; c++; // '<'
+  var ch = this.scat(c);
+
+  this.lttype = TK_SIMP_BINARY;
+  if (ch === CH_EQUALITY_SIGN) {
+    c++;
+    this.prec = PREC_COMP;
+    this.ltraw = '<=';
+  }
+  else if (ch === CH_LESS_THAN) {
+    c++;
+    ch = this.scat(c);
+    if (ch === CH_EQUALITY_SIGN) {
+      c++;
+      this.prec = PREC_ASSIG;
+      this.ltraw = '<<=';
+    }
+    else {
+      this.prec = PREC_SH;
+      this.ltraw = '<<';
+    }
+  }
+  else {
+    this.prec = PREC_COMP;
+    this.ltraw = '<';
+  }
+
+  this.setsimpoff(c);
+};
+
+},
+function(){
+this.readOp_min =
+function() {
+  var c = this.c; c++; // '-'
+  var ch = this.scat(c);
+  if (ch === CH_MIN) {
+    c++;
+    this.lttype = TK_AA_MM;
+    this.ltraw = '--';
+  }
+  else if (ch === CH_EQUALITY_SIGN) {
+    c++;
+    this.prec = PREC_ASSIG;
+    this.lttype = TK_SIMP_BINARY;
+    this.ltraw = '-=';
+  }
+  else {
+    this.lttype = TK_UNBIN;
+    this.ltraw = '-';
+  }
+
+  this.setsimpoff(c);
+};
+
+},
+function(){
+this.readOp_mod =
+function() {
+  var c = this.c; c++;
+  var ch = this.scat(c);
+
+  this.lttype = TK_SIMP_BINARY;
+  if (ch === CH_EQUALITY_SIGN) {
+    c++; this.prec = PREC_ASSIG;
+    this.ltraw = '%=';
+  }
+  else {
+    this.prec = PREC_MUL;
+    this.ltraw = '%';
+  }
+};
+
+},
+function(){
+this.readOp_mul =
+function() {
+  var c = this.c; c++; // '*'
+  var ch = this.scat(c);
+
+  this.lttype = TK_SIMP_BINARY;
+  if (ch === CH_EQUALITY_SIGN) {
+    c++;
+    this.prec = PREC_ASSIG;
+    this.ltraw = '*=';
+  }
+  else if (ch === CH_MUL) {
+    c++; ch = this.scat(c);
+    if (ch === CH_EQUALITY_SIGN) {
+      c++;
+      this.prec = PREC_ASSIG;
+      this.ltraw = '**=';
+    }
+    else {
+      this.prec = PREC_MUL;
+      this.ltraw = '**';
+    }
+  }
+  else {
+    this.prec = PREC_MUL;
+    this.ltraw = '*';
+  }
+
+  this.setsimpoff(c);
+};
+
+},
+function(){
+this.readOp_or =
+function() {
+  var c = this.c; c++; // '|'
+  var ch = this.scat(c);
+
+  this.lttype = TK_SIMP_BINARY;
+  if (ch === CH_EQUALITY_SIGN) {
+    c++; this.prec = PREC_ASSIG;
+    this.ltraw = '|=';
+  }
+  else if (ch === CH_OR) {
+    c++; this.prec = PREC_LOG_OR;
+    this.ltraw = '||';
+  }
+  else {
+    this.prec = PREC_BIT_OR;
+    this.ltraw = '|';
+  }
+
+  this.setsimpoff(c);
+};
+
+},
+function(){
+this.readOp_xor =
+function() {
+  var c = this.c; c++; // '^'
+  var ch = this.scat(c);
+
+  this.lttype = TK_SIMP_BINARY;
+  if (ch === CH_EQUALITY_SIGN) {
+    c++; this.prec = PREC_ASSIG;
+    this.ltraw = '^=';
+  }
+  else {
+    this.prec = PREC_BIT_XOR;
+    this.ltraw = '^';
+  }
+
+  this.setsimpoff(c);
+};
+
+},
+function(){
+this.read_multiQ =
+function() {
+  this.lttype = CH_MULTI_QUOTE;
+  this.ltraw = '"';
+  this.setsimpoff(this.c+1);
+};
+
+this.read_singleQ =
+function() {
+  this.lttype = CH_SINGLE_QUOTE;
+  this.ltraw = "'";
+  this.setsimpoff(this.c+1);
+};
+
+},
+function(){
+this.readSingleChar =
+function() {
+  var ch = this.src.charAt(this.c);
+  this.lttype = ch.charCodeAt(0);
+  this.ltraw = ch;
+  this.setsimpoff(this.c+1);
+};
+
+},
+function(){
 this.declare = function(id) {
    ASSERT.call(this, this.declMode !== DM_NONE, 'Unknown declMode');
    if (this.declMode & (DM_LET|DM_CONST)) {
@@ -10809,6 +10375,118 @@ this.semiI = function() {
     return 0;
 
   }
+};
+
+},
+function(){
+this.skipWS =
+function() {
+  var c = this.c, s = this.src, l = s.length;
+  var nl = false, sourceStart = c === 0, ch = -1;
+
+  SKIPLOOP:
+  while (c < l)
+    switch (s.charCodeAt(c)) {
+    case CH_WHITESPACE:
+      while (
+        ++c < l &&
+        s.charCodeAt(c) === CH_WHITESPACE
+      );
+      continue;
+
+    case CH_CARRIAGE_RETURN:
+      if (
+        c+1 < l &&
+        s.charCodeAt(c+1) === CH_LINE_FEED
+      ) c++;
+    case CH_LINE_FEED:
+      if (!nl)
+        nl = true;
+      this.setnewloff(c);
+      c++;
+      continue;
+
+    case CH_VTAB:
+    case CH_TAB:
+    case CH_FORM_FEED:
+      c++;
+      continue;
+
+    case CH_DIV:
+      if (c+1 >= l)
+        break SKIPLOOP;
+
+      switch (s.charCodeAt(c+1)) {
+      case CH_DIV:
+        this.setsimpoff(c+2); // '//'
+        this.readComment_line();
+        c = this.c;
+        continue;
+
+      case CH_MUL:
+        this.setsimpoff(c+2); // '/*'
+        nl = this.readComment_multi() || nl;
+        c = this.c;
+        continue;
+      }
+
+      break SKIPLOOP;
+
+    case CH_MIN:
+      if (
+        this.v>5 &&
+        (nl || sourceStart) &&
+        this.isScript &&
+        c+2<l &&
+        s.charCodeAt(c+1) === CH_MIN &&
+        s.charCodeAt(c+2) === CH_GREATER_THAN
+      ) {
+        this.setsimpoff(c+3); // '-->'
+        this.readComment_line();
+        c = this.c;
+        continue;
+      }
+
+      break SKIPLOOP;
+
+    case CH_LESS_THAN:
+      if (
+        this.v>5 &&
+        this.isScript &&
+        c+3<l &&
+        l.charCodeAt(c+1) === CH_EXCLAMATION &&
+        l.charCodeAt(c+2) === CH_MIN &&
+        l.charCodeAt(c+3) === CH_MIN
+      ) {
+        this.setsimpoff(c+4) ;
+        this.readComment_line();
+        c = this.c;
+        continue;
+      }
+
+      break SKIPLOOP;
+
+    case 0x0020: case 0x00A0: 
+    case 0x1680: case 0x2000: 
+    case 0x2001: case 0x2002: case 0x2003:
+    case 0x2004: case 0x2005: case 0x2006:
+    case 0x2007: case 0x2008: case 0x2009:
+    case 0x200A: case 0x202F: case 0x205F:
+    case 0x3000: case 0xFEFF:
+      c++;
+      continue;
+  
+    case 0x2028:
+    case 0x2029:
+      this.setnewloff(c);
+      c++;
+      continue;
+
+    default: break SKIPLOOP;
+    }
+
+  this.setsimpoff(c);
+  this.nl = nl;
 };
 
 },
@@ -10899,6 +10577,26 @@ this.clearAllStrictErrors = function() {
   this.se = null;
 };
  
+
+},
+function(){
+this.readSurrogateTail =
+function() {
+  var c = this.c, s = this.src, l = s.length, mustSetOff = false;
+  c >= l && this.err('unexpected.eof.while.surrogate.tail');
+  var surrogateTail = s.charCodeAt(c);
+  if (surrogateTail === CH_BACK_SLASH)
+    surrogateTail = this.readBS();
+  else
+    mustSetOff = true;
+
+  if (surrogateTail<0x0DC00 || surrogateTail>0x0DFFF)
+    this.err('surrogate.tail.not.in.range');
+
+  mustSetOff && this.setsimpoff(c+1);
+
+  return surrogateTail;
+};
 
 },
 function(){
@@ -11048,1115 +10746,198 @@ this.errorReservedID = function(id) {
 
 
 }]  ],
-[Ref.prototype, [function(){
-this.absorbIndirect = function(anotherRef) {
-  ASSERT.call(this, !anotherRef.resolved,
-    'absorbing a reference that has been resolved is not a valid action');
-  this.indirect += anotherRef.total();
-  if (anotherRef.scope.isConcrete())
-    this.lors.push(
-      anotherRef.scope.isAnyFnHead() ?
-      anotherRef.scope.funcBody :
-      anotherRef.scope
-    );
-  if (anotherRef.lors.length)
-    this.lors = this.lors.concat(anotherRef.lors);
-
-  anotherRef.parent = this;
-//if (this.resolved && anotherRef.scope.isHoistable())
-//  this.decl.useTZ();
-};
-
-this.resolveTo = function(decl) {
-  ASSERT.call(this, !this.resolved,
-    'this ref has already been resolved actually');
-  this.resolved = true;
-  this.decl = decl;
-  return this;
-};
-
-this.total = function() {
-  return this.indirect + this.direct;
-};
-
-this.absorbDirect = function(anotherRef) {
-  ASSERT.call(this, !anotherRef.resolved,
-    'absorbing a reference that has been resolved is not a valid action');
-  this.direct += anotherRef.direct;
-  this.indirect += anotherRef.indirect;
-  if (anotherRef.scope.isConcrete())
-    this.lors.push(
-      anotherRef.scope.isAnyFnHead() ? 
-      anotherRef.scope.funcBody :
-      anotherRef.scope
-    );
-  if (anotherRef.lors.length)
-    this.lors = this.lors.concat(anotherRef.lors);
-  anotherRef.parent = this;
-};
-
-this.getDecl = function() {
-  if (this.decl)
-    return this.decl;
-  if (this.parent)
-    return this.decl = this.parent.getDecl();
-  return null;
-};
-
-}]  ],
-[RefCount.prototype, [function(){
-this.total = function() {
-  return this.fw + this.ex;
-};
-
-}]  ],
+null,
 [Scope.prototype, [function(){
-this.addFunc = function(name, resolvedFn) {
-  var fnList = this.getFuncList(name);
-  fnList.push(resolvedFn);
-};
-
-this.getFuncList_m = function(mname) {
-  return this.funcDecls.has(mname) ?
-    this.funcDecls.get(mname) :
-    this.funcDecls.set(mname, []);
-};
-
-this.getFuncList = function(name) {
-  return this.getFuncList_m(_m(name));
-};
-
-},
-function(){
-this.calculateSpecial = function() {
-  if (this.isClass())
-    return {supMem: null, supCall: null};
-  if (this.isAnyFnHead())
-    return {lexicalThis: null, arguments: null, newTarget: null};
-  if (this.isScript() || this.isModule())
-    return {lexicalThis: null};
-  return null;
-};
-
-this.calculateAllowedActions = function() {
-  if (this.isParen())
-    return this.parent.allowed;
-
-  var a = SA_NONE;
-  if (this.isLexical() || this.isClass() || this.isCatchHead() || this.isBare())
-    a |= this.parent.allowed;
-  else if (this.isAnyFnComp()) {
-    a |= SA_RETURN;
-    if (this.isCtorComp())
-      a |= SA_CALLSUP;
-    if (this.isGenComp())
-      a |= SA_YIELD;
-    if (this.isAsyncComp())
-      a |= SA_AWAIT;
-    if (this.isMem())
-      a |= SA_MEMSUP;
-  }
-
-  return a;
-};
-
-this.calculateScopeMode = function() {
-  if (this.isParen())
-    return this.parent.mode;
-
-  var m = SM_NONE;
-  if (!this.parent) {
-    ASSERT.call(this, this.isGlobal(),
-      'global scope is the only scope that ' +
-      'can have a null parent');
-    return m;
-  }
-
-  if (this.isClass() || this.isModule() ||
-      this.parent.insideStrict())
-    m |= SM_STRICT;
-
-  if (!this.isAnyFnComp() && this.parent.insideLoop())
-    m |= SM_LOOP;
-
-  // catch-heads and non-simple fn-heads
-  if (!this.isExpr() && !this.isDecl() && this.isHead())
-    m |= SM_UNIQUE;
-
-  return m;
-};
-
-this.calculateParent = function() {
-  if (this.parent.isParen())
-    this.parent = this.parent.calculateParen();
-
-  return this.parent;
-};
-
-this.setName = function(name) {
-  ASSERT.call(this, this.isExpr(),
-    'the current scope is not an expr scope, and can not have a name');
-  ASSERT.call(this, this.scopeName === null,
-    'the current scope has already got a name');
-  this.scopeName = name;
-};
-
-this.ownsDecl = function(decl) {
-  return decl.ref.scope === this;
-};
-
-},
-function(){
-this.declare = function(name, mode) {
-  return this.declare_m(_m(name), mode);
-};
-
-this.declare_m = function(mname, mode) {
-  if (mode & DM_LET)
-    return this.let_m(mname, mode);
-  if (mode & DM_FUNCTION)
-    return this.function_m(mname, mode);
-  if (mode & DM_CONST)
-    return this.const_m(mname, mode);
-  if (mode & DM_VAR)
-    return this.var_m(mname, mode);
-  if (mode & DM_CLS)
-    return this.class_m(mname, mode);
-  if (mode & DM_CATCHARG)
-    return this.catchArg_m(mname, mode);
-  if (mode & DM_FNARG)
-    return this.fnArg_m(mname, mode);
-
-  ASSERT.call(this, false, 'declmode unknown');
-};
-
-this.findDecl = function(name) {
-  return this.findDecl_m(_m(name));
-};
-
-this.let_m = function(mname, mode) {
-  return this.declareLexical_m(mname, mode);
-};
-
-this.function_m = function(mname, mode) {
-  return this.isLexical() ?
-    this.declareLexical_m(mname, mode) :
-    this.declareVarLike_m(mname, mode);
-};
-
-this.const_m = function(mname, mode) {
-  return this.declareLexical_m(mname, mode);
-};
-
-this.var_m = function(mname, mode) {
-  return this.declareVarLike_m(mname, mode);
-};
-
-this.class_m = function(mname, mode) {
-  return this.declareLexical_m(mname, mode);
-};
-
-this.catchArg_m = function(mname, mode) {
-  ASSERT.call(this, this.isCatchHead(),
-    'only catch heads are allowed to declare catch-args');
-  
-  var existing = this.findDecl_m(mname);
-  if (existing)
-    this.parser.err('var.catch.is.dup');
-
-  var newDecl = null;
-  var ref = this.findRef_m(mname, true);
-
-  newDecl = new Decl().m(mode).n(_u(mname)).r(ref);
-  this.insertDecl_m(mname, newDecl);
-
-  return newDecl;
-};
-
-this.fnArg_m = function(mname, mode) {
-  ASSERT.call(this, this.isAnyFnComp() && this.isHead(),
-    'only fn heads are allowed to declare fn-args');
-
-  var ref = this.findRef_m(mname, true),
-      newDecl = new Decl().m(mode).n(_u(mname));
-
-  var existing = null;
-  if (HAS.call(this.paramMap, mname))
-    existing = this.paramMap[mname];
-  
-  if (existing) {
-    if (!this.canDup())
-      this.parser.err('var.fn.is.dup.arg');
-
-    if (!this.firstDup)
-      this.firstDup = newDecl;
-
-    newDecl.ref = ref; // TODO: eliminate
-  }
-  else {
-    switch (_u(mname)) {
-    case 'eval':
-    case 'arguments':
-      if (!this.firstEvalOrArguments)
-        this.firstEvalOrArguments = newDecl;
-    }
-    newDecl.r(ref);
-    this.paramMap[mname] = newDecl;
-  }
-
-  this.paramList.push(newDecl);
-  return newDecl;
-};
-
-this.declareLexical_m = function(mname, mode) {
-  var existing = this.findDecl_m(mname);
-  if (!existing && this.isAnyFnBody())
-    existing = this.funcHead.findDecl_m(mname);
-
-  if (existing)
-    this.err('lexical.can.not.override.existing');
-
-  
-  var newDecl = null, ref = this.findRef_m(mname, true);
-  newDecl = new Decl().m(mode).n(_u(mname)).r(ref);
-
-  this.insertDecl_m(mname, newDecl);
-  return newDecl;
-};
-
-this.declareVarLike_m = function(mname, mode) {
-  var dest = null, varDecl = null;
-  if (this.isLexical()) {
-    var catchScope = this.surroundingCatchScope;
-    if (catchScope) {
-      varDecl = catchScope.findCatchVar_m(mname);
-      if (varDecl) {
-        if (!catchScope.hasSimpleList)
-          this.err('non.simple.catch.var.is.not.overridable');
-
-        dest = catchScope;
-      }
-    }
-  }
-
-  if (dest === null) {
-    dest = this.scs;
-    varDecl = dest.findDecl_m(mname);
-    if (varDecl === null && dest.isAnyFnBody()) {
-      varDecl = dest.funcHead.findDecl_m(mname);
-      if (varDecl)
-        dest = dest.funcHead;
-    }
-
-    if (varDecl) {
-      if (!varDecl.isVarLike())
-        this.err('var.can.not.override.nonvarlike');
-      if (!varDecl.isFunc() && (mode & DM_FUNCTION))
-        varDecl.mode |= mode;
-    }
-  }
-
-  var newDecl = varDecl;
-  if (newDecl === null)
-    newDecl = new Decl().m(mode).n(_u(mname));
-
-  var cur = this;
-  while (cur !== dest) {
-    var existing = cur.findDecl_m(mname);
-    if (existing) {
-      if (!existing.isVarLike())
-        this.err('var.can.not.override.nonvarlike');
-    }
-    else
-      cur.insertDecl_m(mname, newDecl);
-
-    cur = cur.parent;
-  }
-
-  if (!varDecl) {
-    var ref = dest.findRef_m(mname, true);
-    newDecl.r(ref);
-    dest.insertDecl_m(mname, newDecl);
-  }
-
-  return newDecl.scope === this ? newDecl : null;
-};
-
-this.findDecl_m = function(mname) {
-  return this.defs.has(mname) ?
-    this.defs.get(mname) : null;
-};
-
-this.insertDecl_m = function(mname, decl) {
-  this.defs.set(mname, decl);
-};
-
-this.getGlobal_m = function(mname, ref) {
-  ASSERT.call(this, this.isGlobal(),
-    'global scope was expected');
-  var newRef = new Ref(this);
-  newRef.absorbDirect(ref);
-  var decl = this.findDecl_m(mname);
-  if (!decl) {
-    decl = new Decl()
-      .m(DM_GLOBAL)
-      .r(newRef)
-      .n(_u(mname));
-
-    this.insertDecl_m(mname, decl);
-  }
-  return decl;
-};
-
-this.insertFn = function(declNode) {
-  this.funcDecls.push(declNode);
-};
-
-},
-function(){
-this.finish = function() {
-  this.handOverRefsToParent(this.refs);
-};
-
-this.handOverRefsToParent = function(refs) {
-  var list = refs.keys, i = 0;
-  while (i < list.length) {
-    var ref = refs.at(i);
-    if (!ref.resolved)
-      this.handOver_m(list[i], ref);
-    i++ ;
-  }
-};
-
-},
-function(){
-this.clsMemHandOver_m = function(mname, ref) {
-  if (this.isHead())
-    return this.parent.refIndirect_m(mname, ref);
-  if (isSupMem(mname))
-    return this.cls()
-               .getSupMem()
-               .absorbIndirect(ref);
-  if (isSupCall(mname))
-    return this.cls()
-               .getSupCall()
-               .absorbIndirect(ref);
-  return this.funcHandOver_m(mname, ref);
-};
-
-this.fnBodyHandOver_m = function(mname, ref) {
-  if (isThis(mname))
-    return this.getThis(ref);
-  ASSERT.call(this, this.parent.isAnyFnHead(),
-    'fnbody must have an fn-head parent');
-  this.parent.refDirect_m(mname, ref);
-};
-
-this.fnHeadHandOver_m = function(mname, ref) {
-  if (isArguments(mname))
-    return this.getArguments(ref);
-  if (this.hasScopeName_m(mname) && !this.isDecl() && !this.isMem())
-    return this.scopeName.absorbDirect(ref);
-  this.parent.refIndirect_m(mname, ref);
-};
-
-this.arrowHandOver_m = function(mname, ref) {
-  if (this.isHead())
-    this.parent.refIndirect_m(mname, ref);
-  else
-    this.parent.refDirect_m(mname, ref);
-};
-
-this.clsHandOver_m = function(mname, ref) {
-  if (isArguments(mname) || isThis(mname))
-    return this.parent.refIndirect_m(mname, ref);
-
-  if (this.isExpr() && this.hasScopeName_m(mname))
-    return this.scopeName.absorbDirect(ref);
-
-  return this.parent.refDirect_m(mname, ref);
-};
-
-this.handOver_m = function(mname, ref) {
-  if (ref.synthTarget === this)
-    return this.declareLiquid_m(mname, ref);
-
-  if (this.isArrowComp()) {
-    return this.arrowHandOver_m(mname, ref);
-  }
-
-  if (this.isClassMem())
-    return this.clsMemHandOver_m(mname, ref);
-
-  if (this.isClass())
-    return this.clsHandOver_m(mname, ref);
-
-  if (this.isCatchComp()||
-     this.isBlock() ||
-     this.isLexical() ||
-     this.isBare())
-    return this.parent.refDirect_m(mname, ref);
-
-  if (this.isScript() || this.isModule()) {
-    ASSERT.call(
-      this,
-      this.parent.isGlobal(),
-      'script must have a parent scope of type '+
-      'global');
-    if (isThis(mname))
-      return this.getThis(ref);
-    return this.parent.getGlobal_m(mname, ref);
-  }
-
-  ASSERT.call(this, this.isAnyFnComp(),
-    'the only remaining type should have been fn');
-
-  this.funcHandOver_m(mname, ref);
-};
-
-this.funcHandOver_m = function(mname, ref) {
-  if (this.isHead())
-    return this.fnHeadHandOver_m(mname, ref);
-  this.fnBodyHandOver_m(mname, ref);
-};
-
-},
-function(){
-this.hasLiquid = function(name) { 
-  return this.hasLiquid_m(_m(name));
-};
-
-this.accessLiquid = function(targetScope, targetName, createNew) {
-  var liquidSource = targetScope;
-  if (liquidSource.isAnyFnHead())
-    liquidSource = liquidSource.funcBody;
-
-  var liquid = liquidSource.getLiquid(targetName, createNew);
-  liquid.trackScope(this, targetScope);
-  return liquid;
-};
-
-// NOTE: createNew will create a new entry anyway
-this.getLiquid = function(name, createNew) {
-  ASSERT.call(this, !this.isAnyFnHead(),
-    'it is not valid to ask fn-head for a liquid');
-
-  var fullName = _full(this.id, name),
-      scs = this.scs;
-
-  if (createNew) {
-    var num = 0, newName = name;
-    while (scs.liquidDefs.has(fullName)) {
-      num++;
-      newName = name + "" + num;
-      fullName =_full(this.id, newName);
-    }
-    return scs.liquidDefs.set(
-      fullName,
-      new Liquid(this, newName).i(name)
-    );
-  }
- 
-  if (scs.liquidDefs.has(fullName))
-    return scs.liquidDefs.get(fullName);
-
-  return scs.liquidDefs.set(
-    fullName,
-    new Liquid(this, name)
-  );
-};
-
-this.hasLiquid_m = function(mname) {
-  return this.liquidDefs.has(mname);
-};
-
-this.findLiquid = function(name) {
-  var fullName = _full(this.id, name);
-  return this.liquidDefs.has(fullName) ?
-    this.liquidDefs.get(fullName) : null;
-};
-
-},
-function(){
-this.refDirect_m = function(mname, anotherRef) {
-  var ref = this.findRef_m(mname, true, anotherRef && anotherRef.synthTarget !== null);
-  if (anotherRef === null) ref.direct++;
-  else ref.absorbDirect(anotherRef);
-};
-
-this.refIndirect_m = function(mname, ref) {
-  this.findRef_m(mname, true, ref.synthTarget !== null).absorbIndirect(ref);
-};
-
-this.findRef_m = function(mname, createIfNone, isLiquid) {
-  var target = isLiquid ? this.liquidRefs : this.refs;
-  return (
-    target.has(mname) ? 
-    target.get(mname) :
-    createIfNone ?
-      target.set(mname, new Ref(this)) :
-      null
-  );
-  
-};
-
-this.hasUnresolvedRef_m = function(mname) {
-  return this.findRef_m(mname) && !this.findDecl_m(mname);
-};
-
-},
-function(){
-this.str = function() {
-  var emitter = new Emitter();
-  this.writeTo(emitter);
-  return emitter.code;
-};
-
-this.typeString = function() {
-  var str = "";
-
-  if (this.type & ST_GLOBAL) str += ":global"; 
-  if (this.type & ST_MODULE) str += ":module"; 
-  if (this.type & ST_SCRIPT) str += ":script";
-  if (this.type & ST_DECL) str += ":decl";
-  if (this.type & ST_CLS) str += ":class";
-  if (this.type & ST_FN) str += ":fn";
-  if (this.type & ST_CLSMEM) str += ":clsmem";
-  if (this.type & ST_GETTER) str += ":getter";
-  if (this.type & ST_SETTER) str += ":setter";
-  if (this.type & ST_STATICMEM) str += ":static";
-  if (this.type & ST_CTOR) str += ":ctor";
-  if (this.type & ST_OBJMEM) str += ":objmem";
-  if (this.type & ST_ARROW) str += ":arrow";
-  if (this.type & ST_BLOCK) str += ":block";
-  if (this.type & ST_CATCH) str += ":catch";
-  if (this.type & ST_ASYNC) str += ":async";
-  if (this.type & ST_BARE) str += ":bare";
-  if (this.type & ST_BODY) str += ":body";
-  if (this.type & ST_METH) str += ":meth";
-  if (this.type & ST_EXPR) str += ':expr';
-  if (this.type & ST_GEN) str += ":gen";
-  if (this.type & ST_HEAD) str += ":head";
-  if (this.type & ST_PAREN) str += ":paren";
-
-  return str;
-};
-
-this.writeTo = function(emitter) {
-  var defs = this.defs,
-      scopes = this.ch,
-      si = 0,
-      di = 0;
-
-  emitter.w(this.headI+':<scope type="'+this.typeString()+'">');
-  var specialThis = null, specialArguments = null;
-  if (this.isAnyFnBody()) {
-    specialThis = this.special.lexicalThis;
-    specialArguments = this.special.arguments;
-  }
-
-  if (defs.keys.length !== 0 || scopes.length !== 0 || specialThis || specialArguments) {
-    emitter.i();
-    if (specialThis) {
-      emitter.l().w(
-        '<special:this r="[d:'+specialThis.ref.direct+';i:'+specialThis.ref.indirect+']">');
-    }
-
-    if (specialArguments) {
-      emitter.l().w(
-        '<special:arguments r="[d:'+specialArguments.ref.direct+';i:'+specialArguments.ref.indirect+']">');
-    }
-
-    while (true) {
-      var def = null,
-          scope = null;
-      if (di < defs.keys.length)
-        def = defs.at(di);
-      if (si < scopes.length)
-        scope = scopes[si];
-      if (scope === null && def === null)
-        break;
-
-      if (def && (scope === null || def.i < scope.headI)) {
-        emitter.l();
-        def.writeTo(emitter); di++;
-      }
-      else if (scope && (def === null || scope.headI < def.i)) {
-        emitter.l()
-        scope.writeTo(emitter); si++;
-      }
-    }
-    emitter.u().l()
-  }
-
-  emitter.w(this.tailI+':</scope>');
-};
-
-},
-function(){
-this.clsScope = function(t) {
-  return new ClassScope(this, t);
-};
-
-this.fnHeadScope = function(t) {
-  return new FuncHeadScope(this, t);
-};
-
-this.fnBodyScope = function(t) {
-  return new FuncBodyScope(this, t);
-};
-
-this.blockScope = function() {
-  return new LexicalScope(this, ST_BLOCK);
-};
-
-this.catchBodyScope = function() {
-  return new CatchBodyScope(this);
-};
-
-this.catchHeadScope = function() {
-  return new CatchHeadScope(this);
-};
-
-this.bodyScope = function() {
-  return new LexicalScope(this, ST_BARE|ST_BODY);
-};
-
-this.parenScope = function() {
-  return new ParenScope(this);
-};
-
-},
-function(){
-this.getSupMem = function() {
-  ASSERT.call(this, this.isClass(),
-    'a supmem is only reachable through a class');
-  if (!this.special.supMem)
-    this.special.supMem =
-      new Decl().m(DM_MEMSUP).n(_u(RS_SMEM)).r(new Ref(this));
-
-  return this.special.supMem;
-};
-
-this.getNewTarget = function() {
-  ASSERT.call(this, this.isAnyFnBody(),
-    'a newTarget is only reachable through an fnbody');
-  if (!this.special.newTarget)
-    this.special.newTarget =
-      new Decl().m(DM_NEW_TARGET).n(_u(RS_NTARGET)).r(new Ref(this));
-
-  return this.special.newTarget;
-};
-
-this.getThis = function(ref) {
-  ASSERT.call(
-    this,
-    this.isModule() || this.isAnyFnBody() || this.isScript(),
-    'a this is only reachable through a module, fnbody, or script');
-  if (!this.special.lexicalThis) {
-    this.special.lexicalThis =
-      new Decl().m(DM_LTHIS).n(_u(RS_THIS)).r(ref || new Ref(this));
-    var tl = this.getLiquid('<this>');
-    if (tl.idealName === "")
-      tl.idealName = 'this_';
-
-    this.special.lexicalThis.associateWithLiquid(tl);
-    
-  }
-
-  return this.special.lexicalThis;
-};
-
-this.getArguments = function(ref) {
-  ASSERT.call(this, this.isAnyFnHead(),
-    'any special handling of arguments is only allowed from an fn-head');
-
-  var argDecl = this.findDecl_m(RS_ARGUMENTS);
-  if (!argDecl)
-    argDecl = this.special.arguments =
-      new Decl().m(DM_ARGUMENTS).n('arguments').r(ref);
-
-  return argDecl;
-};
-
-this.getSupCall = function() {
-  ASSERT.call(this, this.isClass(),
-    'a call to super is only reachable through a class');
-  if (!this.special.supCall)
-    this.special.supCall =
-      new Decl().m(DM_CALLSUP).n(_u(RS_SCALL)).r(new Ref(this));
-
-  return this.special.supCall;
-};
-
-},
-function(){
-this.acceptsName_m = function(mname, m, o) {
-  ASSERT.call(this, this.isScript() || this.isModule(),
-    '<'+this.typeString()+'> unsupported');
-//ASSERT.call(this, m === ACC_DECL,
-//  'a script scope will only respond to <accept-decl> requests, no <accept-refs>');
-
-  if (this.synthNamesUntilNow === null)
-    this.bootSynthesis();
-
-  if (this.containsSynthName_m(mname))
-    return false;
-
-  return true;
-};
-
-if (false) {
-this.acceptsName = function(name, acceptMode) {
-  return this.acceptsName_m(_m(name), acceptMode);
-};
-}
-
-},
-function(){
-Scope.newSynthName = function(baseName, declScope, locrs, originalDecl) {
-  locrs = locrs || null;
-  originalDecl = originalDecl || null;
-  var i = 0, name = baseName;
-
-  RENAME:
-  for (;; ++i, name = baseName + "" + i) {
-    var mname = _m(name);
-    if (declScope) {
-      if (!declScope.acceptsName_m(mname, ACC_DECL, originalDecl))
-        continue RENAME;
-    }
-
-    if (locrs) {
-      var l = 0;
-      while (l < locrs.length)
-        if (!locrs[l++].acceptsName_m(mname, ACC_REF, originalDecl))
-          continue RENAME;
-    }
-
-    break;
-  }
-
-  return name;
-};
-
-},
-function(){
-this.bootSynthesis = function() {
-  ASSERT.call(this, this.isConcrete(),
-    'only concrete scope are allowed to be synth-booted');
-
-  if (this.synthNamesUntilNow)
-    return;
-
-  this.synthNamesUntilNow = new SortedObj();
-  var list = this.defs, i = 0, len = list.length();
-  while (i < len) {
-    var decl = list.at(i++);
-    this.synthDecl(decl);
-  }
-};
-
-},
-function(){
-this.endSynthesis = function() {
-  ASSERT.call(this, this.isScript() || this.isModule(),
-    'a script or module scope was expected but got '+this.typeString());
-
-  var list = this.liquidDefs, i = 0, len = list.length();
-  while (i < len)
-    this.synthLiquid(list.at(i++));
-};
-
-},
-function(){
-this.synthGlobals = function() {
-  ASSERT.call(this, this.isScript() || this.isModule(),
-    'globals are not allowed to be synthesized in any other scope than a script or a module');
-
-  var globalScope = this.parent;
-  ASSERT.call(this, globalScope.isGlobal(),
-    'the script scope must have a global parent');
-
-  var list = globalScope.defs, i = 0, len = list.length();
-  while (i < len) {
-    var globalDef = list.at(i++);
-    var synthName = Scope.newSynthName(globalDef.name, null, globalDef.ref.lors);
-    if (synthName === globalDef.name) {
-      globalDef.setSynthName(synthName);
-    }
-    else {
-      globalDef.synthName = '<global>';
-      this.getThis().liquid.updateCRSList(globalDef.ref.lors);
-    }
-  }
-};
-
-
-},
-function(){
-this.synthesizeNamesInto = function(scs) {
-  ASSERT.call(this, scs.isConcrete(),
-    'synthesis target has to be a concrete scope');
-
-  var list = this.defs, i = 0, len = list.length();
-  while (i < len) {
-    var elem = list.at(i++);
-    if (elem.ref.scope === this)
-      scs.synthDecl(elem);
-    else
-      ASSERT.call(this, elem.ref.scope === this.scs,
-        'any decl in a scope must either belong to the scope itself or the surrounding concrete scope');
-  }
-
-};
-
-this.synthesizeLiquidsInto = function(scs) {
-  ASSERT.call(this, scs.isConcrete(),
-    'synthesis target has to be a concrete scope');
-  var list = this.liquidDefs, i = 0, len = list.length();
-  while (i < len)
-    scs.synthLiquid(list.at(i++));
-};
-
-this.synthLiquid = function(liquid) {
-  ASSERT.call(this, liquid.synthName === "",
-    'this liquid has already got a synth-name');
-  var baseName = liquid.idealName;
-  if (baseName === "") {
-    baseName = liquid.name;
-    if (baseName === "")
-      baseName = "lq";
-  }
-
-  var synthName = Scope.newSynthName(baseName, this, liquid.crsList);
-  liquid.setSynthName(synthName);
-  this.trackSynthName(synthName);
-};
-
-this.synthDecl = function(decl) {
-  ASSERT.call(this, decl.synthName === "",
-    'this decl has already got a synth-name');
-  var baseName = decl.name;
-  ASSERT.call(this, baseName !== "",
-    'the decl has to have a name');
-  var synthName = Scope.newSynthName(baseName, this, decl.ref.lors, decl);
-  decl.setSynthName(synthName);
-  this.trackSynthName(synthName);
-};
-
-this.containsSynthName = function(name) {
-  return this.containsSynthName_m(_m(name));
-};
-
-this.containsSynthName_m = function(mname) {
-  return this.synthNamesUntilNow.has(mname);
-};
-
-this.trackSynthName = function(name) {
-  return this.trackSynthName_m(_m(name));
-};
-
-this.trackSynthName_m = function(mname) {
-  ASSERT.call(this, !this.synthNamesUntilNow.has(mname),
-    'a name that already exists can not be tracked: <' + _u(mname) + '>');
-  this.synthNamesUntilNow.set(mname, true);
-};
-
-},
-function(){
-this.hasSignificantRef = function(ref) {
-  ASSERT.call(this, this.isScript() || this.isModule(),
-    'a scope or module scope was expected but got a <'+this.typeString()+'>');
-  if (ref.resolved)
-    return false;
-
-  var decl = ref.getDecl();
-  if (decl.isActuallyLiquid())
-    return false;
-
-  if (decl.isInsignificant())
-    return false;
-
-  ASSERT.call(this, decl.isGlobal(),
-    'the only kind of external reference in a script is global scope');
-
-  if (decl.synthName === decl.name)
+this.canSmem =
+function() { return this.allowed & SF_MEMSUP; };
+
+this.canAwait = 
+function() { return this.allowed & SF_AWAIT; };
+
+this.canBreak = 
+function() { return this.allowed & SF_BREAK; };
+
+this.canDeclareLetOrConst =
+function() {
+  if (this.isBlock() ||
+    this.isModule() ||
+    this.isScript())
     return true;
 
-  ASSERT.call(this, decl.synthName === '<global>',
-    'synthesized globals whose synthesized names are not the same as their real names '+
-    'must have been named <global>'
-  );
+  if (this.isAnyFn() || this.isCatch())
+    return this.inBody;
+  
+  return this.insideForInit();
+};
+
+this.canScall = 
+function() { return this.allowed & SF_CALLSUP; };
+
+this.canDeclareFn =
+function(st) {
+  if (this.isBlock() ||
+    this.isModule() ||
+    this.isScript())
+    return true;
+
+  if (this.isAnyFn() || this.isCatch())
+    return this.inBody;
+
+  ASSERT.call(this, this.isBare(),
+    'a bare scope was expected but got '+
+    this.typeString());
+
+  if (st & (ST_GEN|ST_ASYNC))
+    return false;
+
+  return this.insideIf();
+};
+
+this.canYield = 
+function() { return this.allowed & SF_YIELD; };
+
+this.canReturn = 
+function() { return this.allowed & SF_RETURN; };
+
+this.canContinue = 
+function() { return this.allowed & SF_CONTINUE; };
+
+},
+function(){
+this.enterForInit =
+function() { this.flags |= SF_FORINIT; };
+
+this.exitForinit =
+function() {
+  ASSERT.call(this, this.insideForInit(),
+    'must be in a for');
+  this.flags &= ~SF_FORINIT;
+};
+
+},
+function(){
+this.hasNewTarget =
+function() { return this.allowed & SA_NEW_TARGET; };
+
+this.hasSignificantNames =
+function() {
+  if (this.isModule() ||
+    this.isAnyFn() ||
+    this.isScript())
+    return true;
+
+  if (this.isCatch())
+    return this.argIsSimple && this.argIsSimple;
 
   return false;
 };
 
 },
 function(){
-this.startupSynthesis = function() {
-  ASSERT.call(
-    this,
-    this.isConcrete(),
-    'only concrete scopes are allowed to have a synth-starup'
-  );
-  this.bootSynthesis();
+this.insideIf =
+function() { return this.flags & SF_IF; };
 
-  var list = this.refs, i = 0, len = list.length(), elem = null;
-  while (i < len) {
-    var elem = list.at(i++);
-    if (!this.hasSignificantRef(elem))
-      continue;
-    this.trackSynthName(elem.getDecl().synthName);
-  }
+this.insideLoop =
+function() { return this.flags & SF_LOOP; };
+
+this.insideStrict = 
+function() { return this.flags & SF_STRICT; };
+
+this.insideForInit =
+function() { return this.flags & SF_FORINIT; };
+
+},
+function(){
+this.isAnyFn = 
+function() { return this.type & ST_FN; };
+
+this.isCatch = 
+function() { return this.type & ST_CATCH; };
+
+this.isScript = 
+function() { return this.type & ST_SCRIPT; };
+
+this.isModule = 
+function() { return this.type & ST_MODULE; };
+
+this.isClass = 
+function() { return this.type & ST_CLS; };
+
+this.isGen = 
+function() { return this.type & ST_GEN; };
+
+this.isAsync = 
+function() { return this.type & ST_ASYNC; };
+
+this.isGetter = 
+function() { return this.type & ST_GETTER; };
+
+this.isSetter = 
+function() { return this.type & ST_SETTER; };
+
+this.isClassMem = 
+function() { return this.type & ST_CLSMEM; };
+
+this.isStaticMem = 
+function() { return this.type & ST_STATICMEM; };
+
+this.isObjMem = 
+function() { return this.type & ST_OBJMEM; };
+
+this.isArrow = 
+function() { return this.type & ST_ARROW; };
+
+this.isCtor = 
+function() { return this.type & ST_CTOR; };
+
+this.isConcrete = 
+function() { return this.type & (ST_FN|ST_MODULE|ST_SCRIPT); };
+
+this.isDecl = 
+function() { return this.type & ST_DECL; };
+
+this.isExpr = 
+function() { return this.type & ST_EXPR; };
+
+this.isConditional = 
+function() { return this.flags & ST_COND; };
+
+this.isSoft = 
+function() {
+  return this.isBlock() ||
+         this.isClass() ||
+         this.isCatch() ||
+         this.isParen() ||
+         this.isBare();
 };
 
 },
 function(){
-// function component: function head or function body
-this.isGlobal = function() { return this.type & ST_GLOBAL; };
-this.isModule = function() { return this.type & ST_MODULE; };
-this.isScript = function() { return this.type & ST_SCRIPT; };
-this.isDecl = function() { return this.type & ST_DECL; };
-this.isClass = function() { return this.type & ST_CLS; };
-this.isAnyFnComp = function() { return this.type & ST_ANY_FN; };
-this.isAnyFnHead = function() {
-  return this.isAnyFnComp() && this.isHead();
-};
-this.isAnyFnBody = function() {
-  return this.isAnyFnComp() && this.isBody();
-};
-this.isClassMem = function() { return this.type & ST_CLSMEM; };
-this.isGetterComp = function() { return this.type & ST_GETTER; };
-this.isSetterComp = function() { return this.type & ST_SETTER; };
-this.isStaticMem = function() { return this.type & ST_STATICMEM; };
-this.isCtorComp = function() { return this.type & ST_CTOR; };
-this.isObjMem = function() { return this.type & ST_OBJMEM; };
-this.isArrowComp = function() { return this.type & ST_ARROW; };
-this.isBlock = function() { return this.type & ST_BLOCK; };
-this.isCatchComp = function() { return this.type & ST_CATCH; };
-this.isBody = function() { return this.type & ST_BODY; };
-this.isMethComp = function() { return this.type & ST_METH; };
-this.isExpr = function() { return this.type & ST_EXPR; };
-this.isMem = function() { return this.isStaticMem() || this.isClassMem() || this.isObjMem(); };
-this.isGenComp = function() { return this.type & ST_GEN; };
-this.isAsyncComp = function() { return this.type & ST_ASYNC; };
-this.isAccessorComp = function() { return this.isGetterComp() || this.isSetterComp(); };
-this.isSpecialComp = function() { return this.isAccessorComp() || this.isGenComp(); };
-this.isLexical = function() { return this.isCatchBody() || this.isBlock(); };
-this.isTopLevel = function() { return this.type & ST_TOP; };
-this.isHoistable = function() { return this.isSimpleFnComp() && this.isDecl(); };
-this.isIndirect = function() { return this.isAnyFnComp() || this.isClass(); };
-this.isConcrete = function() { return this.type & ST_CONCRETE; };
-this.isSimpleFnComp = function() { return this.type & ST_FN; };
-this.isBare = function() { return this.type & ST_BARE; };
-this.isCatchBody = function() { return this.isCatchComp() && this.isBody(); };
-this.isCatchHead = function() { return this.isCatchComp() && this.isHead(); };
-this.isHead = function() { return this.type & ST_HEAD; };
-this.isParen = function() { return this.type & ST_PAREN; };
+this.spawnBlock =
+function() { return new Scope(this, ST_BLOCK); };
 
-this.insideIf = function() { return this.mode & SM_INSIDE_IF; };
-this.insideLoop = function() { return this.mode & SM_LOOP; };
-this.insideStrict = function() { return this.mode & SM_STRICT; };
-this.insideBlock = function() { return this.mode & SM_BLOCK; };
-this.insideFuncArgs = function() { return this.mode & SM_INARGS; };
-this.insideForInit = function() { return this.mode & SM_FOR_INIT; };
-this.insideUniqueArgs = function() { return this.mode & SM_UNIQUE; };
+this.spawnFn =
+function(st) { return new FunScope(this, st|ST_FN); }
 
-this.canReturn = function() { return this.allowed & SA_RETURN; };
-this.canContinue = function() { return this.allowed & SA_CONTINUE; };
-this.canBreak = function() { return this.allowed & SA_BREAK; };
-this.canDeclareLetOrClass = function() {
-  return this.isAnyFnBody() || this.isTopLevel() || this.isLexical() || this.insideForInit();
-};
-this.canDeclareFunc = function() {
-  if (this.insideStrict())
-    return false;
+this.spawnCatch =
+function() { return new CatchScope(this); };
 
-  return this.isTopLevel() ||
-         this.isAnyFnBody() ||
-         this.isLexical() ||
-         this.insideIf();
-};
+this.spawnParen =
+function() { return new ParenScope(this); };
 
-this.canYield = function() { return this.allowed & SA_YIELD; };
-this.canAwait = function() { return this.allowed & SA_AWAIT; };
-this.canSupCall = function() {
-  return this.isArrowComp() ?
-    this.parent.canSupCall() :
-    this.allowed & SA_CALLSUP 
-};
+this.spawnCls =
+function(st) { return new ClassScope(this, st|ST_CLS); };
 
-this.canSupMem = function() {
-  return this.isArrowComp() ?
-    this.parent.canSupMem() :
-    this.allowed & SA_MEMSUP;
-};
-
-this.canHaveNewTarget = function() {
-   return this.isArrowComp() ?
-     this.parent.canHaveNewTarget() :
-     this.isAnyFnComp();
-};
-
-this.canDup = function() {
-  ASSERT.call(this, this.insideFuncArgs(),
-    'it has no meaning to call canDup when not ' +
-    'in func-arguments');
-  return !this.insideStrict() &&
-         !this.insideUniqueArgs();
-};
-
-this.enterForInit = function() {
-  ASSERT.call(this, this.isBare(),
-    'to enter for init mode, the scope has to be a bare one');
-  
-  this.mode |= SM_FOR_INIT;
-};
-
-this.exitForInit = function() {
-  ASSERT.call(this, this.insideForInit(),
-    'can not unset the for-init mode when it is not set');
-
-  this.mode &= ~SM_FOR_INIT;
-};
-
-this.enterStrict = function() {
-  this.mode |= SM_STRICT;
-};
-
-this.exitStrict = function() {
-  ASSERT.call(this, this.insideStrict(),
-    'can not unset strict when it is not set');
-  this.mode &= ~SM_STRICT;
-};
-
-this.yieldIsKW = function() { return this.mode & SM_YIELD_KW; };
-this.awaitIsKW = function() { return this.mode & SM_AWAIT_KW; };
-
-this.hasHeritage = function() {
-  ASSERT.call(this, this.isClass(),
-    'only classes are allowed to be tested for '+
-    'heritage');
-  return this.mode & SM_CLS_WITH_SUPER;
-};
+this.spawnBare =
+function() { return new Scope(this, ST_BARE); };
 
 },
 function(){
-this.shouldTest = function(decl) {
-  if (decl.isVName() || decl.isFunc() || decl.isGlobal() || decl.isScopeName())
-    return false;
-  if (!decl.reached)
-    return true;
-
-  var scope = this.scs;
-  if (!scope.isAnyFnComp())
-    return false;
-
-  if (scope.isAnyFnBody())
-    scope = scope.funcHead;
-
-  return decl.ref.scope === scope.parent && scope.isDecl();
+this.makeStrict =
+function() {
+  this.flags |= SF_STRICT; 
+  if (this.isAnyFn())
+    this.verifyForStrictness();
 };
 
 }]  ],
@@ -13155,7 +11936,7 @@ this.Transformer = Transformer;
 this.Scope = Scope;
 this.Hitmap = Hitmap;
 this.GlobalScope = GlobalScope;
-
+/*
 this.ST_GLOBAL  = ST_GLOBAL ;
 this.ST_MODULE  = ST_MODULE ;
 this.ST_SCRIPT  = ST_SCRIPT ;
@@ -13235,4 +12016,5 @@ this.RS_SMEM  = RS_SMEM ;
 this.RS_SCALL  = RS_SCALL ;
 this.RS_NTARGET  = RS_NTARGET ;
 this.RS_THIS = RS_THIS;
+*/
 ;}).call (function(){try{return module.exports;}catch(e){return this;}}.call(this))

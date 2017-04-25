@@ -1,4 +1,4 @@
-function num(c) {
+function isNum(c) {
   return (c >= CH_0 && c <= CH_9);
 }
 
