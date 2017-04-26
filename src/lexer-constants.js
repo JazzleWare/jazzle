@@ -6,8 +6,7 @@ var VDT_AWAIT = 8;
 
 var TK_NONE = 0;
 var TK_EOF = 1 << 8;
-var TK_QUOTE = TK_EOF << 1;
-var TK_NUM = TK_QUOTE << 1;
+var TK_NUM = TK_EOF << 1;
 var TK_ID = TK_NUM << 1;
 var TK_SIMP_ASSIG = TK_ID << 1;
 var TK_UNARY = TK_SIMP_ASSIG << 1;

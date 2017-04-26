@@ -87,3 +87,10 @@ function octStr2num(octStr) {
 function surrogate(ch1, ch2) {
   return ((ch1-0x0d800)<<10)+(ch2-0x0dc00)+0x010000;
 }
+
+function isDirective(n) {
+  return (
+    n.type === 'Literal' &&
+    typeof(n.value) === STRING_TYPE
+  );
+}

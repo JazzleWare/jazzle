@@ -7,6 +7,6 @@ function() {
   else if (!isIDHead(bsc))
     this.err('id.head.esc.not.idstart');
 
-  var head = String.fromCharCode(bsc);
+  var head = cp2sp(bsc);
   return this.readID_withHead(head);
 };

@@ -26,7 +26,6 @@ var Parser = function (src, o) {
   
   this.canBeStatement = false;
   this.foundStatement = false;
-  this.scopeFlags = 0;
 
   this.isScript = false;
   this.v = 7;
@@ -36,12 +35,10 @@ var Parser = function (src, o) {
   this.first__proto__ = false;
 
   this.scope = null;
-  this.directive = DIR_NONE;
-  
   this.declMode = DECL_NONE;
  
   // TODO:eliminate
-  this.pendingExprHead = null;
+  this.exprHead = null;
 
   // ERROR TYPE           CORE ERROR NODE    OWNER NODE
   this.pt = ERR_NONE_YET; this.pe = null; this.po = null; // paramErr info
@@ -51,9 +48,7 @@ var Parser = function (src, o) {
   this.suspys = null;
   this.missingInit = false;
 
-  this.dv = { value: "", raw: "" };
-
-  // "pin" location; for errors that might not have been precisely cause by a syntax node, like:
+  // "pin" location; for errors that might not have been precisely caused by a syntax node, like:
   // function l() { '\12'; 'use strict' }
   //                 ^
   // 
@@ -62,8 +57,10 @@ var Parser = function (src, o) {
   //
   // var e = [a -= 12] = 5
   //            ^
-  this.ploc = { c0: -1, li0: -1, col0: -1 }; // paramErr locPin; currently only for the last error above
-  this.aloc = { c0: -1, li0: -1, col0: -1 }; // assigErr locPin; currently only for the last error above
+  this.ploc = 
+    { c0: -1, li0: -1, col0: -1 }; // paramErr locPin; currently only for the last error above
+  this.aloc =
+    { c0: -1, li0: -1, col0: -1 }; // assigErr locPin; currently only for the last error above
 
   // escErr locPin; like the name suggests, it's not a simpleErr -- none of the simpleErrs needs a pinpoint
   this.esct = ERR_NONE_YET;
@@ -73,18 +70,6 @@ var Parser = function (src, o) {
 
   this.commentBuf = null;
   this.errorListener = this; // any object with an `onErr(errType "string", errParams {*})` will do
-
-//this.core = MAIN_CORE;
-  this.misc = {
-    alloHashBang: false,
-    allowImportExportEverywhere: false,
-    allowReturnOutsideFunction: false,
-    directSourceFile: "",
-    sourceFile: ""
-  };
-  this.program = null;
-
   this.parenScope = null;
-  this.setOptions(o);
 };
 

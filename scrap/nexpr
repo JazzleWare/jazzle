@@ -1,0 +1,27 @@
+`parseNonSeqExpr(ctx) {
+  var head = `getHead(ctx)
+  ...
+}
+
+`getHead(ctx) {
+  if !`head { `head = `parseExprHead() }
+  var head = `head
+  `head = null
+  return `head
+}
+
+`stmt() {
+  `isStmt = true
+  if `ttype == TK.ID {
+    `head = `prepareExprHead()
+    if `foundStmt {
+      var head = `head
+      `head = null
+      `foundStmt = false
+      return head
+    }
+  }
+
+  var e = `parseExpr(CTX.NONE)
+  return e#toStatement
+}

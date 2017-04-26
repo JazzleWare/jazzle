@@ -51,6 +51,8 @@ function() {
     return this.readOp_xor();
   case CH_BACK_SLASH:
     return this.readID_bs();
+  case CH_DIV:
+    return this.readDiv();
 
   default:
     if (ch >= 0x0D800 && ch <= 0x0DBFF)
