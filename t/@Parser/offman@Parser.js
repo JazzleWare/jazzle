@@ -14,26 +14,6 @@ function(offset) {
   this.li++;
 };
 
-this.autosetoff =
-function(offset) {
-  var ch = this.scat(offset);
-  switch (ch) {
-  case CH_CARRIAGE_RETURN:
-  case CH_LINE_FEED:
-  case 0x2028:
-  case 0x2029:
-    this.setnewloff(offset);
-  default:
-    if (ch !== -1)
-      this.setsimpoff(offset);
-  }
-};
-
-this.peekch =
-function() {
-  return this.scat(this.c);
-};
-
 this.scat =
 function(offset) {
   return offset < this.src.length ?

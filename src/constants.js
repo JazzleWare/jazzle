@@ -128,44 +128,9 @@ var CTX_NONE = 0,
     CTX_PARPAT_ERR = CTX_HAS_A_PARAM_ERR|CTX_HAS_AN_ASSIG_ERR|CTX_HAS_A_SIMPLE_ERR,
     CTX_TOP = CTX_PAT|CTX_NO_SIMPLE_ERR;
 
-// TODO: order matters in the first few declarations below, mostly due to a 
-// slight performance gain in parseFunc, where MEM_CONSTRUCTOR and MEM_SUPER in `flags` are
-// getting added to the current scope flags.
-// the ordering is also to make the relevant value sets (i.e., SCOPE_FLAG_* and MEM_*)
-// span less bit lengths; this order sensitivity is something that must change in a very
-// near future.
-var MEM_PROTOTYPE = 1,
-    MEM_PROTO = MEM_PROTOTYPE << 1,
-    MEM_HAS_CONSTRUCTOR = MEM_PROTO << 1,
-    MEM_NONE;
-
 var ARGLEN_GET = 0,
     ARGLEN_SET = 1,
     ARGLEN_ANY = -1;
-
-var DECL_NONE = 0;
-var DECL_NOT_FOUND = 
-  // #if V
-  null;
-  // #else
-  DECL_NONE;
-  // #end
-
-var VDT_VOID = 1;
-var VDT_TYPEOF = 2;
-var VDT_NONE = 0;
-var VDT_DELETE = 4;
-var VDT_AWAIT = 8;
-
-var DIR_MODULE = 1,
-    DIR_SCRIPT = DIR_MODULE << 1,
-    DIR_NONE = 0,
-    DIR_TOP = DIR_MODULE|DIR_SCRIPT,
-    DIR_FUNC = DIR_SCRIPT << 2,
-    DIR_LAST = DIR_FUNC << 1,
-    DIR_MAYBE = DIR_LAST << 1,
-    DIR_HANDLED_BY_NEWLINE = DIR_MAYBE << 1,
-    DIR_HAS_OCTAL_ERROR = DIR_HANDLED_BY_NEWLINE << 1;
 
 var EC_NONE = 0,
     EC_NEW_HEAD = 1,
@@ -174,13 +139,3 @@ var EC_NONE = 0,
     EC_CALL_HEAD = EC_EXPR_HEAD << 1,
     EC_NON_SEQ = EC_CALL_HEAD << 1;
 
-var PREC_NONE = PREC_WITH_NO_OP;
-
-function MAIN_CORE(n) {
-  return n.expression;
-}
-
-function KEEPER_CORE(n) {
-  n.type = 'ParenthesizedExpression';
-  return n;
-}

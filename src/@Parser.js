@@ -35,7 +35,7 @@ var Parser = function (src, o) {
   this.first__proto__ = false;
 
   this.scope = null;
-  this.declMode = DECL_NONE;
+  this.declMode = DT_NONE;
  
   // TODO:eliminate
   this.exprHead = null;

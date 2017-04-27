@@ -56,7 +56,7 @@ function(ctx) {
   case CH_LSQBRACKET:
   case CH_LPAREN:
   case CH_BACKTICK:
-    this.flushNonSimpErrors();
+    this.flushSimpErrors();
   }
 
   var inner = core(head), elem = null;

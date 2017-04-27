@@ -41,6 +41,7 @@ var SF_LOOP = 1,
     SF_FORINIT = SF_COND << 1,
     SF_WITH_SCALL = SF_FORINIT << 1,
     SF_WITH_SMEM = SF_WITH_SCALL << 1,
+    SF_INSIDEPROLOGUE = SF_WITH_MEM << 1,
     SF_NONE = 0;
 
 var DT_CLS = 1,

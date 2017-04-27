@@ -14,6 +14,7 @@ function(allowNull) {
       this.foundStatement = false;
       return head;
     }
+    this.canBeStatement = false;
     this.exprHead = head;
     break;
 
@@ -34,13 +35,6 @@ function(allowNull) {
       head, allowNull);
 
   this.fixupLabels(false);
-  if (this.insidePrologue()) {
-    if (!isDirective(head))
-      this.exitPrologue();
-    else
-      this.applyDirective(head);
-  }
-
   if (!this.semi())
     this.err('no.semi');
 
@@ -54,3 +48,10 @@ function(allowNull) {
       end: this.semiLoc || head.loc.end }
   };
 };
+
+//if (this.insidePrologue()) {
+//  if (!isDirective(head))
+//    this.exitPrologue();
+//  else
+//    this.applyDirective(head);
+//}
