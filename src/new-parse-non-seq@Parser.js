@@ -4,7 +4,9 @@ function(prec, ctx) {
   if (head) this.exprHead = null;
   else head = this.parseExprHead(ctx);
 
-  if (head === null)
+  if (head)
+    head = this.parseTail(head);
+  else
   switch (this.lttype) {
   case TK_UNARY:
   case TK_UNBIN:

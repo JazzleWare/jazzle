@@ -907,6 +907,7 @@ var SF_LOOP = 1,
     SF_FORINIT = SF_COND << 1,
     SF_WITH_SCALL = SF_FORINIT << 1,
     SF_WITH_SMEM = SF_WITH_SCALL << 1,
+    SF_INSIDEPROLOGUE = SF_WITH_SMEM << 1,
     SF_NONE = 0;
 
 var DT_CLS = 1,
@@ -2733,9 +2734,120 @@ null,
 null,
 null,
 [Parser.prototype, [function(){
+this.suck =
+function() {
+  var commentBuf = this.commentBuf;
+  this.commentBuf = null;
+  return commentBuf;
+};
+
+this.spew =
+function() {
+  this.lpn.trailingComments = this.commentBuf;
+  this.commentBuf = null;
+  this.lpn = null;
+};
+
+},
+function(){
+this.insidePrologue =
+function() {
+  return this.scope.isFunc() &&
+    this.scope.insidePrologue();
+};
+
+this.exitPrologue =
+function() {
+  this.scope.exitPrologue();
+  this.clearPendingStrictErrors();
+};
+
+this.applyDirective =
+function(directive) {
+  var raw = directive.raw;
+  // TODO: which one should apply first?
+  if (raw.substring(1,raw.length-1) === 'use strict') {
+    this.scope.makeStrict();
+    this.applyPendingStrictErrors();
+  }
+};
+
+},
+function(){
+this.next =
+function() {
+
+  this.skipWS();
+  if (this.c >= this.src.length) {
+    this.lttype = 'eof';
+    this.ltraw = '<<EOF>>';
+    return;
+  }
+
+  this.c0 = this.c;
+  this.li0 = this.li;
+  this.col0 = this.col;
+
+  var ch = this.src.charCodeAt(this.c);
+  if (isIDHead(ch))
+    return this.readID_simple();
+  if (isNum(ch))
+    return this.readNum_raw(ch);
+
+  switch (ch) {
+  case CH_MIN:
+    return this.readOp_min();
+  case CH_ADD:
+    return this.readOp_add();
+  case CH_MULTI_QUOTE:
+    return this.read_multiQ();
+  case CH_SINGLE_QUOTE:
+    return this.read_singleQ();
+  case CH_SINGLEDOT:
+    return this.read_dot();
+  case CH_EQUALITY_SIGN:
+    return this.readOp_eq();
+  case CH_LESS_THAN:
+    return this.readOp_lt();
+  case CH_GREATER_THAN:
+    return this.readOp_gt();
+  case CH_MUL:
+    return this.readOp_mul();
+  case CH_MODULO:
+    return this.readOp_mod();
+  case CH_EXCLAMATION:
+    return this.readOp_exclam();
+  case CH_COMPLEMENT:
+    return this.readOp_compl();
+  case CH_OR:
+    return this.readOp_or();
+  case CH_AND:
+    return this.readOp_and();
+  case CH_XOR:
+    return this.readOp_xor();
+  case CH_BACK_SLASH:
+    return this.readID_bs();
+  case CH_DIV:
+    return this.readDiv();
+
+  default:
+    if (ch >= 0x0D800 && ch <= 0x0DBFF)
+      return this.readID_surrogate(ch);
+
+    return this.readSingleChar();
+  }
+};
+
+this.c0_to_c =
+function() { return this.src.substring(this.c0,this.c); };
+
+},
+function(){
 this.parseExprHead =
 function(ctx) {
-  var head = null;
+  var head = this.exprHead;
+  if (head !== null) this.exprHead = null;
+  else
   switch (this.lttype) {
   case TK_ID:
     if (head = this.parseIDExprHead(ctx))
@@ -2785,94 +2897,6 @@ function(ctx) {
 
   if (head.type === 'Identifier')
     this.scope.refDirect_m(_m(head.name), null);
-
-  switch (this.lttype) {
-  case CH_SINGLEDOT:
-  case CH_LSQBRACKET:
-  case CH_LPAREN:
-  case CH_BACKTICK:
-    this.flushSimpErrors();
-  }
-
-  var inner = core(head), elem = null;
-
-  LOOP:
-  while (true) {
-    switch (this.ltype) {
-    case CH_SINGLEDOT:
-      this.next();
-      if (this.lttype !== TK_ID)
-        this.err('mem.name.not.id');
-      elem = this.memberID();
-      if (elem === null)
-        this.err('mem.id.is.null');
-      head = inner = {
-        type: 'MemberExpression',
-        property: elem,
-        start: head.start,
-        end: elem.end,
-        object: inner,
-        loc: {
-          start: head.loc.start,
-          end: elem.loc.end },
-        computed: false,
-        '#y': -1
-      };
-      continue;
-
-    case CH_LSQBRACKET:
-      this.next();
-      elem = this.parseExpr(PREC_NONE, CTX_NONE);
-      head = inner = {
-        type: 'MemberExpression',
-        property: core(elem),
-        start: head.start,
-        end: this.c,
-        loc: {
-          start: head.loc.start,
-          end: this.loc() },
-        computed: true,
-        '#y': -1
-      };
-      if (!this.expectType_soft(CH_RSQBRACKET))
-        this.err('mem.unfinished');
-      continue;
-
-    case CH_LPAREN:
-      elem = this.parseArgList();
-      head = inner = {
-        type: 'CallExpression',
-        callee: inner,
-        start: head.start,
-        end: this.c,
-        arguments: elem,
-        loc: {
-          start: head.loc.start,
-          end: this.loc() },
-        '#y': -1
-      };
-      if (!this.expectType_soft(CH_RPAREN))
-        this.err('call.args.is.unfinished');
-      continue;
-
-    case CH_BACKTICK:
-      elem = this.parseTemplateLiteral();
-      head = inner = {
-        type: 'TaggedTemplateLiteral',
-        quasi: elem,
-        start: head.start,
-        end: elem.end,
-        loc: {
-          start: head.loc.start,
-          end: elem.loc.end },
-        tag: inner,
-        '#y': -1
-      };
-      continue;
-
-    default: break LOOP;
-    }
-  }
 
   return head;
 };
@@ -3109,7 +3133,9 @@ function(prec, ctx) {
   if (head) this.exprHead = null;
   else head = this.parseExprHead(ctx);
 
-  if (head === null)
+  if (head)
+    head = this.parseTail(head);
+  else
   switch (this.lttype) {
   case TK_UNARY:
   case TK_UNBIN:
@@ -3248,6 +3274,295 @@ function(allowNull) {
 //  else
 //    this.applyDirective(head);
 //}
+
+},
+function(){
+this.parseTail =
+function(head) {
+  switch (this.lttype) {
+  case CH_SINGLEDOT:
+  case CH_LSQBRACKET:
+  case CH_LPAREN:
+  case CH_BACKTICK:
+    this.flushSimpleErrors();
+  }
+
+  var inner = core(head), elem = null;
+
+  LOOP:
+  while (true) {
+    switch (this.lttype) {
+    case CH_SINGLEDOT:
+      this.next();
+      if (this.lttype !== TK_ID)
+        this.err('mem.name.not.id');
+      elem = this.memberID();
+      if (elem === null)
+        this.err('mem.id.is.null');
+      head = inner = {
+        type: 'MemberExpression',
+        property: elem,
+        start: head.start,
+        end: elem.end,
+        object: inner,
+        loc: {
+          start: head.loc.start,
+          end: elem.loc.end },
+        computed: false,
+        '#y': -1
+      };
+      continue;
+
+    case CH_LSQBRACKET:
+      this.next();
+      elem = this.parseExpr(PREC_NONE, CTX_NONE);
+      head = inner = {
+        type: 'MemberExpression',
+        property: core(elem),
+        start: head.start,
+        end: this.c,
+        loc: {
+          start: head.loc.start,
+          end: this.loc() },
+        computed: true,
+        '#y': -1
+      };
+      if (!this.expectType_soft(CH_RSQBRACKET))
+        this.err('mem.unfinished');
+      continue;
+
+    case CH_LPAREN:
+      elem = this.parseArgList();
+      head = inner = {
+        type: 'CallExpression',
+        callee: inner,
+        start: head.start,
+        end: this.c,
+        arguments: elem,
+        loc: {
+          start: head.loc.start,
+          end: this.loc() },
+        '#y': -1
+      };
+      if (!this.expectType_soft(CH_RPAREN))
+        this.err('call.args.is.unfinished');
+      continue;
+
+    case CH_BACKTICK:
+      elem = this.parseTemplateLiteral();
+      head = inner = {
+        type: 'TaggedTemplateLiteral',
+        quasi: elem,
+        start: head.start,
+        end: elem.end,
+        loc: {
+          start: head.loc.start,
+          end: elem.loc.end },
+        tag: inner,
+        '#y': -1
+      };
+      continue;
+
+    default: break LOOP;
+    }
+  }
+
+  return head;
+};
+
+},
+function(){
+this.semi =
+function() {
+  var t = this.lttype;
+  if (t === CH_SEMI) {
+    this.semiC = this.c;
+    this.semiLoc = this.loc();
+    this.next();
+    return true;
+  }
+
+  if (this.nl) {
+    this.semiC = 0;
+    this.semiLoc = null;
+    return true;
+  }
+
+  switch (t) {
+  case TK_EOF:
+    this.semiC = this.c;
+    this.semiLoc = this.loc();
+    return true;
+
+  case CH_RCURLY:
+    this.semiC = this.c0;
+    this.semiLoc = this.locOn(1);
+    return true;
+  }
+
+  return false;
+};
+
+},
+function(){
+this.isResv =
+function (name) {
+  switch (name.length) {
+  case 1:
+    return false;
+  case 2: 
+    switch (name) {
+    case 'do': case 'if': case 'in':
+      return true;
+    }
+    return false;
+
+  case 3:
+    switch (name) {
+    case 'int' :
+      return this.v>5;
+    case 'let' :
+      return this.v <= 5 ||
+        !this.scope.insideStrict();
+    case 'var': case 'for':
+    case 'try': case 'new' :
+      return true;
+    }
+    return false;
+
+  case 4:
+    switch (name) {
+    case 'byte': case 'char':
+    case 'goto': case 'long':
+      return this.v<=5;
+
+    case 'case': case 'else':
+    case 'this': case 'void':
+    case 'with': case 'enum':
+    case 'true': case 'null':
+      return true;
+    }
+    return false;
+
+  case 5:
+    switch (name) {
+    case 'await':
+      return !this.isScript ||
+        this.scope.canAwait();
+
+    case 'final':
+    case 'float':
+    case 'short':
+      return this.v<=5;
+    
+    case 'yield': 
+      return this.scope.insideStrict() ||
+        this.scope.canYield();
+
+    case 'break': case 'catch':
+    case 'class': case 'const':
+    case 'false': case 'super':
+    case 'throw': case 'while': 
+      return true;
+    }
+    return false;
+
+  case 6:
+    switch (name) {
+    case 'double': case 'native': case 'throws':
+      return this.v<=5;
+    case 'public':
+      return this.v<=5 ||
+        this.scope.insideStrict();
+    case 'static':
+      return this.scope.insideStrict();
+    case 'delete': case 'export':
+    case 'import': case 'typeof':
+    case 'switch': case 'return': 
+      return true;
+    }
+    return false;
+
+  case 7:
+    switch (name) {
+    case 'extends':
+    case 'default':
+    case 'finally':
+      return true;
+    case 'package':
+    case 'private':
+      return this.v<=5 ||
+        this.scope.insideStrict();
+    case 'boolean':
+      return this.v<=5;
+    }
+    return false;
+
+  case 8:
+    switch (name) {
+    case 'abstract':
+    case 'volatile':
+      return this.v<=5;
+    case 'continue':
+    case 'debugger':
+    case 'function':
+      return true;
+    }
+    return false;
+
+  case 9:
+    switch (name) {
+    case 'protected':
+    case 'interface':
+      return this.scope.insideStrict() ||
+        this.v<=5;
+    case 'transient':
+      return this.v<=5;
+    }
+    return false;
+
+   case 10:
+     switch (name) {
+     case 'implements':
+       return this.v <= 5 ||
+         this.scope.insideStrict();
+
+     case 'instanceof':
+       return true;
+     }
+     return false;
+
+  case 12:
+    return this.v<=5 && name === 'synchronized';
+  default: return true;
+  }
+};
+
+
+
+},
+function(){
+this.setsimpoff =
+function(offset) {
+  this.col += (this.c = offset) - this.luo;
+  // TODO: will luo remain relevant even if
+  // we only use this.c at the start and end of a lexere routine
+  this.luo = offset;
+};
+
+this.setnewloff =
+function(offset) {
+  this.luo = offset;
+  this.c = offset;
+  this.col = 0;
+  this.li++;
+};
+
+this.scat =
+function(offset) {
+  return offset < this.src.length ?
+    this.src.charCodeAt(offset) : -1;
+};
 
 },
 function(){
