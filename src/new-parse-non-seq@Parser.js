@@ -52,10 +52,10 @@ function(prec, ctx) {
     return prec === PREC_NONE ?
       this.parseCond(head, ctx) : head;
 
-  if (this.lttype === TK_AAMM) {
+  if (this.lttype === TK_AA_MM) {
     if (this.nl)
       return head;
-    return this.parseUpdateExpression(head, ctx);
+    head = this.parseUpdate(head, ctx);
   }
 
   do {

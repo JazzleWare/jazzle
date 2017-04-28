@@ -4,10 +4,10 @@ this.parseArgList = function () {
 
   do { 
     this.next();
-    elem = this.parseNonSeqExpr(PREC_WITH_NO_OP,CTX_NULLABLE|CTX_PAT|CTX_NO_SIMPLE_ERR); 
+    elem = this.parseNonSeqExpr(PREC_NONE,CTX_TOP); 
     if (elem)
       list.push(core(elem));
-    else if (this.lttype === '...')
+    else if (this.lttype === TK_ELLIPSIS)
       list.push(this.parseSpreadElement(CTX_NONE));
     else {
       if (list.length !== 0) {
@@ -19,7 +19,7 @@ this.parseArgList = function () {
       break;
     }
 
-    if (this.lttype === ',') {
+    if (this.lttype === CH_COMMA) {
       c0 = this.c0;
       li0 = this.li0;
       col0 = this.col0;

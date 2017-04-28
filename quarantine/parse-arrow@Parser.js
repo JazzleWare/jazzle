@@ -1,7 +1,7 @@
-this.parseArrowFunctionExpression = function(arg, context)   {
+this.parseArrow = function(arg, ctx)   {
   if (this.v <= 5)
     this.err('ver.arrow');
-  var tight = this.scope.insideStrict(), async = false;
+  var async = false;
 
   if (this.pt === ERR_ASYNC_NEWLINE_BEFORE_PAREN) {
     ASSERT.call(this, arg === this.pe,
@@ -9,19 +9,19 @@ this.parseArrowFunctionExpression = function(arg, context)   {
     this.err('arrow.newline.before.paren.async');
   }
 
-  var st = ST_ARROW;
+  var sc = ST_ARROW;
   switch ( arg.type ) {
   case 'Identifier':
     var decl = this.scope.findDecl(arg.name);
     if (decl) decl.ref.direct--;
     else this.scope.findRef_m(_m(arg.name)).direct--;
 
-    this.enterScope(this.scope.fnHeadScope(st));
+    this.enterScope(this.scope.spawnFn(st));
     this.asArrowFuncArg(arg);
     break;
 
   case PAREN_NODE:
-    this.enterScope(this.scope.fnHeadScope(st));
+    this.enterScope(this.scope.spawnFn(st));
     this.scope.absorb(this.parenScope);
     this.parenScope = null;
     if (arg.expr) {
@@ -43,7 +43,7 @@ this.parseArrowFunctionExpression = function(arg, context)   {
 
     async = true;
     st |= ST_ASYNC;
-    this.enterScope(this.scope.fnHeadScope(st));
+    this.enterScope(this.scope.spawnFn(st));
     this.scope.absorb(this.parenScope);
     this.parenScope = null;
     this.asArrowFuncArgList(arg.arguments);
@@ -52,7 +52,7 @@ this.parseArrowFunctionExpression = function(arg, context)   {
   case INTERMEDIATE_ASYNC:
     async = true;
     st |= ST_ASYNC;
-    this.enterScope(this.scope.fnHeadScope(st));
+    this.enterScope(this.scope.spawnFn(st));
     this.asArrowFuncArg(arg.id);
     break;
 
@@ -61,32 +61,30 @@ this.parseArrowFunctionExpression = function(arg, context)   {
 
   }
 
-  var funcHead = this.scope;
-  this.currentExprIsParams();
-
-  this.enterScope(this.scope.fnBodyScope(st));
-  var scope = this.scope;
-  this.scope.setHead(funcHead);
+  this.flushParamErrors();
+  this.scope.enterBody();
 
   if (this.nl)
     this.err('arrow.newline');
 
   this.next();
-
   var isExpr = true, nbody = null;
 
-  if ( this.lttype === '{' ) {
-    var prevLabels = this.labels, prevDeclMode = this.declMode;
+  if (this.lttype === CH_LCURLY) {
+    var prevLabels = this.labels,
+        prevDeclMode = this.declMode;
+
     this.labels = {};
     isExpr = false;
-    nbody = this.parseFuncBody(CTX_NONE|CTX_PAT|CTX_NO_SIMPLE_ERR);
-    this.labels = prevLabels; this.declMode = prevDeclMode;
+    nbody = this.parseFuncBody();
+
+    this.labels = prevLabels;
+    this.declMode = prevDeclMode;
   }
   else
-    nbody = this. parseNonSeqExpr(PREC_WITH_NO_OP, context|CTX_PAT) ;
+    nbody = this.parseNonSeqExpr(PREC_NONE, ctx|CTX_PAT) ;
 
   this.exitScope(); // body
-  this.exitScope(); // head
 
   var params = core(arg);
   if (params === null)
@@ -110,7 +108,8 @@ this.parseArrowFunctionExpression = function(arg, context)   {
     },
     generator: false, expression: isExpr,
     body: core(nbody), id : null,
-    async: async, scope: scope
+    async: async,
+    '#scope': scope
   }; 
 };
 

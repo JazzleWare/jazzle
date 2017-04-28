@@ -1,6 +1,6 @@
 this.declare = function(id) {
-   ASSERT.call(this, this.declMode !== DM_NONE, 'Unknown declMode');
-   if (this.declMode & (DM_LET|DM_CONST)) {
+   ASSERT.call(this, this.declMode !== DT_NONE, 'Unknown declMode');
+   if (this.declMode & (DT_LET|DT_CONST)) {
      if (id.name === 'let')
        this.err('lexical.name.is.let');
    }

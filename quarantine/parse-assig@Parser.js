@@ -1,10 +1,10 @@
-this.parseAssignment = function(head, context) {
+this.parseAssignment = function(head, ctx) {
   var o = this.ltraw;
   if (o === '=>')
-    return this.parseArrowFunctionExpression(head);
+    return this.parseArrow(head, ctx&CTX_FOR);
 
   if (head.type === PAREN_NODE) {
-    if (!this.ensureSimpAssig_soft(head.expr)) {
+    if (!this.ensureSAT(head.expr)) {
       this.at = ERR_PAREN_UNBINDABLE;
       this.ae = this.ao = head;
       this.throwTricky('a', this.at, this.ae);
@@ -15,37 +15,45 @@ this.parseAssignment = function(head, context) {
 
   var right = null;
   if (o === '=') {
-    if (context & CTX_PARPAT)
-      this.adjustErrors();
+    // if this assignment is a pattern
+    if (ctx & CTX_PARPAT)
+      this.hideSimpleErrors();
 
     var st = ERR_NONE_YET, se = null, so = null,
         pt = ERR_NONE_YET, pe = null, po = null;
 
-    this.toAssig(core(head), context);
+    // S- and P-errors are not modified during toAssig; A-errors might.
+    this.toAssig(core(head), ctx);
 
-    // flush any remaining simple error, now that there are no more assignment errors
-    if ((context & CTX_NO_SIMPLE_ERR) && this.st !== ERR_NONE_YET)
+    // flush any remaining simple error, now that there are no more assignment errors;
+    // when toAssig completes, it might have set this.st with an assig-to-arguments-or-eval;
+    // this will get thrown immediately if the assignment is non-leaking, i.e., 
+    // won't tolerate simple errors
+    if ((ctx & CTX_NO_SIMPLE_ERR) && this.st !== ERR_NONE_YET)
       this.throwTricky('s', this.st);
 
     var sc0 = -1, sli0 = -1, scol0 = -1,
         pc0 = -1, pli0 = -1, pcol0 = -1;
 
-    if ((context & CTX_PARPAT) && this.st !== ERR_NONE_YET) {
+    // save all the errors on the left hand side, to restore them after right is parsed
+    if ((ctx & CTX_PARPAT) && this.st !== ERR_NONE_YET) {
       st = this.st; se = this.se; so = this.so;
       if (st & ERR_PIN)
         sc0 = this.eloc.c0, sli0 = this.eloc.li0, scol0 = this.eloc.col0;
     }
-    if ((context & CTX_PARAM) && this.pt !== ERR_NONE_YET) {
+    if ((ctx & CTX_PARAM) && this.pt !== ERR_NONE_YET) {
       pt = this.pt; pe = this.pe; po = this.po;
       if (pt & ERR_PIN)
         pc0 = this.ploc.c0, pli0 = this.ploc.li0, pcol0 = this.ploc.col0;
     }
 
-    this.currentExprIsAssig();
-    this.next();
-    right = this.parseNonSeqExpr(PREC_WITH_NO_OP,
-      (context & CTX_FOR)|CTX_PAT|CTX_NO_SIMPLE_ERR);
+    // toAssig was successful -- clear
+    this.clearAssigErrors();
+    this.next(); // '='
+    right = this.parseNonSeqExpr(PREC_NONE,
+      (ctx & CTX_FOR)|CTX_TOP);
 
+    // restore the state of errors in the left hand side, if there are any
     if (pt !== ERR_NONE_YET) {
       this.pt = pt; this.pe = pe; this.po = po;
       if (pt & ERR_PIN)
@@ -59,22 +67,24 @@ this.parseAssignment = function(head, context) {
   }
   else {
     // TODO: further scrutiny, like checking for this.at, is necessary (?)
-    if (!this.ensureSimpAssig_soft(core(head)))
+    if (!this.ensureSAT(core(head)))
       this.err('assig.not.simple',{tn:core(head)});
 
     var c0 = -1, li0 = -1, col0 = -1;
-    if (context & CTX_PARPAT) {
+
+    // if this is an potential assignment pattern, pin the location of the non-'='
+    if (ctx & CTX_PARPAT) {
       c0 = this.c0; li0 = this.li0; col0 = this.col0;
     }
-    this.next();
-    right = this.parseNonSeqExpr(PREC_WITH_NO_OP,
-      (context & CTX_FOR)|CTX_PAT|CTX_NO_SIMPLE_ERR);
+    this.next(); // <:o:>=
+    right = this.parseNonSeqExpr(PREC_NONE, (ctx & CTX_FOR)|CTX_TOP);
 
-    if (context & CTX_PARAM) {
+    // record an actual error if we have parsed a potential param or assignment pattern
+    if (ctx & CTX_PARAM) {
       this.ploc.c0 = c0, this.ploc.li0 = li0, this.ploc.col0 = col0;
       this.pt = ERR_PIN_NOT_AN_EQ;
     }
-    if (context & CTX_PAT) {
+    if (ctx & CTX_PAT) {
       this.aloc.c0 = c0, this.aloc.li0 = li0, this.aloc.col0 = col0;
       this.at = ERR_PIN_NOT_AN_EQ;
     }
@@ -90,6 +100,7 @@ this.parseAssignment = function(head, context) {
     loc: {
       start: head.loc.start,
       end: right.loc.end
-    }/* ,y:-1*/
+    },
+    '#y': -1
   };
 };
