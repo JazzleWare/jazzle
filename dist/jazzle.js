@@ -172,16 +172,14 @@ ParenScope.prototype = createObj(Scope.prototype);
 var Parser = function (src, o) {
 
   this.src = src;
-
   this.unsatisfiedLabel = null;
-
   this.nl = false;
 
   this.ltval = null;
   this.lttype= "";
   this.ltraw = "" ;
   this.prec = 0 ;
-  this.isVDT = VDT_NONE;
+  this.vdt = VDT_NONE;
 
   this.labels = {};
 
@@ -194,6 +192,7 @@ var Parser = function (src, o) {
   this.c = 0;
 
   this.luo = 0; // latest used offset
+  this.lpn = null; // latest parsed node
   
   this.canBeStatement = false;
   this.foundStatement = false;
@@ -201,14 +200,11 @@ var Parser = function (src, o) {
   this.isScript = false;
   this.v = 7;
 
-  this.throwReserved = true;
-
   this.first__proto__ = false;
 
   this.scope = null;
   this.declMode = DT_NONE;
  
-  // TODO:eliminate
   this.exprHead = null;
 
   // ERROR TYPE           CORE ERROR NODE    OWNER NODE
@@ -228,14 +224,13 @@ var Parser = function (src, o) {
   //
   // var e = [a -= 12] = 5
   //            ^
-  this.ploc = 
-    { c0: -1, li0: -1, col0: -1 }; // paramErr locPin; currently only for the last error above
-  this.aloc =
-    { c0: -1, li0: -1, col0: -1 }; // assigErr locPin; currently only for the last error above
-
-  // escErr locPin; like the name suggests, it's not a simpleErr -- none of the simpleErrs needs a pinpoint
-  this.esct = ERR_NONE_YET;
-  this.eloc = { c0: -1, li0: -1, col0: -1 };
+  this.ct = ERR_NONE_YET;
+  this.pin = {
+    c: { c:-1, li:-1, col:-1 },
+    a: { c:-1, li:-1, col:-1 },
+    s: { c:-1. li:-1, col:-1 },
+    p: { c:-1, li:-1, col:-1 }
+  };
 
   this.parenAsync = null; // so that things like (async)(a,b)=>12 will not get to parse.
 
@@ -243,7 +238,6 @@ var Parser = function (src, o) {
   this.errorListener = this; // any object with an `onErr(errType "string", errParams {*})` will do
   this.parenScope = null;
 };
-
 ;
 function Ref() {
   this.i = 0;
@@ -2843,6 +2837,86 @@ function() { return this.src.substring(this.c0,this.c); };
 
 },
 function(){
+this.parseBreak =
+function() {
+  this.resvchk();
+  this.testStmt() || this.err('not.stmt');
+  this.fixupLabels(false);
+
+  var c0 = this.c0, loc0 = this.locBegin();
+  var c = this.c, li = this.li, col = this.col;
+
+  this.next();
+  var label = null;
+  if (!this.nl && this.lttype === TK_ID) {
+    this.validate(this.ltval);
+    label = this.id();
+    var target = this.findLabel_m(_m(label.name));
+    if (target === null)
+      this.err('break.no.such.label');
+  }
+
+  this.semi() || this.err('no.semi');
+
+  var ec = this.semiC || (label && label.end) || c;
+  var eloc = this.semiLoc ||
+    (label && label.loc.end) ||
+    { line: li, column: col };
+
+  this.foundStatement = true;
+  return {
+    type: 'BreakStatement',
+    label: label,
+    start: startc,
+    end: ec,
+    loc: eloc
+  };
+};
+
+},
+function(){
+this.parseContinue =
+function() {
+  this.resvchk();
+  this.testStmt() || this.err('not.stmt');
+  this.fixupLabels(false);
+
+  if (!this.scope.canContinue())
+    this.err('continue.not.in.loop');
+
+  var c0 = this.c0, loc0 = this.locBegin();
+  var c = this.c, li = this.li, col = this.col;
+  this.next(); // 'continue'
+
+  var label = null;
+  if (!this.nl && this.lttype === TK_ID) {
+    this.validate(this.ltval);
+    label = this.id();
+    var target = this.findLabel_m(_m(label.name));
+    if (target === null)
+      this.err('continue.no.such.label');
+    if (!target.loop)
+      this.err('continue.not.a.loop');
+  }
+
+  this.semi() || this.err('no.semi');
+  var ec = this.semiC || (label && label.end) || c;
+  var eloc = this.semiLoc ||
+    (label && label.loc.end) ||
+    { line: li, column: col };
+
+  this.foundStatement = true;
+  return {
+    type: 'ContinueStatement',
+    label: label,
+    start: c0,
+    end: ec,
+    loc: { start: loc0, end: eloc }
+  };
+};
+
+},
+function(){
 this.parseExprHead =
 function(ctx) {
   var head = this.exprHead;
@@ -3127,6 +3201,163 @@ this.resvchk = function() {
 
 },
 function(){
+this.getLit_true = function() {
+  this.resvchk();
+  var n = {
+    type: 'Literal', value: true,
+    start: this.c0, end: this.c,
+    loc: { start: this.locBegin(), end: this.loc() },
+    raw: this.ltraw
+  };
+  this.next();
+  return n;
+};
+
+this.getNum_false = function() {
+  
+  var n = {
+    type: 'Literal', value: false,
+    start: this.c0, end: this.c,
+    loc: { start: this.locBegin(), end: this.loc() },
+    raw: this.ltraw
+  };
+  this.next();
+  return n;
+};
+
+this.getLit_null = function() {
+  this.resvchk();
+  var n = {
+    type: 'Literal', value: null,
+    start: this.c0, end: this.c,
+    loc: { start: this.locBegin(), end: this.loc() },
+    raw: this.ltraw
+  };
+  this.next();
+  return n;
+};
+
+this.getLit_num = function () {
+  var n = {
+    type: 'Literal', value: this.ltval,
+    start: this.c0, end: this.c,
+    loc: { start: this.locBegin(), end: this.loc() },
+    raw: this.ltraw
+  };
+  this.next();
+  return n;
+};
+
+},
+function(){
+this.parseNew =
+function() {
+  this.resvchk();
+  var c0 = this.c0, loc0 = this.loc0();
+  var c = this.c, li = this.li, col = this.col;
+
+  this.next(); // 'new'
+  if (this.lttype === CH_SINGLEDOT) {
+    this.next();
+    return this.parseMeta(c0,loc0,c,li,col);
+  }
+
+  var head = this.parseExprHead(CTX_NONE);
+  if (head === null)
+    this.err('new.head.is.not.valid');
+
+  var inner = core(head) ;
+
+  while (true)
+  switch (this.lttype) {
+  case CH_SINGLEDOT:
+    this.next();
+    if (this.lttype !== TK_ID)
+      this.err('mem.name.not.id');
+    elem = this.memberID();
+    if (elem === null)
+      this.err('mem.id.is.null');
+    head = inner = {
+      type: 'MemberExpression',
+      property: elem,
+      start: head.start,
+      end: elem.end,
+      object: inner,
+      loc: {
+        start: head.loc.start,
+        end: elem.loc.end },
+      computed: false,
+      '#y': -1
+    };
+    continue;
+
+  case CH_LSQBRACKET:
+    this.next();
+    elem = this.parseExpr(PREC_NONE, CTX_NONE);
+    head = inner = {
+      type: 'MemberExpression',
+      property: core(elem),
+      start: head.start,
+      end: this.c,
+      loc: {
+        start: head.loc.start,
+        end: this.loc() },
+      computed: true,
+      '#y': -1
+    };
+    if (!this.expectType_soft(CH_RSQBRACKET))
+      this.err('mem.unfinished');
+    continue;
+
+  case CH_LPAREN:
+    elem = this.parseArgList();
+    head = inner = {
+      type: 'NewExpression',
+      callee: inner,
+      start: head.start,
+      end: this.c,
+      arguments: elem,
+      loc: {
+        start: head.loc.start,
+        end: this.loc() },
+      '#y': -1
+    };
+    if (!this.expectType_soft(CH_RPAREN))
+      this.err('new.args.is.unfinished');
+    continue;
+
+  case CH_BACKTICK:
+    elem = this.parseTemplateLiteral();
+    head = inner = {
+      type: 'TaggedTemplateLiteral',
+      quasi: elem,
+      start: head.start,
+      end: elem.end,
+      loc: {
+        start: head.loc.start,
+        end: elem.loc.end },
+      tag: inner,
+      '#y': -1
+    };
+    continue;
+
+  default:
+    return {
+      type: 'NewExpression',
+      callee: inner,
+      start: c0,
+      end: head.end,
+      loc: {
+        start: loc0,
+        end: head.loc.end },
+      arguments : [],
+      '#y': -1
+    };
+  }
+};
+
+},
+function(){
 this.parseNonSeqExpr =
 function(prec, ctx) {
   var head = this.exprHead;
@@ -3181,10 +3412,10 @@ function(prec, ctx) {
     return prec === PREC_NONE ?
       this.parseCond(head, ctx) : head;
 
-  if (this.lttype === TK_AAMM) {
+  if (this.lttype === TK_AA_MM) {
     if (this.nl)
       return head;
-    return this.parseUpdateExpression(head, ctx);
+    head = this.parseUpdate(head, ctx);
   }
 
   do {
@@ -3369,6 +3600,24 @@ function(head) {
 
   return head;
 };
+
+},
+function(){
+this.parseThis = function() {
+  this.resvchk();
+  var n = {
+    type : 'ThisExpression',
+    loc: { start: this.locBegin(), end: this.loc() },
+    start: this.c0,
+    end : this.c
+  };
+
+  this.next() ;
+  this.scope.refDirect_m(RS_THIS, null);
+  return n;
+};
+
+
 
 },
 function(){
@@ -3562,6 +3811,124 @@ this.scat =
 function(offset) {
   return offset < this.src.length ?
     this.src.charCodeAt(offset) : -1;
+};
+
+},
+function(){
+this.parsePat_obj =
+function() {
+  this.v<=5 && this.err('ver.patobj');
+
+  var isID = false, c0 = this.c0, loc0 = this.loc();
+  var name = null, val = null, list = [], isShort = false;
+
+  if (this.scope.insideArgs())
+    this.scope.enterUniqueArgs();
+
+  LOOP:
+  do {
+    this.next();
+    switch (this.lttype) {
+    case TK_ID:
+      isID = true;
+      name = this.id();
+      break;
+
+    case CH_LSQBRACKET:
+      name = this.mem_expr();
+      break;
+
+    case TK_NUM:
+      name = this.getLit_num();
+      break;
+
+    case CH_SINGLE_QUOTE:
+    case CH_MULTI_QUOTE:
+      name = this.parseString(this.lttype);
+      break;
+
+    default: break LOOP;
+    }
+
+    isShort = false;
+    if (isID) {
+      isID = false;
+      if (this.expectT(CH_COLON))
+        val = this.parsePat();
+      else if (this.lttype === TK_SIMPLE_BINARY &&
+        this.ltraw === '=') {
+        val = this.parsePat_assig(name);
+        isShort = true;
+      }
+      else
+        val = name;
+    }
+    else {
+      if (!this.expectT(CH_COLON))
+        this.err('obj.pattern.no.:');
+      val = this.parsePat();
+    }
+    if (val === null)
+      this.err('obj.prop.is.null');
+
+    list.push({
+      type: 'Property',
+      start: name.start,
+      key: core(name),
+      end: val.end,
+      loc: {
+        start: name.loc.start,
+        end: val.loc.end },
+      kind: 'init',
+      computed: name.type === PAREN,
+      value: val,
+      method: false, 
+      shorthand: isShort,
+      '#y': -1
+    });
+  } while (this.lttype === CH_COMMA);
+
+  var n = {
+    type: 'ObjectPattern',
+    loc: { start: loc0, end: this.loc() },
+    start: c0,
+    end: this.c,
+    properties: list,
+    '#y': -1
+  };
+
+  if (!this.expectT(CH_RCURLY))
+    this.err('pat.obj.is.unfinished');
+
+  return n;
+};
+
+},
+function(){
+this.parsePat_rest =
+function() {
+  this.v<=5 && this.err('ver.spread.rest');
+  var c0 = this.c0, loc = this.loc0();
+
+  this.next(); // '...'
+
+  if (this.v<7 && this.lttype !== TK_ID)
+    this.err('rest.binding.arg.not.id');
+
+  var arg = this.parsePat();
+
+  if (arg === null)
+    this.err('rest.has.no.arg');
+
+  return {
+    type: 'RestElement',
+    argument: e,
+    start: c0,
+    end: e.end,
+    loc: {
+      start: startLoc,
+      end: e.loc.end }
+  };
 };
 
 },
@@ -3883,6 +4250,12 @@ function() {
   if (this.scope.insideStrict())
     this.err('esc.legacy.not.allowed.in.strict.mode');
 
+  if (this.insidePrologue() &&
+    this.ct === ERR_NONE_YET) {
+    this.ct = ERR_PIN_OCTAL_IN_STRICT;
+    this.pinLoc_c(this.c,this.li,this.col);
+  }
+    
   var c = this.c+1, s = this.src, l = s.length, v = -1;
 
   v = s.charCodeAt(c) - CH_0;
@@ -3902,6 +4275,10 @@ function() {
 function(){
 this.readID_bs =
 function() {
+  if (this.ct === ERR_NONE_YET) {
+    this.ct = ERR_PIN_UNICODE_IN_RESV;
+    this.pinLoc_c(this.c,this.li,this.col);
+  }
   var bsc = this.readBS();
   var ccode = bsc;
   if (bsc >= 0x0D800 && bsc <= 0x0DBFF)
@@ -3930,6 +4307,10 @@ function(v) {
       if (luo < c)
         v += s.substring(luo,c);
       this.setsimpoff(c);
+      if (this.ct === ERR_NONE_YET) {
+        this.ct = ERR_PIN_UNICODE_IN_RESV;
+        this.pinLoc_c(this.c,this.li,this.col);
+      }
       ch = this.readBS();
       if (!isIDBody(ch))
         this.err('id.body.esc.not.idbody');
@@ -4666,6 +5047,23 @@ function() {
 
   this.setsimpoff(c);
   this.nl = nl;
+};
+
+},
+function(){
+this.readSurrogateTail =
+function() {
+  var c = this.c, s = this.src, l = s.length, mustSetOff = false;
+  c >= l && this.err('unexpected.eof.while.surrogate.tail');
+  var surrogateTail = s.charCodeAt(c);
+  if (surrogateTail === CH_BACK_SLASH)
+    surrogateTail = this.readBS();
+  else
+    mustSetOff = true;
+
+  mustSetOff && this.setsimpoff(c+1);
+
+  return surrogateTail;
 };
 
 }]  ],

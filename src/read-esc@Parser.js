@@ -95,6 +95,12 @@ function() {
   if (this.scope.insideStrict())
     this.err('esc.legacy.not.allowed.in.strict.mode');
 
+  if (this.insidePrologue() &&
+    this.ct === ERR_NONE_YET) {
+    this.ct = ERR_PIN_OCTAL_IN_STRICT;
+    this.pinLoc_c(this.c,this.li,this.col);
+  }
+    
   var c = this.c+1, s = this.src, l = s.length, v = -1;
 
   v = s.charCodeAt(c) - CH_0;

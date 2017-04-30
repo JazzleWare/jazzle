@@ -1,16 +1,14 @@
 var Parser = function (src, o) {
 
   this.src = src;
-
   this.unsatisfiedLabel = null;
-
   this.nl = false;
 
   this.ltval = null;
   this.lttype= "";
   this.ltraw = "" ;
   this.prec = 0 ;
-  this.isVDT = VDT_NONE;
+  this.vdt = VDT_NONE;
 
   this.labels = {};
 
@@ -23,6 +21,7 @@ var Parser = function (src, o) {
   this.c = 0;
 
   this.luo = 0; // latest used offset
+  this.lpn = null; // latest parsed node
   
   this.canBeStatement = false;
   this.foundStatement = false;
@@ -30,14 +29,11 @@ var Parser = function (src, o) {
   this.isScript = false;
   this.v = 7;
 
-  this.throwReserved = true;
-
   this.first__proto__ = false;
 
   this.scope = null;
   this.declMode = DT_NONE;
  
-  // TODO:eliminate
   this.exprHead = null;
 
   // ERROR TYPE           CORE ERROR NODE    OWNER NODE
@@ -57,14 +53,13 @@ var Parser = function (src, o) {
   //
   // var e = [a -= 12] = 5
   //            ^
-  this.ploc = 
-    { c0: -1, li0: -1, col0: -1 }; // paramErr locPin; currently only for the last error above
-  this.aloc =
-    { c0: -1, li0: -1, col0: -1 }; // assigErr locPin; currently only for the last error above
-
-  // escErr locPin; like the name suggests, it's not a simpleErr -- none of the simpleErrs needs a pinpoint
-  this.esct = ERR_NONE_YET;
-  this.eloc = { c0: -1, li0: -1, col0: -1 };
+  this.ct = ERR_NONE_YET;
+  this.pin = {
+    c: { c:-1, li:-1, col:-1 },
+    a: { c:-1, li:-1, col:-1 },
+    s: { c:-1. li:-1, col:-1 },
+    p: { c:-1, li:-1, col:-1 }
+  };
 
   this.parenAsync = null; // so that things like (async)(a,b)=>12 will not get to parse.
 
@@ -72,4 +67,3 @@ var Parser = function (src, o) {
   this.errorListener = this; // any object with an `onErr(errType "string", errParams {*})` will do
   this.parenScope = null;
 };
-

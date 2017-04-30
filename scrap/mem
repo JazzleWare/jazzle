@@ -1,0 +1,80 @@
+`mem(ctx, st) {
+  var idmod_first = null, idmod_last = null
+  if `v>5:
+
+  MMODS:
+  if `lttype == TK::ID {
+    idmod_first = idmod_last = `id()
+    while true {
+      var hasMul = false
+      if `lttype != TK::ID {
+        hasMul = `peekOp('*')
+        if !hasMul: break
+      }
+      switch idmod_latest.name {
+      case 'static':
+        if st !& ST::CLSMEM { break }
+        if st & ST_STATICMEM { break }
+        if st & ST_ASYNC { break }
+        st |= ST::STATICMEM
+        break
+
+      case 'async':
+        if st !& ST::CLSMEM { break }
+        if st & ST::ASYNC { break }
+        if st & ST::ACCESSOR { break }
+        st |= ST::ASYNC
+        break
+
+      case 'set':
+        if st & ST::ACCESSOR { break }
+        if st & ST::ASYNC { break }
+        st |= ST::SETTER
+        break
+
+      case 'get':
+        if st & ST::ACCESSOR { break }
+        if st & ST::ASYNC { break }
+        st |= ST::GETTER
+        break
+      }
+      if hasMul { idmod_last = null; break }
+      else { idmod_last = `id() }
+    }
+static async get a()
+
+static; next is an id, so <:mod :>
+async; next is an id, so <:mod :>
+get; next is an id, so <:mod :>
+a; next is not id, so <:simple :> && break
+
+static [staticTail|nameTail](...) { ... }
+async [asyncTail|nameTail](...) { ... }
+set [setTail|<:none:>](...) { ... }
+get [getTail|<:none:>](...) { ... }
+
+staticTail -> [async [asyncTail]|
+               get [getTail]|
+               set [setTail]]
+asyncTail -> [get [getTail]|
+              set [serTail]]
+setTail -> [name]
+getTail -> [name]
+nameTail -> [<:none:>|name|*name]
+
+[static|async] [getTail|setTail|name|*name](...) { ... }
+
+static <:staticTail:>(
+staticTail -> async <:asyncTail:>|
+              get <:getTail:>|
+              set <:setTail:>|
+              <:none:>|
+              *name
+              name
+asyncTail -> get <:getTail:>|
+             set <:setTail:>|
+             name|
+             <:none:>|
+             *name
+setTail -> name|<:none:>
+getTail -> name|<:none:>

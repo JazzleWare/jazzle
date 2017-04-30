@@ -1,0 +1,7 @@
+`parseAsync(asyncID,ctx) {
+  if `v<7:
+    return asyncID
+  
+async <:'function':> -> parseAsync_function
+async <:'(':> -> parseAsync_arrowParen
+else return the async itself

@@ -13,6 +13,10 @@ function(v) {
       if (luo < c)
         v += s.substring(luo,c);
       this.setsimpoff(c);
+      if (this.ct === ERR_NONE_YET) {
+        this.ct = ERR_PIN_UNICODE_IN_RESV;
+        this.pinLoc_c(this.c,this.li,this.col);
+      }
       ch = this.readBS();
       if (!isIDBody(ch))
         this.err('id.body.esc.not.idbody');
