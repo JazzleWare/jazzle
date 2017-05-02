@@ -57,7 +57,7 @@ var Parser = function (src, o) {
   this.pin = {
     c: { c:-1, li:-1, col:-1 },
     a: { c:-1, li:-1, col:-1 },
-    s: { c:-1. li:-1, col:-1 },
+    s: { c:-1, li:-1, col:-1 },
     p: { c:-1, li:-1, col:-1 }
   };
 

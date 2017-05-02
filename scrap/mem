@@ -78,3 +78,33 @@ asyncTail -> get <:getTail:>|
              *name
 setTail -> name|<:none:>
 getTail -> name|<:none:>
+
+static async get a()
+static -> lastMod: static; pendingFlag: ST_STATIC; continue
+async -> lastMod: async; st |= pendingFlag; pendingFlag = ST_ASYNC; continue
+get -> lastMod: get; st |= pendingFlag; pendingFlag = ST_GETTER; continue
+a -> lastMod: a; st |= pendingFlag; pendingFlag = ST_NONE; break
+
+static async get [a]()
+static; lm static, nextFlag ST_STATIC, continue
+async; lm async, fl |= nextFlag, nextFlag ST_ASYNC, continue
+get; lm get, fl |= nextFlag, nextFlag ST_GETTER, continue
+[; break
+
+get-name:
+switch `lttype {
+case TK::ID { fl |= nextFlag; name=`id(); break }
+case TK::NUM { fl |= nextFlag; name=`getLit_num(); break }
+case CH::MULTI_Q { fl |= nextFlag; name=`str(CH::MULTI_Q); break }
+case CH::LSQBRACKET { fl |= nextFlag; name=`mem_expr(); break }
+case CH::SINGL_Q { fl |= nextFlag; name=`str(CH::SINGLE_Q); break }
+default:
+  if lm { name = lm; break }
+  `err('mem.start')
+}
+
+static async set()
+static; lm static, queued ST_STATIC, continue
+async; lm async, fl |= queued, queued ST_ASYNC, continue
+set; lm set, fl |= queued, queued ST_SETTER, continue
+(; break
