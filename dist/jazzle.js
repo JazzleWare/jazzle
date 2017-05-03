@@ -2728,6 +2728,29 @@ null,
 null,
 null,
 [Parser.prototype, [function(){
+this .ensureSimpAssig_soft = function(head) {
+  switch(head.type) {
+  case 'Identifier':
+    if ( this.scope.insideStrict() && arguments_or_eval(head.name) )
+      this.err('assig.to.arguments.or.eval');
+
+  case 'MemberExpression':
+    return true ;
+
+  default:
+    return false ;
+
+  }
+};
+
+this.ensureSpreadToRestArgument_soft = function(head) {
+  return head.type !== 'AssignmentExpression';
+};
+
+
+
+},
+function(){
 this.suck =
 function() {
   var commentBuf = this.commentBuf;
@@ -2741,6 +2764,184 @@ function() {
   this.commentBuf = null;
   this.lpn = null;
 };
+
+},
+function(){
+this.asArrowFuncArgList = function(argList) {
+  var i = 0, list = argList;
+  while (i < list.length)
+    this.asArrowFuncArg(list[i++]);
+};
+
+this.asArrowFuncArg = function(arg) {
+  var i = 0, list = null;
+  if (arg === this.po)
+    this.throwTricky('p', this.pt);
+  if (arg.type !== 'Identifier')
+    this.scope.firstNonSimple = arg;
+
+  switch  ( arg.type ) {
+  case 'Identifier':
+    if (this.scope.canAwait() &&
+       arg.name === 'await')
+      this.err('arrow.param.is.await.in.an.async',{tn:arg});
+     
+    // TODO: this can also get checked in the scope manager rather than below
+    if (this.scope.insideStrict() && arguments_or_eval(arg.name))
+      this.err('binding.to.arguments.or.eval',{tn:arg});
+
+    this.scope.declare(arg.name, DM_FNARG);
+    this.scope.findRef_m(_m(arg.name)).direct--; // one ref is a decl
+    return;
+
+  case 'ArrayExpression':
+    list = arg.elements;
+    while (i < list.length) {
+      if (list[i])
+        this.asArrowFuncArg(list[i]);
+      i++;
+    }
+    arg.type = 'ArrayPattern';
+    return;
+
+  case 'AssignmentExpression':
+//  if (arg.operator !== '=')
+//    this.err('complex.assig.not.arg');
+
+    this.asArrowFuncArg(arg.left);
+    delete arg.operator ;
+    arg.type = 'AssignmentPattern';
+
+    return;
+
+  case 'ObjectExpression':
+    list = arg.properties;
+    while (i < list.length)
+      this.asArrowFuncArg(list[i++].value );
+
+    arg.type = 'ObjectPattern';
+    return;
+
+  case 'AssignmentPattern':
+    this.asArrowFuncArg(arg.left) ;
+    return;
+
+  case 'ArrayPattern' :
+    list = arg.elements;
+    while ( i < list.length ) {
+      if (list[i])
+        this.asArrowFuncArg(list[i]);
+      i++ ;
+    }
+    return;
+
+  case 'SpreadElement':
+    if (this.v < 7 && arg.argument.type !== 'Identifier')
+      this.err('rest.binding.arg.not.id', {tn:arg});
+    this.asArrowFuncArg(arg.argument);
+    arg.type = 'RestElement';
+    return;
+
+  case 'RestElement':
+    if (this.v < 7 && arg.argument.type !== 'Identifier')
+      this.err('rest.binding.arg.not.id',{tn:arg});
+    this.asArrowFuncArg(arg.argument);
+    return;
+
+  case 'ObjectPattern':
+    list = arg.properties;
+    while (i < list.length)
+      this.asArrowFuncArg(list[i++].value);
+    return;
+
+  default:
+    this.err('not.bindable');
+
+  }
+};
+
+
+},
+function(){
+this.toAssig = function(head, context) {
+  if (head === this.ao)
+    this.throwTricky('a', this.at, this.ae)
+
+  var i = 0, list = null;
+  switch (head.type) {
+  case 'Identifier':
+    if (this.scope.insideStrict() && arguments_or_eval(head.name)) {
+      if (this.st === ERR_ARGUMENTS_OR_EVAL_DEFAULT)
+        this.st = ERR_NONE_YET;
+      if (this.st === ERR_NONE_YET) {
+        this.st = ERR_ARGUMENTS_OR_EVAL_ASSIGNED;
+        this.se = head;
+      }
+//    if (context & CTX_NO_SIMPLE_ERR)
+//      this.currentExprIsSimple();
+    }
+    return;
+
+  case 'MemberExpression':
+    return;
+
+  case 'ObjectExpression':
+    if (this.v <= 5) this.err('ver.pat.obj',{tn:head});
+    i = 0; list = head.properties;
+    while (i < list.length)
+      this.toAssig(list[i++], context);
+    head.type = 'ObjectPattern';
+    return;
+
+  case 'ArrayExpression':
+    if (this.v <= 5) this.err('ver.pat.arr',{tn:head});
+    i = 0; list = head.elements;
+    while (i < list.length) {
+      list[i] && this.toAssig(list[i], context);
+      i++ ;
+    }
+    head.type = 'ArrayPattern';
+    return;
+
+  case 'AssignmentExpression':
+    // TODO: operator is the one that must be pinned,
+    // but head is pinned currently
+    if (head.operator !== '=')
+      this.err('complex.assig.not.pattern');
+
+    // TODO: the left is not re-checked for errors
+    // because it is already an assignable pattern;
+    // this requires keeping track of the latest
+    // ea error, in order to re-record it if it is
+    // also the first error in the current pattern
+    if (this.st === ERR_ARGUMENTS_OR_EVAL_DEFAULT &&
+       head === this.so) {
+      this.st = ERR_NONE_YET;
+      this.toAssig(this.se);
+    }
+
+    head.type = 'AssignmentPattern';
+    delete head.operator;
+    return;
+
+  case 'SpreadElement':
+    if (head.argument.type === 'AssignmentExpression')
+      this.err('rest.arg.not.valid',{tn:head});
+    this.toAssig(head.argument, context);
+    head.type = 'RestElement';
+    return;
+
+  case 'Property':
+    this.toAssig(head.value, context);
+    return;
+
+  default:
+    this.err('not.assignable',{tn:core(head)});
+ 
+  }
+};
+
+
 
 },
 function(){
@@ -2765,6 +2966,708 @@ function(directive) {
     this.applyPendingStrictErrors();
   }
 };
+
+},
+function(){
+this.onErr = function(errorType, errParams) {
+   var message = "";
+   if (!HAS.call(ErrorBuilders, errorType))
+     message = "Error: " + errorType + "\n" +
+       this.src.substr(this.c-120,120) +
+       ">>>>" + this.src.charAt(this.c+1) + "<<<<" +
+       this.src.substr(this.c, 120);
+
+   else {
+     var errorBuilder = ErrorBuilders[errorType];  
+     var errorInfo = this.buildErrorInfo(errorBuilder, errParams);
+
+     var offset = errorInfo.c0,
+         line = errorInfo.li0,
+         column = errorInfo.col0,
+         errMessage = errorInfo.messageTemplate.applyTo(errParams);
+
+     message += "Error: "+line+":"+column+" (src@"+offset+"): "+errMessage;
+
+     // TODO: add a way to print a 'pin-range', i.e., the particular chunk of the
+     // source code that is causing the error
+   }
+
+   throw new Error(message);
+};
+  
+// TODO: find a way to squash it with normalize
+this.buildErrorInfo = function(builder, params) {
+  if (builder.preprocessor !== null)
+    builder.preprocessor.call(params);
+
+  var errInfo = {
+    messageTemplate: builder.messageTemplate,
+    c: -1, li: -1, col: -1,
+    c0: -1, li0: -1, col0: -1,
+    parser: params['parser'],
+    extra: params.extra
+  };
+
+  var cur0 = params.cur0, cur = params.cur;
+
+  if (HAS.call(builder, 'tn')) {
+    var tn = builder.tn.applyTo(params);
+    if (HAS.call(tn,'start')) cur0.c = tn.start;
+    if (HAS.call(tn,'end')) cur.c = tn.end;
+    if (HAS.call(tn,'loc')) {
+      if (HAS.call(tn.loc, 'start')) {
+        cur0.loc.li = tn.loc.start.line;
+        cur0.loc.col = tn.loc.start.column;
+      }
+      if (HAS.call(tn.loc, 'end')) {
+        cur.loc.li = tn.loc.end.line;
+        cur.loc.col = tn.loc.end.column;
+      }
+    }
+  }
+
+  if (HAS.call(builder, 'cur0'))
+    cur0 = builder.cur0.applyTo(params);
+
+  if (HAS.call(builder, 'cur'))
+    cur = builder.cur.applyTo(params);
+
+  if (HAS.call(builder, 'loc0'))
+    cur0.loc = builder.loc0.applyTo(params);
+
+  if (HAS.call(builder, 'loc'))
+    cur.loc = builder.loc.applyTo(params);
+
+  if (HAS.call(builder, 'li0'))
+    cur0.loc.li = builder.li0.applyTo(params);
+
+  if (HAS.call(builder, 'li'))
+    cur.loc.li = builder.li.applyTo(params);
+
+  if (HAS.call(builder, 'col0'))
+    cur0.loc.col = builder.col0.applyTo(params);
+
+  if (HAS.call(builder, 'col'))
+    cur.loc.col = builder.col.applyTo(params);
+
+  if (HAS.call(builder, 'c0'))
+    cur0.c = builder.c0.applyTo(params);
+
+  if (HAS.call(builder, 'c'))
+    cur.c = builder.c.applyTo(params);
+
+  errInfo.c0 = cur0.c; errInfo.li0 = cur0.loc.li; errInfo.col0 = cur0.loc.col;
+  errInfo.c = cur.c; errInfo.li = cur.loc.li; errInfo.col = cur.loc.col;
+
+  return errInfo;
+};
+
+var ErrorBuilders = {};
+function a(errorType, builderOutline) {
+  if (HAS.call(ErrorBuilders, errorType))
+    throw new Error('Error type has already got a builder: <'+errorType+'>');
+  var builder = {preprocessor:null};
+  for (var name in builderOutline) {
+    if (name === 'm')
+      builder.messageTemplate = ErrorString.from(builderOutline[name]);
+    else if (name === 'p')
+      builder.preprocessor = builderOutline.p; 
+    else
+      builder[name] = Template.from(builderOutline[name]);
+  }
+
+  ErrorBuilders[errorType] = builder;
+
+  return builder;
+}
+
+function set(newErrorType, existingErrorType) {
+  if (HAS.call(ErrorBuilders, newErrorType))
+    throw new Error('cannot override the existing <'+
+      newErrorType+'> with <'+existingErrorType);
+  if (!HAS.call(ErrorBuilders, existingErrorType))
+    throw new Error('error is not defined: <'+existingErrorType+'>');
+  
+  var builder = ErrorBuilders[existingErrorType];
+  ErrorBuilders[newErrorType] = builder;
+
+  return builder;
+}
+
+// TODO: the argument that is coming last is a sample error code; builders must have this value as a property.
+// also a list of options may come after each of these "samples" signifying which options they should be parsed with
+
+a('arg.non.tail', {c0:'c0', li0:'li0',col0:'col0', m: 'unexpected comma -- tail arguments not allowed in versions before 7'}, 'a(b,)');
+
+a('arg.non.tail.in.func', {c0:'c0',li0:'li0',col0:'col0', m: 'unexpected comma -- tail parameters not allowed in versions before 7'}, 'function a(b,) {}', '(a,)=>b');
+
+a('array.unfinished', {c0:'parser.c0', li0: 'parser.li0', col0: 'parser.col0', m: 'a \']\' was expected -- got {parser.lttype}'}, '[a 12');
+
+a('arrow.has.a.paren.async', {tn: 'parser.parenAsync', m: '\'async\' can not have parentheses around it (the \'=>\' at {parser.li0}:{parser.col0} (offset {parser.c0}) requires this to hold'}, '(async)(a,b)=>12');
+
+a('arrow.newline.before.paren.async', {tn:'parser.pe', m: '\'async\' of an async can not have a newline after it'}, 'async\n(a)=>12');
+
+a('arrow.arg.is.await.in.an.async', {tn:'tn', m: 'await is not allowed as an async arrow\'s parameter'}, 'async(a=await)=>12');
+
+a('arrow.missing.after.empty.list', {c0:'parser.se.end', li0:'parser.se.loc.end.line', col0: 'parser.se.loc.end.column', m:'unexpected \')\''}, '()');
+
+a('assig.not.first', {c0:'parser.c0', li0:'parser.li0', col0:'parser.col0', m: 'Unexpected \'=\''}, 'a-b=12');
+
+a('assig.not.simple', {tn:'tn', m: 'an identifier or a member expression was expected; instead got a {tn.type}'}, '([a])--');
+
+a('assig.to.arguments.or.eval', {tn:'parser.se', m:'can not assign to {parser.se.name} while in strict mode'}, '"use strict"; [arguments] = 12');
+
+a('async.gen.not.yet.supported', {c0:'parser.c0', li0:'parser.li0',col0:'parser.col0', m:'unexpected \'*\' -- async generators not yet supported'}, 'async function *l() {}');
+
+a('async.newline', {c0:'parser.c0',li0:'parser.li0',col0:'parser.col0',m:'unexpected newline after async -- async modifier in an object can not have a newline after it'}, '({async l(){}})');
+
+a('await.args', {c0:'parser.c0',li0:'parser.li0',col0:'parser.col0',m:'an async function may not contain \'await\' anywhere in its parameter list'}, 'async function l(e=[await]) {}', 'async function l(await) {}');
+
+// TODO: await.label
+
+a('await.in.strict', {c0:'parser.c0',li0:'parserl.li0',col0:'parser.col0',m: 'await is a reserved word when in a module, no matter it is in an async function or not'}, 'await = 12');
+
+a('rest.binding.arg.not.id', {tn:'tn.argument',m:'binding rests can only have an argument of type \'Identifier\'(which {tn.argument.type} isn\'t) in versions before 7; current version is {parser.v}.'}, 'function a(...[b]){}');
+
+a('binding.to.arguments.or.eval',{tn:'tn',m:'invalid binding name in strict mode: {tn.name}'}, '"use strict"; (arguments)=>12');
+
+a('<unfinished>', {'tn':'tn', m:'unexpected {parser.lttype} -- a {extra.delim} was expected to end the {tn.type} at {tn.loc.start.line}:{tn.loc.start.column} (offset {tn.start})'});
+
+set('block.dependent.is.unfinished', '<unfinished>', 'try { 12');
+
+a('block.dependent.no.opening.curly', {c0:'parser.c0', li0:'parser.li', col0: 'parser.col0', m:'unexpected {parser.lttype} after {extra.name} -- expected {}'}, 'try 12');
+
+set('block.unfinished', '<unfinished>');
+
+a('break.no.such.label',{tn:'tn',m:'no such label: {tn.name}'}, 'while (false) break L;');
+
+a('break.not.in.breakable', {c0:'c0',li0:'li0',col0:'col0',m:'breaks without any targets can only appear inside an iteration statement or a switch'}, 'break;');
+
+set('call.args.is.unfinished', '<unfinished>');
+
+a('catch.has.no.end.paren',{c0:'c0',li0:'li0',col0:'col0',m:'unexpected {parser.lttype} -- a ) was expected'}, 'try {} catch (a) { 12');
+
+a('catch.has.no.opening.paren',{c0:'c0',li0:'li0',col0:'col0',m:'unexpected {parser.lttype} -- a ( was expected'}, 'try {} catch 12');
+
+a('catch.has.an.asiig.param',{c0:'c0',li0:'li0',col0:'col0',m:'the parameter for a catch clause can not be an assignment pattern'},'try{} catch(a=12){}');
+
+a('catch.has.no.param',{c0:'c0',li0:'li0',col0:'col0',m:'a catch clause must have a parameter'}, 'try{} catch(){}');
+
+a('class.constructor.is.a.dup', {tn:'tn',m:'this class has already got a constructor'}, 'class A{constructor(){} constructor(){}}');
+
+// TODO: what about this: class A { static get constructor() {} }
+a('class.constructor.is.special.mem',{tn:'tn',m:'a class member named constructor (or \'constructor\') can not be a getter, generator, setter, or async. (it can be a static member, though.)'}, 'class A{get constructor(){}}');
+
+a('class.decl.has.no.name',{c0:'c0',li0:'li0',col0:'col0',m:'this context requires that the class declaration has a name'}, 'class {}');
+
+a('class.decl.not.in.block',{c0:'c0',li0:'li0',col0:'col0',m:'this scope can not contain a class declaration -- block scope (i.e, those wrapped between {} and }), module scope, and script scope are the only ones that can.'}, 'if (false) class{}');
+
+a('class.label.not.allowed',{c0:'parser.c0',li0:'parser.li0',col0:'parser.col0',m:'can not label a class'}, 'L: class A{}');
+
+a('class.no.curly',{c0:'c0',li0:'li0',col0:'col0',m:'a {} was expected -- got {parser.lttype} instead'},'class L 12');
+
+a('class.prototype.is.static.mem',{tn:'tn',m:'class can not have a static member named prototype'},'class A{static prototype() {}}');
+
+a('class.super.call',{tn:'tn',m:'can not call super in this context'},'class A{constructor(){var a = super()}');
+
+a('class.super.lone',{tn:'tn',m:'unexpected {parser.lttype} after \'super\' -- a "(" or "." or "[" was expected'}, 'class A extends B { constructor() { (super * 12); }}');
+
+a('class.super.mem',{tn:'tn',m:'member access from super not allowed in this context -- super member access must only occur inside an object method or inside a non-static class member'}, 'class A { static b() { (super.l()); }');
+
+set('class.unfinished', '<unfinished>');
+
+a('comment.multi.unfinished', {c0:'parser.c',li0:'parser.li',col0:'parser.col',m:'reached eof before finding a matching */ for the multiline comment at {extra.li0}:{extra.col0} (offset {extra.c0})'},'/* 12');
+
+// TODO: tell what was got
+a('complex.assig.not.pattern',{c0:'c0',li0:'li0',col0:'col0',m:'a \'=\' was expected'},'(a-=12)=>12');
+
+a('cond.colon',{c0:'parser.c0',li0:'parser.li0',col0:'parser.col0',m:'a \':\' was expected; got {parser.lttype}'}, 'a ? b 5');
+
+a('const.has.no.init',{c0:'c0',li0:'li0',col0:'col0',m:'a \'=\' was expected, got {parser.lttype} -- the declarator at {extra.e.loc.start.line}:{extra.e.loc.start.column} (offset {extra.e.start}) is a const  declarator and needs an initialiser.'},'const a' );
+
+a('const.not.in.v5',{c0:'parser.c0',li0:'parser.li0',col0:'parser.col0',m:'in versions before ES2015 (current version is {parser.v}), const is a reserved word and can\'t be an actual identifier reference.'}, 'a * const');
+
+a('continue.no.such.label',{tn:'tn', m:'no such label: {tn.name}'},'while (false) continue L;');
+
+a('continue.not.a.loop.label',{tn:'tn',m:'label {tn.name} is not referring to a loop -- a continue\'s label, if any, must refer to a loop.'},'while (false)L:if(false)continue L;');
+
+a('continue.not.in.loop',{c0:'parser.c0',li0:'parser.li0',col0:'parser.col0',m:'continue is not allowed in this context -- it has to appear in loops only'},'is (false) continue;');
+
+a('decl.label', {c0:'c0',li0:'li0',col0:'col0',m:'{parser.ltval} declarations can not have labels'}, 'L: const a = 12;');
+
+a('delete.arg.not.a.mem',{tn:'tn',m:'when in strict mode code, the delete operator must take a member expression as argument; currently, its argument is a {tn.type}'},  '"use strict"; a * (delete l)');
+
+a('<closing>', {c0:'parser.c0',li0:'parser.li0',col0:'parser.col0',m:'a ) was expected; got {parser.lttype}'});
+
+set('do.has.no.closing.paren', '<closing>');
+
+a('<opening>', {c0:'parser.c0',li0:'parser.li0',col0:'parser.col0',m:'a ( was expected; got {parser.lttype}'});
+
+set('do.has.no.opening.paren', '<opening>');
+
+a('do.has.no.while',{c0:'parser.c0',li0:'parser.li0',col0:'parser.col0',m:'while expected; got {parser.lttype}'}, 'do {};');
+
+a('esc.8.or.9',{c0:'parser.c',li0:'parser.li',col0:'parser.col0',m:'escapes \\8 or \\9 are not syntactically valid escapes'},'"\\8"');
+
+a('exists.in.current',{tn:'tn',m:'\'{tn.name}\' has been actually declared at {extra.loc.start.line}:{extra.loc.start.column} (offset {extra.start})'},'let a;{var a;}');
+
+a('export.all.no.from', {c0:'parser.c0',li0:'parser.li0',col0:'parser.col0',m:'\'from\' expected; got {parser.ltval}'}, 'export * not \'12\'');
+
+a('export.all.not.*', {c0:'parser.c0',li0:'parser.li0',col0:'parser.col0',m:'unexpected {parser.ltraw}; a * was expected'}, 'export - from \'12\'');
+
+a('export.all.source.not.str',{c0:'parser.c0',li0:'parser.li0',col0:'parser.col0',m:'a string literal was expected'}, 'export * from 12');
+
+a('export.async.but.no.function',{c0:'parser.c0',li0:'parser.li0',col0:'parser.col0',m:'function expected to immediately follow async; got {parser.lttype}'},'export async\n12');
+
+a('export.default.const.let',{c0:'parser.c0',li0:'parser.li0',col0:'parser.col0',m:'const and let declarations can\'t be default exports'},'export default let r = 12;');
+
+a('export.named.has.reserved',{tn:'tn',m:'local {tn.name} is actually a reserved word'},'export {a, if as l};');
+
+a('export.named.list.not.finished',{c0:'parser.c0',li0:'parser.li0',col0:'parser.col0',m:'unfinished specifier list -- expected }, got {parser.lttype}'},'export {a 12 from \'l\'');
+
+a('export.named.no.exports',{c0:'parser.c0',li0:'parser.li0',col0:'parser.col0',m:'unexpected {parser.lttype} -- it is not something that can appear at the beginning of an actual declaration'},'export 12');
+
+set('export.named.not.id.from','export.all.no.from');
+
+set('export.named.source.not.str','export.all.source.not.str');
+
+a('export.newline.before.the.function',{c0:'parser.c0',li0:'parser.li0',col0:'parser.col0',m:'a newline is not allowed before \'function\' in exported async declarations.'},'export async\nfunction l() {}');
+
+a('export.not.in.module', {c0:'parser.c0',li0:'parser.li0',col0:'parser.col0'});
+
+a('export.specifier.after.as.id', {c0:'parser.c0',li0:'parser.li0',col0:'parser.col0',m:'got {parser.lttype}; an identifier was expected'}, 'export {a as 12}');
+
+a('export.specifier.not.as', {m:'\'as\' or } was expected; got {parser.lttype}'},'export {a 12 e}');
+
+a('for.decl.multi',{tn:'tn.declarations.1',m:'head of a {extra.2} can only have one declarator'},'for (var a, b in e) break;');
+
+a('for.decl.no.init',{m:'initialiser "=" was expected; got {parser.lttype}'},'for (var [a];;) break;');
+
+a('for.in.has.decl.init',{tn:'tn.declarations.0.init',m:'{tn.kind} declarations and non-Identifier declarators can not have initialisers; also it is not allowed altogether in versions before 7; current version is {parser.v}'},'for (var a = 12 in e) break;');
+
+a('for.in.has.init.assig',{tn:'tn',m:'assignment expressions can not be a {extra.2}\'s head'},'for (a=12 in e) break;');
+
+a('for.iter.no.end.paren',{m:'a ) was expected; got {parser.lttype}'},'for (a in b 5');
+
+a('for.iter.not.of.in',{m:'an \'in\' or \'of\' expected; got {parser.ltval}'},'for (a to e) break;');
+
+a('for.of.var.overrides.catch',{tn:'tn',m:'{tn.name} overrides the surrounding catch block\'s variable of the same name'},'try {} catch (a) { for (var a of l) break;}');
+
+set('for.simple.no.end.paren', 'for.iter.no.end.paren');
+
+a('for.simple.no.init.semi',{m:'a ; was expected; got {parser.lttype}'}, 'for (a 12 b; 12) break;');
+
+set('for.simple.no.test.semi', 'for.simple.no.init.semi');
+
+set('for.with.no.opening.paren', '<opening>');
+
+// TODO: precision
+a('func.args.has.dup',{tn:'tn',m:'{tn.name}: duplicate params are not allowed'}, 'function l([a,a]) {}');
+
+set('func.args.no.end.paren', '<closing>');
+
+set('func.args.no.opening.paren', '<opening>');
+
+a('func.args.not.enough', {m:'unexpected {parser.lttype}'}, '({ get a(l) {} })', '({set a() {}})');
+
+a('func.body.is.unfinished', {m:'a } was expected to end the current function\'s body; got {parser.lttype}'}, 'function l() { 12');
+
+a('func.decl.not.allowed', {m:'the current scope does not allow a function to be declared in it'}, 'while (false) function l() {}');
+
+a('func.label.not.allowed', {m:'can not label this declaration'}, 'L:function* l() {}');
+
+a('func.strict.non.simple.param', {tn:'parser.firstNonSimpArg', m:'a function containing a Use Strict directive can not have any non-simple paramer -- all must be Identifiers'});
+
+a('hex.esc.byte.not.hex', {c0:'parser.c',li0:'parser.li',col0:'parser.col',m:'a hex byte was expected'}, '"\\xab\\xel"');
+
+a('id.esc.must.be.idbody',{cur0:'cur',m:'unicode codepoint with value {extra} is not a valid identifier body codepoint'});
+
+a('id.esc.must.be.id.head',{cur0:'cur',m:'unicode codepoint with value {extra} is not a valid identifier start codepoint'});
+
+a('id.multi.must.be.idhead', {cur0:'cur',m:'the unicode surrogate pair [{extra.0},{extra.1}] don\'t represent an identifier start.'});
+
+a('id.multi.must.be.idbody', {cur0:'cur',m:'the unicode surrogate pair [{extra.0},{extra.1}] don\'t represent an identifier body codepoint'});
+
+a('id.name.has.surrogate.pair',{m:'unicode escapes in identifier names can not be parts of a surrogate pair'});
+
+a('id.u.not.after.slash',{m:'a \'u\' was expected after \\'}, '\\e');
+
+set('if.has.no.closing.paren', '<closing>');
+
+set('if.has.no.opening.paren', '<opening>');
+
+a('import.from',{m:'\'from\' expected'},'import * 12');
+
+a('import.invalid.specifier.after.comma',{m:'unexpected {parser.lttype}'},'import a, 12 from \'l\'');
+
+a('import.namespace.specifier.not.*',{m:'unexpected {parser.ltraw} -- a * was expected'},'import - as \'12\'');
+
+a('import.namespace.specifier.local.not.id', {m:'valid identifier was expected; got {parser.lttype}'},'import {a as 12} from \'12\'');
+
+a('import.namespace.specifier.no.as', {m:'\'as\' expected'}, 'import {a 12 l} from \'12\'');
+
+a('import.not.in.module', {m:'import is not allowed in script mode'});
+
+a('import.source.is.not.str', {m:'string literal was expected'},'import * as a from 12');
+
+a('import.specifier.list.unfinished', {m:'a } was expected; got {parser.lttype}'}, 'import {a as b, e as l 12');
+
+set('import.specifier.local.not.id', 'import.namespace.specifier.local.not.id');
+
+set('import.specifier.no.as', 'import.namespace.specifier.no.as');
+
+a('incdec.post.not.simple.assig',{m:'member expression or identifier expected -- got {tn.type}'},'[a]--');
+
+set('incdec.pre.not.simple.assig', 'incdec.post.not.simple.assig');
+
+a('label.is.a.dup', {m:'{tn.name} has been actually declared at {extra.li0}:{extra:col0} (offset {extra.c0})'}, 'a: a: for (;false;) break;');
+
+// TODO:
+// a('let.dcl.not.in.block',{m: 
+
+a('lexical.decl.not.in.block',{m:'a {extra.kind}-binding can not be declared in this scope'}, 'if (false) const a = 12;');
+
+a('lexical.name.is.let', {m:'let/const bindings can not have the name \'let\''}, 'let [[let=let]=let*let] = 12;');
+
+a('mem.gen.has.no.name',{m:'unexpected {parser.lttype}'},'({**() {}} })');
+
+// v < 5
+a('mem.id.is.null',{m:'got {parser.ltval} -- a valid member identifier was expected'},'a.this');
+
+a('mem.name.not.id',{m:'unexpected {parser.lttype} -- a valid member identifier was expected'}, 'a.12');
+
+a('mem.unfinished',{m:'unexpected {parser.lttype} -- a ] was expected'}, 'a[e 12');
+
+a('meta.new.has.unknown.prop',{m:'\'target\' is currently the only allowed meta property of new; got {parser.ltval}'},'function l() { new.a }');
+
+a('meta.new.not.in.function',{m:'\'new.target\' must be in the body of a function'}, 'new.target');
+
+// TODO: precision
+a('meth.paren',{m:'unexpected {parser.lttype} -- a ( was expected to start method-params'},'({get a 12})');
+
+a('func.decl.has.no.name',{m:'function declaration must have a name in this context'},'function() {}');
+
+a('new.args.is.unfinished',{m:'unexpected {parser.lttype} -- a ) was expected'}, 'new L(12');
+
+a('new.head.is.not.valid',{m:'unexpected {parser.lttype}'}, 'new ?');
+
+a('arrow.newline', {m:'\'=>\' can not have a newline before it'}, 'a \n=>12');
+
+a('nexpr.null.head',{m:'unexpected {parser.lttype} -- something that can start an actual expression was expected'},'a-- * ?');
+
+a('non.tail.rest',{m:'a rest element can not be followed by a comma (a fact that also implies it must be the very last element)'}, '[...a,]=12');
+
+// TODO: this.noSemiAfter(nodeType)
+a('no.semi',{m:'a semicolon was expected (or a \'}\' if appropriate), but got a {parser.lttype}'},'a e'); 
+
+a('not.assignable',{m:'{tn.type} is not a valid assignment left hand side'},'a[0]-- = 12');
+
+a('not.bindable',{m:'{tn.type} can not be treated as an actual binding pattern'});
+
+// TODO: for now it would suffice
+a('not.stmt',{m:'unexpected {parser.lttype} -- it can\'t be used in an expression'},'a * while (false) { break; }');
+
+a('null.stmt',{m:'unexpected {parser.lttype} -- expected something that would start a statement'}, '{ for (a=0;a>=0 && false;a--) }');
+
+a('num.has.no.mantissa',{m:'a mantissa was expected'},'12e?');
+
+a('num.idhead.tail',{m:'a number literal can not immediately precede an identifier head'},'120l');
+
+a('num.legacy.oct',{m:'legacy octals not allowed in strict mode'},'01');
+
+a('num.with.first.not.valid',{m:'{extra} digit not valid'},'0xG','0b5');
+
+a('num.with.no.digits',{m:'{extra} digits were expected to follow -- none found'},'0x','0b');
+
+a('obj.pattern.no.:',{m:'a : was expected -- got {parser.lttype}'},  '({a 12 e, e: a})');
+
+a('obj.prop.assig.not.allowed',{m:'shorthand assignment not allowed in this context, because the containing object can not be an assignment left-hand side'},'-{a=12} = 12');
+
+a('obj.prop.assig.not.assigop',{m:'a \'=\' was expected'},'({a -= 12 } = 12)');
+
+a('obj.prop.assig.not.id',{m:'a shorthand assignment\'s left hand side must be a plain (non-computed) identifier'},'({[a]=12})');
+
+a('obj.prop.is.null',{m:'unexpected {parser.lttype} -- a [, {}, or an Identifier (anything starting a pattern) was expected'},'var {a:-12} = 12');
+
+a('obj.proto.has.dup',{m:'can not have more than a  single property in the form __proto__: <value> or  \'__proto_\': <value>; currently the is already one at {parser.first__proto__.loc.start.line}:{parser.first__proto__.loc.start.column} (offset {parser.first__proto__.start})'}, '({__proto__:12, a, e, \'__proto__\': 12})');
+
+a('obj.unfinished',{m:'unfinished object literal: a } was expected; got {parser.lttype}'},'({e: a 12)');
+
+a('unexpected.lookahead',{m:'unexpected {parser.lttype}'},'-- -a');
+a('param.has.yield.or.super',{p:function(){if(this.tn !== null && this.tn.type === 'Identifier') this.tn = {type:'AwaitExpression',start:this.tn.start,loc:this.tn.loc,end:this.tn.end,argument:null};},m:'{tn.type} isn\'t allowed to appear in this context'},'function* l() { ([a]=[yield])=>12; }');
+
+a('paren.unbindable',{m:'unexpected ) -- bindings should not have parentheses around them, neither should non-simple assignment-patterns'},'([(a)])=>12', '[a,b,e,([l])]=12');
+
+set('pat.array.is.unfinished', 'array.unfinished');
+
+a('pat.obj.is.unfinished',{m:'unexpected {parser.lttype} -- a } was expected'},'var {a=12 l} = 12)');
+
+a('program.unfinished',{m:'unexpected {parser.lttype} -- an EOF was expected'},'a, b, e, l; ?');
+
+a('prop.dyna.is.unfinished',{m:'unexpected {parser.lttype}'},'({[a 12]: e})');
+
+set('prop.dyna.no.expr', 'prop.dyna.is.unfinished');
+
+function regp() {
+  this.col0 = this.col + (this.c0-this.c);
+  if (this.extra === null)
+    this.extra = {};
+
+  this.extra.ch = this.parser.src.charAt(this.c0);
+}
+
+// TODO: precision
+a('regex.flag.is.dup',{p: regp, m:'regex flag is duplicate'},'/a/guymu');
+
+a('regex.newline',{p:regp, m:'regular expressions can not contain a newline'},'/a\n/');
+
+a('regex.newline.esc',{p:regp, m:'regular expressions can not contain escaped newlines'},'/a\\\n/');
+
+a('regex.unfinished',{cur0:'cur',m:'unfinished regex -- a / was expected'},'/a');
+
+// TODO: precision
+a('regex.val.not.in.range',{m:'regex contains an out-of-range value'});
+
+a('reserved.id',{m:'{tn.name} is actually a reserved word in this context'},'"use strict"; var implements = 12;');
+
+a('rest.binding.arg.peek.is.not.id',{m:'unexpected {parser.lttype} -- in versions before 7, a rest\'s argument must be an id'},'var [...[a]] = 12');
+
+a('rest.arg.not.valid',{tn:'tn.argument',m:'a rest\'s argument is not allowed to have a type of {tn.arguments.type}'},'[...a=12]=12');
+
+a('resv.unicode',{cur:'parser.eloc',m:'{parser.ltraw} is actually a reserved word ({parser.ltval}); as such, it can not contain any unicode escapes'},'whil\\u0065 (false) break;');
+
+a('return.not.in.a.function',{m:'return statements are only allowed inside a function'},'return 12');
+
+a('seq.non.tail.expr',{m:'trailing comma was not expected'},'(a,)');
+
+a('shorthand.unassigned',{m:'shorthand assignments are not allowed somewhere other than am assignment\'s left hand side'},'a = [{b=12},]');
+
+a('stmt.null',{m:'unexpected {parser.lttype} because it can not start a statement'},'while (false) ?');
+
+a('strict.err.esc.not.valid',{cur0:'parser.eloc',m:'legacy octals are not allowed in strict mode'},'"\\12"; "use strict"');
+
+a('strict.let.is.id',{m:'let can\'t be used as an id in strict mode'},'"use strict"; a * b * e * l * let');
+
+a('strict.oct.str.esc',{m:'legacy octals not allowed in strict mode'},'"use strict"; "\\12"');
+
+a('strict.oct.str.esc.templ',{m:'legacy octals not allowed inside templates'},'`\\12`');
+
+a('str.newline',{li0: 'parser.li', m:'a string literal may not contain line breaks'},'"a\n"');
+
+a('str.unfinished',{li0: 'parser.li', m:'the string starting at {parser.li0}:{parser.col0} (offset {parser.c0}) not finished'},'"abel');
+
+a('switch.case.has.no.colon',{m:'unexpected {parser.lttype} -- a \':\' was expected'},'switch (a) { case 12 a break; }');
+
+a('switch.has.a.dup.default',{m:'this switch has already got a default'},'swicth (a) { case a: break; case b: break; case e: break; default: break; default: 12; }');
+
+a('switch.has.no.opening.curly',{m:'unexpected {parser.lttype} -- a {} was expected'},'switch (a) 12');
+
+a('switch.has.no.closing.paren',{m:'unexpected {parser.lttype} -- a ) was expected'},'switch (a 12');
+
+a('switch.has.no.opening.paren',{m:'unexpected {parser.lttype} -- a ( was expected'},'switch ?');
+
+a('switch.unfinished',{m:'unexpected {parser.lttype} -- a } was expected'},'switch (a) { case 12: break; ?');
+
+a('templ.expr.is.unfinished',{m:'unexpected {parser.lttype} -- a } was expected at the end of the current interpolated expression'},'`abel${e 12}`');
+
+a('templ.lit.is.unfinished',{m:'the template literal at {extra.loc.start.line}:{extra.loc.start.column} (offset {extra.start}) is unfinished'},'`abel');
+
+a('throw.has.newline',{m:'throw can not have a line-break after it'},'throw \n12');
+
+a('throw.has.no.argument',{m:'unexpected {parser.lttype}'},'throw ?');
+
+a('try.has.no.tain',{m:'unexpected {parser.lttype} -- try must have a \'catch\' or \'finally\' block coming after it'},'try {}\nif (false);');
+
+a('u.curly.is.unfinished',{p: regp, m:'a } was expected'},'\\u{12;');
+
+a('u.curly.not.in.range',{p: regp, m:'unicode codepoints must have a max decimal value of 1114111 (0x10FFFF)'}, '\\u{125400}');
+
+a('u.esc.hex',{p: regp, m:'invalid hex'},'\\u00el');
+
+a('unary.before.an.exponentiation',{m:'left operand for an exponentiation operator is not allowed to be an unparenthesized unary expression'},'-a**e');
+
+a('unexpected.id',{m:'got {parser.ltval} rather than {extra}'},'export * as a from \'12\'');
+
+a('an.id.was.expected',{m:'unexpected {parser.lttype} -- identifier \'{extra}\' was expected'},'export * as a 12 \'l\'');
+
+a('meth.parent',{m:'a ) was expected'},'class A { e: 12 }');
+
+a('obj.meth.no.paren',{m:'a ) was expected'},'({get a: 12})');
+
+a('rest.arg.has.trailing.comma',{m:'trailing comma not expected after rest'},'(...a,)');
+
+a('unexpected.rest',{m:'unexpected rest element'},'(...a)');
+
+a('unfinished.paren',{c0:'tn.end',li0:'tn.loc.end.line',col0:'tn.loc.end.column',m:'the parenthesis at {tn.loc.start.line}:{tn.loc.start.column} (offset {tn.start}) is unfinished'}, '(a,b 12');
+
+a('u.second.esc.not.u',{p:function(){this.col0++;}, cur0:'cur', m:'a \'u\' was expected after the slash', col0:'col'},'\\ee');
+
+a('u.second.not.in.range',{p:function(){this.col0+=(this.c-this.extra);},cur0:'cur',col0:'col',m:'the second surrogate must be in range [0x0dc00, 0x0dfff]'});
+
+a('var.decl.neither.of.in',{m:'unexpected {parser.lttype}'},'var [a] -= 12');
+
+a('var.decl.not.=', {m:'Unexpected {parser.lttype} -- (maybe you mean \'=\'?)'},'var a -= l');
+
+a('var.must.have.init', {m:'a \'=\' was expected -- current declarator needs an initialiser'},'var a, [e]');
+
+a('var.has.no.declarators',{m:'unexpected {parser.lttype}'}, 'var -a = l');
+
+a('var.has.an.empty.declarator',{m:'unexpected {parser.lttype}'}, 'var a, -');
+
+a('while.has.no.closing.paren',{m:'unexpected {parser.lttype} -- a ) was expected'},'while (a 12');
+
+a('while.has.no.opening.paren',{m:'unexpected {parser.lttype} -- a ( was expected'},'while 12) break;');
+
+a('with.has.no.opening.paren',{m:'unexpected {parser.lttype} -- a ( was expected'},'with 12) {}');
+
+a('with.has.no.end.paren',{m:'unexpected {parser.lttype} -- a ) was expected'},'with (a 12 {}');
+
+a('with.strict',{m:'with statements not allowed in strict mode'},'"use strict"; with (l) {}');
+
+a('yield.args',{m:'yield expression not allowed in generator\'s argument list'},'function* l(e=yield 12) {}');
+
+a('yield.as.an.id',{m:'yield is not allowed as an identifier in this context'},'function* l() { var yield = 12 }');
+
+a('yield.has.no.expr.deleg',{m:'unexpected {parser.lttype} -- it can not star an expression'},'function* l() { yield* ?}');
+
+
+},
+function(){
+this.currentExprIsParams = function() {
+  this.st = this.pt = this.at = this.st = ERR_NONE_YET;
+};
+
+this.currentExprIsAssig = function() {
+  this.st = this.pt = this.at = ERR_NONE_YET;
+};
+
+this.currentExprIsSimple = function() {
+  this.pt = this.at = ERR_NONE_YET;
+  if (this.st !== ERR_NONE_YET) {
+    var st = this.st;
+    var se = this.se;
+    this.throwTricky('s', st, se);
+  }
+};
+
+// tricky map
+var tm = {};
+
+tm[ERR_PAREN_UNBINDABLE] = 'paren.unbindable';
+tm[ERR_SHORTHAND_UNASSIGNED] = 'shorthand.unassigned';
+tm[ERR_NON_TAIL_REST] = 'non.tail.rest';
+tm[ERR_ARGUMENTS_OR_EVAL_ASSIGNED] = 'assig.to.arguments.or.eval';
+tm[ERR_YIELD_OR_SUPER] = 'param.has.yield.or.super';
+tm[ERR_UNEXPECTED_REST] = 'unexpected.rest';
+tm[ERR_EMPTY_LIST_MISSING_ARROW] = 'arrow.missing.after.empty.list';
+tm[ERR_NON_TAIL_EXPR] = 'seq.non.tail.expr';
+tm[ERR_INTERMEDIATE_ASYNC] = 'intermediate.async';
+tm[ERR_ASYNC_NEWLINE_BEFORE_PAREN] = 'async.newline.before.paren';
+tm[ERR_PIN_NOT_AN_EQ] = 'complex.assig.not.pattern';
+
+// TODO: trickyContainer
+this.throwTricky = function(source, trickyType) {
+  if (!HAS.call(tm, trickyType))
+    throw new Error("Unknown error value: "+trickyType);
+
+  var t = null, errParams = {};
+  if (trickyType & ERR_PIN) {
+    t = source === 'p' ? this.ploc :
+        source === 'a' ? this.aloc :
+        source === 's' ? this.eloc : null;
+    errParams = { c0: t.c0, li0: t.li0, col0: t.col0 };
+  }
+  else {
+    errParams.tn = source === 'p' ? this.pe :
+                   source === 'a' ? this.ae :
+                   source === 's' ? this.se : null;
+  }
+  errParams.extra = { source: source };
+  this.err(tm[trickyType], errParams);
+}; 
+
+this.adjustErrors = function() { 
+  if (this.st === ERR_ARGUMENTS_OR_EVAL_ASSIGNED)
+    this.st = ERR_ARGUMENTS_OR_EVAL_DEFAULT;
+  else
+    this.st = ERR_NONE_YET;
+};
+
+
+},
+function(){
+this.err = function(errorType, errParams) {
+  errParams = this.normalize(errParams);
+  return this.errorListener.onErr(errorType, errParams);
+};
+
+this.normalize = function(err) {
+  // normalized err
+  var loc0 = { li: this.li0, col: this.col0 },
+      loc = { li: this.li, col: this.col };
+
+  var e = {
+    cur0: { c: this.c0, loc: loc0 },
+    cur: { c: this.c, loc: loc },
+    tn: null,
+    parser: this,
+    extra: null
+  };
+  
+  if (err) {
+    if (err.tn) {
+      var tn = err.tn;
+      e.tn = tn;
+
+      if (HAS.call(tn,'start')) e.cur0.c = tn.start;
+      if (HAS.call(tn,'end')) e.cur.c = tn.end;
+      if (tn.loc) {
+	if (HAS.call(tn.loc, 'start')) {
+          e.cur0.loc.li = tn.loc.start.line;
+          e.cur0.loc.col =  tn.loc.start.column;
+        }
+        if (HAS.call(tn.loc, 'start')) {
+          e.cur.loc.li = tn.loc.end.line;
+          e.cur.loc.col = tn.loc.end.column;
+        }
+      }
+    }
+    if (err.loc0) {
+      var loc0 = err.loc0;
+      e.cur.loc.li = loc0.line;
+      e.cur.loc.col = loc0.column;
+    }
+    if (err.loc) {
+      var loc = err.loc;
+      e.cur.loc.li = loc.line;
+      e.cur.loc.col = loc.column;
+    }
+
+    if (HAS.call(err,'c0'))
+      e.cur0.c = err.c0;
+    
+    if (HAS.call(err,'c'))
+      e.cur.c = err.c;
+
+    if (HAS.call(err, 'extra')) 
+      e.extra = err.extra;
+  }
+
+  e.c0 = e.cur0.c; e.li0 = e.cur0.loc.li; e.col0 = e.cur0.loc.col;
+  e.c = e.cur.c; e.li = e.cur.loc.li; e.col = e.cur.loc.col;
+
+  e.loc0 = e.cur0.loc;
+  e.loc = e.cur.loc;
+
+  return e;
+};
+
+
+},
+function(){
+this.loc = function() { return { line: this.li, column: this.col }; };
+this.locBegin = function() { return  { line: this.li0, column: this.col0 }; };
+this.locOn = function(l) { return { line: this.li, column: this.col - l }; };
 
 },
 function(){
@@ -2977,6 +3880,157 @@ function(ctx) {
 
 },
 function(){
+this.parseFunBody =
+function() {
+  if (this.lttype !== CH_LCURLY)
+    this.err('fun.body.not.a.curly');
+
+  var c0 = this.c0;
+  var loc0 = this.loc0();
+  this.next(); // '{'
+
+  var list = this.parseStmtList();
+
+  var n = {
+    type : 'BlockStatement',
+    body: list,
+    start: c0,
+    end: this.c,
+    loc: { 
+      start: loc0,
+      end: this.loc() },
+    '#y': -1
+  };
+
+  if (!this.expectT(CH_RCURLY))
+    this.err('fun.body.is.unfinished');
+
+  return n;
+};
+
+},
+function(){
+this.parseFn =
+function(ctx, st) {
+  var labels_ = this.labels;
+  var declMode_ = this.declMode;
+  var isStmt = false;
+  if (this.canBeStatement) {
+    isStmt = true;
+    this.canBeStatement = false;
+  }
+
+  var isMeth = st & (ST_CLSMEM|ST_OBJMEM);
+  var isAsync = st & ST_ASYNC;
+
+  var fnName = null;
+  var declScope = null;
+  if (!isMeth) {
+    if (isStmt && isAsync) {
+      this.unsatisfiedLabel &&
+      this.err('async.label.not.allowed');
+
+      this.scope.isBare() &&
+      this.err('async.decl.not.allowed');
+    }
+    this.next(); // 'function'
+    if (this.peekMul()) {
+      this.v<=5 && this.err('ver.gen');
+      if (isAsync)
+        this.err('async.gen.not.supported.yet');
+      if (isStmt) {
+        this.unsatisfiedLabel &&
+        this.err('gen.label.not.allowed');
+
+        this.scope.isBare() &&
+        this.err('gen.decl.not.allowed');
+      }
+      this.next(); // '*'
+      st |= ST_GEN;
+    }
+    else {
+      st |= ST_FN;
+      if (this.scope.isBare()) {
+        if (!this.scope.insideIf() ||
+          this.scope.insideStrict())
+          this.err('fun.decl.not.allowed');
+        if (this.unsatisfiedLabel)
+          this.fixupLabels(false);
+      }
+      else if (this.unsatisfiedLabel)
+        this.scope.insideStrict() &&
+        this.err('func.label.not.allowed');
+    }
+
+    if (isStmt) {
+      if (this.lttype === TK_ID) {
+        this.declMode = DT_FN;
+        declScope = this.scope; 
+        fnName = this.parsePattern();
+      }
+      else if (!(ctx & CTX_DEFAULT))
+        this.err('fun.decl.has.got.no.actual.name');
+    }
+    else if (this.lttype === TK_ID)
+      fnName = this.parseFnExprName(st);
+  }
+
+  this.enterScope(this.scope.spawnFn(st));
+  if (fnName) {
+    if (isStmt)
+      this.scope.setName(
+        fnName.name,
+        st,
+        declScope.findDecl_m(_m(fnName.name)));
+    else
+      this.scope,setName(
+        fnName.name,
+        st,
+        null);
+  }
+
+  var argLen =
+    !isMeth || !(st & ST_ACCESSOR) ?
+      ARGLEN_ANY :
+      (st & ST_GETTER) ?
+        ARGLEN_GET :
+        ARGLEN_SET;
+
+  this.declMode = DT_FNARG;
+  var argList = this.parseParams(argLen);
+
+  this.scope.enterBody();
+
+  this.labels = {};
+
+  var nbody = this.parseFunBody();
+  this.exitScope();
+
+  var n = {
+    type: isStmt ? 'FunctionDeclaration' : 'FunctionExpression',
+    id: fnName,
+    start: c0,
+    end: body.end,
+    generator: (st & ST_GEN) !== 0,
+    body: nbody,
+    loc: { start: loc0, end: body.loc.end },
+    params: argList,
+    expression: false,
+    async: (st & ST_ASYNC) !== 0,
+    '#scope': scope
+  };
+
+  this.declMode = declMode_;
+  this.labels = labels_;
+
+  if (isStmt)
+    this.foundStatement = true;
+
+  return n;
+};
+
+},
+function(){
 this.parseIDExprHead =
 function(ctx) {
   var name = this.ltval;
@@ -3002,8 +4056,10 @@ function(ctx) {
     case 'for': return this.parseFor();
     case 'try': return this.parseTryStatement();
     case 'let':
+      return this.parseVar(DT_LET,ctx);
     case 'var':
-      return this.parseVar(ctx);
+      this.resvchk();
+      return this.parseVar(DT_VAR,ctx);
 
     case 'int':
       this.resvchk();
@@ -3048,13 +4104,15 @@ function(ctx) {
     case 'break': return this.parseBreak();
     case 'catch': this.ri();
     case 'class': return this.parseClass(CTX_NONE);
-    case 'const': return this.parseVar(CTX_NONE);
+    case 'const':
+      this.resvchk();
+      return this.parseVar(DT_CONST,CTX_NONE);
     case 'throw': return this.parseThrow();
     case 'while': return this.parseWhile();
     case 'yield': 
       if (this.scope.canYield()) {
         this.resvchk();
-        if (this.scope.isAnyFnHead())
+        if (this.scope.insideArgs())
           this.err('yield.args');
         if ( this.canBeStatement )
           this.canBeStatement = false;
@@ -3198,6 +4256,70 @@ this.resvchk = function() {
   }
 };
 
+
+},
+function(){
+this.parseParams =
+function(argLen) {
+  var
+    c0 = -1, li0 = -1, col0 = -1,
+    tail = true, elem = null,
+    list = [],
+    gnsa = false;
+
+  if (!this.expectT(CH_LPAREN))
+    this.err('fun.args.no.opening.paren');
+
+  while (list.length !== argLen) {
+    elem = this.parsePat();
+    if (elem) {
+      if (this.peekEq()) {
+        this.scope.enterUniqueArgs();
+        elem = this.parsePat_assig(elem);
+      }
+      if (!gnsa && elem.type !== 'Identifier') {
+        gnsa = true;
+        this.scope.firstNonSimple = elem;
+      }
+      list.push(elem);
+    }
+    else {
+      if (list.length !== 0) // trailing comma
+        this.v<7 &&
+        this.err('arg.non.tail.in.fun',
+          {c0:c0,li0:li0,col0:col0});
+
+      break;
+    }
+
+    if (this.lttype === CH_COMMA) {
+      c0 = this.c0;
+      li0 = this.li0;
+      col0 = this.col0;
+      this.next();
+    }
+    else { tail = false; break; }
+  }
+
+  if (argLen === ARGLEN_ANY) {
+    if (tail && this.lttype === TK_ELLIPSIS) {
+      this.scope.enterUniqueArgs();
+      elem = this.parseRest();
+      list.push(elem);
+      if (!gnsa) {
+        gnsa = true;
+        this.scope.firstNonSimple = elem;
+      }
+    }
+  }
+  else if (list.length !== argLen)
+    this.err('fun.args.not.enough');
+
+  if (!this.expectT(CH_RPAREN))
+    this.err('fun.args.no.end.paren');
+
+  return list;
+};
 
 },
 function(){
@@ -3467,6 +4589,86 @@ function(memName, ctx) {
     method: false,
     value: val,
     computed: false,
+    '#y': -1
+  };
+};
+
+},
+function(){
+this.parseMeth =
+function(memName, ctx, st) {
+  if (this.lttype !== CH_LPAREN)
+    this.err('meth.paren');
+
+  var val = null;
+  if (st & ST_CLSMEM) {
+    if (st & ST_STATICMEM) {
+      if (ctx & CTX_HASPROTOTYPE)
+        this.err('cls.prototype.is.static.mem',
+          {tn:memName});
+      if (st & ST_CTOR)
+        st &= ~ST_CTOR;
+    }
+    if (st & ST_CTOR) {
+      if (st !== ST_CTOR|ST_CLSMEM)
+        this.err('class.ctor.is.special.mem',
+          {tn:memName});
+      if (ctx & CTX_CTOR_NOT_ALLOWED)
+        this.err('class.ctor.is.dup',{tn:memName});
+    }
+
+    val = this.parseFn(CTX_NONE, st);
+    if (memName.type === 'Identifier')
+      val['#scope'].setName(
+        memName.name,
+        SN_VIRTUAL,
+        null);
+
+    return {
+      type: 'MethodDefinition',
+      key: core(memName),
+      start: memName.start,
+      end: val.end,
+      kind:
+        (st & ST_CTOR) ?
+          'constructor' :
+          (st & ST_GETTER) ?
+            'get' :
+            (st & ST_SETTER) ?
+              'set' :
+              'method',
+      computed: memName.type === PAREN,
+      loc: {
+        start: memName.loc.start,
+        end: val.loc.end
+      },
+      value: val,
+      'static': !!(st & ST_STATICMEM),
+      '#y': -1
+    };
+  }
+
+  val = this.parseFn(CTX_NONE, st);
+
+  return {
+    type: 'Property',
+    key: core(memName),
+    start: memName.start,
+    end: val.end,
+    kind:
+      !(st & ST_ACCESSOR) ?
+        'init' :
+        (st & ST_SETTER) ?
+          'set' :
+          'get',
+    computed: name.type === PAREN,
+    loc: {
+      start: name.loc.start,
+      end : val.loc.end
+    },
+    method: !!(st & ST_ACCESSOR),
+    shorthand: false,
+    value : val,
     '#y': -1
   };
 };
@@ -3826,6 +5028,135 @@ function(head) {
 
 },
 function(){
+this.parseTemplate =
+function() {
+  this.v<=5 && this.err('ver.temp');
+
+  // c is on the char after `
+  var c0 = this.c0, loc0 = this.loc0();
+  var c = this.c, li = this.li, col = this.col;
+  var str = [], ex = [];
+  var v = "";
+  var luo = c;
+
+  var s = this.src, l = s.length;
+
+  var c0s = c0, loc0s = loc0;
+
+  LOOP:
+  while (c<l)
+  switch (s.charCodeAt(c)) {
+  case CH_$:
+    if (c+1<l &&
+      s.charCodeAt(c+1) === CH_LCURLY) {
+      if (luo<c)
+        v += s.substring(luo,c);
+
+      this.setoff(c+2);
+      str.push({
+        type: 'TemplateElement', 
+        start: c0s,
+        loc: { 
+          start: loc0s, 
+          end: {
+            line: this.li, 
+            column: this.col-2 
+          }
+        },        
+        end: c,
+        value: {
+          raw : s.slice(c0s, c).replace(/\r\n|\r/g,'\n'), 
+          cooked: v
+        }, 
+        tail: false,
+      });
+
+      this.next(); // prepare the next token
+      var e = this.parseExpr(CTX_TOP);
+      if (e === null)
+        this.err('templ.expr.is.a.null');
+      ex.push(e);
+      if (this.lttype !== CH_RCURLY)
+        this.err('templ.expr.is.unfinished');
+
+      c = luo = this.c;
+      v = "";
+      c0s = c;
+      loc0s = this.loc0();
+    }
+    else
+      c++;
+ 
+    continue;
+
+  case CH_CARRIAGE_RETURN:
+    if (c+1<l && s.charCodeAt(c+1) === CH_LINE_FEED)
+      c++;
+  case CH_LINE_FEED:
+  case 0x2028: case 0x02029:
+    if (luo<c)
+      v += s.substring(luo,c);
+    v += s.charAt(c);
+    this.setnewloff(c);
+    luo = c;
+    continue;
+
+  case CH_BACK_SLASH:
+    if (luo<c) v += s.substring(luo,c);
+
+    this.setsimpoff(c);
+    v += this.readEsc(true);
+    c = luo = this.c;
+    continue;
+
+  case CH_BACTTICK:
+    break LOOP;
+
+  default: c++;
+  }
+
+  if (c >= l || s.charCodeAt(c) !== CH_BACKTICK)
+    this.err('template.literal.is.unfinished');
+
+  if (luo<c)
+    v += s.substring(luo,c);
+
+  this.setsimpoff(c+1); // '`'
+  str.push({
+    type: 'TemplateElement',
+    start: c0s,
+    loc: {
+      start: loc0s,
+      end: {
+        line: this.li,
+        column: this.col-1
+      }
+    },
+    end: c,
+    value: {
+      raw: s.slice(c0s,c).replace(/\r\n|\r/g,'\n'), 
+      cooked: v 
+    },
+    tail: true
+  });
+
+  var n = {
+    type: 'TemplateLiteral',
+    start: c0,
+    quasis: str,
+    end: c,
+    expressions: ex,
+    loc: { start: loc0, end : this.loc() },
+    '#y': -1
+  };
+
+  this.next();
+
+  return n;
+};
+
+},
+function(){
 this.parseThis = function() {
   this.resvchk();
   var n = {
@@ -3841,6 +5172,110 @@ this.parseThis = function() {
 };
 
 
+
+},
+function(){
+this.parseVar =
+function(dt, ctx) {
+  this.testStmt() || this.err('not.stmt');
+
+  var kind = this.ltval;
+  var letID = dt === DT_LET ? this.id() : null;
+  var c0 = letID ? letID.start : this.c0;
+  var loc0 = letID ? letID.loc.start : this.loc0();
+  var vpat = null;
+  var label = this.unsatisfiedLabel;
+
+  letID || this.next();
+
+  ctx &= CTX_FOR;
+
+  if (!letID || !ctx || !this.peekID('in')) {
+    this.setPatCheck(dt !== DT_VAR);
+    this.declMode = dt;
+    vpat = this.parsePat();
+
+    if (vpat === null)
+    switch (this.vpatErr) {
+    case PE_NO_NONVAR:
+      this.err('lexical.decl.not.in.block',
+        {c0:c0,loc0:loc0,extra:kind});
+      break;
+
+    case PE_NO_LABEL:
+      this.err('decl.label',{c0:c0,loc0:loc0});
+      break;
+    }
+  }
+
+  if (vpat === null) {
+    if (letID)
+      return this.handleLet(letID);
+    this.err('var.has.no.declarators');
+  }
+
+  this.fixupLabel(label, false);
+
+  var isConst = dt === DT_CONST, mi = false;
+  while (true) {
+    var init = null;
+    if (this.peekEq()) {
+      this.next();
+      init = this.parseNonSeqExpr(PREC_NONE, ctx|CTX_TOP);
+    }
+    else if (isConst || vpat.type !== 'Identifier') {
+      !(ctx & CTX_FOR) && this.err('const.has.no.init');
+      list.length && this.err('missing.init');
+      mi = true;
+    }
+    var ioh = init || vpat;
+    list.push({
+      type: 'VariableDeclarator',
+      id: vpat,
+      start: vpat.start,
+      end: ioh.end,
+      loc: {
+        start: vpat.loc.start,
+        end: ioh.loc.end 
+      },
+      init: init && core(init),
+      '#y': -1
+    });
+
+    if (mi || this.lttype !== CH_COMMA)
+      break;
+
+    this.next();
+
+    vpat = this.parsePat();
+    vpat || this.err('var.has.an.empty.decltor');
+  }
+
+  var lastItem = list[list.length-1];
+  var ec = -1, eloc = null;
+
+  if (!(ctx & CTX_FOR)) {
+    this.semi() || this.err('no.semi');
+    ec = this.semiC || lastItem.end;
+    eloc = this.semiLoc || lastItem.loc.end;
+  } else {
+    ec = lastItem.end;
+    eloc = lastItem.loc.end;
+  }
+
+  this.missingInit = mi;
+
+  this.foundStatement = true;
+  return {
+    type: 'VariableDeclaration',
+    kind: kind,
+    start: c0,
+    declarations: list,
+    loc: { start: loc0, end: eloc },
+    end: ec,
+    '#y': -1
+  };
+};
 
 },
 function(){
@@ -4038,6 +5473,1440 @@ function(offset) {
 
 },
 function(){
+this.parseUpdate = function(arg, ctx) {
+  var c = 0, loc = null, u = this.ltraw;
+  if (arg === null) {
+    c = this.c0;
+    loc = this.locBegin();
+    this.next() ;
+    arg = this.parseExprHead(ctx & CTX_FOR);
+    if (arg === null)
+      this.err('unexpected.lookahead');
+
+    arg = this.parseTail(arg);
+    if (!this.ensureSimpAssig_soft(core(arg)))
+      this.err('incdec.pre.not.simple.assig',{tn:core(arg)});
+
+    return {
+      type: 'UpdateExpression', operator: u,
+      start: c, end: arg.end, argument: core(arg),
+      loc: { start: loc, end: arg.loc.end },
+      prefix: true
+    };
+  }
+
+  if (!this.ensureSimpAssig_soft(core(arg)))
+    this.err('incdec.post.not.simple.assig',{tn:core(arg)});
+
+  c  = this.c;
+  loc = {
+    start: arg.loc.start,
+    end: { line: this.li, column: this.col }
+  };
+  this.next() ;
+  return {
+    type: 'UpdateExpression', operator: u,
+    start: arg.start, end: c,
+    argument: core(arg), loc: loc,
+    prefix: false
+  };
+};
+
+},
+function(){
+this.parseArgList = function () {
+  var c0 = -1, li0 = -1, col0 = -1, parenAsync = this.parenAsync,
+      elem = null, list = [];
+
+  do { 
+    this.next();
+    elem = this.parseNonSeqExpr(PREC_NONE,CTX_TOP); 
+    if (elem)
+      list.push(core(elem));
+    else if (this.lttype === TK_ELLIPSIS)
+      list.push(this.parseSpreadElement(CTX_NONE));
+    else {
+      if (list.length !== 0) {
+        if (this.v < 7)
+          this.err('arg.non.tail',
+            {c0:c0, li0:li0, col0:col0,
+            extra: {list: list, async: parenAsync}});
+      }
+      break;
+    }
+
+    if (this.lttype === CH_COMMA) {
+      c0 = this.c0;
+      li0 = this.li0;
+      col0 = this.col0;
+    }
+    else break;
+  } while (true);
+
+  if (parenAsync !== null)
+    this.parenAsync = parenAsync;
+
+  return list ;
+};
+
+},
+function(){
+this.parseArray = 
+function(ctx) {
+  var c0 = this.c0, loc0 = this.locBegin();
+
+  this.next(); // '['
+
+  var elem = null, list = [];
+  var elctx = errt_elem_ctx_of(ctx);
+
+  elctx |= CTX_NULLABLE;
+
+  var pt = ERR_NONE_YET, pe = null, po = null;
+  var at = ERR_NONE_YET, ae = null, ao = null;
+  var st = ERR_NONE_YET, se = null, so = null;
+
+  var pc0 = -1, pli0 = -1, pcol0 = -1;
+  var ac0 = -1, ali0 = -1, acol0 = -1;
+  var sc0 = -1, sli0 = -1, scol0 = -1;
+
+  if (errt_track(ctx)) {
+    errt_ptrack(ctx) && this.pt_reset();
+    errt_atrack(ctx) && this.at_reset();
+    errt_strack(ctx) && this.st_reset();
+  }
+
+  var hasMore = true;
+  var hasRest = false, hasNonTailRest = false;
+
+  while (hasMore) {
+    elem = this.parseNonSeqExpr(PREC_NONE, elctx);
+    if (elem === null && this.lttype === TK_ELLIPSIS) {
+      elem = this.parseSpread(elctx);
+      hasRest = true;
+    }
+    if (this.lttype === CH_COMMA) {
+      if (hasRest)
+        hasNonTailRest = true; 
+      if (elem === null) {
+        if (this.v <= 5) this.err('ver.elision');
+        list.push(null);
+      }
+      else list.push(core(elem));
+      this.next();
+    }
+    else {
+      if (elem) {
+        list.push(core(elem));
+        hasMore = false;
+      }
+      else break;
+    }
+ 
+    if (elem && errt_track(elctx)) {
+      var elemCore = elem;
+      // TODO: [...(a),] = 12
+      var t = ERR_NONE_YET;
+      if (elemCore.type === PAREN_NODE)
+        t = ERR_PAREN_UNBINDABLE;
+      else if (hasNonTailRest)
+        t = ERR_NON_TAIL_REST;
+
+      if (errt_ptrack(ctx)) {
+        if (this.pt === ERR_NONE_YET && t !== ERR_NONE_YET) {
+          this.pt = t; this.pe = elemCore;
+        }
+        if (this.pt_override(pt)) {
+          pt = this.pt; pe = this.pe; po = core(elem);
+          if (pt & ERR_P_SYN)
+            elctx |= CTX_HAS_A_PARAM_ERR;
+          if (pt & ERR_PIN) 
+            pc0 = this.ploc.c0, pli0 = this.ploc.li0, pcol0 = this.ploc.col0;
+        }
+      }
+
+      // ([a]) = 12
+      if (t === ERR_PAREN_UNBINDABLE && this.ensureSimpAssig_soft(elem.expr))
+        t = ERR_NONE_YET;
+
+      if (errt_atrack(ctx)) {
+        if (this.at === ERR_NONE_YET && t !== ERR_NONE_YET) {
+          this.at = t; this.ae = elemCore;
+        }
+        if (this.at_override(at)) {
+          at = this.at; ae = this.ae; ao = core(elem);
+          if (at & ERR_A_SYN)
+            elctx |= CTX_HAS_AN_ASSIG_ERR;
+          if (at & ERR_PIN)
+            ac0 = this.aloc.c0, ali0 = this.aloc.li0, acol0 = this.aloc.col0;
+        }
+      }
+      if (errt_strack(ctx)) {
+        if (this.st_override(st)) {
+          st = this.st; se = this.se; so = core(elem);
+          if (st & ERR_S_SYN)
+            elctx |= CTX_HAS_A_SIMPLE_ERR;
+          if (st & ERR_PIN)
+            sc0 = this.eloc.c0, sli0 = this.eloc.li0, scol0 = this.eloc.col0;
+        }
+      }
+    }
+
+    hasRest = hasNonTailRest = false;
+  }
+  
+  var n = {
+    type: 'ArrayExpression',
+    loc: { start: startLoc, end: this.loc() },
+    start: startc,
+    end: this.c,
+    elements : list  ,y:-1
+  };
+
+  if (errt_haserr(ctx,pt)) {
+    this.pt_teot(pt,pe,po);
+    errt_pin(pt) && this.ppin(pc0,pli0,pcol0);
+  }
+  if (errt_haserr(ctx,at)) {
+    this.at_teot(at,ae,ao);
+    errt_pin(at) && this.apin(ac0,ali0,acol0);
+  }
+  if (errt_haserr(ctx,st)) {
+    this.st_teot(st,se,so);
+    errt_pin(st) && this.spin(sc0,sli0,scol0);
+  }
+
+  if (!this.expectType_soft(CH_RSQBRACKET))
+    this.err('array.unfinished');
+  
+  return n;
+};
+
+},
+function(){
+this.parseArrow = function(arg, ctx)   {
+  if (this.v <= 5)
+    this.err('ver.arrow');
+  var async = false;
+
+  if (this.pt === ERR_ASYNC_NEWLINE_BEFORE_PAREN) {
+    ASSERT.call(this, arg === this.pe,
+      'how can an error core not be equal to the erroneous argument?!');
+    this.err('arrow.newline.before.paren.async');
+  }
+
+  var sc = ST_ARROW;
+  switch ( arg.type ) {
+  case 'Identifier':
+    var decl = this.scope.findDecl(arg.name);
+    if (decl) decl.ref.direct--;
+    else this.scope.findRef_m(_m(arg.name)).direct--;
+
+    this.enterScope(this.scope.spawnFn(st));
+    this.asArrowFuncArg(arg);
+    break;
+
+  case PAREN_NODE:
+    this.enterScope(this.scope.spawnFn(st));
+    this.scope.absorb(this.parenScope);
+    this.parenScope = null;
+    if (arg.expr) {
+      if (arg.expr.type === 'SequenceExpression')
+        this.asArrowFuncArgList(arg.expr.expressions);
+      else
+        this.asArrowFuncArg(arg.expr);
+    }
+    break;
+
+  case 'CallExpression':
+    if (this.v >= 7 && arg.callee.type !== 'Identifier' || arg.callee.name !== 'async')
+      this.err('not.a.valid.arg.list',{tn:arg});
+    if (this.parenAsync !== null && arg.callee === this.parenAsync.expr)
+      this.err('arrow.has.a.paren.async');
+
+//  if (this.v < 7)
+//    this.err('ver.async');
+
+    async = true;
+    st |= ST_ASYNC;
+    this.enterScope(this.scope.spawnFn(st));
+    this.scope.absorb(this.parenScope);
+    this.parenScope = null;
+    this.asArrowFuncArgList(arg.arguments);
+    break;
+
+  case INTERMEDIATE_ASYNC:
+    async = true;
+    st |= ST_ASYNC;
+    this.enterScope(this.scope.spawnFn(st));
+    this.asArrowFuncArg(arg.id);
+    break;
+
+  default:
+    this.err('not.a.valid.arg.list');
+
+  }
+
+  this.flushParamErrors();
+  this.scope.enterBody();
+
+  if (this.nl)
+    this.err('arrow.newline');
+
+  this.next();
+  var isExpr = true, nbody = null;
+
+  if (this.lttype === CH_LCURLY) {
+    var prevLabels = this.labels,
+        prevDeclMode = this.declMode;
+
+    this.labels = {};
+    isExpr = false;
+    nbody = this.parseFuncBody();
+
+    this.labels = prevLabels;
+    this.declMode = prevDeclMode;
+  }
+  else
+    nbody = this.parseNonSeqExpr(PREC_NONE, ctx|CTX_PAT) ;
+
+  this.exitScope(); // body
+
+  var params = core(arg);
+  if (params === null)
+    params = [];
+  else if (params.type === 'SequenceExpression')
+    params = params.expressions;
+  else if (params.type === 'CallExpression')
+    params = params.arguments;
+  else {
+    if (params.type === INTERMEDIATE_ASYNC)
+      params = params.id;
+    params = [params];
+  }
+
+  return {
+    type: 'ArrowFunctionExpression', params: params, 
+    start: arg.start, end: nbody.end,
+    loc: {
+      start: arg.loc.start,
+      end: nbody.loc.end
+    },
+    generator: false, expression: isExpr,
+    body: core(nbody), id : null,
+    async: async,
+    '#scope': scope
+  }; 
+};
+
+
+},
+function(){
+this.parseAssignment = function(head, ctx) {
+  var o = this.ltraw;
+  if (o === '=>')
+    return this.parseArrow(head, ctx&CTX_FOR);
+
+  if (head.type === PAREN_NODE) {
+    if (!this.ensureSAT(head.expr)) {
+      this.at = ERR_PAREN_UNBINDABLE;
+      this.ae = this.ao = head;
+      this.throwTricky('a', this.at, this.ae);
+    }
+    else
+      this.dissolveParen();
+  }
+
+  var right = null;
+  if (o === '=') {
+    // if this assignment is a pattern
+    if (ctx & CTX_PARPAT)
+      this.hideSimpleErrors();
+
+    var st = ERR_NONE_YET, se = null, so = null,
+        pt = ERR_NONE_YET, pe = null, po = null;
+
+    // S- and P-errors are not modified during toAssig; A-errors might.
+    this.toAssig(core(head), ctx);
+
+    // flush any remaining simple error, now that there are no more assignment errors;
+    // when toAssig completes, it might have set this.st with an assig-to-arguments-or-eval;
+    // this will get thrown immediately if the assignment is non-leaking, i.e., 
+    // won't tolerate simple errors
+    if ((ctx & CTX_NO_SIMPLE_ERR) && this.st !== ERR_NONE_YET)
+      this.throwTricky('s', this.st);
+
+    var sc0 = -1, sli0 = -1, scol0 = -1,
+        pc0 = -1, pli0 = -1, pcol0 = -1;
+
+    // save all the errors on the left hand side, to restore them after right is parsed
+    if ((ctx & CTX_PARPAT) && this.st !== ERR_NONE_YET) {
+      st = this.st; se = this.se; so = this.so;
+      if (st & ERR_PIN)
+        sc0 = this.eloc.c0, sli0 = this.eloc.li0, scol0 = this.eloc.col0;
+    }
+    if ((ctx & CTX_PARAM) && this.pt !== ERR_NONE_YET) {
+      pt = this.pt; pe = this.pe; po = this.po;
+      if (pt & ERR_PIN)
+        pc0 = this.ploc.c0, pli0 = this.ploc.li0, pcol0 = this.ploc.col0;
+    }
+
+    // toAssig was successful -- clear
+    this.clearAssigErrors();
+    this.next(); // '='
+    right = this.parseNonSeqExpr(PREC_NONE,
+      (ctx & CTX_FOR)|CTX_TOP);
+
+    // restore the state of errors in the left hand side, if there are any
+    if (pt !== ERR_NONE_YET) {
+      this.pt = pt; this.pe = pe; this.po = po;
+      if (pt & ERR_PIN)
+        this.ploc.c0 = pc0, this.ploc.li0 = pli0, this.ploc.col0 = pcol0;
+    }
+    if (st !== ERR_NONE_YET) {
+      this.st = st; this.se = se; this.so = so;
+      if (st & ERR_PIN)
+        this.eloc.c0 = sc0, this.eloc.li0 = sli0, this.eloc.scol0;
+    }
+  }
+  else {
+    // TODO: further scrutiny, like checking for this.at, is necessary (?)
+    if (!this.ensureSAT(core(head)))
+      this.err('assig.not.simple',{tn:core(head)});
+
+    var c0 = -1, li0 = -1, col0 = -1;
+
+    // if this is an potential assignment pattern, pin the location of the non-'='
+    if (ctx & CTX_PARPAT) {
+      c0 = this.c0; li0 = this.li0; col0 = this.col0;
+    }
+    this.next(); // <:o:>=
+    right = this.parseNonSeqExpr(PREC_NONE, (ctx & CTX_FOR)|CTX_TOP);
+
+    // record an actual error if we have parsed a potential param or assignment pattern
+    if (ctx & CTX_PARAM) {
+      this.ploc.c0 = c0, this.ploc.li0 = li0, this.ploc.col0 = col0;
+      this.pt = ERR_PIN_NOT_AN_EQ;
+    }
+    if (ctx & CTX_PAT) {
+      this.aloc.c0 = c0, this.aloc.li0 = li0, this.aloc.col0 = col0;
+      this.at = ERR_PIN_NOT_AN_EQ;
+    }
+  }
+ 
+  return {
+    type: 'AssignmentExpression',
+    operator: o,
+    start: head.start,
+    end: right.end,
+    left: head,
+    right: core(right),
+    loc: {
+      start: head.loc.start,
+      end: right.loc.end
+    },
+    '#y': -1
+  };
+};
+
+},
+function(){
+this.parseBlock = function () {
+  this.fixupLabels(false);
+
+  this.enterScope(this.scope.spawnBlock()); 
+  var scope = this.scope;
+
+  var c0 = this.c0, loc0 = this.loc0();
+  this.next(); // '{'
+
+  var n = {
+    type: 'BlockStatement',
+    body: this.blck(),
+    start: c0,
+    end: this.c,
+    loc: {
+      start: loc0, 
+      end: this.loc() }, 
+    '#scope': scope, 
+    '#y': -1
+  };
+
+  if (this.expectTT(CH_RCURLY))
+    this.err('block.unfinished');
+
+  this.exitScope(); 
+
+  return n;
+};
+
+},
+function(){
+this. parseCatchClause = function () {
+   var c0 = this.c0, loc0 = this.loc0();
+   this.next(); // 'catch'
+
+   this.enterScope(this.scope.spawnCatch());
+   if (!this.expectT(CH_LPAREN))
+     this.err('catch.has.no.opening.paren',{c0:c0,loc0:loc0});
+
+   this.declMode = DT_CATCHARG;
+   var catParam = this.parsePattern();
+   if (this.lttype === TK_SIMP_BINARY && this.ltraw === '=')
+     this.err('catch.has.an.assig.param',{c0:startc,loc0:startLoc,extra:catParam});
+
+   this.declMode = DT_NONE;
+   if (catParam === null)
+     this.err('catch.has.no.param',{c0:startc,loc0:startLoc});
+
+   if (!this.expectT(CH_RPAREN))
+     this.err('catch.has.no.end.paren',{c0:startc,loc0:startLoc,extra:catParam});
+
+   var catBlock = this.parseBlockStatement_dependent('catch');
+   this.exitScope();
+
+   return {
+       type: 'CatchClause',
+       loc: { start: loc0, end: catBlock.loc.end },
+       start: c0,
+       end: catBlock.end,
+       param: catParam ,
+       body: catBlock,
+       '#scope': scope,
+       '#y': -1
+   };
+};
+
+
+},
+function(){
+this.parseClass = 
+function(ctx) {
+  if (this.v <= 5)
+    this.err('ver.class');
+  if (this.unsatisfiedLabel)
+    this.err('class.label.not.allowed');
+
+  var c0 = this.c0, loc0 = this.loc0();
+
+  var isStmt = false, name = null;
+  if (this.canBeStatement) {
+    isStmt = true;
+    this.canBeStatement = false;
+  }
+
+  this.next(); // 'class'
+
+  var scopeName = null;
+  var st = ST_NONE;
+  if (isStmt) {
+    st = ST_DECL;
+    if (!this.scope.canDeclareLetOrClass())
+      this.err('class.decl.not.in.block',{c0:startc,loc0:startLoc});
+    if (this.lttype === TK_ID && this.ltval !== 'extends') {
+      this.declMode = DT_CLS;
+      name = this.parsePat();
+      scopeName = this.scope.findDecl_m(_m(name.name));
+    }
+    else if (!(ctx & CTX_DEFAULT))
+      this.err('class.decl.has.no.name', {c0:startc,loc0:startLoc});
+  }
+  else if (this.lttype === TK_ID && this.ltval !== 'extends') {
+    st = ST_EXPR;
+    name = this.getName_cls();
+  }
+
+  var superClass = null;
+  if (this.lttype === TK_ID && this.ltval === 'extends') {
+    this.next();
+    superClass = this.parseExprHead(CTX_NONE);
+  }
+
+  var mmflags = ST_CLSMEM, mmctx = CTX_NONE;
+
+  this.enterScope(this.scope.spawnCls(st));
+  var scope = this.scope;
+
+  if (name && this.scope.isExpr())
+    this.scope.setScopeName(name.name);
+  else
+    this.scope.scopeName = scopeName;
+
+  if (superClass)
+    this.scope.mode |= SM_CLS_WITH_SUPER;
+
+  var list = [];
+  var c0b = this.c0, loc0b  = this.loc0();
+
+  if (!this.expectT(CH_LCURLY))
+    this.err('class.no.curly',{c0:startc,loc0:startLoc,extra:{n:name,s:superClass,c:ctx}});
+
+  var mem = null;
+
+  while (true) {
+    if (this.lttype === CH_SEMI) {
+      this.next();
+      continue;
+    }
+    mem = this.parseMem(mmctx, mmflags);
+    if (mem !== null) {
+      list.push(mem);
+      if (mem.kind === 'constructor')
+        mmctx |= CTX_CTOR_NOT_ALLOWED;
+    }
+    else break;
+  }
+
+  var eloc = this.loc();
+  var n = {
+    type: isStmt ? 'ClassDeclaration' : 'ClassExpression',
+    id: name,
+    start: c0,
+    end: this.c,
+    superClass: superClass,
+    loc: { start: loc0, end: eloc },
+    body: {
+      type: 'ClassBody',
+      loc: { start: loc0b, end: eloc },
+      start: c0b,
+      end: this.c,
+      body: list,
+      '#y': -1
+    },
+    '#y': -1,
+    '#scope': scope
+  };
+
+  if (!this.expectT(CH_RCURLY))
+    this.err('class.unfinished',{tn:n, extra:{delim:'}'}});
+
+  this.exitScope();
+
+  if (isStmt)
+    this.foundStatement = true;
+
+  return n;
+};
+
+this.parseSuper = function() {
+  if (this.v <=5 ) this.err('ver.super');
+
+  var n = {
+    type: 'Super',
+    loc: { start: this.loc0(), end: this.loc() },
+    start: this.c0,
+    end: this.c
+  };
+ 
+  this.next();
+  switch (this.lttype) {
+  case CH_LPAREN:
+    if (!this.scope.canScall())
+      this.err('class.super.call',{tn:n});
+    this.scope.refDirect_m(RS_SCALL, null);
+    break;
+ 
+  case CH_SINGLEDOT:
+  case CH_LSQBRACKET:
+    if (!this.scope.canSmem())
+      this.err('class.super.mem',{tn:n});
+    break ;
+  
+  default: this.err('class.super.lone',{tn:n}); 
+  }
+ 
+  return n;
+};
+
+},
+function(){
+this.parseCond = function(cond, ctx) {
+  this.next(); // '?'
+  var seq = this.parseNonSeqExpr(PREC_NONE, CTX_TOP);
+
+  if (!this.expectT(CH_COLON))
+    this.err('cond.colon',{extra:[cond,seq,context]});
+
+  var alt = this.parseNonSeqExpr(PREC_NONE, (ctx&CTX_FOR)|CTX_TOP);
+  return {
+    type: 'ConditionalExpression',
+    test: core(cond),
+    start: cond.start,
+    end: alt.end,
+    loc: {
+      start: cond.loc.start,
+      end: alt.loc.end },
+    consequent: core(seq),
+    alternate: core(alt),
+    '#y': -1
+  };
+};
+
+},
+function(){
+this.prseDbg = 
+function() {
+  this.resvchk();
+  this.testStmt() || this.err('not.stmt');
+  this.fixupLabels(false);
+
+  var c0 = this.c0, loc0 = this.locBegin();
+  var c = this.c, li = this.li, col = this.col;
+  this.next() ;
+
+  this.semi() || this.err('no.semi');
+
+  this.foundStatement = true;
+  return {
+    type: 'DebuggerStatement',
+    loc: { start: loc0, end: this.semiLoc || { line: li, column: col } } ,
+    start: c0,
+    end: this.semiC || c
+  };
+};
+
+},
+function(){
+this.parseDependent = 
+function(name) {
+  var c0 = this.c0, loc0 = this.loc0();
+  if (!this.expectT(CH_LCURLY))
+    this.err('block.dependent.no.opening.curly',{extra:{name:name}});
+
+  var n = {
+    type: 'BlockStatement',
+    body: this.blck(),
+    start: startc,
+    end: this.c,
+    loc: {
+      start: loc0,
+      end: this.loc() },
+    '#y': -1
+  };
+
+  if (!this.expectType_soft(CH_RCURLY))
+    this.err('block.dependent.is.unfinished',{tn:n, extra:{delim:'}'}});
+
+  return n;
+};
+
+},
+function(){
+this.parseDoWhile =
+function () {
+  this.resvchk();
+  !this.ensureStmt_soft() && this.err('not.stmt');
+  this.fixupLabels(true);
+
+  this.enterScope(this.scope.spawnBare());
+  var scope = this.scope; 
+
+  this.allow(SA_BREAK|SA_CONTINUE);
+
+  var c0 = this.c0, loc0 = this.loc0() ;
+  this.next(); // 'do...while'
+
+  var nbody = this.parseStatement(true) ;
+  if (this.lttype === TK_ID && this.ltval === 'while') {
+    this.resvchk();
+    this.next();
+  }
+  else
+    this.err('do.has.no.while',{extra:[startc,startLoc,nbody]});
+
+  if (!this.expectT(CH_LPAREN))
+    this.err('do.has.no.opening.paren',{extra:[startc,startLoc,nbody]});
+
+  var cond = core(this.parseExpr(CTX_TOP));
+  var c = this.c, li = this.li, col = this.col;
+  if (!this.expectT(CH_RPAREN))
+    this.err('do.has.no.closing.paren',{extra:[startc,startLoc,nbody,cond]});
+
+  if (this.lttype === CH_SEMI) {
+     c = this.c;
+     li = this.li ;
+     col = this.col;
+     this.next();
+  }
+
+  this.foundStatement = true;
+  this.exitScope(); 
+
+  return {
+    type: 'DoWhileStatement',
+    test: cond,
+    start: startc,
+    end: c,
+    body: nbody,
+    loc: {
+      start: loc0,
+      end: { line: li, column: col } },
+    '#scope': scope,
+    '#y': -1
+  };
+};
+
+},
+function(){
+this.parseEmptyStatement =
+function() {
+  var n = {
+    type: 'EmptyStatement',
+    start: this.c0,
+    loc: { start: this.loc0(), end: this.loc() },
+    end: this.c
+  };
+  this.next();
+  return n;
+};
+
+},
+function(){
+this.parseFor = function() {
+  this.resvchk();
+  this.testStmt() || this.err('not.stmt');
+  this.fixupLabels(true) ;
+
+  var c0 = this.c0, loc0 = this.loc0();
+  this.next () ;
+
+  if (!this.expectT(CH_LPAREN))
+    this.err('for.with.no.opening.paren',{extra:[c0,loc0]});
+
+  this.enterScope(this.scope.spawnBare());
+  var scope = this.scope;
+  var head = null, headIsExpr = false, headctx = CTX_NONE;
+  this.missingInit = false;
+
+  this.scope.enterForInit();
+  if (this.lttype === TK_ID)
+  switch ( this.ltval ) {
+  case 'let':
+    if (this.v<5)
+      break;
+  case 'var':
+  case 'const':
+    this.canBeStatement = true;
+    head = this.parseVariableDeclaration(CTX_FOR);
+    break;
+  }
+
+  if (this.foundStatement) // head is a decl
+    this.foundStatement = false;
+  else {
+    headIsExpr = true;
+    head = this.parseExpr(headctx = CTX_NULLABLE|CTX_TOP|CTX_FOR);
+  }
+  this.scope.exitForInit();
+
+  var nbody = null;
+  var afterHead = null;
+
+  if (head !== null && this.lttype === TK_ID) {
+    var kind = 'ForInStatement', iterkw = this.ltval;
+    if (iterkw === 'of') {
+      kind = 'ForOfStatement';
+      this.ensureVarsAreNotResolvingToCatchParams();
+    }
+    else if (iterkw === 'in')
+      this.resvchk();
+    else 
+      this.err('for.iter.not.of.in',{extra:[startc,startLoc,head]});
+
+    if (headIsExpr) {
+      if (head.type === 'AssignmentExpression')
+        this.err('for.in.has.init.assig',{tn:head,extra:[startc,startLoc,kind]});
+      this.adjustSimpleErrorsBeforeConvertingToAssignable();
+      this.toAssig(head, headctx);
+      this.flushSimpleErrors();
+    }
+    else if (head.declarations.length !== 1)
+      this.err('for.decl.multi',{tn:head,extra:[startc,startLoc,kind]});
+    else if (this.missingInit)
+      this.missingInit = false;
+    else if (head.declarations[0].init) {
+      if (this.scope.insideStrict() || kind === 'ForOfStatement' ||
+          this.v < 7 || head.declarations[0].id.type !== 'Identifier' || head.kind !== 'var')
+        this.err('for.in.has.decl.init',{tn:head,extra:[startc,startLoc,kind]});
+    }
+
+    this.next();
+    afterHead = kind === 'ForOfStatement' ? 
+      this.parseNonSeqExpr(PREC_NONE, CTX_TOP) :
+      this.parseExpr(CTX_TOP);
+
+    if (!this.expectT(CH_RPAREN))
+      this.err('for.iter.no.end.paren',{extra:[head,startc,startLoc,afterHead,kind]});
+
+    nbody = this.parseStatement(true);
+    if (!nbody)
+      this.err('null.stmt');
+
+    this.foundStatement = true;
+    this.exitScope();
+
+    return {
+      type: kind,
+      loc: { start: c0, end: nbody.loc.end },
+      start: c0,
+      end: nbody.end,
+      right: core(afterHead),
+      left: head,
+      body: nbody, 
+      '#y': -1,
+      '#scope': scope
+    };
+  }
+
+  if (headIsExpr)
+    this.flushSimpleErrors();
+  else if (head && this.missingInit)
+    this.err('for.decl.no.init',{extra:[startc,startLoc,head]});
+
+  if (!this.expectT(CH_SEMI))
+    this.err('for.simple.no.init.semi',{extra:[startc,startLoc,head]});
+
+  afterHead = this.parseExpr(CTX_NULLABLE|CTX_TOP);
+  if (!this.expectT(CH_SEMI))
+    this.err('for.simple.no.test.semi',{extra:[startc,startLoc,head,afterHead]});
+
+  var tail = this.parseExpr(CTX_NULLABLE|CTX_TOP);
+  if (!this.expectT(CH_RPAREN))
+    this.err('for.simple.no.end.paren',{extra:[startc,startLoc,head,afterHead,tail]});
+
+  nbody = this.parseStatement(true);
+  if (!nbody)
+    this.err('null.stmt');
+  this.foundStatement = true;
+  this.exitScope();
+
+  return {
+    type: 'ForStatement',
+    init: head && core(head), 
+    start : c0,
+    end: nbody.end,
+    test: afterHead && core(afterHead),
+    loc: { start: loc0, end: nbody.loc.end },
+    update: tail && core(tail),
+    body: nbody,
+    '#scope': scope,
+    '#y': -1
+  };
+};
+
+this.ensureVarsAreNotResolvingToCatchParams = function() {
+  return;
+};
+
+},
+function(){
+this.id = function() {
+  var id = {
+    type: 'Identifier',
+    name: this.ltval,
+    start: this.c0,
+    end: this.c,
+    loc: {
+      start: this.loc0(),
+      end: this.loc() },
+    raw: this.ltraw
+  };
+  this.next() ;
+  return id;
+};
+
+},
+function(){
+this.parseIfStatement = function () {
+  this.resvchk();
+  !this.testStmt() && this.err('not.stmt');
+  this.fixupLabels(false);
+
+  this.enterScope(this.scope.spawnBare());
+  var ifScope = this.scope; 
+  this.scope.mode |= SM_INSIDE_IF;
+
+  var c0 = this.c0, loc0 = this.loc0();
+
+  this.next(); // 'if'
+  if (!this.expectT(CH_LPAREN))
+    this.err('if.has.no.opening.paren');
+
+  var cond = core(this.parseExpr(CTX_TOP));
+
+  if (!this.expectT(CH_RPAREN))
+    this.err('if.has.no.closing.paren');
+
+  var nbody = this.parseStatement(false);
+  this.exitScope(); 
+
+  var alt = null, elseScope = null;
+  if (this.lttype === TK_ID && this.ltval === 'else') {
+    this.resvchk();
+    this.next(); // 'else'
+    this.enterScope(this.scope.spawnBare());
+    elseScope = this.scope; 
+    alt = this.parseStatement(false);
+    this.exitScope();
+  }
+
+  this.foundStatement = true;
+  return {
+    type: 'IfStatement',
+    test: cond,
+    start: c0,
+    end: (alt||nbody).end,
+    loc: {
+      start: loc0,
+      end: (alt||nbody).loc.end },
+    consequent: nbody,
+    alternate: alt,
+    '#ifScope': ifScope,
+    '# elseScope': elseScope, 
+    '#y': -1
+  };
+};
+
+},
+function(){
+this.parseLabel = function(label, allowNull) {
+  this.next();
+  var mname = _m(label.name);
+  var ex = this.findLabel_m(mname); // existing label
+  ex && this.err('label.is.a.dup',{tn:label,extra:ex});
+
+  this.labels[mname] =
+    this.unsatisfiedLabel ?
+    this.unsatisfiedLabel :
+    this.unsatisfiedLabel = { loop: false };
+
+  var stmt = this.parseStatement(allowNull);
+  this.labels[mname] = null;
+
+  return {
+    type: 'LabeledStatement',
+    label: label,
+    start: label.start,
+    end: stmt.end,
+    loc: { start: label.loc.start, end: stmt.loc.end },
+    body: stmt
+  };
+};
+
+},
+function(){
+this.mem_id = 
+function() {
+  if (this.v>5)
+    return this.id();
+
+  this.validate(this.ltval);
+  return this.id();
+};
+
+this.mem_expr = 
+function() {
+  if (this.v <= 5)
+    this.err('ver.mem.comp');
+
+  var c0 = this.c0, loc0 = this.loc0();
+  this.next() ;
+  
+  // none of the modifications memberExpr may make to this.pt, this.at, and this.st
+  // overwrite some other unrecorded this.pt, this.at, or this.st -- an unrecorded value of <pt:at:st>
+  // means a whole elem was just parsed, and <pt:at:st> is immediately recorded after that whole
+  // potpat element is parsed, so if a memberExpr overwrites <pt:at:st>, that <pt:at:st> is not an
+  // unrecorded one.
+  
+  // TODO: it is not necessary to reset <pt:at>
+  this.pt = this.at = this.st = 0;
+
+  // TODO: should be CTX_NULLABLE, or else the next line is in vain  
+  var e = this.parseNonSeqExpr(PREC_NONE, CTX_NULLABLE|CTX_TOP);
+  e || this.err('prop.dyna.no.expr');
+
+  var n = {
+    type: PAREN,
+    expr: e, 
+    start: c0,
+    end: this.c,
+    loc: { start: loc0, end: this.loc() }
+  };
+
+  if (!this.expectT(CH_RSQBRACKET))
+    this.err('prop.dyna.is.unfinished');
+
+  return n;
+};
+
+},
+function(){
+this.parseMeta =
+function(c0,loc0,c,li,col) {
+  this.v<=5 && this.err('ver.ntarget');
+  this.lttype !== TK_ID && this.err('ntarget.id');
+  if (this.ltval !== 'target')
+    this.err('meta.new.has.unknown.prop');
+  
+  if (!this.scope.canHaveNewTarget())
+    this.err('meta.new.not.in.function',{c0:startc,loc:startLoc});
+
+  var prop = this.id();
+
+  return {
+    type: 'MetaProperty',
+    meta: {
+      type: 'Identifier',
+      name : 'new',
+      start: c0,
+      end: c,
+      loc: {
+        start : loc0,
+        end: { line: li, column: col }
+      } 
+    },
+    start : c0,
+    property: prop,
+    end: prop.end,
+    loc : { start: loc0, end: prop.loc.end }
+  };
+};
+
+},
+function(){
+this.parseObjectExpression = function(ctx) {
+  var c0 = this.c0, loc0 = this.loc0(),
+      elem = null, list = [], first__proto__ = null,
+      elctx = CTX_NONE,
+      pt = ERR_NONE_YET, pe = null, po = null,
+      at = ERR_NONE_YET, ae = null, ao = null,
+      st = ERR_NONE_YET, se = null, so = null,
+      n = null;
+
+  if (ctx & CTX_PAT) {
+    elctx |= ctx & CTX_PARPAT;
+    elctx |= ctx & CTX_PARPAT_ERR;
+  }
+  else 
+    elctx |= CTX_TOP;
+
+  if (errt_track(ctx)) {
+    errt_ptrack(ctx) && this.pt_reset();
+    errt_atrack(ctx) && this.at_reset();
+    errt_strack(ctx) && this.st_reset();
+  }
+
+  var pc0 = -1, pli0 = -1, pcol0 = -1;
+  var ac0 = -1, ali0 = -1, acol0 = -1;
+  var sc0 = -1, sli0 = -1, scol0 = -1;
+
+  do {
+    this.next();
+    this.first__proto__ = first__proto__;
+    elem = this.parseMem(elctx, ST_OBJMEM);
+
+    if (elem === null)
+      break;
+
+    if (!first__proto__ && this.first__proto__)
+      first__proto__ = this.first__proto__;
+
+    list.push(core(elem));
+    if (!errt_track(elctx))
+      continue;
+
+    if (errt_ptrack(elctx) && this.pt_override(pt)) {
+      pt = this.pt, pe = this.pe, po = elem;
+      if (errt_pin(pt))
+        pc0 = this.ploc.c0, pli0 = this.ploc.li0, pcol0 = this.ploc.col0;
+      if (errt_psyn(pt))
+        elctx |= CTX_HAS_A_PARAM_ERR;
+    }
+    if (errt_atrack(elctx) && this.at_override(at)) {
+      at = this.at; ae = this.ae; ao = elem;
+      if (errt_pin(at))
+        ac0 = this.aloc.c0, ali0 = this.aloc.li0, acol0 = this.aloc.col0;
+      if (errt_asyn(at))
+        elctx |= CTX_HAS_AN_ASSIG_ERR;
+    }
+    if (errt_strack(elctx) && this.st_override(st)) {
+      st = this.st; se = this.se; so = elem;
+      if (errt_pin(st))
+        sc0 = this.eloc.c0, sli0 = this.eloc.li0, scol0 = this.eloc.col0;
+      if (errt_ssyn(st))
+        elctx |= CTX_HAS_A_SIMPLE_ERR;
+    }
+  } while (this.lttype === ',');
+
+  n = {
+    properties: list,
+    type: 'ObjectExpression',
+    start: startc,
+    end: this.c,
+    loc: { start: startLoc, end: this.loc() }, 
+    '#y': -1
+  };
+
+  if (errt_haserr(ctx,pt)) {
+    this.pt_teot(pt,pe,po);
+    errt_pin(pt) && this.pin_pt(pc0,pli0,pcol0);
+  }
+  if (errt_haserr(ctx,at)) {
+    this.at_teot(at,ae,ao);
+    errt_pin(at) && this.pin_at(ac0,ali0,acol0);
+  }
+  if (errt_haserr(ctx,st)) {
+    this.st_teot(st,se,so);
+    errt_pin(st) && this.pin_st(sc0,sli0,scol0);
+  }
+
+  if (!this.expectT(CH_RCURLY))
+    this.err('obj.unfinished');
+
+  return n;
+};
+
+
+},
+function(){
+this.parseParen = function(ctx) {
+  var c0 = this.c0, loc0 = this.loc0(),
+      list = null, prevys = this.suspys,
+      elctx = CTX_NONE, hasRest = false,
+      pc0 = -1, pli0 = -1, pcol0 = -1,
+      sc0 = -1, sli0 = -1, scol0 = -1,
+      st = ERR_NONE_YET, se = null, so = null,
+      pt = ERR_NONE_YET, pe = null, po = null,
+      insideParams = false,
+      parenScope = null;
+
+  if (ctx & CTX_PAT) {
+    this.pt = this.st = ERR_NONE_YET;
+    this.pe = this.po =
+    this.se = this.so = null;
+    this.suspys = null;
+    elctx = CTX_PAT|CTX_PARAM|CTX_NULLABLE;
+    this.enterScope(this.scope.parenScope());
+    insideParen = true;
+  }
+  else
+    elctx = CTX_TOP;
+
+  var lastElem = null, hasTailElem = false;
+  this.next();
+  while (true) {
+    lastElem = elem;
+    elem = this.parseNonSeqExpr(PREC_NONE, elctx);
+    if (elem === null) {
+      if (this.lttype === TK_ELLIPSIS) {
+        if (!errt_paramList(elctx)) {
+          this.st_teot(ERR_UNEXPECTED_REST,null,null);
+          this.flushSimpleErrors();
+        }
+        elem = this.parseSpread(elctx);
+        hasRest = true;
+      }
+      else if (list) {
+        if (this.v < 7)
+          this.err('seq.non.tail.expr');
+        else 
+          hasTailElem = true;
+      } 
+      else break;
+    }
+
+    if (errt_paramList(elctx)) {
+      if (errt_ptrack(elctx)) {
+        if (this.pt === ERR_NONE_YET && !hasTailElem) {
+          // TODO: function* l() { ({[yield]: (a)})=>12 }
+          if (elem.type === PAREN_NODE) {
+            this.pt = ERR_PAREN_UNBINDABLE;
+            this.pe = elem;
+          }
+          else if(this.suspys) {
+            this.pt = ERR_YIELD_OR_SUPER;
+            this.pe = this.suspys;
+          }
+        }
+        if (this.pt_override(pt)) {
+          pt = this.pt, pe = this.pe, po = core(elem);
+          if (errt_pin(pt))
+            pc0 = this.ploc.c0, pli0 = this.ploc.li0, pcol0 = this.ploc.col0;
+          if (errt_psyn(pt))
+            elctx |= CTX_HAS_A_PARAM_ERR;
+        }
+      }
+
+      if (errt_strack(elctx)) {
+        if (this.st === ERR_NONE_YET) {
+          if (hasRest) {
+            this.st = ERR_UNEXPECTED_REST;
+            this.se = elem;
+          }
+          else if (hasTailElem) {
+            this.st = ERR_NON_TAIL_EXPR;
+            this.se = lastElem;
+          }
+        }
+        if (this.st_override(st)) {
+          st = this.st, se = this.se, so = elem && core(elem);
+          if (errt_pin(st))
+            sc0 = this.eloc.c0, sli0 = this.eloc.li0, scol0 = this.eloc.col0;
+          if (errt_ssyn(st))
+            elctx |= CTX_HAS_A_SIMPLE_ERR;
+        }
+      }
+    }
+
+    if (hasTailElem)
+      break;
+
+    if (list) list.push(core(elem));
+    if (this.lttype === CH_COMMA) {
+      if (hasRest)
+        this.err('rest.arg.has.trailing.comma');
+      if (list === null)
+        list = [core(elem)];
+      this.next();
+    }
+    else break;
+  }
+
+  var n = {
+      type: PAREN_NODE,
+      expr: list ? {
+        type: 'SequenceExpression',
+        expressions: list,
+        start: list[0].start,
+        end: list[list.length-1].end,
+        loc: {
+          start: list[0].loc.start,
+          end: list[list.length-1].loc.end
+        } 
+      } : elem && core(elem),
+      start: c0,
+      end: this.c,
+      loc: { start: loc0, end: this.loc() }
+  };
+
+  if (!this.expectT(CH_RPAREN))
+    this.err('unfinished.paren',{tn:n});
+
+  if (elem === null && list === null) {
+    if (ctx & CTX_PARPAT) {
+      st = ERR_EMPTY_LIST_MISSING_ARROW;
+      se = so = n;
+    }
+    else {
+      this.st_teot(ERR_EMPTY_LIST_MISSING_ARROW,n,n);
+      this.flushSimpleErrors();
+    }
+  }
+
+  if (errt_pat(ctx)) {
+    if (pt !== ERR_NONE_YET) {
+      this.pt_teot(pt,pe,po);
+      errt_pin(pt) && this.ppin(pc0,pli0,pcol0);
+    }
+    if (st !== ERR_NONE_YET) {
+      this.st_teot(st,se,so);
+      errt_pin(st) && this.spin(sc0,sli0,scol0);
+    }
+    if (list === null && elem !== null &&
+       elem.type === 'Identifier' && elem.name === 'async')
+      this.parenAsync = n;
+  }
+
+  if (prevys !== null)
+    this.suspys = prevys;
+
+  if (insideParams)
+    parenScope = this.exitScope();
+
+  this.parenScope = parenScope;
+
+  return n;
+};
+
+this.dissolveParen = function() {
+  if (this.parenScope) {
+    this.parenScope.dissolve();
+    this.parenScope = null;
+  }
+};
+
+},
+function(){
+this.parsePat_array = 
+function() {
+  if (this.v <= 5)
+    this.err('ver.patarr');
+
+  var c0 = this.c0, loc0 = this.loc0(),
+      elem = null, list = [];
+
+  if (this.scope.insideArgs())
+    this.scope.enterUniqueArgs();
+
+  this.next();
+  while (true) {
+    elem = this.parsePat();
+    if (elem &&
+      this.lttype === TK_SIMPLE_BINARY &&
+      this.ltraw === '=' )
+      elem = this.parsePat_assig(elem);
+    else if (this.lttype === TK_ELLIPSIS) {
+      list.push(this.parsePat_rest());
+      break ;
+    }  
+
+    if (this.lttype === CH_COMMA) {
+      list.push(elem);
+      this.next();
+    } else  {
+      elem && list.push(elem);
+      break ;
+    }
+  }
+
+  var n = {
+    type: 'ArrayPattern',
+    loc: { start: loc0, end: this.loc() },
+    start: c0,
+    end: this.c,
+    elements: list,
+    '#y': -1
+  };
+
+  if (!this.expectT(CH_RSQBRACKET))
+    this.err('pat.array.is.unfinished');
+
+  return n;
+};
+
+},
+function(){
+this.parsePat_assig = 
+function (head) {
+  if (this.v <= 5)
+    this.err('ver.assig');
+  this.next() ;
+  var e = this.parseNonSeqExpr(PREC_NONE, CTX_TOP);
+  return {
+    type: 'AssignmentPattern',
+    start: head.start,
+    left: head,
+    end: e.end,
+    right: core(e),
+    loc: {
+      start: head.loc.start,
+      end: e.loc.end },
+    '#y': -1
+  };
+};
+
+},
+function(){
 this.parsePat_obj =
 function() {
   this.v<=5 && this.err('ver.patobj');
@@ -4156,6 +7025,332 @@ function() {
 
 },
 function(){
+this.parsePat = 
+function() {
+  switch (this.lttype) {
+  case TK_ID:
+    this.validate(this.ltval);
+    var id = this.id();
+    this.declare(id);
+    if (this.scope.insideStrict() && arguments_or_eval(id.name))
+      this.err('bind.arguments.or.eval');
+
+    return id;
+
+  case CH_LSQBRACKET:
+     return this.parsePat_array();
+
+  case CH_LCURLY:
+     return this.parsePat_obj();
+
+  default:
+     return null;
+  }
+};
+
+},
+function(){
+this.parseProgram = function () {
+  var c0 = this.c, li0 = this.li, col0 = this.col;
+  var ec = -1, eloc = null;
+
+  var globalScope = new GlobalScope();
+
+  this.scope = new Scope(globalScope, ST_SCRIPT);
+  globalScope.scriptScope = this.scope;
+
+  this.scope.parser = this;
+  if (!this.isScript)
+    this.scope.enterStrict();
+
+  this.next();
+
+  var list = this.blck(); 
+
+  this.scope.finish();
+  globalScope.finish();
+
+  var n = {
+    type: 'Program',
+    body: list,
+    start: 0,
+    end: this.src.length,
+    sourceType: !this.isScript ? "module" : "script" ,
+    loc: {
+      start: {line: li0, column: col0},
+      end: {line: this.li, column: this.col}
+    }, 
+    '#scope': this.scope
+  };
+
+  if (!this.expectT(TK_EOF))
+    this.err('program.unfinished');
+
+  return n;
+};
+
+},
+function(){
+
+var gRegexFlag =               1 ,
+    uRegexFlag = gRegexFlag << 1 ,
+    yRegexFlag = uRegexFlag << 1 ,
+    mRegexFlag = yRegexFlag << 1 ,
+    iRegexFlag = mRegexFlag << 1 ;
+
+var regexFlagsSupported = 0;
+
+(function() {
+  var str = "guymi", 
+      val = [gRegexFlag,uRegexFlag,yRegexFlag,mRegexFlag,iRegexFlag], e = 0;
+  while (e < flags.length) {
+    try {
+      new RegExp("l",str.charAt(e));
+      regexFlagsSupported |= val[e];
+    } catch (err) {}
+    e++;
+  }
+})();
+
+function curlyReplace(matchedString, b, matchIndex, wholeString ) {
+  var c = parseInt( '0x' + b );
+  if ( c <= 0xFFFF ) return '\\u' + hex(c);
+  return '\\uFFFF';
+}
+
+function regexReplace(matchedString, b, noB, matchIndex, wholeString) {
+  var c = parseInt('0x' + ( b || noB ) ) ;
+  if (c > 0x010FFFF )
+    this.err('regex.val.not.in.range');
+  
+  if ( c <= 0xFFFF ) return String.fromCharCode(c) ;
+
+  c -= 0x010000;
+  return '\uFFFF';
+} 
+
+function verifyRegex(regex, flags) {
+  var regexVal = null;
+
+  try {
+    return new RegExp(regex, flags);
+  } catch ( e ) { throw e; }
+
+}
+
+function verifyRegex_soft (regex, flags) {
+  var regexVal = null;
+
+  try {
+    return new RegExp(regex, flags);
+  } catch ( e ) { return null; }
+
+}
+
+this.parseRegExpLiteral = function() {
+  if (this.v < 2)
+    this.err('ver.regex');
+     var startc = this.c - 1, startLoc = this.locOn(1),
+         c = this.c, src = this.src, len = src.length;
+
+     var inSquareBrackets = false ;
+     WHILE:
+     while ( c < len ) {
+       switch ( src.charCodeAt(c) ) {
+         case CH_LSQBRACKET:
+            if ( !inSquareBrackets )
+               inSquareBrackets = true;
+
+            break;
+
+         case CH_BACK_SLASH:
+            ++c;
+            if (c < len) switch(src.charCodeAt(c)) {
+               case CH_CARRIAGE_RETURN: 
+                  if ( l.charCodeAt(c + 1) === CH_LINE_FEED ) c++;
+               case CH_LINE_FEED :
+               case 0x2028 :
+               case 0x2029 :
+                  if ( this.err('regex.newline.esc',{c0:c}) )
+                    return this.errorHandlerOutput ;
+            }
+
+            break;
+
+         case CH_RSQBRACKET:
+            if ( inSquareBrackets )
+               inSquareBrackets = false;
+
+            break;
+
+         case CH_DIV :
+            if ( inSquareBrackets )
+               break;
+
+            break WHILE;
+
+         case CH_CARRIAGE_RETURN: if ( l.charCodeAt(c + 1 ) === CH_LINE_FEED ) c++ ;
+         case CH_LINE_FEED :
+         case 0x2028 :
+         case 0x2029 :
+           if ( this.err('regex.newline',{c0:c}) )
+             return this.errorHandlerOutput ;
+
+//       default:if ( o >= 0x0D800 && o <= 0x0DBFF ) { this.col-- ; }
+       }
+
+       c++ ;
+     }
+
+     if ( src.charCodeAt(c) !== CH_DIV && 
+          this.err('regex.unfinished') )
+       return this.errorHandlerOutput ;
+
+     var flags = 0;
+     var flagCount = 0;
+     WHILE:
+     while ( flagCount <= 5 ) {
+        switch ( src.charCodeAt ( ++c ) ) {
+            case CH_g:
+                if (flags & gRegexFlag)
+                  this.err('regex.flag.is.dup',{c0:c});
+                flags |= gRegexFlag; break;
+            case CH_u:
+                if (flags & uRegexFlag)
+                  this.err('regex.flag.is.dup',{c0:c});
+                flags |= uRegexFlag; break;
+            case CH_y:
+                if (flags & yRegexFlag)
+                  this.err('regex.flag.is.dup',{c0:c});
+                flags |= yRegexFlag; break;
+            case CH_m:
+                if (flags & mRegexFlag)
+                  this.err('regex.flag.is.dup',{c0:c});
+                flags |= mRegexFlag; break;
+            case CH_i:
+                if (flags & iRegexFlag)
+                  this.err('regex.flag.is.dup',{c0:c});
+                flags |= iRegexFlag; break;
+
+            default : break WHILE;
+        }
+
+        flagCount++ ;
+     }
+     var patternString = src.slice(this.c, c-flagCount-1 ), flagsString = src .slice(c-flagCount,c);
+     var val = null;
+
+     var normalizedRegex = patternString;
+
+     // those that contain a 'u' flag need special treatment when RegExp constructor they get sent to
+     // doesn't support the 'u' flag: since they can have surrogate pair sequences (which are not allowed without the 'u' flag),
+     // they must be checked for having such surrogate pairs, and should replace them with a character that is valid even
+     // without being in the context of a 'u' 
+     if ( (flags & uRegexFlag) && !(regexFlagsSupported & uRegexFlag) )
+          normalizedRegex = normalizedRegex.replace( /\\u\{([A-F0-9a-f]+)\}/g, curlyReplace) // normalize curlies
+             .replace( /\\u([A-F0-9a-f][A-F0-9a-f][A-F0-9a-f][A-F0-9a-f])/g, regexReplace ) // convert u
+             .replace( /[\ud800-\udbff][\udc00-\udfff]/g, '\uFFFF' );
+       
+
+     // all of the 1 bits in flags must also be 1 in the same bit index in regexsupportedFlags;
+     // flags ^ rsf returns a bit set in which the 1 bits mean "this flag is either not used in flags, or yt is not supported";
+     // for knowing whether the 1 bit has also been 1 in flags, we '&' the above bit set with flags; the 1 bits in the
+     // given bit set must both be 1 in flags and in flags ^ rsf; that is, they are both "used" and "unsupoorted or unused",
+     // which would be equal to this: [used && (unsupported || !used)] === unsopprted
+     if (flags & (regexFlagsSupported^flags) )
+       val  = verifyRegex_soft (normalizedRegex, "");
+     else
+        val = verifyRegex( patternString, flagsString ) ;
+
+     if ( !val &&
+        this.err('regex.not.valid') )
+       return this.errorHandlerOutput;
+
+     this.col += (c-this.c);
+     var regex = { type: 'Literal', regex: { pattern: patternString, flags: flagsString },
+                   start: startc, end: c,
+                   value: val, loc: { start: startLoc, end: this.loc() }, 
+                   raw: this.src.substring(startc, c) };
+     this.c = c;
+
+     this.next () ;
+     return regex ;
+};
+
+
+
+},
+function(){
+this.parseReturn = function () {
+  this.resvchk();
+  !this.ensureSAT() && this.err('not.stmt');
+  this.fixupLabels(false ) ;
+
+  if (!this.scope.canReturn()) 
+    this.err('return.not.in.a.function');
+
+  var c0 = this.c0, loc0 = this.loc0();
+  var c = this.c, li = this.li, col = this.col, r = null;
+
+  this.next(); // 'return'
+
+  if (!this.nl)
+    r = this.parseExpr(CTX_TOP);
+
+  !this.semi() && this.err('no.semi');
+  var ec = this.semiC || (r && r.end) || c;
+  var eloc = this.semiLoc ||
+    (r && r.loc.end) ||
+    { line: li, column: col };
+
+  this.foundStatement = true;
+  return { 
+    type: 'ReturnStatement',
+    argument: r,
+    start: startc,
+    end: ec,
+    loc: {
+      start: loc0,
+      end: eloc 
+    } 
+  };
+};
+
+},
+function(){
+this.parseSpread = 
+function(ctx) {
+  this.v <= 5 && this.err('ver.spread.rest');
+
+  var c0 = this.c0, loc0 = this.loc0();
+  this.next();
+
+  var arg = this.parseNonSeqExpr(PREC_NONE, ctx);
+  if (arg === null)
+    this.err('spread.arg.is.null');
+
+  if (arg.type === PAREN_NODE) {
+    if (errt_ptrack(ctx)) { 
+      this.pt = ERR_PAREN_UNBINDABLE;
+      this.pe = arg;
+    }
+    if (errt_atrack(ctx) && !this.ensureSAT(arg.expr)) {
+      this.at = ERR_PAREN_UNBINDABLE;
+      this.ae = arg;
+    }
+  }
+    
+  return {
+    type: 'SpreadElement',
+    loc: { start: loc0, end: arg.loc.end },
+    start: c0,
+    end: arg.end,
+    argument: core(arg)
+  };
+};
+
+},
+function(){
 this.parseString =
 function(startChar) {
   var c = this.c, s = this.src, l = s.length, v = "";
@@ -4195,6 +7390,455 @@ function(startChar) {
       end: { line: this.li, column: this.col }
     }
   };
+};
+
+},
+function(){
+this.parseSwitchCase = function () {
+  var c0, loc0;
+  var nbody = null, cond = null;
+
+  if (this.lttype === TK_ID) 
+  switch (this.ltval) {
+  case 'case':
+    this.resvchk();
+    c0 = this.c0;
+    loc0 = this.loc0();
+    this.next(); // 'case'
+    cond = core(this.parseExpr(CTX_TOP)) ;
+    break;
+
+  case 'default':
+    this.resvchk();
+    c0 = this.c0;
+    loc0 = this.loc0();
+    this.next();
+    break ;
+
+  default: return null;
+  } else return null;
+
+  var c = this.c, li = this.li, col = this.col;
+  if (!this.expectT(CH_COLON))
+    this.err('switch.case.has.no.colon');
+
+  nbody = this.blck();
+  var last = nbody.length ? nbody[nbody.length-1] : null;
+
+  var ec = -1, eloc = null;
+  if (last) {
+    ec = last.end;
+    eloc = last.loc.end;
+  } else {
+    ec = c;
+    eloc = { line: li, column: col };
+  }
+
+  return {
+    type: 'SwitchCase',
+    test: cond,
+    start: startc,
+    end: ec,
+    loc: { start: loc0, end: eloc },
+    consequent: nbody,
+    '#y': -1
+  };
+};
+
+},
+function(){
+this.parseSwitch = function () {
+  this.resvchk();
+  !this.ensureStmt_soft() && this.err('not.stmt');
+  this.fixupLabels(false) ;
+
+  var c0 = this.c0, loc0 = this.loc0(),
+      cases = [], hasDefault = false , elem = null;
+
+  this.next(); // 'switch'
+  if (!this.expectT(CH_LPAREN))
+    this.err('switch.has.no.opening.paren');
+
+  var switchExpr = core(this.parseExpr(CTX_TOP));
+
+  if (!this.expectT(CH_RPAREN))
+    this.err('switch.has.no.closing.paren');
+
+  if (!this.expectT(CH_LCURLY))
+    this.err('switch.has.no.opening.curly');
+
+  this.enterScope(this.scope.spawnBlock()); 
+  var scope = this.scope;
+
+  this.allow(SA_BREAK);
+
+  while (elem = this.parseSwitchCase()) {
+    if (elem.test === null) {
+       if (hasDefault ) this.err('switch.has.a.dup.default');
+       hasDefault = true ;
+    }
+    cases.push(elem);
+  }
+
+  this.foundStatement = true;
+  this.exitScope(); 
+
+  var n = {
+    type: 'SwitchStatement',
+    cases: cases,
+    start: c0,
+    discriminant: switchExpr,
+    end: this.c,
+    loc: {
+      start: loc0,
+      end: this.loc() }, 
+    '#scope': scope,
+    '#y': -1
+  };
+
+  if (!this.expectT(CH_RCURLY))
+    this.err('switch.unfinished');
+
+  return n;
+};
+
+},
+function(){
+this.parseThrow =
+function () {
+  this.resvchk();
+  this.testStmt() || this.err('not.stmt');
+  this.fixupLabels(false ) ;
+
+  var ex = null, c0 = this.c0, loc0 = this.locBegin();
+  var li = this.li, c = this.c, col = this.col;
+
+  this.next(); // 'throw'
+
+  if (this.nl)
+    this.err('throw.has.newline');
+
+  ex = this.parseExpr(CTX_NULLABLE|CTX_TOP);
+  if (ex === null)
+    this.err('throw.has.no.argument');
+
+  this.semi() || this.err('no.semi');
+
+  this.foundStatement = true;
+  return {
+    type: 'ThrowStatement',
+    argument: core(ex),
+    start: c0,
+    end: this.semiC || ex.end,
+    loc: {
+      start: loc0,
+      end: this.semiLoc || ex.loc.end
+    }
+  };
+};
+
+},
+function(){
+this.parseExpr =
+function(ctx) {
+  var head = this.parseNonSeqExpr(PREC_NONE, ctx);
+  var latestExpr = null;
+
+  if (this.lttype !== CH_COMMA)
+    return head;
+
+  ctx &= CTX_FOR;
+  ctx |= CTX_TOP;
+
+  var e = [core(head)];
+  do {
+    this.next();
+    latestExpr = this.parseNonSeqExpr(PREC_NONE, ctx);
+    e.push(core(latestExpr));
+  } while (this.lttype === CH_COMMA);
+
+  return {
+    type: 'SequenceExpression',
+    expressions: e,
+    start: head.start,
+    end: latestExpr.end,
+    loc: {
+      start: head.loc.start,
+      end: latestExpr.loc.end
+    },
+    '#y': -1
+  };
+};
+
+},
+function(){
+this.parseTryStatement = function () {
+  this.resvchk();
+  this.ensureSAT() || this.err('not.stmt');
+  this.fixupLabels(false);
+
+  var c0 = this.c0, loc0 = this.loc0();
+
+  this.next(); // 'try'
+
+  this.enterScope(this.scope.spawnBlock()); 
+
+  var tryBlock = this.parseDependent('try');
+  var tryScope = this.scope; 
+
+  this.exitScope(); 
+
+  var finBlock = null, catBlock  = null;
+  if (this.lttype === TK_ID && this.ltval === 'catch')
+    catBlock = this.parseCatchClause();
+
+  var finScope = null;
+  if (this.lttype === TK_ID && this.ltval === 'finally') {
+    this.resvchk();
+    this.next();
+    this.enterScope(this.scope.spawnBare()); 
+    finScope = this.scope;
+    finBlock = this.parseDependent('finally');
+    this.exitScope(); 
+  }
+
+  var finOrCat = finBlock || catBlock;
+
+  finOrCat || this.err('try.has.no.tail');
+  this.foundStatement = true;
+
+  return  {
+    type: 'TryStatement',
+    block: tryBlock,
+    start: c0,
+    end: finOrCat.end,
+    handler: catBlock,
+    finalizer: finBlock,
+    loc: {
+      start: loc0,
+      end: finOrCat.loc.end },
+    '#tryScope': tryScope,
+    '#finScope': finScope,
+    '#y': -1
+  };
+};
+
+},
+function(){
+this.parseUnaryExpression =
+function(ctx) {
+  var op = "", loc0 = this.loc0(), c0 = this.c0, vdt = this.vdt;
+
+  if (vdt !== VDT_NONE) {
+    this.vdt = VDT_NONE;
+    op = this.ltval;
+  }
+  else
+    op = this.ltraw;
+
+  this.next();
+  var arg = this.parseNonSeqExpr(PREC_U, context & CTX_FOR);
+
+  if (this.scope.insideStrict() &&
+    vdt === VDT_DELETE &&
+    core(arg).type !== 'MemberExpression')
+    this.err('delete.arg.not.a.mem',{tn:arg,extra:{c0:startc,loc0:startLoc,context:context}});
+
+  if (vdt === VDT_AWAIT) {
+    var n = {
+      type: 'AwaitExpression',
+      argument: core(arg),
+      start: c0,
+      end: arg.end,
+      loc: { start: loc0, end: arg.loc.end }
+    };
+    this.suspys = n;
+    return n;
+  }
+
+  return {
+    type: 'UnaryExpression',
+    operator: op,
+    start: c0,
+    end: arg.end,
+    loc: { start: loc0, end: arg.loc.end },
+    argument: core(arg),
+    prefix: true
+  };
+};
+
+},
+function(){
+this.parseWhile = 
+function () {
+  this.resvchk();
+  !this.ensureStmt_soft() && this.err('not.stmt');
+  this.fixupLabels(true);
+
+  this.enterScope(this.scope.spawnBare());
+  var scope = this.scope; 
+  this.allow(SA_BREAK|SA_CONTINUE);
+  this.scope.mode |= SM_LOOP;
+
+  var c0 = this.c0, loc0 = this.loc0();
+  this.next(); // 'while'
+
+  if (!this.expectT(CH_LPAREN))
+    this.err('while.has.no.opening.paren');
+ 
+  var cond = core(this.parseExpr(CTX_TOP));
+
+  if (!this.expectType_soft(CH_LPAREN))
+    this.err('while.has.no.closing.paren');
+
+  var nbody = this.parseStatement(false);
+  this.foundStatement = true;
+
+  var scope = this.exitScope();
+  return {
+    type: 'WhileStatement',
+    test: cond,
+    start: c0,
+    end: nbody.end,
+    loc: {
+      start: loc0,
+      end: nbody.loc.end },
+    body:nbody,
+    '#scope': scope, 
+    '#y': -1
+  };
+};
+
+},
+function(){
+this.parseWith = 
+function() {
+  this.resvchk();
+  this.testStmt() && this.err('not.stmt');
+  if (this.scope.insideStrict())
+    this.err('with.strict')  ;
+
+  this.fixupLabels(false);
+
+  this.enterScope(this.scope.spawnBare());
+  var scope = this.scope;
+
+  var c0 = this.c0, loc0 = this.loc0();
+  this.next(); // 'with'
+
+  if (!this.expectT(CH_LPAREN))
+    this.err('with.has.no.opening.paren');
+
+  var obj = this.parseExpr(CTX_TOP);
+  if (!this.expectT(CH_RPAREN))
+    this.err('with.has.no.end.paren');
+
+  var nbody = this.parseStatement(true);
+  this.exitScope();
+
+  this.foundStatement = true;
+  return  {
+      type: 'WithStatement',
+      loc: { start: loc0, end: nbody.loc.end },
+      start: c0,
+      end: nbody.end,
+      object: obj,
+      body: nbody,
+      '#scope': scope,
+      '#y': -1
+  };
+};
+
+},
+function(){
+this.parseYield = 
+function(ctx) {
+  var c = this.c, li = this.li, col = this.col;
+  var deleg = false, arg = null;
+  var c0 = this.c0, loc0 = this.loc0();
+
+  this.next(); // 'yield'
+
+  if (!this.nl) {
+    if (this.lttype === TK_SIMPLE_BINARY && this.ltraw === '*') {
+      deleg = true;
+      this.next(); // '*'
+      arg = this.parseNonSeqExpr(PREC_NONE, ctx&CTX_FOR);
+      if (!arg)
+        this.err('yield.has.no.expr.deleg');
+    }
+    else
+      arg = this.parseNonSeqExpr(PREC_NONE, (ctx&CTX_FOR)|CTX_NULLABLE);
+  }
+
+  var ec = -1, eloc = null;
+  if (arg) { ec = arg.end; eloc = arg.loc.end; }
+  else { ec = c; eloc = { line: li, column: col };
+
+  var n = {
+    type: 'YieldExpression',
+    argument: arg && core(arg),
+    start: c0,
+    delegate: deleg,
+    end: ec,
+    loc: { start : loc0, end: eloc },
+    '#y':-1
+  };
+ 
+  if (this.suspys === null)
+    this.suspys = n;
+
+  return n;
+};
+
+},
+function(){
+this.getOp = 
+function(ctx) {
+  switch ( this. lttype ) {
+  case TK_SIMP_BINARY:
+    return true;
+  case TK_AA_MM:
+    return true;
+  case TK_UNBIN:
+    this.prec = PREC_ADD_MIN;
+    return true;
+  case CH_DIV:
+    if (this.scat(this.c) === CH_EQUALITY_SIGN) {
+      this.prec = PREC_SIMP_ASSIG;
+      this.ltraw = '/=';
+      this.setsimpoff(this.c+1);
+    }
+    else
+      this.prec = PREC_MUL; 
+    return true;
+
+  case TK_ID:
+    switch (this.ltval) {
+    case 'in':
+      this.resvchk();
+    case 'of':
+      if (ctx & CTX_FOR) break;
+
+      this.prec = PREC_COMP;
+      this.ltraw = this.ltval;
+      return true;
+
+    case 'instanceof':
+      this.resvchk();
+      this.prec = PREC_COMP;
+      this.ltraw = this.ltval ;
+      return true;
+    }
+    return false;
+
+  case '?':
+    this.prec = PREC_COND;
+    return true;
+
+  default: return false;
+  }
+
 };
 
 },
@@ -4836,7 +8480,8 @@ function() {
 
 },
 function(){
-this.readOp_add = function() {
+this.readOp_add =
+function() {
   var c = this.c; c++ // '+'
   var ch = this.scat(c);
   if (ch === CH_ADD) {
@@ -4847,7 +8492,6 @@ this.readOp_add = function() {
   else if (ch === CH_EQUALITY_SIGN) {
     c++;
     this.lttype = TK_OP_ASSIG;
-    this.prec = PREC_ASSIG;
     this.ltraw = '+=';
   }
   else {
@@ -4865,18 +8509,20 @@ function() {
   var c = this.c; c++;
   var ch = this.scat(c);
 
-  this.lttype = TK_SIMP_BINARY;
   if (ch === CH_EQUALITY_SIGN) {
-    c++; this.prec = PREC_ASSIG;
+    c++; this.lttype = TK_OP_ASSIG;
     this.ltraw = '&=';
   }
-  else if (ch === CH_AND) {
-    c++; this.prec = PREC_LOG_AND;
-    this.ltraw = '&&';
-  }
   else {
-    this.prec = PREC_BIT_AND;
-    this.ltraw = '&';
+    this.lttype = TK_SIMP_BINARY;
+    if (ch === CH_AND) {
+      c++; this.prec = PREC_LOG_AND;
+      this.ltraw = '&&';
+    }
+    else {
+      this.prec = PREC_BIT_AND;
+      this.ltraw = '&';
+    }
   }
 
   this.setsimpoff(c);
@@ -4898,8 +8544,8 @@ function() {
   var c = this.c; c++; // '='
   var ch = this.scat(c);
 
-  this.lttype = TK_SIMP_BINARY;
   if (ch === CH_EQUALITY_SIGN) {
+    this.lttype = TK_SIMP_BINARY;
     c++; this.prec = PREC_EQ;
     ch = this.scat(c);
     if (ch === CH_EQUALITY_SIGN) {
@@ -4909,11 +8555,12 @@ function() {
     else this.ltraw = '==';
   }
   else if (ch === CH_GREATER_THAN) {
-    c++; this.prec = PREC_ASSIG;
+    this.lttype = TK_SIMP_ASSIG;
+    c++;
     this.ltraw = '=>';
   }
   else {
-    this.prec = PREC_ASSIG;
+    this.lttype = TK_SIMP_ASSIG;
     this.ltraw = '=';
   }
 
@@ -4952,37 +8599,42 @@ function() {
   var c = this.c; c++; // '>';
   var ch = this.scat(c);
 
-  this.lttype = TK_SIMP_BINARY;
   if (ch === CH_EQUALITY_SIGN) {
     c++;
     this.prec = PREC_COMP;
+    this.lttype = TK_SIMP_BINARY;
     this.ltraw = '>=';
   }
   else if (ch === CH_GREATER_THAN) {
     c++;
     ch = this.scat(c);
     if (ch === CH_EQUALITY_SIGN) {
-      c++; this.prec = PREC_ASSIG;
+      c++;
+      this.lttype = TK_OP_ASSIG;
       this.ltraw = '>>=';
     }
     else if (ch === CH_GREATER_THAN) {
       c++;
       ch = this.scat(c);
       if (ch === CH_EQUALITY_SIGN) {
-        c++; this.prec = PREC_ASSIG;
+        c++;
+        this.lttype = TK_OP_ASSIG;
         this.ltraw = '>>>=';
       }
       else {
+        this.lttype = TK_SIMP_BINARY;
         this.prec = PREC_SH;
         this.ltraw = '>>>';
       }
     }
     else {
+      this.lttype = TK_SIMP_BINARY;
       this.prec = PREC_SH;
       this.ltraw = '>>';
     }
   }
   else {
+    this.lttype = TK_SIMP_BINARY;
     this.prec = PREC_COMP;
     this.ltraw = '>';
   }
@@ -4997,10 +8649,10 @@ function() {
   var c = this.c; c++; // '<'
   var ch = this.scat(c);
 
-  this.lttype = TK_SIMP_BINARY;
   if (ch === CH_EQUALITY_SIGN) {
     c++;
     this.prec = PREC_COMP;
+    this.lttype = TK_SIMP_BINARY;
     this.ltraw = '<=';
   }
   else if (ch === CH_LESS_THAN) {
@@ -5008,15 +8660,17 @@ function() {
     ch = this.scat(c);
     if (ch === CH_EQUALITY_SIGN) {
       c++;
-      this.prec = PREC_ASSIG;
+      this.lttype = TK_OP_ASSIG;
       this.ltraw = '<<=';
     }
     else {
+      this.lttype = TK_SIMP_BINARY;
       this.prec = PREC_SH;
       this.ltraw = '<<';
     }
   }
   else {
+    this.lttype = TK_SIMP_BINARY;
     this.prec = PREC_COMP;
     this.ltraw = '<';
   }
@@ -5037,8 +8691,7 @@ function() {
   }
   else if (ch === CH_EQUALITY_SIGN) {
     c++;
-    this.prec = PREC_ASSIG;
-    this.lttype = TK_SIMP_BINARY;
+    this.lttype = TK_OP_ASSIG;
     this.ltraw = '-=';
   }
   else {
@@ -5056,12 +8709,13 @@ function() {
   var c = this.c; c++;
   var ch = this.scat(c);
 
-  this.lttype = TK_SIMP_BINARY;
   if (ch === CH_EQUALITY_SIGN) {
-    c++; this.prec = PREC_ASSIG;
+    this.lttype = TK_OP_ASSIG;
+    c++;
     this.ltraw = '%=';
   }
   else {
+    this.lttype = TK_SIMP_BINARY;
     this.prec = PREC_MUL;
     this.ltraw = '%';
   }
@@ -5074,26 +8728,27 @@ function() {
   var c = this.c; c++; // '*'
   var ch = this.scat(c);
 
-  this.lttype = TK_SIMP_BINARY;
   if (ch === CH_EQUALITY_SIGN) {
     c++;
-    this.prec = PREC_ASSIG;
+    this.lttype = TK_OP_ASSIG;
     this.ltraw = '*=';
   }
   else if (ch === CH_MUL) {
     c++; ch = this.scat(c);
     if (ch === CH_EQUALITY_SIGN) {
       c++;
-      this.prec = PREC_ASSIG;
+      this.lttype = TK_OP_ASSIG;
       this.ltraw = '**=';
     }
     else {
       this.prec = PREC_MUL;
+      this.lttype = TK_SIMP_BINARY;
       this.ltraw = '**';
     }
   }
   else {
     this.prec = PREC_MUL;
+    this.lttype = TK_SIMP_BINARY;
     this.ltraw = '*';
   }
 
@@ -5107,18 +8762,21 @@ function() {
   var c = this.c; c++; // '|'
   var ch = this.scat(c);
 
-  this.lttype = TK_SIMP_BINARY;
   if (ch === CH_EQUALITY_SIGN) {
-    c++; this.prec = PREC_ASSIG;
+    c++;
+    this.lttype = TK_OP_ASSIG;
     this.ltraw = '|=';
   }
-  else if (ch === CH_OR) {
-    c++; this.prec = PREC_LOG_OR;
-    this.ltraw = '||';
-  }
   else {
-    this.prec = PREC_BIT_OR;
-    this.ltraw = '|';
+    this.lttype = TK_SIMP_BINARY;
+    if (ch === CH_OR) {
+      c++; this.prec = PREC_LOG_OR;
+      this.ltraw = '||';
+    }
+    else {
+      this.prec = PREC_BIT_OR;
+      this.ltraw = '|';
+    }
   }
 
   this.setsimpoff(c);
@@ -5131,13 +8789,14 @@ function() {
   var c = this.c; c++; // '^'
   var ch = this.scat(c);
 
-  this.lttype = TK_SIMP_BINARY;
   if (ch === CH_EQUALITY_SIGN) {
-    c++; this.prec = PREC_ASSIG;
+    c++;
+    this.lttype = TK_OP_ASSIG;
     this.ltraw = '^=';
   }
   else {
     this.prec = PREC_BIT_XOR;
+    this.lttype = TK_SIMP_BINARY;
     this.ltraw = '^';
   }
 
@@ -5158,6 +8817,34 @@ function() {
   this.lttype = CH_SINGLE_QUOTE;
   this.ltraw = "'";
   this.setsimpoff(this.c+1);
+};
+
+},
+function(){
+this.declare = function(id) {
+   ASSERT.call(this, this.declMode !== DT_NONE, 'Unknown declMode');
+   if (this.declMode & (DT_LET|DT_CONST)) {
+     if (id.name === 'let')
+       this.err('lexical.name.is.let');
+   }
+
+   var decl = this.scope.declare(id.name, this.declMode);
+   decl && decl.s(id);
+};
+
+this.enterScope = function(scope) {
+  this.scope = scope;
+};
+
+this.exitScope = function() {
+  var scope = this.scope;
+  scope.finish();
+  this.scope = this.scope.parent;
+  return scope;
+};
+
+this.allow = function(allowedActions) {
+  this.scope.allowed |= allowedActions;
 };
 
 },
@@ -5274,6 +8961,42 @@ function() {
 
 },
 function(){
+this.findLabel_m = 
+function(mname) {
+  return HAS.call(this.labels, mname) ?
+    this.labels[name] : null;
+};
+
+this.testStmt = 
+function() {
+  if (this.canBeStatement) {
+    this.canBeStatement = false;
+    return true;
+  }
+  return false;
+};
+
+this.fixupLabels =
+function(isLoop) {
+  if (this.unsatisfiedLabel) {
+    this.unsatisfiedLabel.loop = loop;
+    this.unsatisfiedLabel = null;
+  }
+};
+
+this.blck = function () { // blck ([]stmt)
+  var isFunc = false, stmt = null, stmts = [];
+  if (this.directive !== DIR_NONE)
+    this.parseDirectives(stmts);
+
+  while (stmt = this.parseStatement(true))
+    stmts.push(stmt);
+
+  return (stmts);
+};
+
+},
+function(){
 this.readSurrogateTail =
 function() {
   var c = this.c, s = this.src, l = s.length, mustSetOff = false;
@@ -5351,11 +9074,19 @@ function(){
 this.enterForInit =
 function() { this.flags |= SF_FORINIT; };
 
+this.enterPrologue =
+function() { this.flags |= SF_INSIDEPROLOGUE; };
+
 this.exitForinit =
 function() {
   ASSERT.call(this, this.insideForInit(),
     'must be in a for');
   this.flags &= ~SF_FORINIT;
+};
+
+this.exitPrologue =
+function() {
+  this.flags &= ~SF_INSIDEPROLOGUE;
 };
 
 },
@@ -5389,6 +9120,9 @@ function() { return this.flags & SF_STRICT; };
 
 this.insideForInit =
 function() { return this.flags & SF_FORINIT; };
+
+this.insideArgs =
+function() { return this.isAnyFn() && !this.inBody; };
 
 },
 function(){
@@ -5453,6 +9187,184 @@ function() {
          this.isCatch() ||
          this.isParen() ||
          this.isBare();
+};
+
+},
+function(){
+this.declareHoisted_m =
+function(mname, t) {
+  var tdecl = this.findDecl_m(mname);
+
+  if (tdecl) {
+    if (tdecl.isOverridableByVar())
+      return tdecl;
+    this.err('var.can.not.override.existing');
+  }
+
+  var tscope = null;
+  var isNew = false;
+
+  tdecl = this.findVarTarget_m(mname);
+  if (!tdecl) {
+    tscope = this.scs;
+    tdecl = new Decl()
+      .t(t)
+      .n(_u(mname))
+      .r(new Ref(scs));
+    isNew = true;
+    this.insertDecl(mname, tdecl);
+  }
+  else { tscope = tdecl.scope; }
+
+  if (this !== tscope)
+    this.parent.hoistName_m(mname, tdecl, tscope, isNew);
+
+  return tdecl;
+};
+
+this.findDecl_m = 
+function(mname) {
+  return this.defs.has(mname) ?
+    this.defs.get(mname) : null;
+};
+
+this.hoistName_m =
+function(mname, tdecl, tscope, isNew) {
+  var cur = this;
+  while (true) {
+    var existing = cur.findDecl_m(mname);
+    if (existing.isOverridableByVar())
+      return;
+    this.err('var.can.not.override.existing');
+
+    cur.insertDecl(mname, tdecl);
+    if (cur === tscope) { break; }
+
+    cur = cur.parent;
+    ASSERT.call(this, cur !== null,
+      'reached topmost before reaching target');
+  }
+
+  isNew && tscope.addVarTarget(mname, tdecl);
+};
+
+this.declareLexical_m =
+function(mname, t) {
+  var existing = this.findDecl_m(mname);
+  if (!existing) {
+    if (this.isAnyFn() || this.isCatch())
+      existing = this.findParam_m(mname);
+  }
+  if (existing)
+    this.err('lexical.can.not.override.existing');
+
+  var newDecl = null;
+  var ref = this.findRef_m(mname) || new Ref(this);
+
+  newDecl = new Decl().t(t).n(_u(mname)).r(ref);
+  this.insertDecl_m(mname, newDecl);
+
+  return newDecl;
+};
+
+this.decl_m = function(mname, dt) {
+  switch (dt) {
+  case DT_LET:
+    return this.decl_let_m(mname, dt);
+  case DT_FN:
+    return this.decl_fn_m(mname, dt);
+  case DT_CONST:
+    return this.decl_const_m(mname, dt);
+  case DT_VAR:
+    return this.decl_var_m(mname, dt);
+  case DT_CLS:
+    return this.decl_cls_m(mname, dt);
+  case DT_CATCHARG:
+    return this.decl_catchArg_m(mname, dt);
+  case DT_FNARG:
+    return this.decl_fnArg_m(mname, dt);
+  }
+
+  ASSERT.call(this, false, 'unknown decltype');
+};
+
+this.decl_let_m =
+function(mname, t) {
+  return this.declareLexical_m(mname, t);
+};
+
+this.decl_fn_m =
+function(mname, t) {
+  return this.isLexicalLike() ?
+    this.declareLexical_m(mname, t) :
+    this.declareHoisted_m(mname, t);
+};
+
+this.decl_const_m =
+function(mname, t) {
+  return this.declareLexical_m(mname, t);
+};
+
+this.decl_var_m =
+function(mname, t) {
+  return this.declareHoisted_m(mname, t);
+};
+
+this.decl_cls_m =
+function(mname, t) {
+  return this.declareLexical_m(mname, t);
+};
+
+this.decl_catchArg_m =
+function(mname, t) {
+  ASSERT.call(this, this.isCatch() && !this.inBody,
+    'only catch heads are allowed to declare args');
+
+  var existing = this.findDecl_m(mname);
+  if (existing)
+    this.err('var.catch.is.duplicate');
+
+  var newDecl = null;
+  var ref = this.findRef_m(mname) || new Ref(this);
+
+  newDecl = new Decl().t(t).n(_u(mname)).r(ref);
+
+  this.insertDecl_m(mname, newDecl);
+  this.addVarTarget_m(mname, newDecl);
+
+  return newDecl;
+};
+
+this.decl_fnArg_m =
+function(mname, t) {
+  ASSERT.call(this, this.isAnyFn() && !this.inBody,
+    'only fn heads are allowed to declare args');
+
+  var ref = this.findRef_m(mname) || new Ref(this),
+      newDecl = new Decl().t(t).n(_u(mname));
+
+  var existing = HAS.call(this.paramMap, mname) ?
+    this.paramMap[mname] : null;
+
+  if (existing) {
+    this.canDup() || this.err('var.fn.is.dup.arg');
+    if (!this.firstDup)
+      this.firstDup = existing;
+    newDecl.ref = ref;
+  }
+  else {
+    newDecl.r(ref);
+    this.paramMap[mname] = newDecl;
+    this.addVarTarget(mname, newDecl);
+  }
+
+  this.paramList.push(newDecl);
+  return newDecl;
+};
+
+this.insertDecl_m =
+function(mname, newDecl) {
+  this.defs.set(mname, newDecl);
 };
 
 },

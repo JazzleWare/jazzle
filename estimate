@@ -1,0 +1,4 @@
+#!/bin/bash
+stat -c '%s' quarantine/* ttemp/* src/*  |  perl -e '
+  my $sum=0; while (<>) { $sum += $_ }
+  print "$sum\n"'

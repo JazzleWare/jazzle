@@ -1,0 +1,37 @@
+`parseVarLetConst(kind, ctx) {
+  var c0 = `c0, li0 = `li0, col0 = `col
+  var list = [], decltor = null
+
+  var letID = kind === 'let' ? `getID() : null
+  var decltor = null
+  if.not letID && (ctx & CTX::FOR) && `peekID('in'):
+    decltor =  `parseDecltor()
+  if decltor === null {
+    if letID { return `handleLet(letID) }
+    `err(ERRLIST::DECL_BUT_NO_DECLTOR)
+  }
+
+  var isConst = kind == 'const', missingInit = false
+  while true {
+    var init = null
+    if `peekEq() {
+      `next()
+      init = `parseNonSeqExpr(PREC::NONE, (ctx&CTX::FOR)|CTX::TOP)
+    }
+    else if isConst || decltor.type !== 'Identifier' {
+      (ctx !& CTX::FOR) && `err('missing.init')
+      list.length && `err('missing.init')
+      missingInit = true
+    }
+    list.push(decltor#createDecltor(init))
+    missingInit && break
+    if `lttype != CH::COMMA { break }
+    `next()
+    decltor = `parseDecltor()
+    if decltor == null:
+      `err('not.decltor')
+  }
+
+  `missingInit = missingInit
+  return list#createVar
+}
