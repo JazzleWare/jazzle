@@ -9,11 +9,11 @@ this.parseProgram = function () {
 
   this.scope.parser = this;
   if (!this.isScript)
-    this.scope.enterStrict();
+    this.scope.makeStrict();
 
   this.next();
 
-  var list = this.blck(); 
+  var list = this.stmtList(); 
 
   this.scope.finish();
   globalScope.finish();

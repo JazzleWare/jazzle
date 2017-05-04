@@ -10,7 +10,7 @@ CatchScope { argList, argMap, argRefs, argsIsSimple, argsIsSignificant, inBody }
 
 Decl { ref, liquid, name, hasTZCheck, liquid, reached, site, idx }
 
-Ref { i, lors, scope, d, targetDecl, isResolved, parentDecl }
+Ref { i, lors, scope, d, targetDecl, isResolved, parentDecl, isExternal }
 
 Liquid < Decl { category<:string:>, crsMap }
 

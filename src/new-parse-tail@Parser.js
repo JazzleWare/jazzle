@@ -1,5 +1,8 @@
 this.parseTail =
 function(head) {
+  if (head.type === 'Identifier')
+    this.scope.refDirect_m(_m(head.name), null);
+
   switch (this.lttype) {
   case CH_SINGLEDOT:
   case CH_LSQBRACKET:

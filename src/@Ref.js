@@ -1,9 +1,9 @@
-function Ref() {
+function Ref(scope) {
   this.i = 0;
   this.rsList = [];
-  this.scope = null;
+  this.scope = scope || null;
   this.d = 0;
   this.targetDecl = null;
-  this.isResolved = false;
+  this.hasTarget = false;
   this.parentRef = null;
 }

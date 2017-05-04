@@ -10,7 +10,7 @@ var regexFlagsSupported = 0;
 (function() {
   var str = "guymi", 
       val = [gRegexFlag,uRegexFlag,yRegexFlag,mRegexFlag,iRegexFlag], e = 0;
-  while (e < flags.length) {
+  while (e < str.length) {
     try {
       new RegExp("l",str.charAt(e));
       regexFlagsSupported |= val[e];

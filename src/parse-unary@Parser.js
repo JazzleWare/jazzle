@@ -10,7 +10,7 @@ function(ctx) {
     op = this.ltraw;
 
   this.next();
-  var arg = this.parseNonSeqExpr(PREC_U, context & CTX_FOR);
+  var arg = this.parseNonSeqExpr(PREC_UNARY, context & CTX_FOR);
 
   if (this.scope.insideStrict() &&
     vdt === VDT_DELETE &&

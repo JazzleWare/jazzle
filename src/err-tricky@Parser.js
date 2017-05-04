@@ -1,20 +1,3 @@
-this.currentExprIsParams = function() {
-  this.st = this.pt = this.at = this.st = ERR_NONE_YET;
-};
-
-this.currentExprIsAssig = function() {
-  this.st = this.pt = this.at = ERR_NONE_YET;
-};
-
-this.currentExprIsSimple = function() {
-  this.pt = this.at = ERR_NONE_YET;
-  if (this.st !== ERR_NONE_YET) {
-    var st = this.st;
-    var se = this.se;
-    this.throwTricky('s', st, se);
-  }
-};
-
 // tricky map
 var tm = {};
 
@@ -30,6 +13,28 @@ tm[ERR_INTERMEDIATE_ASYNC] = 'intermediate.async';
 tm[ERR_ASYNC_NEWLINE_BEFORE_PAREN] = 'async.newline.before.paren';
 tm[ERR_PIN_NOT_AN_EQ] = 'complex.assig.not.pattern';
 
+this.flushSimpleErrors =
+function() {
+  if (this.st === ERR_NONE_YET)
+    return;
+  ASSERT.call(this, HAS.call(tm, this.st),
+    'Unknown error value: ' + this.st);
+  var st = this.st, se = this.se, so = this.so;
+  this.st_reset();
+
+  var ep = {};
+  ep.tn = se;
+  if (errt_pin(st)) {
+    var pin = this.pin.s;
+    ep.c0 = pin.c0; ep.li0 = pin.li0; ep.col0 = pin.col0;
+  }
+
+  return this.err(tm[st], ep) ;
+};
+
+this.st_reset = 
+function() { this.se = ERR_NONE_YET; };
+  
 // TODO: trickyContainer
 this.throwTricky = function(source, trickyType) {
   if (!HAS.call(tm, trickyType))

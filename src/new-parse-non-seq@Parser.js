@@ -28,22 +28,22 @@ function(prec, ctx) {
     return null;
   }
 
-  var hasOp = this.getOp(ctx);
-  if (!hasOp) {
-    if (mnl(ctx)) {
-      this.flushSimpleErrors();
-      this.dissolveParen();
-    }
-    return head;
-  }
-
   if (this.lttype & TK_ANY_ASSIG) {
     if (prec !== PREC_NONE)
       this.err('assig.not.first');
     return this.parseAssignment(head, ctx);
   }
 
-  if (mnl(ctx)) {
+  var hasOp = this.getOp(ctx);
+  if (!hasOp) {
+    if (errt_noLeak(ctx)) {
+      this.flushSimpleErrors();
+      this.dissolveParen();
+    }
+    return head;
+  }
+
+  if (errt_noLeak(ctx)) {
     this.flushSimpleErrors();
     this.dissolveParen();
   }
@@ -52,15 +52,16 @@ function(prec, ctx) {
     return prec === PREC_NONE ?
       this.parseCond(head, ctx) : head;
 
-  if (this.lttype === TK_AA_MM) {
-    if (this.nl)
-      return head;
-    head = this.parseUpdate(head, ctx);
-  }
-
   do {
+    if (this.lttype === TK_AA_MM) {
+      if (this.nl)
+        break;
+      head = this.parseUpdate(head, ctx);
+      continue;
+    }
+
     var curPrec = this.prec;
-    if (prec === PREC_U && curPrec === PREC_EX)
+    if (prec === PREC_UNARY && curPrec === PREC_EX)
       this.err('unary.before.an.exponentiation');
     if (curPrec < prec)
       break;
@@ -74,12 +75,12 @@ function(prec, ctx) {
       type: isLog(curPrec) ? 'LogicalExpression' : 'BinaryExpression',
       operator: o,
       start: head.start,
-      end: right.end,
+      end: r.end,
       loc: {
         start: head.loc.start,
-        end: right.loc.end },
+        end: r.loc.end },
       left: core(head),
-      right: core(right)
+      right: core(r)
     };
   } while (hasOp = this.getOp(ctx));
 

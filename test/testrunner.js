@@ -10,6 +10,7 @@ var listener = {
     if (submode === 'contrary') {
       console.error('<result>', util.obj2str(test.result), '\n');
       console.error('<comp>', util.obj2str(test.comp), '\n');
+      console.error(test);
       throw new Error(test);
     }
 
@@ -77,6 +78,7 @@ function runTests(parserFactory, testRoot) {
   }
   catch (err) {
     console.error("ABORTED.");
+    console.error(err);
     throw err; 
   }
 

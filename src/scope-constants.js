@@ -59,3 +59,7 @@ var DT_CLS = 1,
     DT_GLOBAL = DT_FNNAME << 1,
     DT_INFERRED = DT_GLOBAL << 1,
     DT_NONE = 0;
+
+var RS_ARGUMENTS = _m('arguments'),
+    RS_SCALL = _m('special:scall'),
+    RS_THIS = _m('special:this');

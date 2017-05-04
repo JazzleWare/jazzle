@@ -9,7 +9,7 @@ function(allowNull) {
   case TK_ID:
     this.canBeStatement = true;
     // TODO: CTX.PAT|CTX.NO_SIMP
-    head = this.parseIdExprHead(CTX_PAT);
+    head = this.parseIDExprHead(CTX_PAT);
     if (this.foundStatement) {
       this.foundStatement = false;
       return head;

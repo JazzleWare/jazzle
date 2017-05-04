@@ -20,7 +20,7 @@ function(ctx) {
 
   var ec = -1, eloc = null;
   if (arg) { ec = arg.end; eloc = arg.loc.end; }
-  else { ec = c; eloc = { line: li, column: col };
+  else { ec = c; eloc = { line: li, column: col }; }
 
   var n = {
     type: 'YieldExpression',

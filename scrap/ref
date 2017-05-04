@@ -1,0 +1,10 @@
+Ref {
+  i,          // indirect refs
+  lors,       // list of concrete scopes
+  scope,      // the scope it was created
+  d,          // direct refs
+  targetDecl, // the decl it is referring to
+  hasTarget,  // is it a decl's ref
+  parentRef,  // the ref it was handed over to
+  transConcrete // does it escape a concrete-scope-boundary
+}

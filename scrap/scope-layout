@@ -1,0 +1,18 @@
+Scope {
+  parent
+  type 
+  refs
+  defs
+  hasTZCheckPoint
+  scs
+  actions
+  flags
+  scopeID_ref
+  scopeID
+  parser
+  diRef
+  di
+  varTargets
+}
+
+Scope::`is{}

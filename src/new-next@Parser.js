@@ -3,7 +3,7 @@ function() {
 
   this.skipWS();
   if (this.c >= this.src.length) {
-    this.lttype = 'eof';
+    this.lttype = TK_EOF;
     this.ltraw = '<<EOF>>';
     return;
   }

@@ -21,13 +21,10 @@ function(isLoop) {
   }
 };
 
-this.blck = function () { // blck ([]stmt)
-  var isFunc = false, stmt = null, stmts = [];
-  if (this.directive !== DIR_NONE)
-    this.parseDirectives(stmts);
-
+this.stmtList =
+function () {
+  var stmt = null, list = [];
   while (stmt = this.parseStatement(true))
-    stmts.push(stmt);
-
-  return (stmts);
+    list.push(stmt);
+  return list;
 };

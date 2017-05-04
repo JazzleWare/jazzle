@@ -50,8 +50,5 @@ function(ctx) {
   default: return null;
   }
 
-  if (head.type === 'Identifier')
-    this.scope.refDirect_m(_m(head.name), null);
-
   return head;
 };

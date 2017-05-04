@@ -26,7 +26,7 @@ var Parser = function (src, o) {
   this.canBeStatement = false;
   this.foundStatement = false;
 
-  this.isScript = false;
+  this.isScript = !o || o.sourceType === 'script';
   this.v = 7;
 
   this.first__proto__ = false;
@@ -66,4 +66,5 @@ var Parser = function (src, o) {
   this.commentBuf = null;
   this.errorListener = this; // any object with an `onErr(errType "string", errParams {*})` will do
   this.parenScope = null;
+
 };

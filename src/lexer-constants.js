@@ -47,7 +47,7 @@ function nextr(nPrec) { return (nPrec&1) ? nPrec + 2 : nPrec + 1; }
 function isLog(nPrec) {
   switch (nPrec) {
   case PREC_LOG_AND:
-  case PREC_LOR_OR:
+  case PREC_LOG_OR:
     return true;
   }
   return false;

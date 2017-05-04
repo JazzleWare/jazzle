@@ -2,11 +2,10 @@ this.getOp =
 function(ctx) {
   switch ( this. lttype ) {
   case TK_SIMP_BINARY:
-    return true;
   case TK_AA_MM:
     return true;
   case TK_UNBIN:
-    this.prec = PREC_ADD_MIN;
+    this.prec = PREC_ADD;
     return true;
   case CH_DIV:
     if (this.scat(this.c) === CH_EQUALITY_SIGN) {
@@ -37,7 +36,7 @@ function(ctx) {
     }
     return false;
 
-  case '?':
+  case CH_QUESTION:
     this.prec = PREC_COND;
     return true;
 

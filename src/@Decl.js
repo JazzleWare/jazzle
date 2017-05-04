@@ -5,4 +5,5 @@ function Decl() {
   this.site = null;
   this.hasTZCheck = false;
   this.reached = false;
+  this.type = DT_NONE;
 }
