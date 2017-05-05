@@ -16,7 +16,7 @@ function() {
       this.ltraw = '**=';
     }
     else {
-      this.prec = PREC_MUL;
+      this.prec = PREC_EX;
       this.lttype = TK_SIMP_BINARY;
       this.ltraw = '**';
     }

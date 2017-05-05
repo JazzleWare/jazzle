@@ -2,7 +2,7 @@ this.parseThis = function() {
   this.resvchk();
   var n = {
     type : 'ThisExpression',
-    loc: { start: this.locBegin(), end: this.loc() },
+    loc: { start: this.loc0(), end: this.loc() },
     start: this.c0,
     end : this.c
   };

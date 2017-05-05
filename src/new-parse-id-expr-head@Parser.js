@@ -216,9 +216,9 @@ function(ctx) {
 };
  
 this.resvchk = function() {
-  if (this.esct !== ERR_NONE_YET) {
-    ASSERT.call(this.esct === ERR_PIN_UNICODE_IN_RESV,
-      'the error in this.esct is something other than ERR_PIN_UNICODE_IN_RESV: ' + this.esct);
+  if (this.ct !== ERR_NONE_YET) {
+    ASSERT.call(this.ct === ERR_PIN_UNICODE_IN_RESV,
+      'the error in this.ct is something other than ERR_PIN_UNICODE_IN_RESV: ' + this.ct);
     this.err('resv.unicode');
   }
 };

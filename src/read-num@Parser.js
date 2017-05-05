@@ -64,6 +64,7 @@ function() {
     if (isNum(ch))
       return this.readNum_octLegacy(ch);
 
+    this.setsimpoff(this.c+1);
     return NUM0_ZERO;
   }
 };

@@ -7,6 +7,9 @@ function() { return this.flags & SF_LOOP; };
 this.insideStrict = 
 function() { return this.flags & SF_STRICT; };
 
+this.insidePrologue =
+function() { return this.flags & SF_INSIDEPROLOGUE; };
+
 this.insideForInit =
 function() { return this.flags & SF_FORINIT; };
 

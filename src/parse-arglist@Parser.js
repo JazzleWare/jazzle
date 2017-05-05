@@ -4,7 +4,7 @@ this.parseArgList = function () {
 
   do { 
     this.next();
-    elem = this.parseNonSeqExpr(PREC_NONE,CTX_TOP); 
+    elem = this.parseNonSeq(PREC_NONE,CTX_TOP); 
     if (elem)
       list.push(core(elem));
     else if (this.lttype === TK_ELLIPSIS)

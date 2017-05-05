@@ -15,22 +15,24 @@ this.parseParen = function(ctx) {
     this.se = this.so = null;
     this.suspys = null;
     elctx = CTX_PAT|CTX_PARAM|CTX_NULLABLE;
-    this.enterScope(this.scope.parenScope());
-    insideParen = true;
+    this.enterScope(this.scope.spawnParen());
+    insideParams = true;
   }
   else
     elctx = CTX_TOP;
 
   var lastElem = null, hasTailElem = false;
   this.next();
+
+  var elem = null;
   while (true) {
     lastElem = elem;
-    elem = this.parseNonSeqExpr(PREC_NONE, elctx);
+    elem = this.parseNonSeq(PREC_NONE, elctx);
     if (elem === null) {
       if (this.lttype === TK_ELLIPSIS) {
-        if (!errt_paramList(elctx)) {
+        if (!errt_param(elctx)) {
           this.st_teot(ERR_UNEXPECTED_REST,null,null);
-          this.flushSimpleErrors();
+          this.st_flush();
         }
         elem = this.parseSpread(elctx);
         hasRest = true;
@@ -44,7 +46,7 @@ this.parseParen = function(ctx) {
       else break;
     }
 
-    if (errt_paramList(elctx)) {
+    if (errt_param(elctx)) {
       if (errt_ptrack(elctx)) {
         if (this.pt === ERR_NONE_YET && !hasTailElem) {
           // TODO: function* l() { ({[yield]: (a)})=>12 }
@@ -60,7 +62,7 @@ this.parseParen = function(ctx) {
         if (this.pt_override(pt)) {
           pt = this.pt, pe = this.pe, po = core(elem);
           if (errt_pin(pt))
-            pc0 = this.ploc.c0, pli0 = this.ploc.li0, pcol0 = this.ploc.col0;
+            pc0 = this.pin.p.c0, pli0 = this.pin.p.li0, pcol0 = this.pin.p.col0;
           if (errt_psyn(pt))
             elctx |= CTX_HAS_A_PARAM_ERR;
         }
@@ -80,7 +82,7 @@ this.parseParen = function(ctx) {
         if (this.st_override(st)) {
           st = this.st, se = this.se, so = elem && core(elem);
           if (errt_pin(st))
-            sc0 = this.eloc.c0, sli0 = this.eloc.li0, scol0 = this.eloc.col0;
+            sc0 = this.pin.s.c0, sli0 = this.pin.s.li0, scol0 = this.pin.s.col0;
           if (errt_ssyn(st))
             elctx |= CTX_HAS_A_SIMPLE_ERR;
         }
@@ -135,11 +137,11 @@ this.parseParen = function(ctx) {
   if (errt_pat(ctx)) {
     if (pt !== ERR_NONE_YET) {
       this.pt_teot(pt,pe,po);
-      errt_pin(pt) && this.ppin(pc0,pli0,pcol0);
+      errt_pin(pt) && this.pin_pt(pc0,pli0,pcol0);
     }
     if (st !== ERR_NONE_YET) {
       this.st_teot(st,se,so);
-      errt_pin(st) && this.spin(sc0,sli0,scol0);
+      errt_pin(st) && this.pin_st(sc0,sli0,scol0);
     }
     if (list === null && elem !== null &&
        elem.type === 'Identifier' && elem.name === 'async')
@@ -159,7 +161,7 @@ this.parseParen = function(ctx) {
 
 this.dissolveParen = function() {
   if (this.parenScope) {
-    this.parenScope.dissolve();
+    this.parenScope.makeSimple();
     this.parenScope = null;
   }
 };

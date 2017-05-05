@@ -13,6 +13,7 @@ this.parseProgram = function () {
 
   this.next();
 
+  this.enterPrologue();
   var list = this.stmtList(); 
 
   this.scope.finish();

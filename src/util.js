@@ -90,7 +90,8 @@ function surrogate(ch1, ch2) {
 
 function isDirective(n) {
   return (
-    n.type === 'Literal' &&
-    typeof(n.value) === STRING_TYPE
+    n.type === 'ExpressionStatement' &&
+    n.expression.type === 'Literal' &&
+    typeof(n.expression.value) === STRING_TYPE
   );
 }

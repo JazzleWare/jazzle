@@ -1,7 +1,6 @@
-this.insidePrologue =
+this.enterPrologue =
 function() {
-  return this.scope.isFunc() &&
-    this.scope.insidePrologue();
+  this.scope.enterPrologue();
 };
 
 this.exitPrologue =

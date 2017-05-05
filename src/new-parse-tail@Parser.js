@@ -8,7 +8,7 @@ function(head) {
   case CH_LSQBRACKET:
   case CH_LPAREN:
   case CH_BACKTICK:
-    this.flushSimpleErrors();
+    this.st_flush();
   }
 
   var inner = core(head), elem = null;
@@ -51,7 +51,7 @@ function(head) {
         computed: true,
         '#y': -1
       };
-      if (!this.expectType_soft(CH_RSQBRACKET))
+      if (!this.expectT(CH_RSQBRACKET))
         this.err('mem.unfinished');
       continue;
 
@@ -68,7 +68,7 @@ function(head) {
           end: this.loc() },
         '#y': -1
       };
-      if (!this.expectType_soft(CH_RPAREN))
+      if (!this.expectT(CH_RPAREN))
         this.err('call.args.is.unfinished');
       continue;
 

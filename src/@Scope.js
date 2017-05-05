@@ -34,4 +34,7 @@ function Scope(sParent, type) {
         this.isCatch() ?
           createObj(this.parent.varTargets) :
           this.parent.varTargets;
+
+  if (this.parent && this.parent.isParen())
+    this.parent.ch.push(this);
 }

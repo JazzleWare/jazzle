@@ -21,8 +21,8 @@ this.asArrowFuncArg = function(arg) {
     if (this.scope.insideStrict() && arguments_or_eval(arg.name))
       this.err('binding.to.arguments.or.eval',{tn:arg});
 
-    this.scope.declare(arg.name, DM_FNARG);
-    this.scope.findRef_m(_m(arg.name)).direct--; // one ref is a decl
+    this.scope.decl_m(_m(arg.name), DT_FNARG);
+    this.scope.findRef_m(_m(arg.name)).d--; // one ref is a decl
     return;
 
   case 'ArrayExpression':

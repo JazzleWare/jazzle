@@ -143,9 +143,9 @@ function(memName, ctx) {
       this.err('obj.proto.has.dup',{tn:memName});
 
     this.next();
-    val = this.parseNonSeqExpr(PREC_NONE, ctx);
+    val = this.parseNonSeq(PREC_NONE, ctx);
     if (errt_track(ctx) && val.type === PAREN_NODE) {
-      // if there is no error after the parseNonSeqExpr above
+      // if there is no error after the parseNonSeq above
       if (errt_ptrack(ctx) && this.pt === ERR_NONE_YET) {
         this.pt = ERR_PAREN_UNBINDABLE;
         this.pe = val;
@@ -176,7 +176,7 @@ function(memName, ctx) {
 
     return val;
 
-  case TK_SIMPLE_BINARY:
+  case TK_SIMP_ASSIG:
     if (this.v <= 5)
       this.err('mem.short.assig');
     if (memName.type !== 'Identifier')
@@ -186,7 +186,7 @@ function(memName, ctx) {
     if (errt_noLeak(ctx)) // if the owner is not leaky
       this.err('obj.prop.assig.not.allowed');
 
-    val = this.parseAssig(memName, ctx);
+    val = this.parseAssignment(memName, ctx);
     if (errt_strack(ctx) && this.st === ERR_NONE_YET) {
       this.st = ERR_SHORTHAND_UNASSIGNED;
       this.se = val;
@@ -197,7 +197,7 @@ function(memName, ctx) {
   default:
     if (this.v <= 5)
       this.err('mem.short');
-    if (name.type !== 'Identifier')
+    if (memName.type !== 'Identifier')
       this.err('obj.prop.assig.not.id',{tn:memName});
     this.validate(memName.name);
     val = memName;
@@ -206,7 +206,7 @@ function(memName, ctx) {
 
   return {
     type: 'Property',
-    key: name,
+    key: memName,
     start: val.start,
     end: val.end,
     loc: val.loc,

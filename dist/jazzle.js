@@ -167,8 +167,6 @@ function ParenScope(sParent) {
   Scope.call(this, sParent, ST_PAREN);
   this.ch = [];
 }
-
-ParenScope.prototype = createObj(Scope.prototype);
 ;
 var Parser = function (src, o) {
 
@@ -287,6 +285,9 @@ function Scope(sParent, type) {
         this.isCatch() ?
           createObj(this.parent.varTargets) :
           this.parent.varTargets;
+
+  if (this.parent && this.parent.isParen())
+    this.parent.ch.push(this);
 }
 ;
 function SortedObj(obj) {
@@ -741,7 +742,7 @@ var ERR_P_SYN = 1 << ERR_FLAG_LEN++,
     ERR_P_SEM = 1 << ERR_FLAG_LEN++,
     ERR_A_SEM = 1 << ERR_FLAG_LEN++,
     ERR_S_SEM = 1 << ERR_FLAG_LEN++,
-    ERR_PIN = 1 << ERR_FLAG_LEN, // looks like it need not have any sub-type yet
+    ERR_PIN = 1 << ERR_FLAG_LEN++, // looks like it need not have any sub-type yet
     ERR_SYN = ERR_P_SYN|ERR_A_SYN|ERR_S_SYN,
     ERR_SEM = ERR_P_SEM|ERR_A_SEM|ERR_S_SEM,
     ERR_I = 0;
@@ -803,13 +804,67 @@ function agtb(a, b) {
 // TODO: choose a more descriptive name
 var NORMALIZE_COMMON = ['li0', 'c0', 'col0', 'li', 'c', 'col', 'loc0', 'loc'];
 ;
-function errt_noLeak(ctx) {
-  return !(ctx & CTX_PAT) || (ctx & CTX_NO_SIMPLE_ERR);
+function errt_top(ctx) {
+  return (ctx & CTX_TOP) === CTX_TOP;
 }
 
 function errt_pin(err) {
   return err & ERR_PIN;
 }
+
+function errt_noLeak(ctx) {
+  return errt_top(ctx);
+}
+
+function errt_perr(ctx, err) {
+  return errt_param(ctx) && err !== ERR_NONE_YET;
+}
+
+function errt_param(ctx) {
+  return ctx & CTX_PARAM;
+}
+
+function errt_aerr(ctx, err) {
+  return errt_pat(ctx) && err !== ERR_NONE_YET;
+}
+
+function errt_pat(ctx) {
+  return ctx & CTX_PAT;
+}
+
+function errt_serr(ctx, err) {
+  return errt_pat(ctx) && err !== ERR_NONE_YET;
+}
+
+function errt_ptrack(ctx) {
+  return errt_param(ctx) && !(ctx & CTX_HAS_A_PARAM_ERR);
+}
+
+function errt_atrack(ctx) {
+  return errt_pat(ctx) && !(ctx & CTX_HAS_AN_ASSIG_ERR);
+}
+
+function errt_strack(ctx) {
+  return errt_pat(ctx) && !(ctx & CTX_HAS_A_SIMPLE_ERR);
+}
+
+function errt_elem_ctx_of(ctx) {
+  return errt_pat(ctx) ?
+    ctx & (
+      CTX_HAS_A_PARAM_ERR|
+      CTX_HAS_AN_ASSIG_ERR|
+      CTX_HAS_A_SIMPLE_ERR|
+      CTX_PARAM|CTX_PAT
+    ) : CTX_PAT|CTX_NO_SIMPLE_ERR;
+}
+
+function errt_track(ctx) {
+  return errt_pat(ctx) || errt_param(ctx);
+}
+
+function errt_psyn(err) { return err & ERR_P_SYN; }
+function errt_asyn(err) { return err & ERR_A_SYN; }
+function errt_ssyn(err) { return err & ERR_S_SYN; }
 ;
 var Emitters = {};
 var UntransformedEmitters = {};
@@ -831,7 +886,8 @@ var TK_SIMP_BINARY = TK_UNARY << 1;
 var TK_AA_MM = TK_SIMP_BINARY << 1;
 var TK_OP_ASSIG = TK_AA_MM << 1;
 var TK_YIELD = TK_OP_ASSIG << 1;
-var TK_DIV = TK_YIELD << 1;
+var TK_ELLIPSIS = TK_YIELD << 1;
+var TK_DIV = TK_ELLIPSIS << 1;
 var TK_UNBIN = TK_SIMP_BINARY|TK_UNARY;
 var TK_ANY_ASSIG = TK_SIMP_ASSIG|TK_OP_ASSIG;
 var TK_ANY_BINARY = TK_SIMP_BINARY|TK_ANY_ASSIG;
@@ -898,6 +954,7 @@ var ST_GLOBAL = 1,
     ST_CTOR = ST_METH << 1,
     ST_SETTER = ST_CTOR << 1,
     ST_GETTER = ST_SETTER << 1,
+    ST_ACCESSOR = ST_GETTER|ST_SETTER,
     ST_ARROW = ST_GETTER << 1,
     ST_GEN = ST_ARROW << 1,
     ST_ASYNC = ST_GEN << 1,
@@ -1136,8 +1193,9 @@ function surrogate(ch1, ch2) {
 
 function isDirective(n) {
   return (
-    n.type === 'Literal' &&
-    typeof(n.value) === STRING_TYPE
+    n.type === 'ExpressionStatement' &&
+    n.expression.type === 'Literal' &&
+    typeof(n.expression.value) === STRING_TYPE
   );
 }
 ;
@@ -1186,7 +1244,7 @@ function(r) {
   ASSERT_EQ.call(this, r.hasTarget, false);
   this.ref = r;
   r.targetDecl = this;
-  this.hasTarget = true;
+  r.hasTarget = true;
   return this;
 };
 
@@ -2667,6 +2725,15 @@ function() {
 
 },
 function(){
+this.setRefsAndArgRefs =
+function(refs) {
+  ASSERT.call(this, !this.inBody, 'sraar must be in args');
+  this.argRefs = refs;
+  this.refs = this.argRefs;
+};
+
+},
+function(){
 this.handOver_m =
 function(mname, ref) {
   if (!this.isArrow()) {
@@ -2694,7 +2761,23 @@ function(mname, ref) {
     }
   }
 
-  return this.focRef(mname).absorbDirect(ref);
+  return this.focRef_m(mname).absorbDirect(ref);
+};
+
+},
+function(){
+this.activateBody =
+function() {
+  ASSERT_EQ.call(this, this.inBody, false);
+  this.inBody = true;
+  this.refs = this.bodyRefs;
+};
+
+this.deactivateBody =
+function() {
+  ASSERT_EQ.call(this, this.inBody, true);
+  this.inBody = false;
+  this.refs = this.argRefs;
 };
 
 },
@@ -2843,7 +2926,48 @@ this.newSynthLabelName = function(baseLabelName) {
 }]  ],
 null,
 null,
-null,
+[ParenScope.prototype, [function(){
+this.finish = 
+function() {};
+
+this.makeParams =
+function(paramScope) {
+  paramScope.setRefsAndArgRefs(this.refs);
+  this.updateParentForSubScopesTo(paramScope);
+};
+
+this.makeSimple =
+function() {
+  var list = this.refs;
+  var i = 0;
+  var len = list.length();
+
+  var p = this.parent;
+  while (i<len) {
+    var mname = list.keys[i], ref = p.findRef_m(mname);
+    var elem = list.get(mname);
+    if (ref) ref.absorbDirect(elem);
+    else { elem.scope = p; p.insertRef_m(mname, elem); }
+    i++;
+  }
+
+  this.updateParentForSubScopesTo(p);
+};
+
+this.updateParentForSubScopesTo =
+function(sParent) {
+  var list = this.ch, i = 0;
+  while (i<list.length) {
+    var elem = list[i];
+    ASSERT.call(this, elem.isAnyFn(),
+      'current fn scopes are the only scope allowed '+
+      'to come in a paren');
+    elem.parent = sParent;
+    i++;
+  }
+};
+
+}]  ],
 [Parser.prototype, [function(){
 this .ensureSimpAssig_soft = function(head) {
   switch(head.type) {
@@ -2907,8 +3031,8 @@ this.asArrowFuncArg = function(arg) {
     if (this.scope.insideStrict() && arguments_or_eval(arg.name))
       this.err('binding.to.arguments.or.eval',{tn:arg});
 
-    this.scope.declare(arg.name, DM_FNARG);
-    this.scope.findRef_m(_m(arg.name)).direct--; // one ref is a decl
+    this.scope.decl_m(_m(arg.name), DT_FNARG);
+    this.scope.findRef_m(_m(arg.name)).d--; // one ref is a decl
     return;
 
   case 'ArrayExpression':
@@ -3062,10 +3186,21 @@ this.toAssig = function(head, context) {
 
 },
 function(){
-this.insidePrologue =
+this.clearPendingStrictErrors =
 function() {
-  return this.scope.isFunc() &&
-    this.scope.insidePrologue();
+  if (this.ct === ERR_NONE_YET)
+    return;
+
+  ASSERT.call(this, this.ct === ERR_PIN_UNICODE_IN_RESV,
+    'the only strict error allowed currently is ERR_PIN_UNICODE_IN_RESV');
+  this.ct = ERR_NONE_YET;
+};
+
+},
+function(){
+this.enterPrologue =
+function() {
+  this.scope.enterPrologue();
 };
 
 this.exitPrologue =
@@ -3650,74 +3785,6 @@ a('yield.has.no.expr.deleg',{m:'unexpected {parser.lttype} -- it can not star an
 
 },
 function(){
-// tricky map
-var tm = {};
-
-tm[ERR_PAREN_UNBINDABLE] = 'paren.unbindable';
-tm[ERR_SHORTHAND_UNASSIGNED] = 'shorthand.unassigned';
-tm[ERR_NON_TAIL_REST] = 'non.tail.rest';
-tm[ERR_ARGUMENTS_OR_EVAL_ASSIGNED] = 'assig.to.arguments.or.eval';
-tm[ERR_YIELD_OR_SUPER] = 'param.has.yield.or.super';
-tm[ERR_UNEXPECTED_REST] = 'unexpected.rest';
-tm[ERR_EMPTY_LIST_MISSING_ARROW] = 'arrow.missing.after.empty.list';
-tm[ERR_NON_TAIL_EXPR] = 'seq.non.tail.expr';
-tm[ERR_INTERMEDIATE_ASYNC] = 'intermediate.async';
-tm[ERR_ASYNC_NEWLINE_BEFORE_PAREN] = 'async.newline.before.paren';
-tm[ERR_PIN_NOT_AN_EQ] = 'complex.assig.not.pattern';
-
-this.flushSimpleErrors =
-function() {
-  if (this.st === ERR_NONE_YET)
-    return;
-  ASSERT.call(this, HAS.call(tm, this.st),
-    'Unknown error value: ' + this.st);
-  var st = this.st, se = this.se, so = this.so;
-  this.st_reset();
-
-  var ep = {};
-  ep.tn = se;
-  if (errt_pin(st)) {
-    var pin = this.pin.s;
-    ep.c0 = pin.c0; ep.li0 = pin.li0; ep.col0 = pin.col0;
-  }
-
-  return this.err(tm[st], ep) ;
-};
-
-this.st_reset = 
-function() { this.se = ERR_NONE_YET; };
-  
-// TODO: trickyContainer
-this.throwTricky = function(source, trickyType) {
-  if (!HAS.call(tm, trickyType))
-    throw new Error("Unknown error value: "+trickyType);
-
-  var t = null, errParams = {};
-  if (trickyType & ERR_PIN) {
-    t = source === 'p' ? this.ploc :
-        source === 'a' ? this.aloc :
-        source === 's' ? this.eloc : null;
-    errParams = { c0: t.c0, li0: t.li0, col0: t.col0 };
-  }
-  else {
-    errParams.tn = source === 'p' ? this.pe :
-                   source === 'a' ? this.ae :
-                   source === 's' ? this.se : null;
-  }
-  errParams.extra = { source: source };
-  this.err(tm[trickyType], errParams);
-}; 
-
-this.adjustErrors = function() { 
-  if (this.st === ERR_ARGUMENTS_OR_EVAL_ASSIGNED)
-    this.st = ERR_ARGUMENTS_OR_EVAL_DEFAULT;
-  else
-    this.st = ERR_NONE_YET;
-};
-
-
-},
-function(){
 this.err = function(errorType, errParams) {
   errParams = this.normalize(errParams);
   return this.errorListener.onErr(errorType, errParams);
@@ -3784,6 +3851,116 @@ this.normalize = function(err) {
   return e;
 };
 
+
+},
+function(){
+this.pt_override =
+function(pt) {
+  return this.pt !== ERR_NONE_YET &&
+    (pt === ERR_NONE_YET || agtb(this.pt, pt));
+};
+
+this.at_override =
+function(at) {
+  return this.at !== ERR_NONE_YET &&
+    (at === ERR_NONE_YET || agtb(this.at, at));
+};
+
+this.st_override =
+function(st) {
+  return this.st !== ERR_NONE_YET &&
+    (st === ERR_NONE_YET || agtb(this.st, st));
+};
+
+this.pt_reset =
+function() { this.pt = ERR_NONE_YET; };
+
+this.at_reset =
+function() { this.at = ERR_NONE_YET; };
+
+this.st_reset =
+function() { this.st = ERR_NONE_YET; };
+
+// tricky map
+var tm = {};
+
+tm[ERR_PAREN_UNBINDABLE] = 'paren.unbindable';
+tm[ERR_SHORTHAND_UNASSIGNED] = 'shorthand.unassigned';
+tm[ERR_NON_TAIL_REST] = 'non.tail.rest';
+tm[ERR_ARGUMENTS_OR_EVAL_ASSIGNED] = 'assig.to.arguments.or.eval';
+tm[ERR_YIELD_OR_SUPER] = 'param.has.yield.or.super';
+tm[ERR_UNEXPECTED_REST] = 'unexpected.rest';
+tm[ERR_EMPTY_LIST_MISSING_ARROW] = 'arrow.missing.after.empty.list';
+tm[ERR_NON_TAIL_EXPR] = 'seq.non.tail.expr';
+tm[ERR_INTERMEDIATE_ASYNC] = 'intermediate.async';
+tm[ERR_ASYNC_NEWLINE_BEFORE_PAREN] = 'async.newline.before.paren';
+tm[ERR_PIN_NOT_AN_EQ] = 'complex.assig.not.pattern';
+
+this.pt_flush =
+function() {
+  ASSERT.call(this, this.pt === ERR_NONE_YET,
+    'pending errors in pt');
+  this.st = this.at = ERR_NONE_YET;
+};
+
+this.at_flush =
+function() {
+  ASSERT.call(this, this.at === ERR_NONE_YET,
+    'pending errors in at');
+  this.st = this.pt = ERR_NONE_YET;
+};
+
+this.st_flush =
+function() {
+  this.at = this.pt = ERR_NONE_YET;
+  if (this.st === ERR_NONE_YET)
+    return;
+  ASSERT.call(this, HAS.call(tm, this.st),
+    'Unknown error value: ' + this.st);
+  var st = this.st, se = this.se, so = this.so;
+  this.st_reset();
+
+  var ep = {};
+  ep.tn = se;
+  if (errt_pin(st)) {
+    var pin = this.pin.s;
+    ep.c0 = pin.c0; ep.li0 = pin.li0; ep.col0 = pin.col0;
+  }
+
+  return this.err(tm[st], ep) ;
+};
+
+this.pt_teot =
+function(t,e,o) { this.pt = t; this.pe = e; this.po = o; };
+
+this.at_teot =
+function(t,e,o) { this.at = t; this.ae = e; this.ao = o; };
+
+this.st_teot =
+function(t,e,o) { this.st = t; this.se = e; this.so = o; };
+
+this.st_adjust_for_toAssig =
+function() {
+  if (this.st === ERR_ARGUMENTS_OR_EVAL_ASSIGNED)
+    this.st = ERR_ARGUMENTS_OR_EVAL_DEFAULT;
+  else
+    this.st = ERR_NONE_YET;
+};
+
+this.pin_at =
+function(c0,li0,col0) { return this.pinErr(this.pin.a,c0,li0,col0); };
+
+this.pin_ct =
+function(c0,li0,col0) { return this.pinErr(this.pin.c,c0,li0,col0); };
+
+this.pin_st =
+function(c0,li0,col0) { return this.pinErr(this.pin.s,c0,li0,col0); };
+
+this.pin_pt =
+function(c0,li0,col0) { return this.pinErr(this.pin.p,c0,li0,col0); };
+
+this.pinErr =
+function(pin,c0,li0,col0) { pin.c0=c0; pin.li0=li0; pin.col0=col0; };
 
 },
 function(){
@@ -3878,7 +4055,7 @@ function() {
   this.testStmt() || this.err('not.stmt');
   this.fixupLabels(false);
 
-  var c0 = this.c0, loc0 = this.locBegin();
+  var c0 = this.c0, loc0 = this.loc0();
   var c = this.c, li = this.li, col = this.col;
 
   this.next();
@@ -3919,7 +4096,7 @@ function() {
   if (!this.scope.canContinue())
     this.err('continue.not.in.loop');
 
-  var c0 = this.c0, loc0 = this.locBegin();
+  var c0 = this.c0, loc0 = this.loc0();
   var c = this.c, li = this.li, col = this.col;
   this.next(); // 'continue'
 
@@ -3969,7 +4146,7 @@ function(ctx) {
     return null;
 
   case CH_LSQBRACKET:
-    head = this.parseArrayExpression(ctx);
+    head = this.parseArray(ctx);
     break;
 
   case CH_LPAREN:
@@ -3977,7 +4154,7 @@ function(ctx) {
     break;
 
   case CH_LCURLY:
-    head = this.parseObjectExpression(ctx);
+    head = this.parseObj(ctx);
     break;
 
   case CH_MULTI_QUOTE:
@@ -4018,7 +4195,8 @@ function() {
   var loc0 = this.loc0();
   this.next(); // '{'
 
-  var list = this.parseStmtList();
+  this.enterPrologue();
+  var list = this.stmtList();
 
   var n = {
     type : 'BlockStatement',
@@ -4378,9 +4556,9 @@ function(ctx) {
 };
  
 this.resvchk = function() {
-  if (this.esct !== ERR_NONE_YET) {
-    ASSERT.call(this.esct === ERR_PIN_UNICODE_IN_RESV,
-      'the error in this.esct is something other than ERR_PIN_UNICODE_IN_RESV: ' + this.esct);
+  if (this.ct !== ERR_NONE_YET) {
+    ASSERT.call(this.ct === ERR_PIN_UNICODE_IN_RESV,
+      'the error in this.ct is something other than ERR_PIN_UNICODE_IN_RESV: ' + this.ct);
     this.err('resv.unicode');
   }
 };
@@ -4457,7 +4635,7 @@ this.getLit_true = function() {
   var n = {
     type: 'Literal', value: true,
     start: this.c0, end: this.c,
-    loc: { start: this.locBegin(), end: this.loc() },
+    loc: { start: this.loc0(), end: this.loc() },
     raw: this.ltraw
   };
   this.next();
@@ -4469,7 +4647,7 @@ this.getNum_false = function() {
   var n = {
     type: 'Literal', value: false,
     start: this.c0, end: this.c,
-    loc: { start: this.locBegin(), end: this.loc() },
+    loc: { start: this.loc0(), end: this.loc() },
     raw: this.ltraw
   };
   this.next();
@@ -4481,7 +4659,7 @@ this.getLit_null = function() {
   var n = {
     type: 'Literal', value: null,
     start: this.c0, end: this.c,
-    loc: { start: this.locBegin(), end: this.loc() },
+    loc: { start: this.loc0(), end: this.loc() },
     raw: this.ltraw
   };
   this.next();
@@ -4492,7 +4670,7 @@ this.getLit_num = function () {
   var n = {
     type: 'Literal', value: this.ltval,
     start: this.c0, end: this.c,
-    loc: { start: this.locBegin(), end: this.loc() },
+    loc: { start: this.loc0(), end: this.loc() },
     raw: this.ltraw
   };
   this.next();
@@ -4646,9 +4824,9 @@ function(memName, ctx) {
       this.err('obj.proto.has.dup',{tn:memName});
 
     this.next();
-    val = this.parseNonSeqExpr(PREC_NONE, ctx);
+    val = this.parseNonSeq(PREC_NONE, ctx);
     if (errt_track(ctx) && val.type === PAREN_NODE) {
-      // if there is no error after the parseNonSeqExpr above
+      // if there is no error after the parseNonSeq above
       if (errt_ptrack(ctx) && this.pt === ERR_NONE_YET) {
         this.pt = ERR_PAREN_UNBINDABLE;
         this.pe = val;
@@ -4679,7 +4857,7 @@ function(memName, ctx) {
 
     return val;
 
-  case TK_SIMPLE_BINARY:
+  case TK_SIMP_ASSIG:
     if (this.v <= 5)
       this.err('mem.short.assig');
     if (memName.type !== 'Identifier')
@@ -4689,7 +4867,7 @@ function(memName, ctx) {
     if (errt_noLeak(ctx)) // if the owner is not leaky
       this.err('obj.prop.assig.not.allowed');
 
-    val = this.parseAssig(memName, ctx);
+    val = this.parseAssignment(memName, ctx);
     if (errt_strack(ctx) && this.st === ERR_NONE_YET) {
       this.st = ERR_SHORTHAND_UNASSIGNED;
       this.se = val;
@@ -4700,7 +4878,7 @@ function(memName, ctx) {
   default:
     if (this.v <= 5)
       this.err('mem.short');
-    if (name.type !== 'Identifier')
+    if (memName.type !== 'Identifier')
       this.err('obj.prop.assig.not.id',{tn:memName});
     this.validate(memName.name);
     val = memName;
@@ -4709,7 +4887,7 @@ function(memName, ctx) {
 
   return {
     type: 'Property',
-    key: name,
+    key: memName,
     start: val.start,
     end: val.end,
     loc: val.loc,
@@ -4912,7 +5090,7 @@ function() {
 
 },
 function(){
-this.parseNonSeqExpr =
+this.parseNonSeq =
 function(prec, ctx) {
   var head = this.exprHead;
   if (head) this.exprHead = null;
@@ -4924,11 +5102,11 @@ function(prec, ctx) {
   switch (this.lttype) {
   case TK_UNARY:
   case TK_UNBIN:
-    head = this.parseUnaryExpression(ctx);
+    head = this.parseUnary(ctx);
     break;
 
   case TK_AA_MM:
-    head = this.parseUpdateExpression(null, ctx);
+    head = this.parseUpdate(null, ctx);
     break;
 
   case TK_YIELD:
@@ -4951,14 +5129,14 @@ function(prec, ctx) {
   var hasOp = this.getOp(ctx);
   if (!hasOp) {
     if (errt_noLeak(ctx)) {
-      this.flushSimpleErrors();
+      this.st_flush();
       this.dissolveParen();
     }
     return head;
   }
 
   if (errt_noLeak(ctx)) {
-    this.flushSimpleErrors();
+    this.st_flush();
     this.dissolveParen();
   }
 
@@ -4984,7 +5162,7 @@ function(prec, ctx) {
 
     var o = this.ltraw;
     this.next();
-    var r = this.parseNonSeqExpr(curPrec, ctx & CTX_FOR);
+    var r = this.parseNonSeq(curPrec, ctx & CTX_FOR);
     head = {
       type: isLog(curPrec) ? 'LogicalExpression' : 'BinaryExpression',
       operator: o,
@@ -5029,14 +5207,14 @@ function(allowNull) {
     return null;
   }
 
-  head = this.parseExpr(CTX_TOP);
+  head = this.parseExpr(CTX_NULLABLE|CTX_TOP);
   if (head === null) {
-    allowNull && this.err('stmt.null');
+    allowNull || this.err('stmt.null');
     return null;
   }
   if (head.type === 'Identifier' &&
     this.lttype === CH_COLON)
-    return this.parseLabeledStatement(
+    return this.parseLabel(
       head, allowNull);
 
   this.fixupLabels(false);
@@ -5054,13 +5232,6 @@ function(allowNull) {
   };
 };
 
-//if (this.insidePrologue()) {
-//  if (!isDirective(head))
-//    this.exitPrologue();
-//  else
-//    this.applyDirective(head);
-//}
-
 },
 function(){
 this.parseTail =
@@ -5073,7 +5244,7 @@ function(head) {
   case CH_LSQBRACKET:
   case CH_LPAREN:
   case CH_BACKTICK:
-    this.flushSimpleErrors();
+    this.st_flush();
   }
 
   var inner = core(head), elem = null;
@@ -5116,7 +5287,7 @@ function(head) {
         computed: true,
         '#y': -1
       };
-      if (!this.expectType_soft(CH_RSQBRACKET))
+      if (!this.expectT(CH_RSQBRACKET))
         this.err('mem.unfinished');
       continue;
 
@@ -5133,7 +5304,7 @@ function(head) {
           end: this.loc() },
         '#y': -1
       };
-      if (!this.expectType_soft(CH_RPAREN))
+      if (!this.expectT(CH_RPAREN))
         this.err('call.args.is.unfinished');
       continue;
 
@@ -5294,7 +5465,7 @@ this.parseThis = function() {
   this.resvchk();
   var n = {
     type : 'ThisExpression',
-    loc: { start: this.locBegin(), end: this.loc() },
+    loc: { start: this.loc0(), end: this.loc() },
     start: this.c0,
     end : this.c
   };
@@ -5354,7 +5525,7 @@ function(dt, ctx) {
     var init = null;
     if (this.peekEq()) {
       this.next();
-      init = this.parseNonSeqExpr(PREC_NONE, ctx|CTX_TOP);
+      init = this.parseNonSeq(PREC_NONE, ctx|CTX_TOP);
     }
     else if (isConst || vpat.type !== 'Identifier') {
       !(ctx & CTX_FOR) && this.err('const.has.no.init');
@@ -5436,7 +5607,7 @@ function() {
 
   case CH_RCURLY:
     this.semiC = this.c0;
-    this.semiLoc = this.locOn(1);
+    this.semiLoc = this.loc0();
     return true;
   }
 
@@ -5578,7 +5749,10 @@ function (name) {
   }
 };
 
-
+this.validate =
+function(name) {
+  this.isResv(name) && this.ri();
+};
 
 },
 function(){
@@ -5610,7 +5784,7 @@ this.parseUpdate = function(arg, ctx) {
   var c = 0, loc = null, u = this.ltraw;
   if (arg === null) {
     c = this.c0;
-    loc = this.locBegin();
+    loc = this.loc0();
     this.next() ;
     arg = this.parseExprHead(ctx & CTX_FOR);
     if (arg === null)
@@ -5653,7 +5827,7 @@ this.parseArgList = function () {
 
   do { 
     this.next();
-    elem = this.parseNonSeqExpr(PREC_NONE,CTX_TOP); 
+    elem = this.parseNonSeq(PREC_NONE,CTX_TOP); 
     if (elem)
       list.push(core(elem));
     else if (this.lttype === TK_ELLIPSIS)
@@ -5686,7 +5860,7 @@ this.parseArgList = function () {
 function(){
 this.parseArray = 
 function(ctx) {
-  var c0 = this.c0, loc0 = this.locBegin();
+  var c0 = this.c0, loc0 = this.loc0();
 
   this.next(); // '['
 
@@ -5713,7 +5887,7 @@ function(ctx) {
   var hasRest = false, hasNonTailRest = false;
 
   while (hasMore) {
-    elem = this.parseNonSeqExpr(PREC_NONE, elctx);
+    elem = this.parseNonSeq(PREC_NONE, elctx);
     if (elem === null && this.lttype === TK_ELLIPSIS) {
       elem = this.parseSpread(elctx);
       hasRest = true;
@@ -5751,10 +5925,10 @@ function(ctx) {
         }
         if (this.pt_override(pt)) {
           pt = this.pt; pe = this.pe; po = core(elem);
-          if (pt & ERR_P_SYN)
+          if (errt_psyn(pt))
             elctx |= CTX_HAS_A_PARAM_ERR;
-          if (pt & ERR_PIN) 
-            pc0 = this.ploc.c0, pli0 = this.ploc.li0, pcol0 = this.ploc.col0;
+          if (errt_pin(pt)) 
+            pc0 = this.pin.p.c0, pli0 = this.pin.p.li0, pcol0 = this.pin.p.col0;
         }
       }
 
@@ -5768,19 +5942,19 @@ function(ctx) {
         }
         if (this.at_override(at)) {
           at = this.at; ae = this.ae; ao = core(elem);
-          if (at & ERR_A_SYN)
+          if (errt_asyn(at))
             elctx |= CTX_HAS_AN_ASSIG_ERR;
-          if (at & ERR_PIN)
-            ac0 = this.aloc.c0, ali0 = this.aloc.li0, acol0 = this.aloc.col0;
+          if (errt_pin(at))
+            ac0 = this.pin.a.c0, ali0 = this.pin.a.li0, acol0 = this.pin.a.col0;
         }
       }
       if (errt_strack(ctx)) {
         if (this.st_override(st)) {
           st = this.st; se = this.se; so = core(elem);
-          if (st & ERR_S_SYN)
+          if (errt_ssyn(st))
             elctx |= CTX_HAS_A_SIMPLE_ERR;
-          if (st & ERR_PIN)
-            sc0 = this.eloc.c0, sli0 = this.eloc.li0, scol0 = this.eloc.col0;
+          if (errt_pin(st))
+            sc0 = this.pin.s.c0, sli0 = this.pin.s.li0, scol0 = this.pin.s.col0;
         }
       }
     }
@@ -5790,26 +5964,27 @@ function(ctx) {
   
   var n = {
     type: 'ArrayExpression',
-    loc: { start: startLoc, end: this.loc() },
-    start: startc,
+    loc: { start: loc0, end: this.loc() },
+    start: c0,
     end: this.c,
-    elements : list  ,y:-1
+    elements : list,
+    '#y': -1
   };
 
-  if (errt_haserr(ctx,pt)) {
+  if (errt_perr(ctx,pt)) {
     this.pt_teot(pt,pe,po);
-    errt_pin(pt) && this.ppin(pc0,pli0,pcol0);
+    errt_pin(pt) && this.pin_pt(pc0,pli0,pcol0);
   }
-  if (errt_haserr(ctx,at)) {
+  if (errt_aerr(ctx,at)) {
     this.at_teot(at,ae,ao);
-    errt_pin(at) && this.apin(ac0,ali0,acol0);
+    errt_pin(at) && this.pin_at(ac0,ali0,acol0);
   }
-  if (errt_haserr(ctx,st)) {
+  if (errt_serr(ctx,st)) {
     this.st_teot(st,se,so);
-    errt_pin(st) && this.spin(sc0,sli0,scol0);
+    errt_pin(st) && this.pin_st(sc0,sli0,scol0);
   }
 
-  if (!this.expectType_soft(CH_RSQBRACKET))
+  if (!this.expectT(CH_RSQBRACKET))
     this.err('array.unfinished');
   
   return n;
@@ -5831,17 +6006,15 @@ this.parseArrow = function(arg, ctx)   {
   var sc = ST_ARROW;
   switch ( arg.type ) {
   case 'Identifier':
-    var decl = this.scope.findDecl(arg.name);
-    if (decl) decl.ref.direct--;
-    else this.scope.findRef_m(_m(arg.name)).direct--;
-
-    this.enterScope(this.scope.spawnFn(st));
+    this.scope.findRef_m(_m(arg.name)).d--;
+    this.enterScope(this.scope.spawnFn(sc));
+    this.scope.refDirect_m(_m(arg.name), null);
     this.asArrowFuncArg(arg);
     break;
 
   case PAREN_NODE:
-    this.enterScope(this.scope.spawnFn(st));
-    this.scope.absorb(this.parenScope);
+    this.enterScope(this.scope.spawnFn(sc));
+    this.parenScope.makeParams(this.scope);
     this.parenScope = null;
     if (arg.expr) {
       if (arg.expr.type === 'SequenceExpression')
@@ -5861,9 +6034,9 @@ this.parseArrow = function(arg, ctx)   {
 //    this.err('ver.async');
 
     async = true;
-    st |= ST_ASYNC;
-    this.enterScope(this.scope.spawnFn(st));
-    this.scope.absorb(this.parenScope);
+    sc |= ST_ASYNC;
+    this.enterScope(this.scope.spawnFn(sc));
+    this.parenScope.makeParams(this.scope);
     this.parenScope = null;
     this.asArrowFuncArgList(arg.arguments);
     break;
@@ -5871,17 +6044,18 @@ this.parseArrow = function(arg, ctx)   {
   case INTERMEDIATE_ASYNC:
     async = true;
     st |= ST_ASYNC;
-    this.enterScope(this.scope.spawnFn(st));
+    this.enterScope(this.scope.spawnFn(sc));
+    this.scope.refDirect_m(_m(arg.id.name));
     this.asArrowFuncArg(arg.id);
     break;
 
-  default:
-    this.err('not.a.valid.arg.list');
-
+  default: this.err('not.a.valid.arg.list');
   }
 
-  this.flushParamErrors();
-  this.scope.enterBody();
+  this.pt_flush();
+
+  var scope = this.scope;
+  scope.activateBody();
 
   if (this.nl)
     this.err('arrow.newline');
@@ -5895,13 +6069,13 @@ this.parseArrow = function(arg, ctx)   {
 
     this.labels = {};
     isExpr = false;
-    nbody = this.parseFuncBody();
+    nbody = this.parseFunBody();
 
     this.labels = prevLabels;
     this.declMode = prevDeclMode;
   }
   else
-    nbody = this.parseNonSeqExpr(PREC_NONE, ctx|CTX_PAT) ;
+    nbody = this.parseNonSeq(PREC_NONE, ctx|CTX_PAT) ;
 
   this.exitScope(); // body
 
@@ -5932,7 +6106,6 @@ this.parseArrow = function(arg, ctx)   {
   }; 
 };
 
-
 },
 function(){
 this.parseAssignment = function(head, ctx) {
@@ -5954,7 +6127,7 @@ this.parseAssignment = function(head, ctx) {
   if (o === '=') {
     // if this assignment is a pattern
     if (ctx & CTX_PARPAT)
-      this.hideSimpleErrors();
+      this.st_adjust_for_toAssig();
 
     var st = ERR_NONE_YET, se = null, so = null,
         pt = ERR_NONE_YET, pe = null, po = null;
@@ -5962,7 +6135,7 @@ this.parseAssignment = function(head, ctx) {
     // S- and P-errors are not modified during toAssig; A-errors might.
     this.toAssig(core(head), ctx);
 
-    // flush any remaining simple error, now that there are no more assignment errors;
+    // flush any remaining simple errors, now that there are no more assignment errors;
     // when toAssig completes, it might have set this.st with an assig-to-arguments-or-eval;
     // this will get thrown immediately if the assignment is non-leaking, i.e., 
     // won't tolerate simple errors
@@ -5976,36 +6149,40 @@ this.parseAssignment = function(head, ctx) {
     if ((ctx & CTX_PARPAT) && this.st !== ERR_NONE_YET) {
       st = this.st; se = this.se; so = this.so;
       if (st & ERR_PIN)
-        sc0 = this.eloc.c0, sli0 = this.eloc.li0, scol0 = this.eloc.col0;
+        sc0 = this.pin.s.c0, sli0 = this.pin.s.li0, scol0 = this.pin.s.col0;
     }
     if ((ctx & CTX_PARAM) && this.pt !== ERR_NONE_YET) {
       pt = this.pt; pe = this.pe; po = this.po;
       if (pt & ERR_PIN)
-        pc0 = this.ploc.c0, pli0 = this.ploc.li0, pcol0 = this.ploc.col0;
+        pc0 = this.pin.p.c0, pli0 = this.pin.p.li0, pcol0 = this.pin.p.col0;
     }
 
     // toAssig was successful -- clear
-    this.clearAssigErrors();
+    this.at_flush();
+    if (errt_top(ctx))
+      ctx &= ~CTX_TOP; // a top assig is not a pattern
+
     this.next(); // '='
-    right = this.parseNonSeqExpr(PREC_NONE,
+    right = this.parseNonSeq(PREC_NONE,
       (ctx & CTX_FOR)|CTX_TOP);
 
     // restore the state of errors in the left hand side, if there are any
     if (pt !== ERR_NONE_YET) {
       this.pt = pt; this.pe = pe; this.po = po;
-      if (pt & ERR_PIN)
-        this.ploc.c0 = pc0, this.ploc.li0 = pli0, this.ploc.col0 = pcol0;
+      errt_pin(pt) && this.pin_pt(pc0,pli0,pcol0);
     }
     if (st !== ERR_NONE_YET) {
       this.st = st; this.se = se; this.so = so;
-      if (st & ERR_PIN)
-        this.eloc.c0 = sc0, this.eloc.li0 = sli0, this.eloc.scol0;
+      errt_pin(st) && this.pin_st(sc0,sli0,scol0);
     }
   }
   else {
     // TODO: further scrutiny, like checking for this.at, is necessary (?)
     if (!this.ensureSAT(core(head)))
       this.err('assig.not.simple',{tn:core(head)});
+
+    if (errt_top(ctx))
+      ctx &= ~CTX_TOP;
 
     var c0 = -1, li0 = -1, col0 = -1;
 
@@ -6014,15 +6191,15 @@ this.parseAssignment = function(head, ctx) {
       c0 = this.c0; li0 = this.li0; col0 = this.col0;
     }
     this.next(); // <:o:>=
-    right = this.parseNonSeqExpr(PREC_NONE, (ctx & CTX_FOR)|CTX_TOP);
+    right = this.parseNonSeq(PREC_NONE, (ctx & CTX_FOR)|CTX_TOP);
 
     // record an actual error if we have parsed a potential param or assignment pattern
-    if (ctx & CTX_PARAM) {
-      this.ploc.c0 = c0, this.ploc.li0 = li0, this.ploc.col0 = col0;
+    if (errt_param(ctx)) {
+      this.pt_pin(c0,li0,col0);
       this.pt = ERR_PIN_NOT_AN_EQ;
     }
-    if (ctx & CTX_PAT) {
-      this.aloc.c0 = c0, this.aloc.li0 = li0, this.aloc.col0 = col0;
+    if (errt_pat(ctx)) {
+      this.at_pin(c0,li0,col0);
       this.at = ERR_PIN_NOT_AN_EQ;
     }
   }
@@ -6255,12 +6432,12 @@ this.parseSuper = function() {
 function(){
 this.parseCond = function(cond, ctx) {
   this.next(); // '?'
-  var seq = this.parseNonSeqExpr(PREC_NONE, CTX_TOP);
+  var seq = this.parseNonSeq(PREC_NONE, CTX_TOP);
 
   if (!this.expectT(CH_COLON))
     this.err('cond.colon',{extra:[cond,seq,context]});
 
-  var alt = this.parseNonSeqExpr(PREC_NONE, (ctx&CTX_FOR)|CTX_TOP);
+  var alt = this.parseNonSeq(PREC_NONE, (ctx&CTX_FOR)|CTX_TOP);
   return {
     type: 'ConditionalExpression',
     test: core(cond),
@@ -6283,7 +6460,7 @@ function() {
   this.testStmt() || this.err('not.stmt');
   this.fixupLabels(false);
 
-  var c0 = this.c0, loc0 = this.locBegin();
+  var c0 = this.c0, loc0 = this.loc0();
   var c = this.c, li = this.li, col = this.col;
   this.next() ;
 
@@ -6465,7 +6642,7 @@ this.parseFor = function() {
 
     this.next();
     afterHead = kind === 'ForOfStatement' ? 
-      this.parseNonSeqExpr(PREC_NONE, CTX_TOP) :
+      this.parseNonSeq(PREC_NONE, CTX_TOP) :
       this.parseExpr(CTX_TOP);
 
     if (!this.expectT(CH_RPAREN))
@@ -6655,7 +6832,7 @@ function() {
   this.pt = this.at = this.st = 0;
 
   // TODO: should be CTX_NULLABLE, or else the next line is in vain  
-  var e = this.parseNonSeqExpr(PREC_NONE, CTX_NULLABLE|CTX_TOP);
+  var e = this.parseNonSeq(PREC_NONE, CTX_NULLABLE|CTX_TOP);
   e || this.err('prop.dyna.no.expr');
 
   var n = {
@@ -6707,7 +6884,7 @@ function(c0,loc0,c,li,col) {
 
 },
 function(){
-this.parseObjectExpression = function(ctx) {
+this.parseObj = function(ctx) {
   var c0 = this.c0, loc0 = this.loc0(),
       elem = null, list = [], first__proto__ = null,
       elctx = CTX_NONE,
@@ -6751,44 +6928,44 @@ this.parseObjectExpression = function(ctx) {
     if (errt_ptrack(elctx) && this.pt_override(pt)) {
       pt = this.pt, pe = this.pe, po = elem;
       if (errt_pin(pt))
-        pc0 = this.ploc.c0, pli0 = this.ploc.li0, pcol0 = this.ploc.col0;
+        pc0 = this.pin.p.c0, pli0 = this.pin.p.li0, pcol0 = this.pin.p.col0;
       if (errt_psyn(pt))
         elctx |= CTX_HAS_A_PARAM_ERR;
     }
     if (errt_atrack(elctx) && this.at_override(at)) {
       at = this.at; ae = this.ae; ao = elem;
       if (errt_pin(at))
-        ac0 = this.aloc.c0, ali0 = this.aloc.li0, acol0 = this.aloc.col0;
+        ac0 = this.pin.a.c0, ali0 = this.pin.a.li0, acol0 = this.pin.a.col0;
       if (errt_asyn(at))
         elctx |= CTX_HAS_AN_ASSIG_ERR;
     }
     if (errt_strack(elctx) && this.st_override(st)) {
       st = this.st; se = this.se; so = elem;
       if (errt_pin(st))
-        sc0 = this.eloc.c0, sli0 = this.eloc.li0, scol0 = this.eloc.col0;
+        sc0 = this.pin.s.c0, sli0 = this.pin.s.li0, scol0 = this.pin.s.col0;
       if (errt_ssyn(st))
         elctx |= CTX_HAS_A_SIMPLE_ERR;
     }
-  } while (this.lttype === ',');
+  } while (this.lttype === CH_COMMA);
 
   n = {
     properties: list,
     type: 'ObjectExpression',
-    start: startc,
+    start: c0,
     end: this.c,
-    loc: { start: startLoc, end: this.loc() }, 
+    loc: { start: loc0, end: this.loc() }, 
     '#y': -1
   };
 
-  if (errt_haserr(ctx,pt)) {
+  if (errt_perr(ctx,pt)) {
     this.pt_teot(pt,pe,po);
     errt_pin(pt) && this.pin_pt(pc0,pli0,pcol0);
   }
-  if (errt_haserr(ctx,at)) {
+  if (errt_aerr(ctx,at)) {
     this.at_teot(at,ae,ao);
     errt_pin(at) && this.pin_at(ac0,ali0,acol0);
   }
-  if (errt_haserr(ctx,st)) {
+  if (errt_serr(ctx,st)) {
     this.st_teot(st,se,so);
     errt_pin(st) && this.pin_st(sc0,sli0,scol0);
   }
@@ -6819,22 +6996,24 @@ this.parseParen = function(ctx) {
     this.se = this.so = null;
     this.suspys = null;
     elctx = CTX_PAT|CTX_PARAM|CTX_NULLABLE;
-    this.enterScope(this.scope.parenScope());
-    insideParen = true;
+    this.enterScope(this.scope.spawnParen());
+    insideParams = true;
   }
   else
     elctx = CTX_TOP;
 
   var lastElem = null, hasTailElem = false;
   this.next();
+
+  var elem = null;
   while (true) {
     lastElem = elem;
-    elem = this.parseNonSeqExpr(PREC_NONE, elctx);
+    elem = this.parseNonSeq(PREC_NONE, elctx);
     if (elem === null) {
       if (this.lttype === TK_ELLIPSIS) {
-        if (!errt_paramList(elctx)) {
+        if (!errt_param(elctx)) {
           this.st_teot(ERR_UNEXPECTED_REST,null,null);
-          this.flushSimpleErrors();
+          this.st_flush();
         }
         elem = this.parseSpread(elctx);
         hasRest = true;
@@ -6848,7 +7027,7 @@ this.parseParen = function(ctx) {
       else break;
     }
 
-    if (errt_paramList(elctx)) {
+    if (errt_param(elctx)) {
       if (errt_ptrack(elctx)) {
         if (this.pt === ERR_NONE_YET && !hasTailElem) {
           // TODO: function* l() { ({[yield]: (a)})=>12 }
@@ -6864,7 +7043,7 @@ this.parseParen = function(ctx) {
         if (this.pt_override(pt)) {
           pt = this.pt, pe = this.pe, po = core(elem);
           if (errt_pin(pt))
-            pc0 = this.ploc.c0, pli0 = this.ploc.li0, pcol0 = this.ploc.col0;
+            pc0 = this.pin.p.c0, pli0 = this.pin.p.li0, pcol0 = this.pin.p.col0;
           if (errt_psyn(pt))
             elctx |= CTX_HAS_A_PARAM_ERR;
         }
@@ -6884,7 +7063,7 @@ this.parseParen = function(ctx) {
         if (this.st_override(st)) {
           st = this.st, se = this.se, so = elem && core(elem);
           if (errt_pin(st))
-            sc0 = this.eloc.c0, sli0 = this.eloc.li0, scol0 = this.eloc.col0;
+            sc0 = this.pin.s.c0, sli0 = this.pin.s.li0, scol0 = this.pin.s.col0;
           if (errt_ssyn(st))
             elctx |= CTX_HAS_A_SIMPLE_ERR;
         }
@@ -6939,11 +7118,11 @@ this.parseParen = function(ctx) {
   if (errt_pat(ctx)) {
     if (pt !== ERR_NONE_YET) {
       this.pt_teot(pt,pe,po);
-      errt_pin(pt) && this.ppin(pc0,pli0,pcol0);
+      errt_pin(pt) && this.pin_pt(pc0,pli0,pcol0);
     }
     if (st !== ERR_NONE_YET) {
       this.st_teot(st,se,so);
-      errt_pin(st) && this.spin(sc0,sli0,scol0);
+      errt_pin(st) && this.pin_st(sc0,sli0,scol0);
     }
     if (list === null && elem !== null &&
        elem.type === 'Identifier' && elem.name === 'async')
@@ -6963,7 +7142,7 @@ this.parseParen = function(ctx) {
 
 this.dissolveParen = function() {
   if (this.parenScope) {
-    this.parenScope.dissolve();
+    this.parenScope.makeSimple();
     this.parenScope = null;
   }
 };
@@ -7024,7 +7203,7 @@ function (head) {
   if (this.v <= 5)
     this.err('ver.assig');
   this.next() ;
-  var e = this.parseNonSeqExpr(PREC_NONE, CTX_TOP);
+  var e = this.parseNonSeq(PREC_NONE, CTX_TOP);
   return {
     type: 'AssignmentPattern',
     start: head.start,
@@ -7198,6 +7377,7 @@ this.parseProgram = function () {
 
   this.next();
 
+  this.enterPrologue();
   var list = this.stmtList(); 
 
   this.scope.finish();
@@ -7458,7 +7638,7 @@ function(ctx) {
   var c0 = this.c0, loc0 = this.loc0();
   this.next();
 
-  var arg = this.parseNonSeqExpr(PREC_NONE, ctx);
+  var arg = this.parseNonSeq(PREC_NONE, ctx);
   if (arg === null)
     this.err('spread.arg.is.null');
 
@@ -7511,6 +7691,8 @@ function(startChar) {
   this.setsimpoff(c);
   if (ch !== startChar)
     this.err('str.unfinished');
+
+  this.next();
 
   return {
     type: 'Literal',
@@ -7643,7 +7825,7 @@ function () {
   this.testStmt() || this.err('not.stmt');
   this.fixupLabels(false ) ;
 
-  var ex = null, c0 = this.c0, loc0 = this.locBegin();
+  var ex = null, c0 = this.c0, loc0 = this.loc0();
   var li = this.li, c = this.c, col = this.col;
 
   this.next(); // 'throw'
@@ -7674,7 +7856,7 @@ function () {
 function(){
 this.parseExpr =
 function(ctx) {
-  var head = this.parseNonSeqExpr(PREC_NONE, ctx);
+  var head = this.parseNonSeq(PREC_NONE, ctx);
   var latestExpr = null;
 
   if (this.lttype !== CH_COMMA)
@@ -7686,7 +7868,7 @@ function(ctx) {
   var e = [core(head)];
   do {
     this.next();
-    latestExpr = this.parseNonSeqExpr(PREC_NONE, ctx);
+    latestExpr = this.parseNonSeq(PREC_NONE, ctx);
     e.push(core(latestExpr));
   } while (this.lttype === CH_COMMA);
 
@@ -7758,7 +7940,7 @@ this.parseTryStatement = function () {
 
 },
 function(){
-this.parseUnaryExpression =
+this.parseUnary =
 function(ctx) {
   var op = "", loc0 = this.loc0(), c0 = this.c0, vdt = this.vdt;
 
@@ -7770,7 +7952,7 @@ function(ctx) {
     op = this.ltraw;
 
   this.next();
-  var arg = this.parseNonSeqExpr(PREC_UNARY, context & CTX_FOR);
+  var arg = this.parseNonSeq(PREC_UNARY, ctx & CTX_FOR);
 
   if (this.scope.insideStrict() &&
     vdt === VDT_DELETE &&
@@ -7896,12 +8078,12 @@ function(ctx) {
     if (this.lttype === TK_SIMPLE_BINARY && this.ltraw === '*') {
       deleg = true;
       this.next(); // '*'
-      arg = this.parseNonSeqExpr(PREC_NONE, ctx&CTX_FOR);
+      arg = this.parseNonSeq(PREC_NONE, ctx&CTX_FOR);
       if (!arg)
         this.err('yield.has.no.expr.deleg');
     }
     else
-      arg = this.parseNonSeqExpr(PREC_NONE, (ctx&CTX_FOR)|CTX_NULLABLE);
+      arg = this.parseNonSeq(PREC_NONE, (ctx&CTX_FOR)|CTX_NULLABLE);
   }
 
   var ec = -1, eloc = null;
@@ -8142,12 +8324,26 @@ this.read_dot =
 function() {
   var ch = this.scat(this.c+1);
   if (ch === CH_SINGLEDOT)
-    return this.readEllipsis();
+    return this.read_ellipsis();
   
   this.readNum_tail(FL_HEADLESS_FLOAT);
 
   this.ltval = parseFloat(this.ltraw = this.c0_to_c());
   this.lttype = TK_NUM;
+};
+
+},
+function(){
+this.read_ellipsis =
+function() {
+  var c = this.c+2, s = this.src;
+  if (c>=s.length || s.charCodeAt(c) !== CH_SINGLEDOT) {
+    this.setsimpoff(c);
+    this.err('unexpected.dot');
+  }
+
+  this.setsimpoff(c+1);
+  this.lttype = TK_ELLIPSIS;
 };
 
 },
@@ -8438,6 +8634,7 @@ function() {
     if (isNum(ch))
       return this.readNum_octLegacy(ch);
 
+    this.setsimpoff(this.c+1);
     return NUM0_ZERO;
   }
 };
@@ -8873,7 +9070,7 @@ function() {
       this.ltraw = '**=';
     }
     else {
-      this.prec = PREC_MUL;
+      this.prec = PREC_EX;
       this.lttype = TK_SIMP_BINARY;
       this.ltraw = '**';
     }
@@ -9111,7 +9308,7 @@ function() {
 this.fixupLabels =
 function(isLoop) {
   if (this.unsatisfiedLabel) {
-    this.unsatisfiedLabel.loop = loop;
+    this.unsatisfiedLabel.loop = isLoop;
     this.unsatisfiedLabel = null;
   }
 };
@@ -9119,8 +9316,15 @@ function(isLoop) {
 this.stmtList =
 function () {
   var stmt = null, list = [];
-  while (stmt = this.parseStatement(true))
+  while (stmt = this.parseStatement(true)) {
+    if (this.scope.insidePrologue()) {
+      if (!isDirective(stmt))
+        this.exitPrologue();
+      else
+        this.applyDirective(stmt);
+    } 
     list.push(stmt);
+  }
   return list;
 };
 
@@ -9141,6 +9345,23 @@ function() {
   return surrogateTail;
 };
 
+},
+function(){
+this.ensureSAT =
+function(left) {
+
+  switch (left.type) {
+  case 'Identifier':
+    if (this.scope.insideStrict() &&
+      arorev(left.name))
+      this.err('assig.to.arguments.or.eval');
+  case 'MemberExpression':
+    return true;
+  }
+
+  return false;
+};
+
 }]  ],
 [Ref.prototype, [function(){
 this.absorbDirect =
@@ -9151,16 +9372,16 @@ function(ref) { return this.absorb(ref, false); };
 
 this.absorb =
 function(childRef, refD) {
-  ASSERT.call(this, !refD.isReolved,
+  ASSERT.call(this, !childRef.hasTarget,
     'resolved ref are not allowed to get absorbed by another ref');
-  ASSERT.call(this, !refD.parent,
+  ASSERT.call(this, !childRef.parent,
     'a ref with a parent is not allowed to get absorbed by another ref');
 
   if (refD) {
-    this.d += refD.d;
-    this.i += refD.i;
+    this.d += childRef.d;
+    this.i += childRef.i;
   } else
-    this.i += refD.d + refD.i
+    this.i += childRef.d + childRef.i
 
   if (childRef.rsList.length)
     this.rsList = childRef.rsList.concat(this.rsList);
@@ -9174,13 +9395,13 @@ function(childRef, refD) {
 }]  ],
 [Scope.prototype, [function(){
 this.canSmem =
-function() { return this.allowed & SF_MEMSUP; };
+function() { return this.actions & SA_MEMSUP; };
 
 this.canAwait = 
-function() { return this.allowed & SF_AWAIT; };
+function() { return this.actions & SA_AWAIT; };
 
 this.canBreak = 
-function() { return this.allowed & SF_BREAK; };
+function() { return this.actions & SA_BREAK; };
 
 this.canDeclareLetOrConst =
 function() {
@@ -9196,7 +9417,7 @@ function() {
 };
 
 this.canScall = 
-function() { return this.allowed & SF_CALLSUP; };
+function() { return this.actions & SA_CALLSUP; };
 
 this.canDeclareFn =
 function(st) {
@@ -9219,13 +9440,13 @@ function(st) {
 };
 
 this.canYield = 
-function() { return this.allowed & SF_YIELD; };
+function() { return this.actions & SA_YIELD; };
 
 this.canReturn = 
-function() { return this.allowed & SF_RETURN; };
+function() { return this.actions & SA_RETURN; };
 
 this.canContinue = 
-function() { return this.allowed & SF_CONTINUE; };
+function() { return this.actions & SA_CONTINUE; };
 
 },
 function(){
@@ -9341,6 +9562,9 @@ function() { return this.flags & SF_LOOP; };
 this.insideStrict = 
 function() { return this.flags & SF_STRICT; };
 
+this.insidePrologue =
+function() { return this.flags & SF_INSIDEPROLOGUE; };
+
 this.insideForInit =
 function() { return this.flags & SF_FORINIT; };
 
@@ -9384,6 +9608,9 @@ function() { return this.type & ST_STATICMEM; };
 
 this.isObjMem = 
 function() { return this.type & ST_OBJMEM; };
+
+this.isMem =
+function() { return this.isClassMem() || this.isStaticMem() || this.isObjMem(); };
 
 this.isArrow = 
 function() { return this.type & ST_ARROW; };
@@ -9534,7 +9761,7 @@ function(mname, tdecl, tscope, isNew) {
       'reached topmost before reaching target');
   }
 
-  isNew && tscope.addVarTarget(mname, tdecl);
+  isNew && tscope.addVarTarget_m(mname, tdecl);
 };
 
 this.declareLexical_m =
@@ -9632,8 +9859,8 @@ function(mname, t) {
   var ref = this.findRef_m(mname) || new Ref(this),
       newDecl = new Decl().t(t).n(_u(mname));
 
-  var existing = HAS.call(this.paramMap, mname) ?
-    this.paramMap[mname] : null;
+  var existing = HAS.call(this.argMap, mname) ?
+    this.argMap[mname] : null;
 
   if (existing) {
     this.canDup() || this.err('var.fn.is.dup.arg');
@@ -9643,17 +9870,26 @@ function(mname, t) {
   }
   else {
     newDecl.r(ref);
-    this.paramMap[mname] = newDecl;
-    this.addVarTarget(mname, newDecl);
+    this.argMap[mname] = newDecl;
+    this.addVarTarget_m(mname, newDecl);
   }
 
-  this.paramList.push(newDecl);
+  this.argList.push(newDecl);
   return newDecl;
 };
 
 this.insertDecl_m =
 function(mname, newDecl) {
   this.defs.set(mname, newDecl);
+};
+
+},
+function(){
+this.addVarTarget_m =
+function(mname, newDecl) {
+  ASSERT.call(this, !HAS.call(this.varTargets, mname),
+    'var target is not unique: <'+mname+'>');
+  this.varTargets[mname] = newDecl;
 };
 
 },
@@ -9689,6 +9925,16 @@ function(mname) {
 this.insertRef_m =
 function(mname, ref) {
   this.refs.set(mname, ref);
+};
+
+this.refIndirect_m =
+function(mname, childRef) {
+  var ref = this.focRef_m(mname);
+  ASSERT.call(this, childRef !== null,
+    'childRef is not allowed to be null when in refIndirect');
+
+  ref.absorbIndirect(childRef);
+  return ref;
 };
 
 },

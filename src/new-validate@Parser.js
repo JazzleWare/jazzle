@@ -131,4 +131,7 @@ function (name) {
   }
 };
 
-
+this.validate =
+function(name) {
+  this.isResv(name) && this.ri();
+};

@@ -7,7 +7,7 @@ function() {
   if (!this.scope.canContinue())
     this.err('continue.not.in.loop');
 
-  var c0 = this.c0, loc0 = this.locBegin();
+  var c0 = this.c0, loc0 = this.loc0();
   var c = this.c, li = this.li, col = this.col;
   this.next(); // 'continue'
 

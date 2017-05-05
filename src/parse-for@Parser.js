@@ -68,7 +68,7 @@ this.parseFor = function() {
 
     this.next();
     afterHead = kind === 'ForOfStatement' ? 
-      this.parseNonSeqExpr(PREC_NONE, CTX_TOP) :
+      this.parseNonSeq(PREC_NONE, CTX_TOP) :
       this.parseExpr(CTX_TOP);
 
     if (!this.expectT(CH_RPAREN))

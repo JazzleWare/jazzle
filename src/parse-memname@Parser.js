@@ -25,7 +25,7 @@ function() {
   this.pt = this.at = this.st = 0;
 
   // TODO: should be CTX_NULLABLE, or else the next line is in vain  
-  var e = this.parseNonSeqExpr(PREC_NONE, CTX_NULLABLE|CTX_TOP);
+  var e = this.parseNonSeq(PREC_NONE, CTX_NULLABLE|CTX_TOP);
   e || this.err('prop.dyna.no.expr');
 
   var n = {

@@ -1,11 +1,11 @@
 this.canSmem =
-function() { return this.allowed & SF_MEMSUP; };
+function() { return this.actions & SA_MEMSUP; };
 
 this.canAwait = 
-function() { return this.allowed & SF_AWAIT; };
+function() { return this.actions & SA_AWAIT; };
 
 this.canBreak = 
-function() { return this.allowed & SF_BREAK; };
+function() { return this.actions & SA_BREAK; };
 
 this.canDeclareLetOrConst =
 function() {
@@ -21,7 +21,7 @@ function() {
 };
 
 this.canScall = 
-function() { return this.allowed & SF_CALLSUP; };
+function() { return this.actions & SA_CALLSUP; };
 
 this.canDeclareFn =
 function(st) {
@@ -44,10 +44,10 @@ function(st) {
 };
 
 this.canYield = 
-function() { return this.allowed & SF_YIELD; };
+function() { return this.actions & SA_YIELD; };
 
 this.canReturn = 
-function() { return this.allowed & SF_RETURN; };
+function() { return this.actions & SA_RETURN; };
 
 this.canContinue = 
-function() { return this.allowed & SF_CONTINUE; };
+function() { return this.actions & SA_CONTINUE; };

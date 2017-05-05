@@ -7,7 +7,8 @@ function() {
   var loc0 = this.loc0();
   this.next(); // '{'
 
-  var list = this.parseStmtList();
+  this.enterPrologue();
+  var list = this.stmtList();
 
   var n = {
     type : 'BlockStatement',

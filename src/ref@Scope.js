@@ -30,3 +30,13 @@ this.insertRef_m =
 function(mname, ref) {
   this.refs.set(mname, ref);
 };
+
+this.refIndirect_m =
+function(mname, childRef) {
+  var ref = this.focRef_m(mname);
+  ASSERT.call(this, childRef !== null,
+    'childRef is not allowed to be null when in refIndirect');
+
+  ref.absorbIndirect(childRef);
+  return ref;
+};

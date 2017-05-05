@@ -26,6 +26,8 @@ function(startChar) {
   if (ch !== startChar)
     this.err('str.unfinished');
 
+  this.next();
+
   return {
     type: 'Literal',
     value: v,

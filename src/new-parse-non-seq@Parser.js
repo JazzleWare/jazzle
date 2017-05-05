@@ -1,4 +1,4 @@
-this.parseNonSeqExpr =
+this.parseNonSeq =
 function(prec, ctx) {
   var head = this.exprHead;
   if (head) this.exprHead = null;
@@ -10,11 +10,11 @@ function(prec, ctx) {
   switch (this.lttype) {
   case TK_UNARY:
   case TK_UNBIN:
-    head = this.parseUnaryExpression(ctx);
+    head = this.parseUnary(ctx);
     break;
 
   case TK_AA_MM:
-    head = this.parseUpdateExpression(null, ctx);
+    head = this.parseUpdate(null, ctx);
     break;
 
   case TK_YIELD:
@@ -37,14 +37,14 @@ function(prec, ctx) {
   var hasOp = this.getOp(ctx);
   if (!hasOp) {
     if (errt_noLeak(ctx)) {
-      this.flushSimpleErrors();
+      this.st_flush();
       this.dissolveParen();
     }
     return head;
   }
 
   if (errt_noLeak(ctx)) {
-    this.flushSimpleErrors();
+    this.st_flush();
     this.dissolveParen();
   }
 
@@ -70,7 +70,7 @@ function(prec, ctx) {
 
     var o = this.ltraw;
     this.next();
-    var r = this.parseNonSeqExpr(curPrec, ctx & CTX_FOR);
+    var r = this.parseNonSeq(curPrec, ctx & CTX_FOR);
     head = {
       type: isLog(curPrec) ? 'LogicalExpression' : 'BinaryExpression',
       operator: o,

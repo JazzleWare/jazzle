@@ -2,7 +2,7 @@ this.read_dot =
 function() {
   var ch = this.scat(this.c+1);
   if (ch === CH_SINGLEDOT)
-    return this.readEllipsis();
+    return this.read_ellipsis();
   
   this.readNum_tail(FL_HEADLESS_FLOAT);
 

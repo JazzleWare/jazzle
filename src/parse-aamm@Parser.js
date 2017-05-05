@@ -2,7 +2,7 @@ this.parseUpdate = function(arg, ctx) {
   var c = 0, loc = null, u = this.ltraw;
   if (arg === null) {
     c = this.c0;
-    loc = this.locBegin();
+    loc = this.loc0();
     this.next() ;
     arg = this.parseExprHead(ctx & CTX_FOR);
     if (arg === null)

@@ -25,5 +25,5 @@ function(mname, ref) {
     }
   }
 
-  return this.focRef(mname).absorbDirect(ref);
+  return this.focRef_m(mname).absorbDirect(ref);
 };

@@ -1,6 +1,6 @@
 this.parseExpr =
 function(ctx) {
-  var head = this.parseNonSeqExpr(PREC_NONE, ctx);
+  var head = this.parseNonSeq(PREC_NONE, ctx);
   var latestExpr = null;
 
   if (this.lttype !== CH_COMMA)
@@ -12,7 +12,7 @@ function(ctx) {
   var e = [core(head)];
   do {
     this.next();
-    latestExpr = this.parseNonSeqExpr(PREC_NONE, ctx);
+    latestExpr = this.parseNonSeq(PREC_NONE, ctx);
     e.push(core(latestExpr));
   } while (this.lttype === CH_COMMA);
 

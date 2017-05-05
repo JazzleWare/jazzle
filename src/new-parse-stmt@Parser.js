@@ -24,14 +24,14 @@ function(allowNull) {
     return null;
   }
 
-  head = this.parseExpr(CTX_TOP);
+  head = this.parseExpr(CTX_NULLABLE|CTX_TOP);
   if (head === null) {
-    allowNull && this.err('stmt.null');
+    allowNull || this.err('stmt.null');
     return null;
   }
   if (head.type === 'Identifier' &&
     this.lttype === CH_COLON)
-    return this.parseLabeledStatement(
+    return this.parseLabel(
       head, allowNull);
 
   this.fixupLabels(false);
@@ -48,10 +48,3 @@ function(allowNull) {
       end: this.semiLoc || head.loc.end }
   };
 };
-
-//if (this.insidePrologue()) {
-//  if (!isDirective(head))
-//    this.exitPrologue();
-//  else
-//    this.applyDirective(head);
-//}

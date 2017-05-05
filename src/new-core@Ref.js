@@ -6,16 +6,16 @@ function(ref) { return this.absorb(ref, false); };
 
 this.absorb =
 function(childRef, refD) {
-  ASSERT.call(this, !refD.isReolved,
+  ASSERT.call(this, !childRef.hasTarget,
     'resolved ref are not allowed to get absorbed by another ref');
-  ASSERT.call(this, !refD.parent,
+  ASSERT.call(this, !childRef.parent,
     'a ref with a parent is not allowed to get absorbed by another ref');
 
   if (refD) {
-    this.d += refD.d;
-    this.i += refD.i;
+    this.d += childRef.d;
+    this.i += childRef.i;
   } else
-    this.i += refD.d + refD.i
+    this.i += childRef.d + childRef.i
 
   if (childRef.rsList.length)
     this.rsList = childRef.rsList.concat(this.rsList);

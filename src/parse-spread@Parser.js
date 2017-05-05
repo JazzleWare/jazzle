@@ -5,7 +5,7 @@ function(ctx) {
   var c0 = this.c0, loc0 = this.loc0();
   this.next();
 
-  var arg = this.parseNonSeqExpr(PREC_NONE, ctx);
+  var arg = this.parseNonSeq(PREC_NONE, ctx);
   if (arg === null)
     this.err('spread.arg.is.null');
 

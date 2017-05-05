@@ -16,7 +16,7 @@ function() {
 this.fixupLabels =
 function(isLoop) {
   if (this.unsatisfiedLabel) {
-    this.unsatisfiedLabel.loop = loop;
+    this.unsatisfiedLabel.loop = isLoop;
     this.unsatisfiedLabel = null;
   }
 };
@@ -24,7 +24,14 @@ function(isLoop) {
 this.stmtList =
 function () {
   var stmt = null, list = [];
-  while (stmt = this.parseStatement(true))
+  while (stmt = this.parseStatement(true)) {
+    if (this.scope.insidePrologue()) {
+      if (!isDirective(stmt))
+        this.exitPrologue();
+      else
+        this.applyDirective(stmt);
+    } 
     list.push(stmt);
+  }
   return list;
 };

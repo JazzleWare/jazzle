@@ -15,7 +15,7 @@ function(ctx) {
     return null;
 
   case CH_LSQBRACKET:
-    head = this.parseArrayExpression(ctx);
+    head = this.parseArray(ctx);
     break;
 
   case CH_LPAREN:
@@ -23,7 +23,7 @@ function(ctx) {
     break;
 
   case CH_LCURLY:
-    head = this.parseObjectExpression(ctx);
+    head = this.parseObj(ctx);
     break;
 
   case CH_MULTI_QUOTE:

@@ -12,17 +12,15 @@ this.parseArrow = function(arg, ctx)   {
   var sc = ST_ARROW;
   switch ( arg.type ) {
   case 'Identifier':
-    var decl = this.scope.findDecl(arg.name);
-    if (decl) decl.ref.direct--;
-    else this.scope.findRef_m(_m(arg.name)).direct--;
-
-    this.enterScope(this.scope.spawnFn(st));
+    this.scope.findRef_m(_m(arg.name)).d--;
+    this.enterScope(this.scope.spawnFn(sc));
+    this.scope.refDirect_m(_m(arg.name), null);
     this.asArrowFuncArg(arg);
     break;
 
   case PAREN_NODE:
-    this.enterScope(this.scope.spawnFn(st));
-    this.scope.absorb(this.parenScope);
+    this.enterScope(this.scope.spawnFn(sc));
+    this.parenScope.makeParams(this.scope);
     this.parenScope = null;
     if (arg.expr) {
       if (arg.expr.type === 'SequenceExpression')
@@ -42,9 +40,9 @@ this.parseArrow = function(arg, ctx)   {
 //    this.err('ver.async');
 
     async = true;
-    st |= ST_ASYNC;
-    this.enterScope(this.scope.spawnFn(st));
-    this.scope.absorb(this.parenScope);
+    sc |= ST_ASYNC;
+    this.enterScope(this.scope.spawnFn(sc));
+    this.parenScope.makeParams(this.scope);
     this.parenScope = null;
     this.asArrowFuncArgList(arg.arguments);
     break;
@@ -52,17 +50,18 @@ this.parseArrow = function(arg, ctx)   {
   case INTERMEDIATE_ASYNC:
     async = true;
     st |= ST_ASYNC;
-    this.enterScope(this.scope.spawnFn(st));
+    this.enterScope(this.scope.spawnFn(sc));
+    this.scope.refDirect_m(_m(arg.id.name));
     this.asArrowFuncArg(arg.id);
     break;
 
-  default:
-    this.err('not.a.valid.arg.list');
-
+  default: this.err('not.a.valid.arg.list');
   }
 
-  this.flushParamErrors();
-  this.scope.enterBody();
+  this.pt_flush();
+
+  var scope = this.scope;
+  scope.activateBody();
 
   if (this.nl)
     this.err('arrow.newline');
@@ -76,13 +75,13 @@ this.parseArrow = function(arg, ctx)   {
 
     this.labels = {};
     isExpr = false;
-    nbody = this.parseFuncBody();
+    nbody = this.parseFunBody();
 
     this.labels = prevLabels;
     this.declMode = prevDeclMode;
   }
   else
-    nbody = this.parseNonSeqExpr(PREC_NONE, ctx|CTX_PAT) ;
+    nbody = this.parseNonSeq(PREC_NONE, ctx|CTX_PAT) ;
 
   this.exitScope(); // body
 
@@ -112,4 +111,3 @@ this.parseArrow = function(arg, ctx)   {
     '#scope': scope
   }; 
 };
-

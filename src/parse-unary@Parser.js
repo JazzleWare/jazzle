@@ -1,4 +1,4 @@
-this.parseUnaryExpression =
+this.parseUnary =
 function(ctx) {
   var op = "", loc0 = this.loc0(), c0 = this.c0, vdt = this.vdt;
 
@@ -10,7 +10,7 @@ function(ctx) {
     op = this.ltraw;
 
   this.next();
-  var arg = this.parseNonSeqExpr(PREC_UNARY, context & CTX_FOR);
+  var arg = this.parseNonSeq(PREC_UNARY, ctx & CTX_FOR);
 
   if (this.scope.insideStrict() &&
     vdt === VDT_DELETE &&

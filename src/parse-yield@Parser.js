@@ -10,12 +10,12 @@ function(ctx) {
     if (this.lttype === TK_SIMPLE_BINARY && this.ltraw === '*') {
       deleg = true;
       this.next(); // '*'
-      arg = this.parseNonSeqExpr(PREC_NONE, ctx&CTX_FOR);
+      arg = this.parseNonSeq(PREC_NONE, ctx&CTX_FOR);
       if (!arg)
         this.err('yield.has.no.expr.deleg');
     }
     else
-      arg = this.parseNonSeqExpr(PREC_NONE, (ctx&CTX_FOR)|CTX_NULLABLE);
+      arg = this.parseNonSeq(PREC_NONE, (ctx&CTX_FOR)|CTX_NULLABLE);
   }
 
   var ec = -1, eloc = null;

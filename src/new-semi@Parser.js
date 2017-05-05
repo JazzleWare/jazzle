@@ -22,7 +22,7 @@ function() {
 
   case CH_RCURLY:
     this.semiC = this.c0;
-    this.semiLoc = this.locOn(1);
+    this.semiLoc = this.loc0();
     return true;
   }
 

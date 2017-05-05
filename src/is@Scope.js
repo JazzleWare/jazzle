@@ -34,6 +34,9 @@ function() { return this.type & ST_STATICMEM; };
 this.isObjMem = 
 function() { return this.type & ST_OBJMEM; };
 
+this.isMem =
+function() { return this.isClassMem() || this.isStaticMem() || this.isObjMem(); };
+
 this.isArrow = 
 function() { return this.type & ST_ARROW; };
 

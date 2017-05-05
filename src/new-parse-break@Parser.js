@@ -4,7 +4,7 @@ function() {
   this.testStmt() || this.err('not.stmt');
   this.fixupLabels(false);
 
-  var c0 = this.c0, loc0 = this.locBegin();
+  var c0 = this.c0, loc0 = this.loc0();
   var c = this.c, li = this.li, col = this.col;
 
   this.next();

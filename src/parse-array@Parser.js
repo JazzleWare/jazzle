@@ -1,6 +1,6 @@
 this.parseArray = 
 function(ctx) {
-  var c0 = this.c0, loc0 = this.locBegin();
+  var c0 = this.c0, loc0 = this.loc0();
 
   this.next(); // '['
 
@@ -27,7 +27,7 @@ function(ctx) {
   var hasRest = false, hasNonTailRest = false;
 
   while (hasMore) {
-    elem = this.parseNonSeqExpr(PREC_NONE, elctx);
+    elem = this.parseNonSeq(PREC_NONE, elctx);
     if (elem === null && this.lttype === TK_ELLIPSIS) {
       elem = this.parseSpread(elctx);
       hasRest = true;
@@ -65,10 +65,10 @@ function(ctx) {
         }
         if (this.pt_override(pt)) {
           pt = this.pt; pe = this.pe; po = core(elem);
-          if (pt & ERR_P_SYN)
+          if (errt_psyn(pt))
             elctx |= CTX_HAS_A_PARAM_ERR;
-          if (pt & ERR_PIN) 
-            pc0 = this.ploc.c0, pli0 = this.ploc.li0, pcol0 = this.ploc.col0;
+          if (errt_pin(pt)) 
+            pc0 = this.pin.p.c0, pli0 = this.pin.p.li0, pcol0 = this.pin.p.col0;
         }
       }
 
@@ -82,19 +82,19 @@ function(ctx) {
         }
         if (this.at_override(at)) {
           at = this.at; ae = this.ae; ao = core(elem);
-          if (at & ERR_A_SYN)
+          if (errt_asyn(at))
             elctx |= CTX_HAS_AN_ASSIG_ERR;
-          if (at & ERR_PIN)
-            ac0 = this.aloc.c0, ali0 = this.aloc.li0, acol0 = this.aloc.col0;
+          if (errt_pin(at))
+            ac0 = this.pin.a.c0, ali0 = this.pin.a.li0, acol0 = this.pin.a.col0;
         }
       }
       if (errt_strack(ctx)) {
         if (this.st_override(st)) {
           st = this.st; se = this.se; so = core(elem);
-          if (st & ERR_S_SYN)
+          if (errt_ssyn(st))
             elctx |= CTX_HAS_A_SIMPLE_ERR;
-          if (st & ERR_PIN)
-            sc0 = this.eloc.c0, sli0 = this.eloc.li0, scol0 = this.eloc.col0;
+          if (errt_pin(st))
+            sc0 = this.pin.s.c0, sli0 = this.pin.s.li0, scol0 = this.pin.s.col0;
         }
       }
     }
@@ -104,26 +104,27 @@ function(ctx) {
   
   var n = {
     type: 'ArrayExpression',
-    loc: { start: startLoc, end: this.loc() },
-    start: startc,
+    loc: { start: loc0, end: this.loc() },
+    start: c0,
     end: this.c,
-    elements : list /* ,y:-1*/
+    elements : list,
+    '#y': -1
   };
 
-  if (errt_haserr(ctx,pt)) {
+  if (errt_perr(ctx,pt)) {
     this.pt_teot(pt,pe,po);
-    errt_pin(pt) && this.ppin(pc0,pli0,pcol0);
+    errt_pin(pt) && this.pin_pt(pc0,pli0,pcol0);
   }
-  if (errt_haserr(ctx,at)) {
+  if (errt_aerr(ctx,at)) {
     this.at_teot(at,ae,ao);
-    errt_pin(at) && this.apin(ac0,ali0,acol0);
+    errt_pin(at) && this.pin_at(ac0,ali0,acol0);
   }
-  if (errt_haserr(ctx,st)) {
+  if (errt_serr(ctx,st)) {
     this.st_teot(st,se,so);
-    errt_pin(st) && this.spin(sc0,sli0,scol0);
+    errt_pin(st) && this.pin_st(sc0,sli0,scol0);
   }
 
-  if (!this.expectType_soft(CH_RSQBRACKET))
+  if (!this.expectT(CH_RSQBRACKET))
     this.err('array.unfinished');
   
   return n;

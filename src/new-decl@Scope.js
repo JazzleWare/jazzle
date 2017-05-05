@@ -52,7 +52,7 @@ function(mname, tdecl, tscope, isNew) {
       'reached topmost before reaching target');
   }
 
-  isNew && tscope.addVarTarget(mname, tdecl);
+  isNew && tscope.addVarTarget_m(mname, tdecl);
 };
 
 this.declareLexical_m =
@@ -150,8 +150,8 @@ function(mname, t) {
   var ref = this.findRef_m(mname) || new Ref(this),
       newDecl = new Decl().t(t).n(_u(mname));
 
-  var existing = HAS.call(this.paramMap, mname) ?
-    this.paramMap[mname] : null;
+  var existing = HAS.call(this.argMap, mname) ?
+    this.argMap[mname] : null;
 
   if (existing) {
     this.canDup() || this.err('var.fn.is.dup.arg');
@@ -161,11 +161,11 @@ function(mname, t) {
   }
   else {
     newDecl.r(ref);
-    this.paramMap[mname] = newDecl;
-    this.addVarTarget(mname, newDecl);
+    this.argMap[mname] = newDecl;
+    this.addVarTarget_m(mname, newDecl);
   }
 
-  this.paramList.push(newDecl);
+  this.argList.push(newDecl);
   return newDecl;
 };
 

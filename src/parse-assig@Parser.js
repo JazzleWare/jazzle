@@ -17,7 +17,7 @@ this.parseAssignment = function(head, ctx) {
   if (o === '=') {
     // if this assignment is a pattern
     if (ctx & CTX_PARPAT)
-      this.hideSimpleErrors();
+      this.st_adjust_for_toAssig();
 
     var st = ERR_NONE_YET, se = null, so = null,
         pt = ERR_NONE_YET, pe = null, po = null;
@@ -25,7 +25,7 @@ this.parseAssignment = function(head, ctx) {
     // S- and P-errors are not modified during toAssig; A-errors might.
     this.toAssig(core(head), ctx);
 
-    // flush any remaining simple error, now that there are no more assignment errors;
+    // flush any remaining simple errors, now that there are no more assignment errors;
     // when toAssig completes, it might have set this.st with an assig-to-arguments-or-eval;
     // this will get thrown immediately if the assignment is non-leaking, i.e., 
     // won't tolerate simple errors
@@ -39,36 +39,40 @@ this.parseAssignment = function(head, ctx) {
     if ((ctx & CTX_PARPAT) && this.st !== ERR_NONE_YET) {
       st = this.st; se = this.se; so = this.so;
       if (st & ERR_PIN)
-        sc0 = this.eloc.c0, sli0 = this.eloc.li0, scol0 = this.eloc.col0;
+        sc0 = this.pin.s.c0, sli0 = this.pin.s.li0, scol0 = this.pin.s.col0;
     }
     if ((ctx & CTX_PARAM) && this.pt !== ERR_NONE_YET) {
       pt = this.pt; pe = this.pe; po = this.po;
       if (pt & ERR_PIN)
-        pc0 = this.ploc.c0, pli0 = this.ploc.li0, pcol0 = this.ploc.col0;
+        pc0 = this.pin.p.c0, pli0 = this.pin.p.li0, pcol0 = this.pin.p.col0;
     }
 
     // toAssig was successful -- clear
-    this.clearAssigErrors();
+    this.at_flush();
+    if (errt_top(ctx))
+      ctx &= ~CTX_TOP; // a top assig is not a pattern
+
     this.next(); // '='
-    right = this.parseNonSeqExpr(PREC_NONE,
+    right = this.parseNonSeq(PREC_NONE,
       (ctx & CTX_FOR)|CTX_TOP);
 
     // restore the state of errors in the left hand side, if there are any
     if (pt !== ERR_NONE_YET) {
       this.pt = pt; this.pe = pe; this.po = po;
-      if (pt & ERR_PIN)
-        this.ploc.c0 = pc0, this.ploc.li0 = pli0, this.ploc.col0 = pcol0;
+      errt_pin(pt) && this.pin_pt(pc0,pli0,pcol0);
     }
     if (st !== ERR_NONE_YET) {
       this.st = st; this.se = se; this.so = so;
-      if (st & ERR_PIN)
-        this.eloc.c0 = sc0, this.eloc.li0 = sli0, this.eloc.scol0;
+      errt_pin(st) && this.pin_st(sc0,sli0,scol0);
     }
   }
   else {
     // TODO: further scrutiny, like checking for this.at, is necessary (?)
     if (!this.ensureSAT(core(head)))
       this.err('assig.not.simple',{tn:core(head)});
+
+    if (errt_top(ctx))
+      ctx &= ~CTX_TOP;
 
     var c0 = -1, li0 = -1, col0 = -1;
 
@@ -77,15 +81,15 @@ this.parseAssignment = function(head, ctx) {
       c0 = this.c0; li0 = this.li0; col0 = this.col0;
     }
     this.next(); // <:o:>=
-    right = this.parseNonSeqExpr(PREC_NONE, (ctx & CTX_FOR)|CTX_TOP);
+    right = this.parseNonSeq(PREC_NONE, (ctx & CTX_FOR)|CTX_TOP);
 
     // record an actual error if we have parsed a potential param or assignment pattern
-    if (ctx & CTX_PARAM) {
-      this.ploc.c0 = c0, this.ploc.li0 = li0, this.ploc.col0 = col0;
+    if (errt_param(ctx)) {
+      this.pt_pin(c0,li0,col0);
       this.pt = ERR_PIN_NOT_AN_EQ;
     }
-    if (ctx & CTX_PAT) {
-      this.aloc.c0 = c0, this.aloc.li0 = li0, this.aloc.col0 = col0;
+    if (errt_pat(ctx)) {
+      this.at_pin(c0,li0,col0);
       this.at = ERR_PIN_NOT_AN_EQ;
     }
   }

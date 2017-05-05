@@ -1,0 +1,5 @@
+pat-ctx
+  pat-ctx-leaking: the expr can end with pending errors; they will be given to its paren
+  pat-ctx-noLeak: the expr can not end with errors; i.e., pending errors are going to be flushed when the expr ends
+nonpat-ctx: 
+  it will not tolerate errors -- they will be raised immediately

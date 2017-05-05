@@ -44,7 +44,7 @@ function(dt, ctx) {
     var init = null;
     if (this.peekEq()) {
       this.next();
-      init = this.parseNonSeqExpr(PREC_NONE, ctx|CTX_TOP);
+      init = this.parseNonSeq(PREC_NONE, ctx|CTX_TOP);
     }
     else if (isConst || vpat.type !== 'Identifier') {
       !(ctx & CTX_FOR) && this.err('const.has.no.init');

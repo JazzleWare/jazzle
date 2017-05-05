@@ -12,7 +12,7 @@ function(r) {
   ASSERT_EQ.call(this, r.hasTarget, false);
   this.ref = r;
   r.targetDecl = this;
-  this.hasTarget = true;
+  r.hasTarget = true;
   return this;
 };
 
