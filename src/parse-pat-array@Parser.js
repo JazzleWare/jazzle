@@ -12,9 +12,7 @@ function() {
   this.next();
   while (true) {
     elem = this.parsePat();
-    if (elem &&
-      this.lttype === TK_SIMPLE_BINARY &&
-      this.ltraw === '=' )
+    if (elem && this.peekEq())
       elem = this.parsePat_assig(elem);
     else if (this.lttype === TK_ELLIPSIS) {
       list.push(this.parsePat_rest());

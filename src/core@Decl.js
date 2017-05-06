@@ -1,7 +1,7 @@
-this.t =
-function(t) {
-  ASSERT_EQ.call(this, this.type, DT_NONE);
-  this.t = t;
+this.s =
+function(s) {
+  ASSERT_EQ.call(this, this.site, null);
+  this.site = s;
   return this;
 };
 
@@ -20,5 +20,12 @@ this.n =
 function(n) {
   ASSERT_EQ.call(this, this.name, "");
   this.name = n;
+  return this;
+};
+
+this.t =
+function(t) {
+  ASSERT_EQ.call(this, this.type, DT_NONE);
+  this.t = t;
   return this;
 };

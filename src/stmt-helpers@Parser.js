@@ -13,6 +13,9 @@ function() {
   return false;
 };
 
+// NOTE: great care has to be taken to use this.unsatisfiedLabel such that it won't get overwritten.
+// the recommended way is to use fixupLabels at the very beginning of relevant parse routine, or at least before calling
+// any parse routine that might overwrite this.unsatisfiedLabel
 this.fixupLabels =
 function(isLoop) {
   if (this.unsatisfiedLabel) {
@@ -34,4 +37,10 @@ function () {
     list.push(stmt);
   }
   return list;
+};
+
+// TODO: eliminate
+this.fixupLabel =
+function(label, isLoop) {
+  label.loop = isLoop;
 };

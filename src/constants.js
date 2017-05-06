@@ -140,3 +140,7 @@ var EC_NONE = 0,
     EC_CALL_HEAD = EC_EXPR_HEAD << 1,
     EC_NON_SEQ = EC_CALL_HEAD << 1;
 
+var PE_NO_NONVAR = 1,
+    PE_NO_LABEL = PE_NO_NONVAR << 1,
+    PE_LEXICAL = PE_NO_NONVAR,
+    PE_NONE = 0;

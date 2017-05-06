@@ -173,7 +173,7 @@ function(ctx) {
   case 8:
     switch (name) {
     case 'function':
-      return this.parseFunc(ctx&CTX_FOR, 0);
+      return this.parseFn(ctx&CTX_FOR, ST_NONE);
     case 'debugger':
       return this.parseDbg();
     case 'continue':

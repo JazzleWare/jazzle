@@ -7,7 +7,7 @@ function() { return this.actions & SA_AWAIT; };
 this.canBreak = 
 function() { return this.actions & SA_BREAK; };
 
-this.canDeclareLetOrConst =
+this.canDeclareLexical =
 function() {
   if (this.isBlock() ||
     this.isModule() ||
@@ -51,3 +51,6 @@ function() { return this.actions & SA_RETURN; };
 
 this.canContinue = 
 function() { return this.actions & SA_CONTINUE; };
+
+this.canHaveName =
+function() { return this.isAnyFn() || this.isClass(); };

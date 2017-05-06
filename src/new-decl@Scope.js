@@ -17,9 +17,9 @@ function(mname, t) {
     tdecl = new Decl()
       .t(t)
       .n(_u(mname))
-      .r(new Ref(scs));
+      .r(new Ref(tscope));
     isNew = true;
-    this.insertDecl(mname, tdecl);
+    this.insertDecl_m(mname, tdecl);
   }
   else { tscope = tdecl.scope; }
 

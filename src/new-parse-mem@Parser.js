@@ -186,6 +186,7 @@ function(memName, ctx) {
     if (errt_noLeak(ctx)) // if the owner is not leaky
       this.err('obj.prop.assig.not.allowed');
 
+    this.scope.refDirect_m(_m(memName.name), null);
     val = this.parseAssignment(memName, ctx);
     if (errt_strack(ctx) && this.st === ERR_NONE_YET) {
       this.st = ERR_SHORTHAND_UNASSIGNED;

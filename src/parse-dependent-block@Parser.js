@@ -6,8 +6,8 @@ function(name) {
 
   var n = {
     type: 'BlockStatement',
-    body: this.blck(),
-    start: startc,
+    body: this.stmtList(),
+    start: c0,
     end: this.c,
     loc: {
       start: loc0,
@@ -15,7 +15,7 @@ function(name) {
     '#y': -1
   };
 
-  if (!this.expectType_soft(CH_RCURLY))
+  if (!this.expectT(CH_RCURLY))
     this.err('block.dependent.is.unfinished',{tn:n, extra:{delim:'}'}});
 
   return n;

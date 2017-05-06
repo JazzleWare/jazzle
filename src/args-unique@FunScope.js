@@ -1,9 +1,6 @@
 this.insideUniqueArgs =
 function() { return this.flags & SF_UNIQUE; };
 
-this.verifyForUniqueArgs =
-function() { this.firstDup && this.parser.err('argsdup'); };
-
 this.exitUniqueArgs =
 function() {
   ASSERT.call(this, !this.inBody,
@@ -13,7 +10,7 @@ function() {
   this.flags &= ~SF_UNIQUE;
 };
 
-this.makeArgsUnique =
+this.enterUniqueArgs =
 function() {
   if (!this.canDup())
     return;
@@ -21,3 +18,6 @@ function() {
   this.verifyForUniqueArgs();
   this.flags |= SF_UNIQUE;
 };
+
+this.verifyUniqueArgs =
+function() { this.firstDup && this.parser.err('argsdup'); };

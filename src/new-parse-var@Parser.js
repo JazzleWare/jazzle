@@ -7,7 +7,6 @@ function(dt, ctx) {
   var c0 = letID ? letID.start : this.c0;
   var loc0 = letID ? letID.loc.start : this.loc0();
   var vpat = null;
-  var label = this.unsatisfiedLabel;
 
   letID || this.next();
 
@@ -37,9 +36,12 @@ function(dt, ctx) {
     this.err('var.has.no.declarators');
   }
 
-  this.fixupLabel(label, false);
+  // this.unsatisfiedLabel is intact -- there has been no parsing, only lexing actually
+  this.fixupLabels(false);
 
   var isConst = dt === DT_CONST, mi = false;
+
+  var list = [];
   while (true) {
     var init = null;
     if (this.peekEq()) {

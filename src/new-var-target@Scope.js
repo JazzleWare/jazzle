@@ -4,3 +4,8 @@ function(mname, newDecl) {
     'var target is not unique: <'+mname+'>');
   this.varTargets[mname] = newDecl;
 };
+
+this.findVarTarget_m =
+function(mname) {
+  return this.varTargets[mname];
+};

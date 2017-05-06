@@ -2,6 +2,10 @@ this.parsePat =
 function() {
   switch (this.lttype) {
   case TK_ID:
+    if (this.vpatCheck) {
+      this.patErrCheck();
+      this.vpatCheck = false;
+    }
     this.validate(this.ltval);
     var id = this.id();
     this.declare(id);
@@ -11,10 +15,18 @@ function() {
     return id;
 
   case CH_LSQBRACKET:
-     return this.parsePat_array();
+    if (this.vpatCheck) {
+      this.patErrCheck();
+      this.vpatCheck = false;
+    }
+    return this.parsePat_array();
 
   case CH_LCURLY:
-     return this.parsePat_obj();
+    if (this.vpatCheck) {
+      this.patErrCheck();
+      this.vpatCheck = false;
+    }
+    return this.parsePat_obj();
 
   default:
      return null;

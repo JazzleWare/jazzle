@@ -49,8 +49,10 @@ function() { return this.type & ST_BARE; };
 this.isCtor = 
 function() { return this.type & ST_CTOR; };
 
-this.isConcrete = 
-function() { return this.type & (ST_FN|ST_MODULE|ST_SCRIPT); };
+this.isLexicalLike =
+function() {
+  return this.isBlock() || this.isCatch();
+};
 
 this.isDecl = 
 function() { return this.type & ST_DECL; };

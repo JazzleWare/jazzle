@@ -1,6 +1,11 @@
 this.hasNewTarget =
 function() { return this.allowed & SA_NEW_TARGET; };
 
+this.hasHead =
+function() {
+  return this.isAnyFn() || this.isCatch();
+};
+
 this.hasSignificantNames =
 function() {
   if (this.isModule() ||

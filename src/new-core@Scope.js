@@ -46,3 +46,14 @@ function() {
 
   return fl;
 };
+
+this.setName =
+function(name, snType, sourceDecl) {
+  ASSERT.call(this, this.canHaveName(),
+    'only cls/fn can have a name');
+  ASSERT_EQ.call(this, this.scopeName, null);
+  this.scopeName = 
+    new ScopeName(name, snType, sourceDecl).r(new Ref(this));
+
+  return this.scopeName;
+};

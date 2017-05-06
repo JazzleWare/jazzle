@@ -64,3 +64,8 @@ var DT_CLS = 1,
 var RS_ARGUMENTS = _m('arguments'),
     RS_SCALL = _m('special:scall'),
     RS_THIS = _m('special:this');
+
+var SN_REAL = 1,
+    SN_VIRTUAL = SN_REAL << 1,
+    SN_NONE = 0;
+

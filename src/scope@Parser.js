@@ -5,7 +5,7 @@ this.declare = function(id) {
        this.err('lexical.name.is.let');
    }
 
-   var decl = this.scope.declare(id.name, this.declMode);
+   var decl = this.scope.decl_m(_m(id.name), this.declMode);
    decl && decl.s(id);
 };
 

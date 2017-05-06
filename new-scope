@@ -18,6 +18,7 @@ GlobalScope { scriptScope }
 
 ModuleScope { inNames, outNames }
 
+class ScopeName extends Decl {} 
 Scope::`{
   isAnyFn, isCatch, isScript, isModule, isClass isGen, isAsync, isAccessor, isGetter, isSetter, isObjMem, isArrow, isClassMem, isCtor, isBlock, isExpr, isDecl, isStaticMem, isBare, isSoft, /* i.e, not an fn*/ isConcrete, isConditional
   insideIf, insideLoop, insideStrict, insideUniqueArgs, insideFnArgs, insideForInit,

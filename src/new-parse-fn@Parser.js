@@ -54,7 +54,7 @@ function(ctx, st) {
       if (this.lttype === TK_ID) {
         this.declMode = DT_FN;
         declScope = this.scope; 
-        fnName = this.parsePattern();
+        fnName = this.parsePat();
       }
       else if (!(ctx & CTX_DEFAULT))
         this.err('fun.decl.has.got.no.actual.name');

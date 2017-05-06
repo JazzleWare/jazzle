@@ -7,8 +7,8 @@ this. parseCatchClause = function () {
      this.err('catch.has.no.opening.paren',{c0:c0,loc0:loc0});
 
    this.declMode = DT_CATCHARG;
-   var catParam = this.parsePattern();
-   if (this.lttype === TK_SIMP_BINARY && this.ltraw === '=')
+   var catParam = this.parsePat();
+   if (this.peekEq())
      this.err('catch.has.an.assig.param',{c0:startc,loc0:startLoc,extra:catParam});
 
    this.declMode = DT_NONE;
@@ -18,8 +18,9 @@ this. parseCatchClause = function () {
    if (!this.expectT(CH_RPAREN))
      this.err('catch.has.no.end.paren',{c0:startc,loc0:startLoc,extra:catParam});
 
-   var catBlock = this.parseBlockStatement_dependent('catch');
-   this.exitScope();
+   this.scope.activateBody();
+   var catBlock = this.parseDependent('catch');
+   var scope = this.exitScope();
 
    return {
        type: 'CatchClause',
