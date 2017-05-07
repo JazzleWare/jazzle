@@ -9,7 +9,7 @@ function(ctx) {
     return true;
   case CH_DIV:
     if (this.scat(this.c) === CH_EQUALITY_SIGN) {
-      this.prec = PREC_SIMP_ASSIG;
+      this.lttype = TK_OP_ASSIG;
       this.ltraw = '/=';
       this.setsimpoff(this.c+1);
     }

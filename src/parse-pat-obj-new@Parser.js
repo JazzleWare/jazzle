@@ -33,26 +33,30 @@ function() {
     default: break LOOP;
     }
 
-    isShort = false;
+    isShort = isID;
     if (isID) {
-      isID = false;
-      if (this.expectT(CH_COLON))
+      if (this.expectT(CH_COLON)) {
+        isShort = false;
         val = this.parsePat();
-      else if (this.lttype === TK_SIMPLE_BINARY &&
-        this.ltraw === '=') {
-        val = this.parsePat_assig(name);
-        isShort = true;
       }
-      else
+      else {
+        this.validate(name.name);
         val = name;
+      }
     }
     else {
       if (!this.expectT(CH_COLON))
         this.err('obj.pattern.no.:');
       val = this.parsePat();
     }
+
     if (val === null)
       this.err('obj.prop.is.null');
+
+    if (this.peekEq())
+      val = this.parsePat_assig(name);
+    else if (isShort)
+      isShort = false;
 
     list.push({
       type: 'Property',

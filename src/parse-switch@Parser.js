@@ -1,6 +1,6 @@
 this.parseSwitch = function () {
   this.resvchk();
-  !this.ensureStmt_soft() && this.err('not.stmt');
+  !this.testStmt() && this.err('not.stmt');
   this.fixupLabels(false) ;
 
   var c0 = this.c0, loc0 = this.loc0(),

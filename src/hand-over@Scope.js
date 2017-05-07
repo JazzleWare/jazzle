@@ -20,9 +20,13 @@ function(mname, ref) {
     return this.parent.refDirect_m(mname, ref);
   }
 
-  if (this.isClass() && this.isExpr() &&
+  if (this.isClass()) {
+    if (this.isExpr() &&
     this.scopeName && this.scopeName.hasName_m(mname))
-    return this.scopeName.ref.absorbDirect(ref);
+      return this.scopeName.ref.absorbDirect(ref);
+
+    return this.parent.refDirect_m(mname, ref);
+  }
 
   ASSERT.call(this, this.isScript(),
     'a script scope was expected');

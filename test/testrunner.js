@@ -34,6 +34,10 @@ function runTests(parserFactory, testRoot) {
   testSuite.ignore('.lineNumber', function(test) { return false && test.json.hasOwnProperty('lineNumber') });
   testSuite.ignore('.js.xml', function(test) { return test.uri.indexOf('JSX') !== -1 });
   testSuite.ignore('.tokens',function(test) { return test.jsonMode === 'token' });
+  testSuite.ignore('.im',function(test) { return test.uri.indexOf('import') !== -1 });
+  testSuite.ignore('.ex',function(test) { return test.uri.indexOf('export') !== -1 });
+
+  testSuite.ignore('.async',function(test) { return test.uri.indexOf('async') !== -1 });
 
   fs.readFileSync('.ignore').toString().split('\n')
     .forEach(function(line) {

@@ -57,7 +57,7 @@ function verifyRegex_soft (regex, flags) {
 this.parseRegExpLiteral = function() {
   if (this.v < 2)
     this.err('ver.regex');
-     var startc = this.c - 1, startLoc = this.locOn(1),
+     var startc = this.c0, startLoc = this.loc0(),
          c = this.c, src = this.src, len = src.length;
 
      var inSquareBrackets = false ;

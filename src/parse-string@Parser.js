@@ -3,6 +3,7 @@ function(startChar) {
   var c = this.c, s = this.src, l = s.length, v = "";
   var luo = c, surrogateTail = -1, ch = -1;
 
+  LOOP:
   while (c<l) {
     ch = s.charCodeAt(c);
     if (ch === CH_BACK_SLASH) {
@@ -12,23 +13,29 @@ function(startChar) {
       v += this.readEsc(false);
       c = luo = this.c;
     }
-    else if (ch !== startChar)
-      c++;
-    else {
-      if (luo < c)
-        v += s.substring(luo,c);
-      c++;
-      break;
-    }
+    else
+      switch (ch) {
+      case startChar:
+        if (luo < c)
+          v += s.substring(luo,c);
+        c++;
+        break LOOP;
+
+      case CH_CARRIAGE_RETURN:
+      case CH_LINE_FEED:
+      case 0x2028: case 0x2029:
+        this.setsimpoff(c);
+        this.err('str.newline');
+
+      default: c++;
+      }
   }
 
   this.setsimpoff(c);
   if (ch !== startChar)
     this.err('str.unfinished');
 
-  this.next();
-
-  return {
+  var n = {
     type: 'Literal',
     value: v,
     start: this.c0,
@@ -39,4 +46,22 @@ function(startChar) {
       end: { line: this.li, column: this.col }
     }
   };
+
+  // not the most elegant solution, but for what it does (catching legacy numbers),
+  // it is fitting; a better solution which won't require re-parsing the number
+  // will eventually come instead of the block below
+  if (this.chkDirective) {
+    this.chkDirective = false;
+    if (c<l) {
+      this.skipWS();
+      c = this.c;
+      if (this.scat(c) === CH_0) {
+        this.applyDirective(n);
+        this.alreadyApplied = true;
+      }
+    }
+  }
+  this.next();
+
+  return n;
 };

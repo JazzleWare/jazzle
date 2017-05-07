@@ -21,5 +21,5 @@ this.exitScope = function() {
 };
 
 this.allow = function(allowedActions) {
-  this.scope.allowed |= allowedActions;
+  this.scope.actions |= allowedActions;
 };

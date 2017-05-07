@@ -4,6 +4,9 @@ function() {
   this.testStmt() || this.err('not.stmt');
   this.fixupLabels(false);
 
+  if (!this.scope.canBreak())
+    this.err('break.not.in.breakable');
+
   var c0 = this.c0, loc0 = this.loc0();
   var c = this.c, li = this.li, col = this.col;
 
@@ -28,8 +31,8 @@ function() {
   return {
     type: 'BreakStatement',
     label: label,
-    start: startc,
+    start: c0,
     end: ec,
-    loc: eloc
+    loc: { start: loc0, end: eloc }
   };
 };

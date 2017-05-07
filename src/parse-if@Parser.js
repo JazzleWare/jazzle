@@ -1,11 +1,11 @@
-this.parseIfStatement = function () {
+this.parseIf = function () {
   this.resvchk();
   !this.testStmt() && this.err('not.stmt');
   this.fixupLabels(false);
 
   this.enterScope(this.scope.spawnBare());
   var ifScope = this.scope; 
-  this.scope.mode |= SM_INSIDE_IF;
+  this.scope.mode |= SF_INSIDEIF;
 
   var c0 = this.c0, loc0 = this.loc0();
 
@@ -43,7 +43,7 @@ this.parseIfStatement = function () {
     consequent: nbody,
     alternate: alt,
     '#ifScope': ifScope,
-    '# elseScope': elseScope, 
+    '#elseScope': elseScope, 
     '#y': -1
   };
 };

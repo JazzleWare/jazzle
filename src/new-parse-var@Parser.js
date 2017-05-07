@@ -1,6 +1,10 @@
 this.parseVar =
 function(dt, ctx) {
-  this.testStmt() || this.err('not.stmt');
+  if (!this.testStmt()) {
+    if (dt === DT_LET)
+      return this.handleLet(this.id());
+    this.err('not.stmt');
+  }
 
   var kind = this.ltval;
   var letID = dt === DT_LET ? this.id() : null;
@@ -31,8 +35,10 @@ function(dt, ctx) {
   }
 
   if (vpat === null) {
-    if (letID)
+    if (letID) {
+      this.canBeStatement = true; // restore it to the value it had when parseVar was initially called
       return this.handleLet(letID);
+    }
     this.err('var.has.no.declarators');
   }
 

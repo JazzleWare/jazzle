@@ -20,10 +20,23 @@ this.parseFor = function() {
   case 'let':
     if (this.v<5)
       break;
+    this.canBeStatement = true;
+    head = this.parseVar(DT_LET, CTX_FOR);
+    if (!this.foundStatement) { // i.e., we got a letID
+      this.canBeStatement = false; // because parseVar actually keeps it intact, even in the event of a handleLet call
+      this.exprHead = head;
+      head = null;
+    }
+    break;
+
   case 'var':
+    this.canBeStatement = true;
+    head = this.parseVar(DT_VAR, CTX_FOR);
+    break;
+
   case 'const':
     this.canBeStatement = true;
-    head = this.parseVariableDeclaration(CTX_FOR);
+    head = this.parseVar(DT_CONST, CTX_FOR);
     break;
   }
 
@@ -52,9 +65,9 @@ this.parseFor = function() {
     if (headIsExpr) {
       if (head.type === 'AssignmentExpression')
         this.err('for.in.has.init.assig',{tn:head,extra:[startc,startLoc,kind]});
-      this.adjustSimpleErrorsBeforeConvertingToAssignable();
+      this.st_adjust_for_toAssig();
       this.toAssig(head, headctx);
-      this.flushSimpleErrors();
+      this.st_flush();
     }
     else if (head.declarations.length !== 1)
       this.err('for.decl.multi',{tn:head,extra:[startc,startLoc,kind]});

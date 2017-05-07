@@ -44,6 +44,8 @@ var Parser = function (src, o) {
   this.suspys = null;
   this.missingInit = false;
 
+  this.chkDirective = false;
+  this.alreadyApplied = false;
   // "pin" location; for errors that might not have been precisely caused by a syntax node, like:
   // function l() { '\12'; 'use strict' }
   //                 ^

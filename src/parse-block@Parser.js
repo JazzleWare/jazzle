@@ -9,7 +9,7 @@ this.parseBlock = function () {
 
   var n = {
     type: 'BlockStatement',
-    body: this.blck(),
+    body: this.stmtList(),
     start: c0,
     end: this.c,
     loc: {
@@ -19,7 +19,7 @@ this.parseBlock = function () {
     '#y': -1
   };
 
-  if (this.expectTT(CH_RCURLY))
+  if (!this.expectT(CH_RCURLY))
     this.err('block.unfinished');
 
   this.exitScope(); 

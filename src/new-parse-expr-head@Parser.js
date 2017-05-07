@@ -40,7 +40,7 @@ function(ctx) {
     break;
 
   case CH_BACKTICK:
-    head = this.parseTemplateLiteral();
+    head = this.parseTemplate();
     break;
 
   case TK_UNBIN:

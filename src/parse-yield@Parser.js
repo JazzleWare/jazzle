@@ -7,7 +7,7 @@ function(ctx) {
   this.next(); // 'yield'
 
   if (!this.nl) {
-    if (this.lttype === TK_SIMPLE_BINARY && this.ltraw === '*') {
+    if (this.peekMul()) {
       deleg = true;
       this.next(); // '*'
       arg = this.parseNonSeq(PREC_NONE, ctx&CTX_FOR);

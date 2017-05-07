@@ -5,7 +5,7 @@ function() {
 
 this.peekID =
 function(name) {
-  return this.lttype === TK_ID && this.ltval === 'name';
+  return this.lttype === TK_ID && this.ltval === name;
 };
 
 this.peekEq =

@@ -4,11 +4,11 @@ this.parseArgList = function () {
 
   do { 
     this.next();
-    elem = this.parseNonSeq(PREC_NONE,CTX_TOP); 
+    elem = this.parseNonSeq(PREC_NONE, CTX_NULLABLE|CTX_TOP); 
     if (elem)
       list.push(core(elem));
     else if (this.lttype === TK_ELLIPSIS)
-      list.push(this.parseSpreadElement(CTX_NONE));
+      list.push(this.parseSpread(CTX_NONE));
     else {
       if (list.length !== 0) {
         if (this.v < 7)

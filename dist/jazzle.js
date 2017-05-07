@@ -214,6 +214,8 @@ var Parser = function (src, o) {
   this.suspys = null;
   this.missingInit = false;
 
+  this.chkDirective = false;
+  this.alreadyApplied = false;
   // "pin" location; for errors that might not have been precisely caused by a syntax node, like:
   // function l() { '\12'; 'use strict' }
   //                 ^
@@ -419,14 +421,15 @@ function Transformer() {
   this.tempStack = [];
 }
 ;
-ConcreteScope.prototype = createObj(Scope.prototype);
-GlobalScope.prototype = createObj(Scope.prototype);
-FunScope.prototype = createObj(ConcreteScope.prototype);
+ ConcreteScope.prototype = createObj(Scope.prototype);
+ GlobalScope.prototype = createObj(Scope.prototype);
+ FunScope.prototype = createObj(ConcreteScope.prototype);
  ModuleScope.prototype = createObj(ConcreteScope.prototype);
-ClassScope.prototype = createObj(Scope.prototype);
-CatchScope.prototype = createObj(Scope.prototype);
+ ClassScope.prototype = createObj(Scope.prototype);
+ CatchScope.prototype = createObj(Scope.prototype);
  ParenScope.prototype = createObj(Scope.prototype);
-ScopeName.prototype = createObj(Decl.prototype);
+ ScopeName.prototype = createObj(Decl.prototype);
+ Liquid.prototype = createObj(Decl.prototype);
 ;
 var CH_1 = char2int('1'),
     CH_2 = char2int('2'),
@@ -983,7 +986,8 @@ var SA_THROW = 1,
     SA_YIELD = SA_BREAK << 1,
     SA_RETURN = SA_YIELD << 1,
     SA_CONTINUE = SA_RETURN << 1,
-    SA_CALLSUPER = SA_CONTINUE << 1,
+    SA_NEW_TARGET = SA_CONTINUE << 1,
+    SA_CALLSUPER = SA_NEW_TARGET << 1,
     SA_MEMSUPER = SA_CALLSUPER << 1,
     SA_NONE = 0;
 
@@ -991,11 +995,12 @@ var SF_LOOP = 1,
     SF_UNIQUE = SF_LOOP << 1,
     SF_STRICT = SF_UNIQUE << 1,
     SF_ARGS = SF_STRICT << 1,
-    SF_IF = SF_ARGS << 1,
-    SF_COND = SF_IF << 1,
+    SF_INSIDEIF = SF_ARGS << 1,
+    SF_COND = SF_INSIDEIF << 1,
     SF_FORINIT = SF_COND << 1,
     SF_WITH_SCALL = SF_FORINIT << 1,
-    SF_WITH_SMEM = SF_WITH_SCALL << 1,
+    SF_HERITAGE = SF_WITH_SCALL << 1,
+    SF_WITH_SMEM = SF_HERITAGE << 1,
     SF_INSIDEPROLOGUE = SF_WITH_SMEM << 1,
     SF_NONE = 0;
 
@@ -1161,7 +1166,7 @@ function fromRunLenCodes(runLenArray, bitm) {
   return (bitm);
 }
 
-function arguments_or_eval(l) {
+function arorev(l) {
   switch ( l ) {
      case 'arguments':
      case 'eval':
@@ -1211,9 +1216,8 @@ function surrogate(ch1, ch2) {
 
 function isDirective(n) {
   return (
-    n.type === 'ExpressionStatement' &&
-    n.expression.type === 'Literal' &&
-    typeof(n.expression.value) === STRING_TYPE
+    n.type === 'Literal' &&
+    typeof(n.value) === STRING_TYPE
   );
 }
 ;
@@ -1239,11 +1243,11 @@ function(ref) {
     'this scope has already got a this liquid');
 
   // TODO: tz check is also needed for 'this' (in some cases)
-  var lq = new Liquid('<this>')
+  var spThis = new Liquid('<this>')
     .r(ref)
-    .name('this_');
+    .n('this_');
 
-  return this.spThis = lq;
+  return this.spThis = spThis;
 };
 
 }]  ],
@@ -1279,6 +1283,69 @@ function(t) {
   this.t = t;
   return this;
 };
+
+
+},
+function(){
+this.isLet =
+function() { return this.type & DT_LET; };
+
+this.isVar =
+function() { return this.type & DT_VAR; };
+
+this.isConst =
+function() { return this.type & DT_CONST; };
+
+this.isGlobal =
+function() { return this.type & DT_GLOBAL; };
+
+this.isFn =
+function() { return this.type & DT_FN; };
+
+this.isFnArg =
+function() { return this.type & DT_FNARG; };
+
+this.isCls =
+function() { return this.type & DT_CLS; };
+
+this.isCatchArg =
+function() { return this.type & DT_CATCHARG; };
+
+this.isLLINOSA =
+function() {
+  return this.isLexicalLike() &&
+    this.ref.scope.insideLoop() &&
+    this.ref.i;
+};
+
+var _HOISTED = DT_FN|DT_VAR;
+this.isHoisted =
+function() { return this.type & _HOISTED; };
+
+var _ARG = DT_FNARG|DT_CATCHARG;
+this.isArg =
+function() { return this.type & _ARG; };
+
+var _LEXICAL = DT_CLS|DT_LET|DT_CONST;
+this.isLexicalLike =
+function() {
+  if (this.isFn())
+    return this.ref.scope.isLexicalLike();
+  return this.type & _LEXICAL;
+};
+
+// TODO: CATCHARG
+var _VARLIKE = DT_FNARG|DT_FNARG;
+this.isVarLike =
+function() {
+  if (this.isFn())
+    return !this.ref.scope.isLexical();
+  return this.type & _VARLIKE;
+};
+
+var _OVERRIDABLE = DT_CATCHARG|_VARLIKE;
+this.isOverridableByVar =
+function() { return this.type & _OVERRIDABLE; };
 
 }]  ],
 [Emitter.prototype, [function(){
@@ -2731,7 +2798,7 @@ function() {
   if (!this.canDup())
     return;
 
-  this.verifyForUniqueArgs();
+  this.verifyUniqueArgs();
   this.flags |= SF_UNIQUE;
 };
 
@@ -2795,15 +2862,43 @@ function(){
 
 },
 function(){
+this.spCreate_arguments =
+function(ref) {
+  ASSERT.call(this, ref,
+    'ref must be provided to create an argumentsSP');
+
+  var spArguments = new Liquid('<arguments>')
+    .r(ref)
+    .n('arguments');
+
+  return this.spArguments = spArguments;
+};
+
+this.spCreate_scall =
+function(ref) {
+  ASSERT.call(this, this.isCtor(),
+    'only ctor scopes are allowed to create scall');
+  ASSERT.call(this, ref,
+    'ref must be provided to create a scallSP');
+
+  var spSuperCall = new Liquid('<scall>')
+    .r(ref)
+    .n('s');
+
+  return this.spSuperCall = spSuperCall;
+};
+
+},
+function(){
 this.verifyForStrictness =
 function() {
-  this.verifyForUniqueArgs();
-  var list = this.paramList, i = 0;
+  this.verifyUniqueArgs();
+  var list = this.argList, i = 0;
   while (i < list.length) {
     var elem = list[i++];
-    if (arguments_or_eval(elem.name))
+    if (arorev(elem.name))
       this.parser.err('binding.to.arguments.or.eval');
-    if (this.validateID(elem.name))
+    if (this.isResv(elem.name))
       this.parser.err('invalid.argument.in.strict.mode');
   }
 };
@@ -2947,6 +3042,7 @@ this.makeParams =
 function(paramScope) {
   paramScope.setRefsAndArgRefs(this.refs);
   this.updateParentForSubScopesTo(paramScope);
+  this.hasDissolved = true;
 };
 
 this.makeSimple =
@@ -2965,6 +3061,7 @@ function() {
   }
 
   this.updateParentForSubScopesTo(p);
+  this.hasDissolved = true;
 };
 
 this.updateParentForSubScopesTo =
@@ -2972,10 +3069,17 @@ function(sParent) {
   var list = this.ch, i = 0;
   while (i<list.length) {
     var elem = list[i];
-    ASSERT.call(this, elem.isAnyFn(),
-      'current fn scopes are the only scope allowed '+
-      'to come in a paren');
-    elem.parent = sParent;
+    if (elem.isParen()) {
+      ASSERT.call(this, elem.hasDissolved,
+        'paren sub-scopes are not allowed to have remained intact -- they must have dissolved earlier');
+      elem.updateParentForSubScopesTo(sParent);
+    }
+    else {
+      ASSERT.call(this, elem.isAnyFn() || elem.isClass(),
+        'current fn scopes are the only scope allowed '+
+       'to come in a paren');
+      elem.parent = sParent;
+    }
     i++;
   }
 };
@@ -2985,7 +3089,7 @@ function(sParent) {
 this .ensureSimpAssig_soft = function(head) {
   switch(head.type) {
   case 'Identifier':
-    if ( this.scope.insideStrict() && arguments_or_eval(head.name) )
+    if ( this.scope.insideStrict() && arorev(head.name) )
       this.err('assig.to.arguments.or.eval');
 
   case 'MemberExpression':
@@ -3041,7 +3145,7 @@ this.asArrowFuncArg = function(arg) {
       this.err('arrow.param.is.await.in.an.async',{tn:arg});
      
     // TODO: this can also get checked in the scope manager rather than below
-    if (this.scope.insideStrict() && arguments_or_eval(arg.name))
+    if (this.scope.insideStrict() && arorev(arg.name))
       this.err('binding.to.arguments.or.eval',{tn:arg});
 
     this.scope.decl_m(_m(arg.name), DT_FNARG);
@@ -3124,7 +3228,7 @@ this.toAssig = function(head, context) {
   var i = 0, list = null;
   switch (head.type) {
   case 'Identifier':
-    if (this.scope.insideStrict() && arguments_or_eval(head.name)) {
+    if (this.scope.insideStrict() && arorev(head.name)) {
       if (this.st === ERR_ARGUMENTS_OR_EVAL_DEFAULT)
         this.st = ERR_NONE_YET;
       if (this.st === ERR_NONE_YET) {
@@ -3204,8 +3308,8 @@ function() {
   if (this.ct === ERR_NONE_YET)
     return;
 
-  ASSERT.call(this, this.ct === ERR_PIN_UNICODE_IN_RESV,
-    'the only strict error allowed currently is ERR_PIN_UNICODE_IN_RESV');
+  ASSERT.call(this, this.ct === ERR_PIN_OCTAL_IN_STRICT,
+    'the only strict error allowed currently is ERR_PIN_OCTAL_IN_STRICT');
   this.ct = ERR_NONE_YET;
 };
 
@@ -3223,12 +3327,16 @@ function() {
 };
 
 this.applyDirective =
-function(directive) {
-  var raw = directive.raw;
+function(directiveLiteral) {
+  if (this.alreadyApplied) {
+    this.alreadyApplied = false;
+    return;
+  }
+  var raw = directiveLiteral.raw;
   // TODO: which one should apply first?
   if (raw.substring(1,raw.length-1) === 'use strict') {
     this.scope.makeStrict();
-    this.applyPendingStrictErrors();
+    this.strict_esc_chk(); // for now it is the sole possible error
   }
 };
 
@@ -3975,6 +4083,17 @@ function(c0,li0,col0) { return this.pinErr(this.pin.p,c0,li0,col0); };
 this.pinErr =
 function(pin,c0,li0,col0) { pin.c0=c0; pin.li0=li0; pin.col0=col0; };
 
+this.strict_esc_chk =
+function() {
+  if (this.ct === ERR_NONE_YET)
+    return;
+
+  ASSERT.call(this, this.ct === ERR_PIN_OCTAL_IN_STRICT,
+    'currently the only error for strict_esc_chk is ERR_PIN_OCTAL_IN_STRICT');
+
+  this.err('strict.octal');
+};
+
 },
 function(){
 this.expectT =
@@ -3988,8 +4107,56 @@ function(lttype) {
 
 },
 function(){
+this.handleLet =
+function(letID) {
+  if (this.v<=5 || !this.scope.insideStrict())
+    return letID;
+  this.err('let.strict');
+};
+
+},
+function(){
 this.loc = function() { return { line: this.li, column: this.col }; };
 this.loc0 = function() { return  { line: this.li0, column: this.col0 }; };
+
+},
+function(){
+this.getName_cls =
+function(st) {
+  var fl = this.scope.flags, name = null;
+  this.scope.flags |= SF_STRICT;
+  if (st & ST_DECL)
+    name = this.parsePat();
+  else {
+    this.validate(this.ltval);
+    if (arorev(this.ltval))
+      this.arorevErr();
+    name = this.id();
+  }
+  this.scope.flags = fl;
+  return name;
+};
+
+this.getName_fn =
+function(st) {
+  switch (this.ltval) {
+  case 'yield':
+    if ((st & ST_GEN) || this.scope.insideStrict())
+      this.err('fnexpr.yield');
+    return this.id();
+
+  case 'await':
+    if ((st & ST_ASYNC) || this.scope.insideStrict())
+      this.err('fnexpr.await');
+    return this.id();
+  }
+
+  this.validate(this.ltval);
+  if (this.scope.insideStrict() && arorev(this.ltval))
+    this.arorevErr();
+
+  return this.id();
+};
 
 },
 function(){
@@ -4068,6 +4235,9 @@ function() {
   this.testStmt() || this.err('not.stmt');
   this.fixupLabels(false);
 
+  if (!this.scope.canBreak())
+    this.err('break.not.in.breakable');
+
   var c0 = this.c0, loc0 = this.loc0();
   var c = this.c, li = this.li, col = this.col;
 
@@ -4092,9 +4262,9 @@ function() {
   return {
     type: 'BreakStatement',
     label: label,
-    start: startc,
+    start: c0,
     end: ec,
-    loc: eloc
+    loc: { start: loc0, end: eloc }
   };
 };
 
@@ -4184,7 +4354,7 @@ function(ctx) {
     break;
 
   case CH_BACKTICK:
-    head = this.parseTemplateLiteral();
+    head = this.parseTemplate();
     break;
 
   case TK_UNBIN:
@@ -4245,6 +4415,9 @@ function(ctx, st) {
 
   var fnName = null;
   var declScope = null;
+
+  var c0 = this.c0, loc0 = this.loc0();
+
   if (!isMeth) {
     if (isStmt && isAsync) {
       this.unsatisfiedLabel &&
@@ -4283,6 +4456,7 @@ function(ctx, st) {
     }
 
     if (isStmt) {
+      st |= ST_DECL;
       if (this.lttype === TK_ID) {
         this.declMode = DT_FN;
         declScope = this.scope; 
@@ -4291,8 +4465,10 @@ function(ctx, st) {
       else if (!(ctx & CTX_DEFAULT))
         this.err('fun.decl.has.got.no.actual.name');
     }
-    else if (this.lttype === TK_ID)
-      fnName = this.parseFnExprName(st);
+    else if (this.lttype === TK_ID) {
+      st |= ST_EXPR ;
+      fnName = this.getName_fn(st);
+    }
   }
 
   this.enterScope(this.scope.spawnFn(st));
@@ -4303,7 +4479,7 @@ function(ctx, st) {
         st,
         declScope.findDecl_m(_m(fnName.name)));
     else
-      this.scope,setName(
+      this.scope.setName(
         fnName.name,
         st,
         null);
@@ -4319,21 +4495,21 @@ function(ctx, st) {
   this.declMode = DT_FNARG;
   var argList = this.parseParams(argLen);
 
-  this.scope.enterBody();
+  this.scope.activateBody();
 
   this.labels = {};
 
   var nbody = this.parseFunBody();
-  this.exitScope();
+  var scope = this.exitScope();
 
   var n = {
     type: isStmt ? 'FunctionDeclaration' : 'FunctionExpression',
     id: fnName,
     start: c0,
-    end: body.end,
+    end: nbody.end,
     generator: (st & ST_GEN) !== 0,
     body: nbody,
-    loc: { start: loc0, end: body.loc.end },
+    loc: { start: loc0, end: nbody.loc.end },
     params: argList,
     expression: false,
     async: (st & ST_ASYNC) !== 0,
@@ -4371,7 +4547,7 @@ function(ctx) {
     case 'new':
       if (this.canBeStatement)
         this.canBeStatement = false;
-      return this.parseNewHead();
+      return this.parseNew();
 
     case 'for': return this.parseFor();
     case 'try': return this.parseTryStatement();
@@ -4624,7 +4800,7 @@ function(argLen) {
   if (argLen === ARGLEN_ANY) {
     if (tail && this.lttype === TK_ELLIPSIS) {
       this.scope.enterUniqueArgs();
-      elem = this.parseRest();
+      elem = this.parsePat_rest();
       list.push(elem);
       if (!gnsa) {
         gnsa = true;
@@ -4708,7 +4884,7 @@ function(ctx, st) {
         if (!(st & ST_CLSMEM)) { nonMod = latestMod; break MM; }
         if (st & ST_STATICMEM) { nonMod = latestMod; break MM; }
         if (st & ST_ASYNC) { nonMod = latestMod; break MM; }
-        mpending = ST_STATIC;
+        mpending = ST_STATICMEM;
         break;
 
       case 'get':
@@ -4735,6 +4911,7 @@ function(ctx, st) {
       default:
         st |= mpending;
         nonMod = latestMod;
+        mpending = ST_NONE;
         break MM;
       }
 
@@ -4744,23 +4921,28 @@ function(ctx, st) {
     }
   }
 
-  var memName = null;
-  if (nonMod)
-    memName = nonMod;
-  else {
-    if (this.peekMul()) {
-      if (this.v<=5)
-        this.err('ver.mem.gen');
-      if (st & ST_ASYNC)
-        this.err('async.gen.not.supported.yet');
+  if (this.peekMul()) {
+    if (this.v<=5) this.err('ver.mem.gen');
+    if (nonMod) this.err('gen.has.non.modifier');
+    st |= mpending|ST_GEN;
+    if (latestMod)
       latestMod = null;
-      st |= mpending|ST_GEN;
-      this.next();
-    }
-    var nameVal = "";
+    mpending = ST_NONE;
+    this.next();
+  }
+
+  var memName = null, nameVal = "";
+  if (mpending === ST_NONE && latestMod) { // if the most recent token is a "real" (i.e., non-get/set) non-modifier ID
+    memName = latestMod;
+    nameVal = memName.name;
+  }
+  else {
     switch (this.lttype) {
     case TK_ID:
-      if (latestMod !== null) // must not actually happen unless (st & ST_GEN) holds to be true
+      // if the current token is an id, either the most recent token is a '*' (in which case latestMod is null),
+      // or the current token is the first one we have reached since entering parseMem (in which case latestMod is, once again, null).
+      // if mpending is not ST_NONE, we will not have reached the else we are in now; the test below, then, is there for mere safety, as to err is human
+      if (latestMod !== null)
         this.err('pending.id');
 
       st |= mpending;
@@ -4788,29 +4970,30 @@ function(ctx, st) {
     default:
       if (latestMod) {
         memName = latestMod;
-        nameVal = memName.name; // unnecessary
+        // unnecessary because it is either static, async, set, or get
+        nameVal = memName.name;
       }
     }
-
-    if (memName === null) {
-      if (st & ST_GEN)
-        this.err('mem.gen.has.no.name');
-      return null;
-    }
-
-    if (st & ST_CLSMEM)
-      switch (nameVal) {
-      case 'prototype':
-        ctx |= CTX_HASPROTOTYPE;
-        break;
-
-      case 'constructor':
-        st |= ST_CTOR;
-        break;
-      }
-    else if (this.v>5 && nameVal === '__proto__')
-      ctx |= CTX_HASPROTO;
   }
+
+  if (memName === null) {
+    if (st & ST_GEN)
+      this.err('mem.gen.has.no.name');
+    return null;
+  }
+
+  if (st & ST_CLSMEM)
+    switch (nameVal) {
+    case 'prototype':
+      ctx |= CTX_HASPROTOTYPE;
+      break;
+
+    case 'constructor':
+      st |= ST_CTOR;
+      break;
+    }
+  else if (this.v>5 && nameVal === '__proto__')
+    ctx |= CTX_HASPROTO;
 
   if (this.lttype === CH_LPAREN) {
     if (this.v <= 5) this.err('ver.mem.meth');
@@ -4880,6 +5063,7 @@ function(memName, ctx) {
     if (errt_noLeak(ctx)) // if the owner is not leaky
       this.err('obj.prop.assig.not.allowed');
 
+    this.validate(memName.name);
     this.scope.refDirect_m(_m(memName.name), null);
     val = this.parseAssignment(memName, ctx);
     if (errt_strack(ctx) && this.st === ERR_NONE_YET) {
@@ -4895,6 +5079,7 @@ function(memName, ctx) {
     if (memName.type !== 'Identifier')
       this.err('obj.prop.assig.not.id',{tn:memName});
     this.validate(memName.name);
+    this.scope.refDirect_m(_m(memName.name), null);
     val = memName;
     break;
   }
@@ -4931,7 +5116,7 @@ function(memName, ctx, st) {
         st &= ~ST_CTOR;
     }
     if (st & ST_CTOR) {
-      if (st !== ST_CTOR|ST_CLSMEM)
+      if (st !== (ST_CTOR|ST_CLSMEM))
         this.err('class.ctor.is.special.mem',
           {tn:memName});
       if (ctx & CTX_CTOR_NOT_ALLOWED)
@@ -4982,9 +5167,9 @@ function(memName, ctx, st) {
         (st & ST_SETTER) ?
           'set' :
           'get',
-    computed: name.type === PAREN,
+    computed: memName.type === PAREN,
     loc: {
-      start: name.loc.start,
+      start: memName.loc.start,
       end : val.loc.end
     },
     method: !!(st & ST_ACCESSOR),
@@ -5012,7 +5197,7 @@ function() {
   if (head === null)
     this.err('new.head.is.not.valid');
 
-  var inner = core(head) ;
+  var inner = core(head), elem = null;
 
   while (true)
   switch (this.lttype) {
@@ -5020,7 +5205,7 @@ function() {
     this.next();
     if (this.lttype !== TK_ID)
       this.err('mem.name.not.id');
-    elem = this.memberID();
+    elem = this.mem_id();
     if (elem === null)
       this.err('mem.id.is.null');
     head = inner = {
@@ -5051,7 +5236,7 @@ function() {
       computed: true,
       '#y': -1
     };
-    if (!this.expectType_soft(CH_RSQBRACKET))
+    if (!this.expectT(CH_RSQBRACKET))
       this.err('mem.unfinished');
     continue;
 
@@ -5068,12 +5253,12 @@ function() {
         end: this.loc() },
       '#y': -1
     };
-    if (!this.expectType_soft(CH_RPAREN))
+    if (!this.expectT(CH_RPAREN))
       this.err('new.args.is.unfinished');
     continue;
 
   case CH_BACKTICK:
-    elem = this.parseTemplateLiteral();
+    elem = this.parseTemplate();
     head = inner = {
       type: 'TaggedTemplateLiteral',
       quasi: elem,
@@ -5134,13 +5319,13 @@ function(prec, ctx) {
     return null;
   }
 
+  var hasOp = this.getOp(ctx);
   if (this.lttype & TK_ANY_ASSIG) {
     if (prec !== PREC_NONE)
       this.err('assig.not.first');
     return this.parseAssignment(head, ctx);
   }
 
-  var hasOp = this.getOp(ctx);
   if (!hasOp) {
     if (errt_noLeak(ctx)) {
       this.st_flush();
@@ -5154,16 +5339,21 @@ function(prec, ctx) {
     this.dissolveParen();
   }
 
-  if (this.lttype === CH_QUESTION)
-    return prec === PREC_NONE ?
-      this.parseCond(head, ctx) : head;
 
-  do {
-    if (this.lttype === TK_AA_MM) {
-      if (this.nl)
-        break;
+  var resume = true;
+  if (this.lttype === TK_AA_MM) {
+    if (!this.nl)
       head = this.parseUpdate(head, ctx);
-      continue;
+    else
+      resume = false;
+  }
+
+  if (resume)
+  do {
+    if (this.lttype === CH_QUESTION) {
+      if (prec === PREC_NONE)
+        head = this.parseCond(head, ctx);
+      break;
     }
 
     var curPrec = this.prec;
@@ -5200,50 +5390,68 @@ function(allowNull) {
   var head = null;
   switch (this.lttype) {
   case CH_LCURLY:
-    return this.parseBlockStatement();
+    head = this.parseBlock();
+    break;
   case CH_SEMI:
-    return this.parseEmptyStatement();
+    head = this.parseEmptyStatement();
+    break;
   case TK_ID:
     this.canBeStatement = true;
     // TODO: CTX.PAT|CTX.NO_SIMP
     head = this.parseIDExprHead(CTX_PAT);
-    if (this.foundStatement) {
+    if (this.foundStatement)
       this.foundStatement = false;
-      return head;
+    else {
+      this.canBeStatement = false;
+      this.exprHead = head;
+      head = null;
     }
-    this.canBeStatement = false;
-    this.exprHead = head;
+    break;
+
+  case CH_SINGLE_QUOTE:
+  case CH_MULTI_QUOTE:
+    if (this.scope.insidePrologue())
+      this.chkDirective = true;
+    this.exprHead = this.parseString(this.lttype);
     break;
 
   case TK_EOF:
     if (!allowNull)
       this.err('stmt.null');
-    return null;
+    break;
   }
 
-  head = this.parseExpr(CTX_NULLABLE|CTX_TOP);
+  var finishPrologue = this.scope.insidePrologue();
   if (head === null) {
-    allowNull || this.err('stmt.null');
-    return null;
+    head = this.parseExpr(CTX_NULLABLE|CTX_TOP);
+    if (head === null)
+      allowNull || this.err('stmt.null');
+    else if (head.type === 'Identifier' &&
+      this.lttype === CH_COLON)
+      head = this.parseLabel(head, allowNull);
+    else {
+      this.fixupLabels(false);
+      if (finishPrologue && isDirective(head)) {
+        finishPrologue = false;
+        this.applyDirective(head);
+      }
+      this.semi() || this.err('no.semi');
+      head = {
+        type: 'ExpressionStatement',
+        expression: core(head),
+        start: head.start,
+        end: this.semiC || head.end,
+        loc: {
+          start: head.loc.start,
+          end: this.semiLoc || head.loc.end }
+      };
+    }
   }
-  if (head.type === 'Identifier' &&
-    this.lttype === CH_COLON)
-    return this.parseLabel(
-      head, allowNull);
 
-  this.fixupLabels(false);
-  if (!this.semi())
-    this.err('no.semi');
+  if (finishPrologue)
+    this.scope.exitPrologue();
 
-  return {
-    type: 'ExpressionStatement',
-    expression: core(head),
-    start: head.start,
-    end: this.semiC || head.end,
-    loc: {
-      start: head.loc.start,
-      end: this.semiLoc || head.loc.end }
-  };
+  return head;
 };
 
 },
@@ -5270,7 +5478,7 @@ function(head) {
       this.next();
       if (this.lttype !== TK_ID)
         this.err('mem.name.not.id');
-      elem = this.memberID();
+      elem = this.mem_id();
       if (elem === null)
         this.err('mem.id.is.null');
       head = inner = {
@@ -5323,7 +5531,7 @@ function(head) {
       continue;
 
     case CH_BACKTICK:
-      elem = this.parseTemplateLiteral();
+      elem = this.parseTemplate();
       head = inner = {
         type: 'TaggedTemplateLiteral',
         quasi: elem,
@@ -5370,7 +5578,7 @@ function() {
       if (luo<c)
         v += s.substring(luo,c);
 
-      this.setoff(c+2);
+      this.setsimpoff(c+2);
       str.push({
         type: 'TemplateElement', 
         start: c0s,
@@ -5416,6 +5624,7 @@ function() {
       v += s.substring(luo,c);
     v += s.charAt(c);
     this.setnewloff(c);
+    c++;
     luo = c;
     continue;
 
@@ -5427,7 +5636,7 @@ function() {
     c = luo = this.c;
     continue;
 
-  case CH_BACTTICK:
+  case CH_BACKTICK:
     break LOOP;
 
   default: c++;
@@ -5495,7 +5704,11 @@ this.parseThis = function() {
 function(){
 this.parseVar =
 function(dt, ctx) {
-  this.testStmt() || this.err('not.stmt');
+  if (!this.testStmt()) {
+    if (dt === DT_LET)
+      return this.handleLet(this.id());
+    this.err('not.stmt');
+  }
 
   var kind = this.ltval;
   var letID = dt === DT_LET ? this.id() : null;
@@ -5526,8 +5739,10 @@ function(dt, ctx) {
   }
 
   if (vpat === null) {
-    if (letID)
+    if (letID) {
+      this.canBeStatement = true; // restore it to the value it had when parseVar was initially called
       return this.handleLet(letID);
+    }
     this.err('var.has.no.declarators');
   }
 
@@ -5647,10 +5862,9 @@ function (name) {
   case 3:
     switch (name) {
     case 'int' :
-      return this.v>5;
+      return this.v<=5;
     case 'let' :
-      return this.v <= 5 ||
-        !this.scope.insideStrict();
+      return this.scope.insideStrict();
     case 'var': case 'for':
     case 'try': case 'new' :
       return true;
@@ -5843,11 +6057,11 @@ this.parseArgList = function () {
 
   do { 
     this.next();
-    elem = this.parseNonSeq(PREC_NONE,CTX_TOP); 
+    elem = this.parseNonSeq(PREC_NONE, CTX_NULLABLE|CTX_TOP); 
     if (elem)
       list.push(core(elem));
     else if (this.lttype === TK_ELLIPSIS)
-      list.push(this.parseSpreadElement(CTX_NONE));
+      list.push(this.parseSpread(CTX_NONE));
     else {
       if (list.length !== 0) {
         if (this.v < 7)
@@ -6248,7 +6462,7 @@ this.parseBlock = function () {
 
   var n = {
     type: 'BlockStatement',
-    body: this.blck(),
+    body: this.stmtList(),
     start: c0,
     end: this.c,
     loc: {
@@ -6258,7 +6472,7 @@ this.parseBlock = function () {
     '#y': -1
   };
 
-  if (this.expectTT(CH_RCURLY))
+  if (!this.expectT(CH_RCURLY))
     this.err('block.unfinished');
 
   this.exitScope(); 
@@ -6324,24 +6538,33 @@ function(ctx) {
 
   this.next(); // 'class'
 
-  var scopeName = null;
+  var sourceDecl = null;
   var st = ST_NONE;
   if (isStmt) {
     st = ST_DECL;
-    if (!this.scope.canDeclareLetOrClass())
-      this.err('class.decl.not.in.block',{c0:startc,loc0:startLoc});
+    if (!this.scope.canDeclareLexical())
+      this.err('class.decl.not.in.block',{c0:c0,loc0:loc0});
     if (this.lttype === TK_ID && this.ltval !== 'extends') {
       this.declMode = DT_CLS;
-      name = this.parsePat();
-      scopeName = this.scope.findDecl_m(_m(name.name));
+      name = this.getName_cls(st);
+      sourceDecl = this.scope.findDecl_m(_m(name.name));
     }
     else if (!(ctx & CTX_DEFAULT))
       this.err('class.decl.has.no.name', {c0:startc,loc0:startLoc});
   }
-  else if (this.lttype === TK_ID && this.ltval !== 'extends') {
+  else {
     st = ST_EXPR;
-    name = this.getName_cls();
+    if (this.lttype === TK_ID && this.ltval !== 'extends')
+      name = this.getName_cls(st);
   }
+
+  this.enterScope(this.scope.spawnCls(st));
+  var scope = this.scope;
+
+  scope.makeStrict();
+
+  if (name)
+    scope.setName(name.name, SN_REAL, sourceDecl);
 
   var superClass = null;
   if (this.lttype === TK_ID && this.ltval === 'extends') {
@@ -6351,16 +6574,8 @@ function(ctx) {
 
   var mmflags = ST_CLSMEM, mmctx = CTX_NONE;
 
-  this.enterScope(this.scope.spawnCls(st));
-  var scope = this.scope;
-
-  if (name && this.scope.isExpr())
-    this.scope.setScopeName(name.name);
-  else
-    this.scope.scopeName = scopeName;
-
   if (superClass)
-    this.scope.mode |= SM_CLS_WITH_SUPER;
+    this.scope.flags |= SF_HERITAGE;
 
   var list = [];
   var c0b = this.c0, loc0b  = this.loc0();
@@ -6611,10 +6826,23 @@ this.parseFor = function() {
   case 'let':
     if (this.v<5)
       break;
+    this.canBeStatement = true;
+    head = this.parseVar(DT_LET, CTX_FOR);
+    if (!this.foundStatement) { // i.e., we got a letID
+      this.canBeStatement = false; // because parseVar actually keeps it intact, even in the event of a handleLet call
+      this.exprHead = head;
+      head = null;
+    }
+    break;
+
   case 'var':
+    this.canBeStatement = true;
+    head = this.parseVar(DT_VAR, CTX_FOR);
+    break;
+
   case 'const':
     this.canBeStatement = true;
-    head = this.parseVariableDeclaration(CTX_FOR);
+    head = this.parseVar(DT_CONST, CTX_FOR);
     break;
   }
 
@@ -6643,9 +6871,9 @@ this.parseFor = function() {
     if (headIsExpr) {
       if (head.type === 'AssignmentExpression')
         this.err('for.in.has.init.assig',{tn:head,extra:[startc,startLoc,kind]});
-      this.adjustSimpleErrorsBeforeConvertingToAssignable();
+      this.st_adjust_for_toAssig();
       this.toAssig(head, headctx);
-      this.flushSimpleErrors();
+      this.st_flush();
     }
     else if (head.declarations.length !== 1)
       this.err('for.decl.multi',{tn:head,extra:[startc,startLoc,kind]});
@@ -6744,14 +6972,14 @@ this.id = function() {
 
 },
 function(){
-this.parseIfStatement = function () {
+this.parseIf = function () {
   this.resvchk();
   !this.testStmt() && this.err('not.stmt');
   this.fixupLabels(false);
 
   this.enterScope(this.scope.spawnBare());
   var ifScope = this.scope; 
-  this.scope.mode |= SM_INSIDE_IF;
+  this.scope.mode |= SF_INSIDEIF;
 
   var c0 = this.c0, loc0 = this.loc0();
 
@@ -6789,7 +7017,7 @@ this.parseIfStatement = function () {
     consequent: nbody,
     alternate: alt,
     '#ifScope': ifScope,
-    '# elseScope': elseScope, 
+    '#elseScope': elseScope, 
     '#y': -1
   };
 };
@@ -6875,7 +7103,7 @@ function(c0,loc0,c,li,col) {
   if (this.ltval !== 'target')
     this.err('meta.new.has.unknown.prop');
   
-  if (!this.scope.canHaveNewTarget())
+  if (!this.scope.canAccessNewTarget())
     this.err('meta.new.not.in.function',{c0:startc,loc:startLoc});
 
   var prop = this.id();
@@ -7269,26 +7497,30 @@ function() {
     default: break LOOP;
     }
 
-    isShort = false;
+    isShort = isID;
     if (isID) {
-      isID = false;
-      if (this.expectT(CH_COLON))
+      if (this.expectT(CH_COLON)) {
+        isShort = false;
         val = this.parsePat();
-      else if (this.lttype === TK_SIMPLE_BINARY &&
-        this.ltraw === '=') {
-        val = this.parsePat_assig(name);
-        isShort = true;
       }
-      else
+      else {
+        this.validate(name.name);
         val = name;
+      }
     }
     else {
       if (!this.expectT(CH_COLON))
         this.err('obj.pattern.no.:');
       val = this.parsePat();
     }
+
     if (val === null)
       this.err('obj.prop.is.null');
+
+    if (this.peekEq())
+      val = this.parsePat_assig(name);
+    else if (isShort)
+      isShort = false;
 
     list.push({
       type: 'Property',
@@ -7327,7 +7559,7 @@ function(){
 this.parsePat_rest =
 function() {
   this.v<=5 && this.err('ver.spread.rest');
-  var c0 = this.c0, loc = this.loc0();
+  var c0 = this.c0, loc0 = this.loc0();
 
   this.next(); // '...'
 
@@ -7341,12 +7573,12 @@ function() {
 
   return {
     type: 'RestElement',
-    argument: e,
+    argument: arg,
     start: c0,
-    end: e.end,
+    end: arg.end,
     loc: {
-      start: startLoc,
-      end: e.loc.end }
+      start: loc0,
+      end: arg.loc.end }
   };
 };
 
@@ -7356,30 +7588,24 @@ this.parsePat =
 function() {
   switch (this.lttype) {
   case TK_ID:
-    if (this.vpatCheck) {
-      this.patErrCheck();
-      this.vpatCheck = false;
-    }
+    if (this.vpatCheck &&  this.patErrCheck())
+      return null;
     this.validate(this.ltval);
     var id = this.id();
     this.declare(id);
-    if (this.scope.insideStrict() && arguments_or_eval(id.name))
+    if (this.scope.insideStrict() && arorev(id.name))
       this.err('bind.arguments.or.eval');
 
     return id;
 
   case CH_LSQBRACKET:
-    if (this.vpatCheck) {
-      this.patErrCheck();
-      this.vpatCheck = false;
-    }
+    if (this.vpatCheck && this.patErrCheck())
+      return null;
     return this.parsePat_array();
 
   case CH_LCURLY:
-    if (this.vpatCheck) {
-      this.patErrCheck();
-      this.vpatCheck = false;
-    }
+    if (this.vpatCheck && this.patErrCheck())
+      return null;
     return this.parsePat_obj();
 
   default:
@@ -7395,7 +7621,7 @@ this.parseProgram = function () {
 
   var globalScope = new GlobalScope();
 
-  this.scope = new Scope(globalScope, ST_SCRIPT);
+  this.scope = new ConcreteScope(globalScope, ST_SCRIPT);
   globalScope.scriptScope = this.scope;
 
   this.scope.parser = this;
@@ -7490,7 +7716,7 @@ function verifyRegex_soft (regex, flags) {
 this.parseRegExpLiteral = function() {
   if (this.v < 2)
     this.err('ver.regex');
-     var startc = this.c - 1, startLoc = this.locOn(1),
+     var startc = this.c0, startLoc = this.loc0(),
          c = this.c, src = this.src, len = src.length;
 
      var inSquareBrackets = false ;
@@ -7623,7 +7849,7 @@ this.parseRegExpLiteral = function() {
 function(){
 this.parseReturn = function () {
   this.resvchk();
-  !this.ensureSAT() && this.err('not.stmt');
+  this.testStmt() || this.err('not.stmt');
   this.fixupLabels(false ) ;
 
   if (!this.scope.canReturn()) 
@@ -7635,7 +7861,7 @@ this.parseReturn = function () {
   this.next(); // 'return'
 
   if (!this.nl)
-    r = this.parseExpr(CTX_TOP);
+    r = this.parseExpr(CTX_NULLABLE|CTX_TOP);
 
   !this.semi() && this.err('no.semi');
   var ec = this.semiC || (r && r.end) || c;
@@ -7647,12 +7873,9 @@ this.parseReturn = function () {
   return { 
     type: 'ReturnStatement',
     argument: r,
-    start: startc,
+    start: c0,
     end: ec,
-    loc: {
-      start: loc0,
-      end: eloc 
-    } 
+    loc: { start: loc0, end: eloc }
   };
 };
 
@@ -7696,6 +7919,7 @@ function(startChar) {
   var c = this.c, s = this.src, l = s.length, v = "";
   var luo = c, surrogateTail = -1, ch = -1;
 
+  LOOP:
   while (c<l) {
     ch = s.charCodeAt(c);
     if (ch === CH_BACK_SLASH) {
@@ -7705,23 +7929,29 @@ function(startChar) {
       v += this.readEsc(false);
       c = luo = this.c;
     }
-    else if (ch !== startChar)
-      c++;
-    else {
-      if (luo < c)
-        v += s.substring(luo,c);
-      c++;
-      break;
-    }
+    else
+      switch (ch) {
+      case startChar:
+        if (luo < c)
+          v += s.substring(luo,c);
+        c++;
+        break LOOP;
+
+      case CH_CARRIAGE_RETURN:
+      case CH_LINE_FEED:
+      case 0x2028: case 0x2029:
+        this.setsimpoff(c);
+        this.err('str.newline');
+
+      default: c++;
+      }
   }
 
   this.setsimpoff(c);
   if (ch !== startChar)
     this.err('str.unfinished');
 
-  this.next();
-
-  return {
+  var n = {
     type: 'Literal',
     value: v,
     start: this.c0,
@@ -7732,6 +7962,24 @@ function(startChar) {
       end: { line: this.li, column: this.col }
     }
   };
+
+  // not the most elegant solution, but for what it does (catching legacy numbers),
+  // it is fitting; a better solution which won't require re-parsing the number
+  // will eventually come instead of the block below
+  if (this.chkDirective) {
+    this.chkDirective = false;
+    if (c<l) {
+      this.skipWS();
+      c = this.c;
+      if (this.scat(c) === CH_0) {
+        this.applyDirective(n);
+        this.alreadyApplied = true;
+      }
+    }
+  }
+  this.next();
+
+  return n;
 };
 
 },
@@ -7764,7 +8012,7 @@ this.parseSwitchCase = function () {
   if (!this.expectT(CH_COLON))
     this.err('switch.case.has.no.colon');
 
-  nbody = this.blck();
+  nbody = this.stmtList();
   var last = nbody.length ? nbody[nbody.length-1] : null;
 
   var ec = -1, eloc = null;
@@ -7779,7 +8027,7 @@ this.parseSwitchCase = function () {
   return {
     type: 'SwitchCase',
     test: cond,
-    start: startc,
+    start: c0,
     end: ec,
     loc: { start: loc0, end: eloc },
     consequent: nbody,
@@ -7791,7 +8039,7 @@ this.parseSwitchCase = function () {
 function(){
 this.parseSwitch = function () {
   this.resvchk();
-  !this.ensureStmt_soft() && this.err('not.stmt');
+  !this.testStmt() && this.err('not.stmt');
   this.fixupLabels(false) ;
 
   var c0 = this.c0, loc0 = this.loc0(),
@@ -8014,13 +8262,13 @@ function(){
 this.parseWhile = 
 function () {
   this.resvchk();
-  !this.ensureStmt_soft() && this.err('not.stmt');
+  this.testStmt() || this.err('not.stmt');
   this.fixupLabels(true);
 
   this.enterScope(this.scope.spawnBare());
   var scope = this.scope; 
   this.allow(SA_BREAK|SA_CONTINUE);
-  this.scope.mode |= SM_LOOP;
+  this.scope.flags |= SF_LOOP;
 
   var c0 = this.c0, loc0 = this.loc0();
   this.next(); // 'while'
@@ -8030,7 +8278,7 @@ function () {
  
   var cond = core(this.parseExpr(CTX_TOP));
 
-  if (!this.expectType_soft(CH_LPAREN))
+  if (!this.expectT(CH_RPAREN))
     this.err('while.has.no.closing.paren');
 
   var nbody = this.parseStatement(false);
@@ -8056,7 +8304,7 @@ function(){
 this.parseWith = 
 function() {
   this.resvchk();
-  this.testStmt() && this.err('not.stmt');
+  this.testStmt() || this.err('not.stmt');
   if (this.scope.insideStrict())
     this.err('with.strict')  ;
 
@@ -8102,7 +8350,7 @@ function(ctx) {
   this.next(); // 'yield'
 
   if (!this.nl) {
-    if (this.lttype === TK_SIMPLE_BINARY && this.ltraw === '*') {
+    if (this.peekMul()) {
       deleg = true;
       this.next(); // '*'
       arg = this.parseNonSeq(PREC_NONE, ctx&CTX_FOR);
@@ -8142,7 +8390,7 @@ function() {
 
 this.peekID =
 function(name) {
-  return this.lttype === TK_ID && this.ltval === 'name';
+  return this.lttype === TK_ID && this.ltval === name;
 };
 
 this.peekEq =
@@ -8163,7 +8411,7 @@ function(ctx) {
     return true;
   case CH_DIV:
     if (this.scat(this.c) === CH_EQUALITY_SIGN) {
-      this.prec = PREC_SIMP_ASSIG;
+      this.lttype = TK_OP_ASSIG;
       this.ltraw = '/=';
       this.setsimpoff(this.c+1);
     }
@@ -8250,7 +8498,13 @@ function(c) {
       this.setsimpoff(c);
       this.err('hex.expected.got.something.else');
     }
-    val = (val<<4)|b;
+    var t = (val<<4)|b;
+    if (t <= 1114111)
+      val = t
+    else {
+      this.setsimpoff(c);
+      this.err('curly.big');
+    }
     c++;
     if (c >= l) {
       this.setsimpoff(c);
@@ -8370,10 +8624,15 @@ function() {
   if (ch === CH_SINGLEDOT)
     return this.read_ellipsis();
   
-  this.readNum_tail(FL_HEADLESS_FLOAT);
-
-  this.ltval = parseFloat(this.ltraw = this.c0_to_c());
-  this.lttype = TK_NUM;
+  if (isNum(ch)) {
+    this.readNum_tail(FL_HEADLESS_FLOAT);
+    this.ltval = parseFloat(this.ltraw = this.c0_to_c());
+    this.lttype = TK_NUM;
+  }
+  else {
+    this.setsimpoff(this.c+1);
+    this.lttype = CH_SINGLEDOT;
+  }
 };
 
 },
@@ -8405,7 +8664,7 @@ function(t) { // is it a template escape?
 
   var ch1 = -1, ch2 = -1;
   switch (s.charCodeAt(c+1)) {
-  case CH_BACH_SLASH: c+=2; v = '\\'; break;
+  case CH_BACK_SLASH: c+=2; v = '\\'; break;
   case CH_MULTI_QUOTE: c+=2; v = '\"'; break;
   case CH_SINGLE_QUOTE: c+=2; v = '\''; break;
   case CH_v: c+=2; v = '\v'; break;
@@ -8463,8 +8722,8 @@ function(t) { // is it a template escape?
 
   case CH_CARRIAGE_RETURN:
     if (
-      c+3<l &&
-      s.charCodeAt(c+3) === CH_LINE_FEED
+      c+2<l &&
+      s.charCodeAt(c+2) === CH_LINE_FEED
     ) c++;
   case CH_LINE_FEED:
   case 0x2028: case 0x2029:
@@ -8489,12 +8748,12 @@ function() {
   if (this.scope.insideStrict())
     this.err('esc.legacy.not.allowed.in.strict.mode');
 
-  if (this.insidePrologue() &&
+  if (this.scope.insidePrologue() &&
     this.ct === ERR_NONE_YET) {
     this.ct = ERR_PIN_OCTAL_IN_STRICT;
-    this.pinLoc_c(this.c,this.li,this.col);
+    this.pin_ct(this.c,this.li,this.col);
   }
-    
+
   var c = this.c+1, s = this.src, l = s.length, v = -1;
 
   v = s.charCodeAt(c) - CH_0;
@@ -8505,7 +8764,10 @@ function() {
     if (ch < CH_0 || ch >= CH_8)
       break;
     v = (v<<3)|(ch-CH_0);
+    c++;
   }
+
+  this.setsimpoff(c);
 
   return String.fromCharCode(v);
 };
@@ -8516,7 +8778,7 @@ this.readID_bs =
 function() {
   if (this.ct === ERR_NONE_YET) {
     this.ct = ERR_PIN_UNICODE_IN_RESV;
-    this.pinLoc_c(this.c,this.li,this.col);
+    this.pin_ct(this.c,this.li,this.col);
   }
   var bsc = this.readBS();
   var ccode = bsc;
@@ -8548,7 +8810,7 @@ function(v) {
       this.setsimpoff(c);
       if (this.ct === ERR_NONE_YET) {
         this.ct = ERR_PIN_UNICODE_IN_RESV;
-        this.pinLoc_c(this.c,this.li,this.col);
+        this.pin_ct(this.c,this.li,this.col);
       }
       ch = this.readBS();
       if (!isIDBody(ch))
@@ -8656,6 +8918,14 @@ this.readNum_raw = function(ch) {
   }
 
   this.lttype = TK_NUM;
+  c = this.c;
+  if (c<l) {
+    ch = s.charCodeAt(c);
+    if (isIDHead(ch))
+      this.err('id.head.is.num.tail');
+    if (ch === CH_BACK_SLASH || (ch >= 0x0D800 && ch <= 0x0DBFF))
+      this.err('unexpected.char.is.num.tail');
+  }
 };
 
 this.readNum_0 =
@@ -8721,7 +8991,10 @@ function() {
 
 this.readNum_octLegacy =
 function(ch) {
-  var c = this.c+2, s = this.src, l = s.length, dec = false;
+  if (this.scope.insideStrict())
+    this.err('oct.legacy.num.in.strict');
+
+  var c = this.c+1, s = this.src, l = s.length, dec = false;
   do {
     if (!dec && ch >= CH_8)
       dec = true;
@@ -8844,6 +9117,7 @@ function() {
     if (ch < CH_0 || ch >= CH_8)
       this.err('oct.expected.got.somthing.else');
     v = (v<<3)|(ch-CH_0);
+    c++;
   }
 
   this.setsimpoff(c);
@@ -9092,6 +9366,8 @@ function() {
     this.prec = PREC_MUL;
     this.ltraw = '%';
   }
+
+  this.setsimpoff(c);
 };
 
 },
@@ -9217,7 +9493,7 @@ this.exitScope = function() {
 };
 
 this.allow = function(allowedActions) {
-  this.scope.allowed |= allowedActions;
+  this.scope.actions |= allowedActions;
 };
 
 },
@@ -9297,9 +9573,9 @@ function() {
         this.v>5 &&
         this.isScript &&
         c+3<l &&
-        l.charCodeAt(c+1) === CH_EXCLAMATION &&
-        l.charCodeAt(c+2) === CH_MIN &&
-        l.charCodeAt(c+3) === CH_MIN
+        s.charCodeAt(c+1) === CH_EXCLAMATION &&
+        s.charCodeAt(c+2) === CH_MIN &&
+        s.charCodeAt(c+3) === CH_MIN
       ) {
         this.setsimpoff(c+4) ;
         this.readComment_line();
@@ -9337,7 +9613,7 @@ function(){
 this.findLabel_m = 
 function(mname) {
   return HAS.call(this.labels, mname) ?
-    this.labels[name] : null;
+    this.labels[mname] : null;
 };
 
 this.testStmt = 
@@ -9363,15 +9639,9 @@ function(isLoop) {
 this.stmtList =
 function () {
   var stmt = null, list = [];
-  while (stmt = this.parseStatement(true)) {
-    if (this.scope.insidePrologue()) {
-      if (!isDirective(stmt))
-        this.exitPrologue();
-      else
-        this.applyDirective(stmt);
-    } 
+  while (stmt = this.parseStatement(true))
     list.push(stmt);
-  }
+  
   return list;
 };
 
@@ -9417,10 +9687,16 @@ function(left) {
 
 this.patErrCheck =
 function() {
+  ASSERT.call(this, this.vpatCheck,
+    'PEC msut have vpatCheck hold');
+  this.vpatCheck = false;
   if (!this.scope.canDeclareLexical())
-    this.patErr = PE_NO_NONVAR;
+    this.vpatErr = PE_NO_NONVAR;
   else if (this.unsatisfiedLabel)
-    this.patErr = PE_NO_LABEL;
+    this.vpatErr = PE_NO_LABEL;
+  else return false;
+
+  return true;
 };
 
 this.setPatCheck =
@@ -9464,7 +9740,7 @@ function(childRef, refD) {
 }]  ],
 [Scope.prototype, [function(){
 this.canSmem =
-function() { return this.actions & SA_MEMSUP; };
+function() { return this.actions & SA_MEMSUPER; };
 
 this.canAwait = 
 function() { return this.actions & SA_AWAIT; };
@@ -9486,7 +9762,7 @@ function() {
 };
 
 this.canScall = 
-function() { return this.actions & SA_CALLSUP; };
+function() { return this.actions & SA_CALLSUPER; };
 
 this.canDeclareFn =
 function(st) {
@@ -9517,6 +9793,9 @@ function() { return this.actions & SA_RETURN; };
 this.canContinue = 
 function() { return this.actions & SA_CONTINUE; };
 
+this.canAccessNewTarget =
+function() { return this.actions & SA_NEW_TARGET; };
+
 this.canHaveName =
 function() { return this.isAnyFn() || this.isClass(); };
 
@@ -9528,7 +9807,7 @@ function() { this.flags |= SF_FORINIT; };
 this.enterPrologue =
 function() { this.flags |= SF_INSIDEPROLOGUE; };
 
-this.exitForinit =
+this.exitForInit =
 function() {
   ASSERT.call(this, this.insideForInit(),
     'must be in a for');
@@ -9589,9 +9868,13 @@ function(mname, ref) {
     return this.parent.refDirect_m(mname, ref);
   }
 
-  if (this.isClass() && this.isExpr() &&
+  if (this.isClass()) {
+    if (this.isExpr() &&
     this.scopeName && this.scopeName.hasName_m(mname))
-    return this.scopeName.ref.absorbDirect(ref);
+      return this.scopeName.ref.absorbDirect(ref);
+
+    return this.parent.refDirect_m(mname, ref);
+  }
 
   ASSERT.call(this, this.isScript(),
     'a script scope was expected');
@@ -9653,7 +9936,7 @@ function() {
 },
 function(){
 this.insideIf =
-function() { return this.flags & SF_IF; };
+function() { return this.flags & SF_INSIDEIF; };
 
 this.insideLoop =
 function() { return this.flags & SF_LOOP; };
@@ -9737,6 +10020,9 @@ function() { return this.type & ST_PAREN; };
 this.isExpr = 
 function() { return this.type & ST_EXPR; };
 
+this.isSimpleFn =
+function() { return this.type & (ST_EXPR|ST_DECL); };
+
 this.isGlobal =
 function() { return this.type & ST_GLOBAL; };
 
@@ -9760,21 +10046,26 @@ function(){
 this.determineActions =
 function() {
   if (this.isParen())
-    return this.parent.allowed;
+    return this.parent.actions;
 
   var a = SA_NONE;
   if (this.isSoft())
     a |= this.parent.actions;
   else if (this.isAnyFn()) {
     a |= SA_RETURN;
-    if (this.isCtor())
-      a |= SA_CALLSUP;
-    if (this.isGen())
-      a |= SA_YIELD;
-    if (this.isAsync())
-      a |= SA_AWAIT;
-    if (this.isMem())
-      a |= SA_MEMSUPER;
+    if (this.isArrow())
+      a |= (this.parent.actions & (SA_CALLSUPER|SA_NEW_TARGET|SA_MEMSUPER));
+    else {
+      a |= SA_NEW_TARGET;
+      if (this.isCtor())
+        a |= SA_CALLSUPER;
+      if (this.isGen())
+        a |= SA_YIELD;
+      if (this.isAsync())
+        a |= SA_AWAIT;
+      if (this.isMem())
+        a |= SA_MEMSUPER;
+    }
   }
 
   return a;
@@ -9800,7 +10091,7 @@ function() {
   if (!this.isAnyFn() && this.parent.insideLoop())
     fl |= SF_LOOP;
 
-  if (this.isAnyFn() && this.isMem())
+  if (this.isAnyFn() && !this.isSimpleFn())
     fl |= SF_UNIQUE;
 
   return fl;
@@ -9861,11 +10152,13 @@ function(mname, tdecl, tscope, isNew) {
   var cur = this;
   while (true) {
     var existing = cur.findDecl_m(mname);
-    if (existing.isOverridableByVar())
-      return;
-    this.err('var.can.not.override.existing');
+    if (existing) {
+      if (existing.isOverridableByVar())
+        return;
+      this.err('var.can.not.override.existing');
+    }
 
-    cur.insertDecl(mname, tdecl);
+    cur.insertDecl_m(mname, tdecl);
     if (cur === tscope) { break; }
 
     cur = cur.parent;
@@ -9874,6 +10167,14 @@ function(mname, tdecl, tscope, isNew) {
   }
 
   isNew && tscope.addVarTarget_m(mname, tdecl);
+};
+
+this.findParam_m =
+function(mname) {
+  ASSERT.call(this, this.isAnyFn() || this.isCatch(),
+    'this scope is not an fn/catch, and has no params');
+  return HAS.call(this.argMap, mname) ?
+    this.argMap[mname] : null;
 };
 
 this.declareLexical_m =
@@ -10084,7 +10385,13 @@ function() {
 };
 
 }]  ],
-null,
+[ScopeName.prototype, [function(){
+this.hasName_m =
+function(mname) {
+  return _m(this.name) === mname;
+};
+
+}]  ],
 [SortedObj.prototype, [function(){
 this.set = function(name, val) {
   if (!HAS.call(this.obj, name))

@@ -1,21 +1,26 @@
 this.determineActions =
 function() {
   if (this.isParen())
-    return this.parent.allowed;
+    return this.parent.actions;
 
   var a = SA_NONE;
   if (this.isSoft())
     a |= this.parent.actions;
   else if (this.isAnyFn()) {
     a |= SA_RETURN;
-    if (this.isCtor())
-      a |= SA_CALLSUP;
-    if (this.isGen())
-      a |= SA_YIELD;
-    if (this.isAsync())
-      a |= SA_AWAIT;
-    if (this.isMem())
-      a |= SA_MEMSUPER;
+    if (this.isArrow())
+      a |= (this.parent.actions & (SA_CALLSUPER|SA_NEW_TARGET|SA_MEMSUPER));
+    else {
+      a |= SA_NEW_TARGET;
+      if (this.isCtor())
+        a |= SA_CALLSUPER;
+      if (this.isGen())
+        a |= SA_YIELD;
+      if (this.isAsync())
+        a |= SA_AWAIT;
+      if (this.isMem())
+        a |= SA_MEMSUPER;
+    }
   }
 
   return a;
@@ -41,7 +46,7 @@ function() {
   if (!this.isAnyFn() && this.parent.insideLoop())
     fl |= SF_LOOP;
 
-  if (this.isAnyFn() && this.isMem())
+  if (this.isAnyFn() && !this.isSimpleFn())
     fl |= SF_UNIQUE;
 
   return fl;

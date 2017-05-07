@@ -4,7 +4,7 @@ function() { this.flags |= SF_FORINIT; };
 this.enterPrologue =
 function() { this.flags |= SF_INSIDEPROLOGUE; };
 
-this.exitForinit =
+this.exitForInit =
 function() {
   ASSERT.call(this, this.insideForInit(),
     'must be in a for');

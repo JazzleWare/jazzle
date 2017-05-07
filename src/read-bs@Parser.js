@@ -47,7 +47,13 @@ function(c) {
       this.setsimpoff(c);
       this.err('hex.expected.got.something.else');
     }
-    val = (val<<4)|b;
+    var t = (val<<4)|b;
+    if (t <= 1114111)
+      val = t
+    else {
+      this.setsimpoff(c);
+      this.err('curly.big');
+    }
     c++;
     if (c >= l) {
       this.setsimpoff(c);

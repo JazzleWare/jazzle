@@ -1,5 +1,5 @@
 this.canSmem =
-function() { return this.actions & SA_MEMSUP; };
+function() { return this.actions & SA_MEMSUPER; };
 
 this.canAwait = 
 function() { return this.actions & SA_AWAIT; };
@@ -21,7 +21,7 @@ function() {
 };
 
 this.canScall = 
-function() { return this.actions & SA_CALLSUP; };
+function() { return this.actions & SA_CALLSUPER; };
 
 this.canDeclareFn =
 function(st) {
@@ -51,6 +51,9 @@ function() { return this.actions & SA_RETURN; };
 
 this.canContinue = 
 function() { return this.actions & SA_CONTINUE; };
+
+this.canAccessNewTarget =
+function() { return this.actions & SA_NEW_TARGET; };
 
 this.canHaveName =
 function() { return this.isAnyFn() || this.isClass(); };

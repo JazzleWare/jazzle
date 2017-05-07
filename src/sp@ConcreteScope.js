@@ -7,9 +7,9 @@ function(ref) {
     'this scope has already got a this liquid');
 
   // TODO: tz check is also needed for 'this' (in some cases)
-  var lq = new Liquid('<this>')
+  var spThis = new Liquid('<this>')
     .r(ref)
-    .name('this_');
+    .n('this_');
 
-  return this.spThis = lq;
+  return this.spThis = spThis;
 };

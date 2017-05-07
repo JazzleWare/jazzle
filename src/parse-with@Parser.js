@@ -1,7 +1,7 @@
 this.parseWith = 
 function() {
   this.resvchk();
-  this.testStmt() && this.err('not.stmt');
+  this.testStmt() || this.err('not.stmt');
   if (this.scope.insideStrict())
     this.err('with.strict')  ;
 

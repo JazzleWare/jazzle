@@ -20,7 +20,7 @@ function(head) {
       this.next();
       if (this.lttype !== TK_ID)
         this.err('mem.name.not.id');
-      elem = this.memberID();
+      elem = this.mem_id();
       if (elem === null)
         this.err('mem.id.is.null');
       head = inner = {
@@ -73,7 +73,7 @@ function(head) {
       continue;
 
     case CH_BACKTICK:
-      elem = this.parseTemplateLiteral();
+      elem = this.parseTemplate();
       head = inner = {
         type: 'TaggedTemplateLiteral',
         quasi: elem,

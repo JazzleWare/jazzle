@@ -42,6 +42,14 @@ this.readNum_raw = function(ch) {
   }
 
   this.lttype = TK_NUM;
+  c = this.c;
+  if (c<l) {
+    ch = s.charCodeAt(c);
+    if (isIDHead(ch))
+      this.err('id.head.is.num.tail');
+    if (ch === CH_BACK_SLASH || (ch >= 0x0D800 && ch <= 0x0DBFF))
+      this.err('unexpected.char.is.num.tail');
+  }
 };
 
 this.readNum_0 =
@@ -107,7 +115,10 @@ function() {
 
 this.readNum_octLegacy =
 function(ch) {
-  var c = this.c+2, s = this.src, l = s.length, dec = false;
+  if (this.scope.insideStrict())
+    this.err('oct.legacy.num.in.strict');
+
+  var c = this.c+1, s = this.src, l = s.length, dec = false;
   do {
     if (!dec && ch >= CH_8)
       dec = true;
@@ -230,6 +241,7 @@ function() {
     if (ch < CH_0 || ch >= CH_8)
       this.err('oct.expected.got.somthing.else');
     v = (v<<3)|(ch-CH_0);
+    c++;
   }
 
   this.setsimpoff(c);

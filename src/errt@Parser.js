@@ -105,3 +105,14 @@ function(c0,li0,col0) { return this.pinErr(this.pin.p,c0,li0,col0); };
 
 this.pinErr =
 function(pin,c0,li0,col0) { pin.c0=c0; pin.li0=li0; pin.col0=col0; };
+
+this.strict_esc_chk =
+function() {
+  if (this.ct === ERR_NONE_YET)
+    return;
+
+  ASSERT.call(this, this.ct === ERR_PIN_OCTAL_IN_STRICT,
+    'currently the only error for strict_esc_chk is ERR_PIN_OCTAL_IN_STRICT');
+
+  this.err('strict.octal');
+};

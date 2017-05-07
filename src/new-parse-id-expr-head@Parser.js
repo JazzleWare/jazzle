@@ -18,7 +18,7 @@ function(ctx) {
     case 'new':
       if (this.canBeStatement)
         this.canBeStatement = false;
-      return this.parseNewHead();
+      return this.parseNew();
 
     case 'for': return this.parseFor();
     case 'try': return this.parseTryStatement();

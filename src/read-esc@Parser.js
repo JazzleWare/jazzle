@@ -11,7 +11,7 @@ function(t) { // is it a template escape?
 
   var ch1 = -1, ch2 = -1;
   switch (s.charCodeAt(c+1)) {
-  case CH_BACH_SLASH: c+=2; v = '\\'; break;
+  case CH_BACK_SLASH: c+=2; v = '\\'; break;
   case CH_MULTI_QUOTE: c+=2; v = '\"'; break;
   case CH_SINGLE_QUOTE: c+=2; v = '\''; break;
   case CH_v: c+=2; v = '\v'; break;
@@ -69,8 +69,8 @@ function(t) { // is it a template escape?
 
   case CH_CARRIAGE_RETURN:
     if (
-      c+3<l &&
-      s.charCodeAt(c+3) === CH_LINE_FEED
+      c+2<l &&
+      s.charCodeAt(c+2) === CH_LINE_FEED
     ) c++;
   case CH_LINE_FEED:
   case 0x2028: case 0x2029:
@@ -95,12 +95,12 @@ function() {
   if (this.scope.insideStrict())
     this.err('esc.legacy.not.allowed.in.strict.mode');
 
-  if (this.insidePrologue() &&
+  if (this.scope.insidePrologue() &&
     this.ct === ERR_NONE_YET) {
     this.ct = ERR_PIN_OCTAL_IN_STRICT;
-    this.pinLoc_c(this.c,this.li,this.col);
+    this.pin_ct(this.c,this.li,this.col);
   }
-    
+
   var c = this.c+1, s = this.src, l = s.length, v = -1;
 
   v = s.charCodeAt(c) - CH_0;
@@ -111,7 +111,10 @@ function() {
     if (ch < CH_0 || ch >= CH_8)
       break;
     v = (v<<3)|(ch-CH_0);
+    c++;
   }
+
+  this.setsimpoff(c);
 
   return String.fromCharCode(v);
 };

@@ -1,7 +1,7 @@
 this.findLabel_m = 
 function(mname) {
   return HAS.call(this.labels, mname) ?
-    this.labels[name] : null;
+    this.labels[mname] : null;
 };
 
 this.testStmt = 
@@ -27,15 +27,9 @@ function(isLoop) {
 this.stmtList =
 function () {
   var stmt = null, list = [];
-  while (stmt = this.parseStatement(true)) {
-    if (this.scope.insidePrologue()) {
-      if (!isDirective(stmt))
-        this.exitPrologue();
-      else
-        this.applyDirective(stmt);
-    } 
+  while (stmt = this.parseStatement(true))
     list.push(stmt);
-  }
+  
   return list;
 };
 

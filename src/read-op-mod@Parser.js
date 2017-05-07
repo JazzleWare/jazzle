@@ -13,4 +13,6 @@ function() {
     this.prec = PREC_MUL;
     this.ltraw = '%';
   }
+
+  this.setsimpoff(c);
 };

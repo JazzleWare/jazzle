@@ -1,6 +1,6 @@
 this.parseReturn = function () {
   this.resvchk();
-  !this.ensureSAT() && this.err('not.stmt');
+  this.testStmt() || this.err('not.stmt');
   this.fixupLabels(false ) ;
 
   if (!this.scope.canReturn()) 
@@ -12,7 +12,7 @@ this.parseReturn = function () {
   this.next(); // 'return'
 
   if (!this.nl)
-    r = this.parseExpr(CTX_TOP);
+    r = this.parseExpr(CTX_NULLABLE|CTX_TOP);
 
   !this.semi() && this.err('no.semi');
   var ec = this.semiC || (r && r.end) || c;
@@ -24,11 +24,8 @@ this.parseReturn = function () {
   return { 
     type: 'ReturnStatement',
     argument: r,
-    start: startc,
+    start: c0,
     end: ec,
-    loc: {
-      start: loc0,
-      end: eloc 
-    } 
+    loc: { start: loc0, end: eloc }
   };
 };

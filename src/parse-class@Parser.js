@@ -15,24 +15,33 @@ function(ctx) {
 
   this.next(); // 'class'
 
-  var scopeName = null;
+  var sourceDecl = null;
   var st = ST_NONE;
   if (isStmt) {
     st = ST_DECL;
-    if (!this.scope.canDeclareLetOrClass())
-      this.err('class.decl.not.in.block',{c0:startc,loc0:startLoc});
+    if (!this.scope.canDeclareLexical())
+      this.err('class.decl.not.in.block',{c0:c0,loc0:loc0});
     if (this.lttype === TK_ID && this.ltval !== 'extends') {
       this.declMode = DT_CLS;
-      name = this.parsePat();
-      scopeName = this.scope.findDecl_m(_m(name.name));
+      name = this.getName_cls(st);
+      sourceDecl = this.scope.findDecl_m(_m(name.name));
     }
     else if (!(ctx & CTX_DEFAULT))
       this.err('class.decl.has.no.name', {c0:startc,loc0:startLoc});
   }
-  else if (this.lttype === TK_ID && this.ltval !== 'extends') {
+  else {
     st = ST_EXPR;
-    name = this.getName_cls();
+    if (this.lttype === TK_ID && this.ltval !== 'extends')
+      name = this.getName_cls(st);
   }
+
+  this.enterScope(this.scope.spawnCls(st));
+  var scope = this.scope;
+
+  scope.makeStrict();
+
+  if (name)
+    scope.setName(name.name, SN_REAL, sourceDecl);
 
   var superClass = null;
   if (this.lttype === TK_ID && this.ltval === 'extends') {
@@ -42,16 +51,8 @@ function(ctx) {
 
   var mmflags = ST_CLSMEM, mmctx = CTX_NONE;
 
-  this.enterScope(this.scope.spawnCls(st));
-  var scope = this.scope;
-
-  if (name && this.scope.isExpr())
-    this.scope.setScopeName(name.name);
-  else
-    this.scope.scopeName = scopeName;
-
   if (superClass)
-    this.scope.mode |= SM_CLS_WITH_SUPER;
+    this.scope.flags |= SF_HERITAGE;
 
   var list = [];
   var c0b = this.c0, loc0b  = this.loc0();

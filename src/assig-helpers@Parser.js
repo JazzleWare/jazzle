@@ -1,7 +1,7 @@
 this .ensureSimpAssig_soft = function(head) {
   switch(head.type) {
   case 'Identifier':
-    if ( this.scope.insideStrict() && arguments_or_eval(head.name) )
+    if ( this.scope.insideStrict() && arorev(head.name) )
       this.err('assig.to.arguments.or.eval');
 
   case 'MemberExpression':

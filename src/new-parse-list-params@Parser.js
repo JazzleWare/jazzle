@@ -43,7 +43,7 @@ function(argLen) {
   if (argLen === ARGLEN_ANY) {
     if (tail && this.lttype === TK_ELLIPSIS) {
       this.scope.enterUniqueArgs();
-      elem = this.parseRest();
+      elem = this.parsePat_rest();
       list.push(elem);
       if (!gnsa) {
         gnsa = true;

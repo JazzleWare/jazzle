@@ -1,5 +1,5 @@
 this.insideIf =
-function() { return this.flags & SF_IF; };
+function() { return this.flags & SF_INSIDEIF; };
 
 this.insideLoop =
 function() { return this.flags & SF_LOOP; };

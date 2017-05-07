@@ -26,7 +26,7 @@ this.parseSwitchCase = function () {
   if (!this.expectT(CH_COLON))
     this.err('switch.case.has.no.colon');
 
-  nbody = this.blck();
+  nbody = this.stmtList();
   var last = nbody.length ? nbody[nbody.length-1] : null;
 
   var ec = -1, eloc = null;
@@ -41,7 +41,7 @@ this.parseSwitchCase = function () {
   return {
     type: 'SwitchCase',
     test: cond,
-    start: startc,
+    start: c0,
     end: ec,
     loc: { start: loc0, end: eloc },
     consequent: nbody,

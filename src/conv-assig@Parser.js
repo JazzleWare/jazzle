@@ -5,7 +5,7 @@ this.toAssig = function(head, context) {
   var i = 0, list = null;
   switch (head.type) {
   case 'Identifier':
-    if (this.scope.insideStrict() && arguments_or_eval(head.name)) {
+    if (this.scope.insideStrict() && arorev(head.name)) {
       if (this.st === ERR_ARGUMENTS_OR_EVAL_DEFAULT)
         this.st = ERR_NONE_YET;
       if (this.st === ERR_NONE_YET) {

@@ -13,6 +13,9 @@ function(ctx, st) {
 
   var fnName = null;
   var declScope = null;
+
+  var c0 = this.c0, loc0 = this.loc0();
+
   if (!isMeth) {
     if (isStmt && isAsync) {
       this.unsatisfiedLabel &&
@@ -51,6 +54,7 @@ function(ctx, st) {
     }
 
     if (isStmt) {
+      st |= ST_DECL;
       if (this.lttype === TK_ID) {
         this.declMode = DT_FN;
         declScope = this.scope; 
@@ -59,8 +63,10 @@ function(ctx, st) {
       else if (!(ctx & CTX_DEFAULT))
         this.err('fun.decl.has.got.no.actual.name');
     }
-    else if (this.lttype === TK_ID)
-      fnName = this.parseFnExprName(st);
+    else if (this.lttype === TK_ID) {
+      st |= ST_EXPR ;
+      fnName = this.getName_fn(st);
+    }
   }
 
   this.enterScope(this.scope.spawnFn(st));
@@ -71,7 +77,7 @@ function(ctx, st) {
         st,
         declScope.findDecl_m(_m(fnName.name)));
     else
-      this.scope,setName(
+      this.scope.setName(
         fnName.name,
         st,
         null);
@@ -87,21 +93,21 @@ function(ctx, st) {
   this.declMode = DT_FNARG;
   var argList = this.parseParams(argLen);
 
-  this.scope.enterBody();
+  this.scope.activateBody();
 
   this.labels = {};
 
   var nbody = this.parseFunBody();
-  this.exitScope();
+  var scope = this.exitScope();
 
   var n = {
     type: isStmt ? 'FunctionDeclaration' : 'FunctionExpression',
     id: fnName,
     start: c0,
-    end: body.end,
+    end: nbody.end,
     generator: (st & ST_GEN) !== 0,
     body: nbody,
-    loc: { start: loc0, end: body.loc.end },
+    loc: { start: loc0, end: nbody.loc.end },
     params: argList,
     expression: false,
     async: (st & ST_ASYNC) !== 0,

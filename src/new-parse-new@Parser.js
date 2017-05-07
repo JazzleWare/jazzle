@@ -14,7 +14,7 @@ function() {
   if (head === null)
     this.err('new.head.is.not.valid');
 
-  var inner = core(head) ;
+  var inner = core(head), elem = null;
 
   while (true)
   switch (this.lttype) {
@@ -22,7 +22,7 @@ function() {
     this.next();
     if (this.lttype !== TK_ID)
       this.err('mem.name.not.id');
-    elem = this.memberID();
+    elem = this.mem_id();
     if (elem === null)
       this.err('mem.id.is.null');
     head = inner = {
@@ -53,7 +53,7 @@ function() {
       computed: true,
       '#y': -1
     };
-    if (!this.expectType_soft(CH_RSQBRACKET))
+    if (!this.expectT(CH_RSQBRACKET))
       this.err('mem.unfinished');
     continue;
 
@@ -70,12 +70,12 @@ function() {
         end: this.loc() },
       '#y': -1
     };
-    if (!this.expectType_soft(CH_RPAREN))
+    if (!this.expectT(CH_RPAREN))
       this.err('new.args.is.unfinished');
     continue;
 
   case CH_BACKTICK:
-    elem = this.parseTemplateLiteral();
+    elem = this.parseTemplate();
     head = inner = {
       type: 'TaggedTemplateLiteral',
       quasi: elem,

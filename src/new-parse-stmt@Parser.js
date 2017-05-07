@@ -3,48 +3,66 @@ function(allowNull) {
   var head = null;
   switch (this.lttype) {
   case CH_LCURLY:
-    return this.parseBlockStatement();
+    head = this.parseBlock();
+    break;
   case CH_SEMI:
-    return this.parseEmptyStatement();
+    head = this.parseEmptyStatement();
+    break;
   case TK_ID:
     this.canBeStatement = true;
     // TODO: CTX.PAT|CTX.NO_SIMP
     head = this.parseIDExprHead(CTX_PAT);
-    if (this.foundStatement) {
+    if (this.foundStatement)
       this.foundStatement = false;
-      return head;
+    else {
+      this.canBeStatement = false;
+      this.exprHead = head;
+      head = null;
     }
-    this.canBeStatement = false;
-    this.exprHead = head;
+    break;
+
+  case CH_SINGLE_QUOTE:
+  case CH_MULTI_QUOTE:
+    if (this.scope.insidePrologue())
+      this.chkDirective = true;
+    this.exprHead = this.parseString(this.lttype);
     break;
 
   case TK_EOF:
     if (!allowNull)
       this.err('stmt.null');
-    return null;
+    break;
   }
 
-  head = this.parseExpr(CTX_NULLABLE|CTX_TOP);
+  var finishPrologue = this.scope.insidePrologue();
   if (head === null) {
-    allowNull || this.err('stmt.null');
-    return null;
+    head = this.parseExpr(CTX_NULLABLE|CTX_TOP);
+    if (head === null)
+      allowNull || this.err('stmt.null');
+    else if (head.type === 'Identifier' &&
+      this.lttype === CH_COLON)
+      head = this.parseLabel(head, allowNull);
+    else {
+      this.fixupLabels(false);
+      if (finishPrologue && isDirective(head)) {
+        finishPrologue = false;
+        this.applyDirective(head);
+      }
+      this.semi() || this.err('no.semi');
+      head = {
+        type: 'ExpressionStatement',
+        expression: core(head),
+        start: head.start,
+        end: this.semiC || head.end,
+        loc: {
+          start: head.loc.start,
+          end: this.semiLoc || head.loc.end }
+      };
+    }
   }
-  if (head.type === 'Identifier' &&
-    this.lttype === CH_COLON)
-    return this.parseLabel(
-      head, allowNull);
 
-  this.fixupLabels(false);
-  if (!this.semi())
-    this.err('no.semi');
+  if (finishPrologue)
+    this.scope.exitPrologue();
 
-  return {
-    type: 'ExpressionStatement',
-    expression: core(head),
-    start: head.start,
-    end: this.semiC || head.end,
-    loc: {
-      start: head.loc.start,
-      end: this.semiLoc || head.loc.end }
-  };
+  return head;
 };

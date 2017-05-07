@@ -13,10 +13,9 @@ function (name) {
   case 3:
     switch (name) {
     case 'int' :
-      return this.v>5;
+      return this.v<=5;
     case 'let' :
-      return this.v <= 5 ||
-        !this.scope.insideStrict();
+      return this.scope.insideStrict();
     case 'var': case 'for':
     case 'try': case 'new' :
       return true;

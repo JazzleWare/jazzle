@@ -15,7 +15,7 @@ function() {
   if (!this.canDup())
     return;
 
-  this.verifyForUniqueArgs();
+  this.verifyUniqueArgs();
   this.flags |= SF_UNIQUE;
 };
 

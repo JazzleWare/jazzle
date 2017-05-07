@@ -14,7 +14,7 @@ function(ctx, st) {
         if (!(st & ST_CLSMEM)) { nonMod = latestMod; break MM; }
         if (st & ST_STATICMEM) { nonMod = latestMod; break MM; }
         if (st & ST_ASYNC) { nonMod = latestMod; break MM; }
-        mpending = ST_STATIC;
+        mpending = ST_STATICMEM;
         break;
 
       case 'get':
@@ -41,6 +41,7 @@ function(ctx, st) {
       default:
         st |= mpending;
         nonMod = latestMod;
+        mpending = ST_NONE;
         break MM;
       }
 
@@ -50,23 +51,28 @@ function(ctx, st) {
     }
   }
 
-  var memName = null;
-  if (nonMod)
-    memName = nonMod;
-  else {
-    if (this.peekMul()) {
-      if (this.v<=5)
-        this.err('ver.mem.gen');
-      if (st & ST_ASYNC)
-        this.err('async.gen.not.supported.yet');
+  if (this.peekMul()) {
+    if (this.v<=5) this.err('ver.mem.gen');
+    if (nonMod) this.err('gen.has.non.modifier');
+    st |= mpending|ST_GEN;
+    if (latestMod)
       latestMod = null;
-      st |= mpending|ST_GEN;
-      this.next();
-    }
-    var nameVal = "";
+    mpending = ST_NONE;
+    this.next();
+  }
+
+  var memName = null, nameVal = "";
+  if (mpending === ST_NONE && latestMod) { // if the most recent token is a "real" (i.e., non-get/set) non-modifier ID
+    memName = latestMod;
+    nameVal = memName.name;
+  }
+  else {
     switch (this.lttype) {
     case TK_ID:
-      if (latestMod !== null) // must not actually happen unless (st & ST_GEN) holds to be true
+      // if the current token is an id, either the most recent token is a '*' (in which case latestMod is null),
+      // or the current token is the first one we have reached since entering parseMem (in which case latestMod is, once again, null).
+      // if mpending is not ST_NONE, we will not have reached the else we are in now; the test below, then, is there for mere safety, as to err is human
+      if (latestMod !== null)
         this.err('pending.id');
 
       st |= mpending;
@@ -94,29 +100,30 @@ function(ctx, st) {
     default:
       if (latestMod) {
         memName = latestMod;
-        nameVal = memName.name; // unnecessary
+        // unnecessary because it is either static, async, set, or get
+        nameVal = memName.name;
       }
     }
-
-    if (memName === null) {
-      if (st & ST_GEN)
-        this.err('mem.gen.has.no.name');
-      return null;
-    }
-
-    if (st & ST_CLSMEM)
-      switch (nameVal) {
-      case 'prototype':
-        ctx |= CTX_HASPROTOTYPE;
-        break;
-
-      case 'constructor':
-        st |= ST_CTOR;
-        break;
-      }
-    else if (this.v>5 && nameVal === '__proto__')
-      ctx |= CTX_HASPROTO;
   }
+
+  if (memName === null) {
+    if (st & ST_GEN)
+      this.err('mem.gen.has.no.name');
+    return null;
+  }
+
+  if (st & ST_CLSMEM)
+    switch (nameVal) {
+    case 'prototype':
+      ctx |= CTX_HASPROTOTYPE;
+      break;
+
+    case 'constructor':
+      st |= ST_CTOR;
+      break;
+    }
+  else if (this.v>5 && nameVal === '__proto__')
+    ctx |= CTX_HASPROTO;
 
   if (this.lttype === CH_LPAREN) {
     if (this.v <= 5) this.err('ver.mem.meth');
@@ -186,6 +193,7 @@ function(memName, ctx) {
     if (errt_noLeak(ctx)) // if the owner is not leaky
       this.err('obj.prop.assig.not.allowed');
 
+    this.validate(memName.name);
     this.scope.refDirect_m(_m(memName.name), null);
     val = this.parseAssignment(memName, ctx);
     if (errt_strack(ctx) && this.st === ERR_NONE_YET) {
@@ -201,6 +209,7 @@ function(memName, ctx) {
     if (memName.type !== 'Identifier')
       this.err('obj.prop.assig.not.id',{tn:memName});
     this.validate(memName.name);
+    this.scope.refDirect_m(_m(memName.name), null);
     val = memName;
     break;
   }

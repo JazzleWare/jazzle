@@ -13,7 +13,7 @@ function(memName, ctx, st) {
         st &= ~ST_CTOR;
     }
     if (st & ST_CTOR) {
-      if (st !== ST_CTOR|ST_CLSMEM)
+      if (st !== (ST_CTOR|ST_CLSMEM))
         this.err('class.ctor.is.special.mem',
           {tn:memName});
       if (ctx & CTX_CTOR_NOT_ALLOWED)
@@ -64,9 +64,9 @@ function(memName, ctx, st) {
         (st & ST_SETTER) ?
           'set' :
           'get',
-    computed: name.type === PAREN,
+    computed: memName.type === PAREN,
     loc: {
-      start: name.loc.start,
+      start: memName.loc.start,
       end : val.loc.end
     },
     method: !!(st & ST_ACCESSOR),

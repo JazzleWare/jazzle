@@ -4,7 +4,7 @@ this.parseProgram = function () {
 
   var globalScope = new GlobalScope();
 
-  this.scope = new Scope(globalScope, ST_SCRIPT);
+  this.scope = new ConcreteScope(globalScope, ST_SCRIPT);
   globalScope.scriptScope = this.scope;
 
   this.scope.parser = this;

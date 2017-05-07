@@ -15,10 +15,16 @@ function(left) {
 
 this.patErrCheck =
 function() {
+  ASSERT.call(this, this.vpatCheck,
+    'PEC msut have vpatCheck hold');
+  this.vpatCheck = false;
   if (!this.scope.canDeclareLexical())
-    this.patErr = PE_NO_NONVAR;
+    this.vpatErr = PE_NO_NONVAR;
   else if (this.unsatisfiedLabel)
-    this.patErr = PE_NO_LABEL;
+    this.vpatErr = PE_NO_LABEL;
+  else return false;
+
+  return true;
 };
 
 this.setPatCheck =

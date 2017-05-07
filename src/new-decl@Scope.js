@@ -40,11 +40,13 @@ function(mname, tdecl, tscope, isNew) {
   var cur = this;
   while (true) {
     var existing = cur.findDecl_m(mname);
-    if (existing.isOverridableByVar())
-      return;
-    this.err('var.can.not.override.existing');
+    if (existing) {
+      if (existing.isOverridableByVar())
+        return;
+      this.err('var.can.not.override.existing');
+    }
 
-    cur.insertDecl(mname, tdecl);
+    cur.insertDecl_m(mname, tdecl);
     if (cur === tscope) { break; }
 
     cur = cur.parent;
@@ -53,6 +55,14 @@ function(mname, tdecl, tscope, isNew) {
   }
 
   isNew && tscope.addVarTarget_m(mname, tdecl);
+};
+
+this.findParam_m =
+function(mname) {
+  ASSERT.call(this, this.isAnyFn() || this.isCatch(),
+    'this scope is not an fn/catch, and has no params');
+  return HAS.call(this.argMap, mname) ?
+    this.argMap[mname] : null;
 };
 
 this.declareLexical_m =

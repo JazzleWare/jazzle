@@ -63,6 +63,9 @@ function() { return this.type & ST_PAREN; };
 this.isExpr = 
 function() { return this.type & ST_EXPR; };
 
+this.isSimpleFn =
+function() { return this.type & (ST_EXPR|ST_DECL); };
+
 this.isGlobal =
 function() { return this.type & ST_GLOBAL; };
 

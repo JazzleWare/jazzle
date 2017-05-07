@@ -28,13 +28,13 @@ function(prec, ctx) {
     return null;
   }
 
+  var hasOp = this.getOp(ctx);
   if (this.lttype & TK_ANY_ASSIG) {
     if (prec !== PREC_NONE)
       this.err('assig.not.first');
     return this.parseAssignment(head, ctx);
   }
 
-  var hasOp = this.getOp(ctx);
   if (!hasOp) {
     if (errt_noLeak(ctx)) {
       this.st_flush();
@@ -48,16 +48,21 @@ function(prec, ctx) {
     this.dissolveParen();
   }
 
-  if (this.lttype === CH_QUESTION)
-    return prec === PREC_NONE ?
-      this.parseCond(head, ctx) : head;
 
-  do {
-    if (this.lttype === TK_AA_MM) {
-      if (this.nl)
-        break;
+  var resume = true;
+  if (this.lttype === TK_AA_MM) {
+    if (!this.nl)
       head = this.parseUpdate(head, ctx);
-      continue;
+    else
+      resume = false;
+  }
+
+  if (resume)
+  do {
+    if (this.lttype === CH_QUESTION) {
+      if (prec === PREC_NONE)
+        head = this.parseCond(head, ctx);
+      break;
     }
 
     var curPrec = this.prec;

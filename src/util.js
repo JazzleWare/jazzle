@@ -40,7 +40,7 @@ function fromRunLenCodes(runLenArray, bitm) {
   return (bitm);
 }
 
-function arguments_or_eval(l) {
+function arorev(l) {
   switch ( l ) {
      case 'arguments':
      case 'eval':
@@ -90,8 +90,7 @@ function surrogate(ch1, ch2) {
 
 function isDirective(n) {
   return (
-    n.type === 'ExpressionStatement' &&
-    n.expression.type === 'Literal' &&
-    typeof(n.expression.value) === STRING_TYPE
+    n.type === 'Literal' &&
+    typeof(n.value) === STRING_TYPE
   );
 }

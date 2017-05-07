@@ -15,7 +15,7 @@ function(v) {
       this.setsimpoff(c);
       if (this.ct === ERR_NONE_YET) {
         this.ct = ERR_PIN_UNICODE_IN_RESV;
-        this.pinLoc_c(this.c,this.li,this.col);
+        this.pin_ct(this.c,this.li,this.col);
       }
       ch = this.readBS();
       if (!isIDBody(ch))

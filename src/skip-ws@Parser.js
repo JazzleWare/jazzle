@@ -73,9 +73,9 @@ function() {
         this.v>5 &&
         this.isScript &&
         c+3<l &&
-        l.charCodeAt(c+1) === CH_EXCLAMATION &&
-        l.charCodeAt(c+2) === CH_MIN &&
-        l.charCodeAt(c+3) === CH_MIN
+        s.charCodeAt(c+1) === CH_EXCLAMATION &&
+        s.charCodeAt(c+2) === CH_MIN &&
+        s.charCodeAt(c+3) === CH_MIN
       ) {
         this.setsimpoff(c+4) ;
         this.readComment_line();

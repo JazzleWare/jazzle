@@ -1,7 +1,7 @@
 this.parsePat_rest =
 function() {
   this.v<=5 && this.err('ver.spread.rest');
-  var c0 = this.c0, loc = this.loc0();
+  var c0 = this.c0, loc0 = this.loc0();
 
   this.next(); // '...'
 
@@ -15,11 +15,11 @@ function() {
 
   return {
     type: 'RestElement',
-    argument: e,
+    argument: arg,
     start: c0,
-    end: e.end,
+    end: arg.end,
     loc: {
-      start: startLoc,
-      end: e.loc.end }
+      start: loc0,
+      end: arg.loc.end }
   };
 };

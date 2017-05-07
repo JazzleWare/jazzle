@@ -22,7 +22,7 @@ function() {
       if (luo<c)
         v += s.substring(luo,c);
 
-      this.setoff(c+2);
+      this.setsimpoff(c+2);
       str.push({
         type: 'TemplateElement', 
         start: c0s,
@@ -68,6 +68,7 @@ function() {
       v += s.substring(luo,c);
     v += s.charAt(c);
     this.setnewloff(c);
+    c++;
     luo = c;
     continue;
 
@@ -79,7 +80,7 @@ function() {
     c = luo = this.c;
     continue;
 
-  case CH_BACTTICK:
+  case CH_BACKTICK:
     break LOOP;
 
   default: c++;
