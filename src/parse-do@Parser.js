@@ -1,7 +1,7 @@
 this.parseDoWhile =
 function () {
   this.resvchk();
-  !this.ensureStmt_soft() && this.err('not.stmt');
+  this.testStmt() || this.err('not.stmt');
   this.fixupLabels(true);
 
   this.enterScope(this.scope.spawnBare());
@@ -41,7 +41,7 @@ function () {
   return {
     type: 'DoWhileStatement',
     test: cond,
-    start: startc,
+    start: c0,
     end: c,
     body: nbody,
     loc: {

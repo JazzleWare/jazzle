@@ -96,7 +96,7 @@ ErrorString.from = function(str) {
 };
 ;
 function FunScope(parent, type) {
-  ConcreteScope.call(this, parent, type);
+  ConcreteScope.call(this, parent, type|ST_FN);
 
   this.argList = [];
   this.argMap = {};
@@ -4441,8 +4441,7 @@ function(ctx, st) {
       this.next(); // '*'
       st |= ST_GEN;
     }
-    else {
-      st |= ST_FN;
+    if (isStmt) {
       if (this.scope.isBare()) {
         if (!this.scope.insideIf() ||
           this.scope.insideStrict())
@@ -4453,9 +4452,7 @@ function(ctx, st) {
       else if (this.unsatisfiedLabel)
         this.scope.insideStrict() &&
         this.err('func.label.not.allowed');
-    }
 
-    if (isStmt) {
       st |= ST_DECL;
       if (this.lttype === TK_ID) {
         this.declMode = DT_FN;
@@ -4831,8 +4828,8 @@ this.getLit_true = function() {
   return n;
 };
 
-this.getNum_false = function() {
-  
+this.getLit_false = function() {
+  this.resvchk();
   var n = {
     type: 'Literal', value: false,
     start: this.c0, end: this.c,
@@ -5339,17 +5336,15 @@ function(prec, ctx) {
     this.dissolveParen();
   }
 
-
-  var resume = true;
-  if (this.lttype === TK_AA_MM) {
-    if (!this.nl)
-      head = this.parseUpdate(head, ctx);
-    else
-      resume = false;
-  }
-
-  if (resume)
   do {
+    if (this.lttype === TK_AA_MM) {
+      if (!this.nl) {
+        head = this.parseUpdate(head, ctx);
+        continue;
+      }
+      else break;
+    }
+
     if (this.lttype === CH_QUESTION) {
       if (prec === PREC_NONE)
         head = this.parseCond(head, ctx);
@@ -6686,7 +6681,7 @@ this.parseCond = function(cond, ctx) {
 
 },
 function(){
-this.prseDbg = 
+this.parseDbg = 
 function() {
   this.resvchk();
   this.testStmt() || this.err('not.stmt');
@@ -6737,7 +6732,7 @@ function(){
 this.parseDoWhile =
 function () {
   this.resvchk();
-  !this.ensureStmt_soft() && this.err('not.stmt');
+  this.testStmt() || this.err('not.stmt');
   this.fixupLabels(true);
 
   this.enterScope(this.scope.spawnBare());
@@ -6777,7 +6772,7 @@ function () {
   return {
     type: 'DoWhileStatement',
     test: cond,
-    start: startc,
+    start: c0,
     end: c,
     body: nbody,
     loc: {
@@ -6850,7 +6845,7 @@ this.parseFor = function() {
     this.foundStatement = false;
   else {
     headIsExpr = true;
-    head = this.parseExpr(headctx = CTX_NULLABLE|CTX_TOP|CTX_FOR);
+    head = this.parseExpr(headctx = CTX_NULLABLE|CTX_PAT|CTX_FOR);
   }
   this.scope.exitForInit();
 
@@ -6893,6 +6888,8 @@ this.parseFor = function() {
     if (!this.expectT(CH_RPAREN))
       this.err('for.iter.no.end.paren',{extra:[head,startc,startLoc,afterHead,kind]});
 
+    this.scope.actions |= (SA_CONTINUE|SA_BREAK);
+    this.scope.flags |= SF_LOOP;
     nbody = this.parseStatement(true);
     if (!nbody)
       this.err('null.stmt');
@@ -6914,7 +6911,7 @@ this.parseFor = function() {
   }
 
   if (headIsExpr)
-    this.flushSimpleErrors();
+    this.st_flush();
   else if (head && this.missingInit)
     this.err('for.decl.no.init',{extra:[startc,startLoc,head]});
 
@@ -6928,6 +6925,9 @@ this.parseFor = function() {
   var tail = this.parseExpr(CTX_NULLABLE|CTX_TOP);
   if (!this.expectT(CH_RPAREN))
     this.err('for.simple.no.end.paren',{extra:[startc,startLoc,head,afterHead,tail]});
+
+  this.scope.actions |= (SA_CONTINUE|SA_BREAK);
+  this.scope.flags |= SF_LOOP;
 
   nbody = this.parseStatement(true);
   if (!nbody)
@@ -6979,7 +6979,7 @@ this.parseIf = function () {
 
   this.enterScope(this.scope.spawnBare());
   var ifScope = this.scope; 
-  this.scope.mode |= SF_INSIDEIF;
+  this.scope.flags |= SF_INSIDEIF;
 
   var c0 = this.c0, loc0 = this.loc0();
 
@@ -9544,7 +9544,8 @@ function() {
 
       case CH_MUL:
         this.setsimpoff(c+2); // '/*'
-        nl = this.readComment_multi() || nl;
+        if (this.readComment_multi() && !nl)
+          nl = true;
         c = this.c;
         continue;
       }
@@ -9597,6 +9598,7 @@ function() {
   
     case 0x2028:
     case 0x2029:
+      nl = true;
       this.setnewloff(c);
       c++;
       continue;
@@ -9835,11 +9837,15 @@ function() {
   var list = this.refs, len = list.length();
   var e = 0, mname = "", ref = null;
 
+  var isCatch = this.isCatch();
   this.deactivateBody();
   while (e<len) {
     ref = list.at(e);
     mname = list.keys[e];
-    this.refInHead(mname, ref);
+    if (isCatch)
+      this.refDirect_m(mname, ref);
+    else
+      this.refInHead(mname, ref);
     e++;
   }
 };
@@ -9901,12 +9907,13 @@ function() {
 this.hasSignificantNames =
 function() {
   if (this.isModule() ||
-    this.isAnyFn() ||
     this.isScript())
     return true;
 
+  if (this.isAnyFn())
+    return !this.inBody;
   if (this.isCatch())
-    return this.argIsSimple && this.argIsSimple;
+    return !this.inBody && this.argIsSimple && this.argIsSimple;
 
   return false;
 };

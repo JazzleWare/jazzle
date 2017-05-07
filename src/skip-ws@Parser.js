@@ -44,7 +44,8 @@ function() {
 
       case CH_MUL:
         this.setsimpoff(c+2); // '/*'
-        nl = this.readComment_multi() || nl;
+        if (this.readComment_multi() && !nl)
+          nl = true;
         c = this.c;
         continue;
       }
@@ -97,6 +98,7 @@ function() {
   
     case 0x2028:
     case 0x2029:
+      nl = true;
       this.setnewloff(c);
       c++;
       continue;

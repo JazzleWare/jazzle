@@ -48,17 +48,15 @@ function(prec, ctx) {
     this.dissolveParen();
   }
 
-
-  var resume = true;
-  if (this.lttype === TK_AA_MM) {
-    if (!this.nl)
-      head = this.parseUpdate(head, ctx);
-    else
-      resume = false;
-  }
-
-  if (resume)
   do {
+    if (this.lttype === TK_AA_MM) {
+      if (!this.nl) {
+        head = this.parseUpdate(head, ctx);
+        continue;
+      }
+      else break;
+    }
+
     if (this.lttype === CH_QUESTION) {
       if (prec === PREC_NONE)
         head = this.parseCond(head, ctx);

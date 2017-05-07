@@ -44,7 +44,7 @@ this.parseFor = function() {
     this.foundStatement = false;
   else {
     headIsExpr = true;
-    head = this.parseExpr(headctx = CTX_NULLABLE|CTX_TOP|CTX_FOR);
+    head = this.parseExpr(headctx = CTX_NULLABLE|CTX_PAT|CTX_FOR);
   }
   this.scope.exitForInit();
 
@@ -87,6 +87,8 @@ this.parseFor = function() {
     if (!this.expectT(CH_RPAREN))
       this.err('for.iter.no.end.paren',{extra:[head,startc,startLoc,afterHead,kind]});
 
+    this.scope.actions |= (SA_CONTINUE|SA_BREAK);
+    this.scope.flags |= SF_LOOP;
     nbody = this.parseStatement(true);
     if (!nbody)
       this.err('null.stmt');
@@ -108,7 +110,7 @@ this.parseFor = function() {
   }
 
   if (headIsExpr)
-    this.flushSimpleErrors();
+    this.st_flush();
   else if (head && this.missingInit)
     this.err('for.decl.no.init',{extra:[startc,startLoc,head]});
 
@@ -122,6 +124,9 @@ this.parseFor = function() {
   var tail = this.parseExpr(CTX_NULLABLE|CTX_TOP);
   if (!this.expectT(CH_RPAREN))
     this.err('for.simple.no.end.paren',{extra:[startc,startLoc,head,afterHead,tail]});
+
+  this.scope.actions |= (SA_CONTINUE|SA_BREAK);
+  this.scope.flags |= SF_LOOP;
 
   nbody = this.parseStatement(true);
   if (!nbody)

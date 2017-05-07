@@ -5,7 +5,7 @@ this.parseIf = function () {
 
   this.enterScope(this.scope.spawnBare());
   var ifScope = this.scope; 
-  this.scope.mode |= SF_INSIDEIF;
+  this.scope.flags |= SF_INSIDEIF;
 
   var c0 = this.c0, loc0 = this.loc0();
 

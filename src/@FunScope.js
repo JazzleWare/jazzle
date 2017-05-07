@@ -1,5 +1,5 @@
 function FunScope(parent, type) {
-  ConcreteScope.call(this, parent, type);
+  ConcreteScope.call(this, parent, type|ST_FN);
 
   this.argList = [];
   this.argMap = {};

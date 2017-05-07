@@ -10,8 +10,8 @@ this.getLit_true = function() {
   return n;
 };
 
-this.getNum_false = function() {
-  
+this.getLit_false = function() {
+  this.resvchk();
   var n = {
     type: 'Literal', value: false,
     start: this.c0, end: this.c,

@@ -12,11 +12,15 @@ function() {
   var list = this.refs, len = list.length();
   var e = 0, mname = "", ref = null;
 
+  var isCatch = this.isCatch();
   this.deactivateBody();
   while (e<len) {
     ref = list.at(e);
     mname = list.keys[e];
-    this.refInHead(mname, ref);
+    if (isCatch)
+      this.refDirect_m(mname, ref);
+    else
+      this.refInHead(mname, ref);
     e++;
   }
 };

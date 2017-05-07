@@ -39,8 +39,7 @@ function(ctx, st) {
       this.next(); // '*'
       st |= ST_GEN;
     }
-    else {
-      st |= ST_FN;
+    if (isStmt) {
       if (this.scope.isBare()) {
         if (!this.scope.insideIf() ||
           this.scope.insideStrict())
@@ -51,9 +50,7 @@ function(ctx, st) {
       else if (this.unsatisfiedLabel)
         this.scope.insideStrict() &&
         this.err('func.label.not.allowed');
-    }
 
-    if (isStmt) {
       st |= ST_DECL;
       if (this.lttype === TK_ID) {
         this.declMode = DT_FN;

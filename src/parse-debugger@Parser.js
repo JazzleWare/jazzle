@@ -1,4 +1,4 @@
-this.prseDbg = 
+this.parseDbg = 
 function() {
   this.resvchk();
   this.testStmt() || this.err('not.stmt');

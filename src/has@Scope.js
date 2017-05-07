@@ -9,12 +9,13 @@ function() {
 this.hasSignificantNames =
 function() {
   if (this.isModule() ||
-    this.isAnyFn() ||
     this.isScript())
     return true;
 
+  if (this.isAnyFn())
+    return !this.inBody;
   if (this.isCatch())
-    return this.argIsSimple && this.argIsSimple;
+    return !this.inBody && this.argIsSimple && this.argIsSimple;
 
   return false;
 };

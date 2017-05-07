@@ -31,6 +31,6 @@ if (comp === null)
   console.log('equal parses.');
 else {
   console.log('incompatible parses; comparison:');
-  console.log(util.obj2str(comp));
+  console.log(/* util.obj2str(comp) */ comp);
 }
 
