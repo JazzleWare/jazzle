@@ -13,8 +13,11 @@ function(ctx) {
       this.ltraw = '/=';
       this.setsimpoff(this.c+1);
     }
-    else
+    else {
+      this.lttype = TK_SIMP_BINARY; // unnecessary
+      this.ltraw = '/';
       this.prec = PREC_MUL; 
+    }
     return true;
 
   case TK_ID:

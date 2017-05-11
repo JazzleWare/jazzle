@@ -11,7 +11,9 @@ function() {
 
   var s = this.src, l = s.length;
 
-  var c0s = c0, loc0s = loc0;
+  var c0s = c, loc0s = this.loc();
+
+  var iscr = false;
 
   LOOP:
   while (c<l)
@@ -35,7 +37,7 @@ function() {
         },        
         end: c,
         value: {
-          raw : s.slice(c0s, c).replace(/\r\n|\r/g,'\n'), 
+          raw: s.slice(c0s, c).replace(/\r\n|\r/g,'\n'), 
           cooked: v
         }, 
         tail: false,
@@ -52,7 +54,7 @@ function() {
       c = luo = this.c;
       v = "";
       c0s = c;
-      loc0s = this.loc0();
+      loc0s = this.loc();
     }
     else
       c++;
@@ -60,15 +62,19 @@ function() {
     continue;
 
   case CH_CARRIAGE_RETURN:
-    if (c+1<l && s.charCodeAt(c+1) === CH_LINE_FEED)
-      c++;
+    iscr = true;
   case CH_LINE_FEED:
   case 0x2028: case 0x02029:
     if (luo<c)
       v += s.substring(luo,c);
+    if (iscr) {
+      if (c+1<l && s.charCodeAt(c+1) === CH_LINE_FEED)
+        c++;
+      iscr = false;
+    }
     v += s.charAt(c);
-    this.setnewloff(c);
     c++;
+    this.setzoff(c);
     luo = c;
     continue;
 
@@ -92,7 +98,8 @@ function() {
   if (luo<c)
     v += s.substring(luo,c);
 
-  this.setsimpoff(c+1); // '`'
+  c++;
+  this.setsimpoff(c); // '`'
   str.push({
     type: 'TemplateElement',
     start: c0s,
@@ -103,9 +110,9 @@ function() {
         column: this.col-1
       }
     },
-    end: c,
+    end: c-1,
     value: {
-      raw: s.slice(c0s,c).replace(/\r\n|\r/g,'\n'), 
+      raw: s.slice(c0s,c-1).replace(/\r\n|\r/g,'\n'), 
       cooked: v 
     },
     tail: true

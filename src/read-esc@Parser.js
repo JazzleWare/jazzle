@@ -74,7 +74,8 @@ function(t) { // is it a template escape?
     ) c++;
   case CH_LINE_FEED:
   case 0x2028: case 0x2029:
-    this.setnewloff(c+2);
+    c++;
+    this.setzoff(c+1);
     v = '';
     setoff = false;
     break;

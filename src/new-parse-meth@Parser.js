@@ -69,9 +69,9 @@ function(memName, ctx, st) {
       start: memName.loc.start,
       end : val.loc.end
     },
-    method: !!(st & ST_ACCESSOR),
+    method: !(st & ST_ACCESSOR),
     shorthand: false,
-    value : val,
+    value: val,
     '#y': -1
   };
 };

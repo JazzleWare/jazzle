@@ -98,7 +98,7 @@ this.parseFor = function() {
 
     return {
       type: kind,
-      loc: { start: c0, end: nbody.loc.end },
+      loc: { start: loc0, end: nbody.loc.end },
       start: c0,
       end: nbody.end,
       right: core(afterHead),

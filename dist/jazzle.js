@@ -4870,8 +4870,10 @@ function(ctx, st) {
   var firstMod = null, latestMod = null, nonMod = null;
   var mpending = ST_NONE, nina = false; // name is newline async
 
+  var c0 = -1, loc0 = null;
   if (this.lttype === TK_ID) {
     firstMod = latestMod = this.id();
+    c0 = firstMod.start, loc0 = firstMod.loc.start;
 
     MM:
     while (true) {
@@ -4924,6 +4926,7 @@ function(ctx, st) {
     st |= mpending|ST_GEN;
     if (latestMod)
       latestMod = null;
+    else { c0 = this.c0, loc0 = this.loc0(); }
     mpending = ST_NONE;
     this.next();
   }
@@ -4995,7 +4998,10 @@ function(ctx, st) {
   if (this.lttype === CH_LPAREN) {
     if (this.v <= 5) this.err('ver.mem.meth');
     var mem = this.parseMeth(memName, ctx, st);
-    // TODO: loc adjustment
+    if (c0 !== -1 && c0 !== mem.start) {
+      mem.start = c0;
+      mem.loc.start = loc0;
+    }
     return mem;
   }
 
@@ -5169,9 +5175,9 @@ function(memName, ctx, st) {
       start: memName.loc.start,
       end : val.loc.end
     },
-    method: !!(st & ST_ACCESSOR),
+    method: !(st & ST_ACCESSOR),
     shorthand: false,
-    value : val,
+    value: val,
     '#y': -1
   };
 };
@@ -5196,6 +5202,7 @@ function() {
 
   var inner = core(head), elem = null;
 
+  LOOP:
   while (true)
   switch (this.lttype) {
   case CH_SINGLEDOT:
@@ -5227,6 +5234,7 @@ function() {
       property: core(elem),
       start: head.start,
       end: this.c,
+      object: inner,
       loc: {
         start: head.loc.start,
         end: this.loc() },
@@ -5242,22 +5250,22 @@ function() {
     head = inner = {
       type: 'NewExpression',
       callee: inner,
-      start: head.start,
+      start: c0,
       end: this.c,
       arguments: elem,
       loc: {
-        start: head.loc.start,
+        start: loc0,
         end: this.loc() },
       '#y': -1
     };
     if (!this.expectT(CH_RPAREN))
       this.err('new.args.is.unfinished');
-    continue;
+    break LOOP;
 
   case CH_BACKTICK:
     elem = this.parseTemplate();
     head = inner = {
-      type: 'TaggedTemplateLiteral',
+      type: 'TaggedTemplateExpression',
       quasi: elem,
       start: head.start,
       end: elem.end,
@@ -5270,7 +5278,7 @@ function() {
     continue;
 
   default:
-    return {
+    head = {
       type: 'NewExpression',
       callee: inner,
       start: c0,
@@ -5281,7 +5289,10 @@ function() {
       arguments : [],
       '#y': -1
     };
+    break LOOP;
   }
+
+  return head;
 };
 
 },
@@ -5498,6 +5509,7 @@ function(head) {
         property: core(elem),
         start: head.start,
         end: this.c,
+        object: inner,
         loc: {
           start: head.loc.start,
           end: this.loc() },
@@ -5528,7 +5540,7 @@ function(head) {
     case CH_BACKTICK:
       elem = this.parseTemplate();
       head = inner = {
-        type: 'TaggedTemplateLiteral',
+        type: 'TaggedTemplateExpression',
         quasi: elem,
         start: head.start,
         end: elem.end,
@@ -5562,7 +5574,9 @@ function() {
 
   var s = this.src, l = s.length;
 
-  var c0s = c0, loc0s = loc0;
+  var c0s = c, loc0s = this.loc();
+
+  var iscr = false;
 
   LOOP:
   while (c<l)
@@ -5586,7 +5600,7 @@ function() {
         },        
         end: c,
         value: {
-          raw : s.slice(c0s, c).replace(/\r\n|\r/g,'\n'), 
+          raw: s.slice(c0s, c).replace(/\r\n|\r/g,'\n'), 
           cooked: v
         }, 
         tail: false,
@@ -5603,7 +5617,7 @@ function() {
       c = luo = this.c;
       v = "";
       c0s = c;
-      loc0s = this.loc0();
+      loc0s = this.loc();
     }
     else
       c++;
@@ -5611,15 +5625,19 @@ function() {
     continue;
 
   case CH_CARRIAGE_RETURN:
-    if (c+1<l && s.charCodeAt(c+1) === CH_LINE_FEED)
-      c++;
+    iscr = true;
   case CH_LINE_FEED:
   case 0x2028: case 0x02029:
     if (luo<c)
       v += s.substring(luo,c);
+    if (iscr) {
+      if (c+1<l && s.charCodeAt(c+1) === CH_LINE_FEED)
+        c++;
+      iscr = false;
+    }
     v += s.charAt(c);
-    this.setnewloff(c);
     c++;
+    this.setzoff(c);
     luo = c;
     continue;
 
@@ -5643,7 +5661,8 @@ function() {
   if (luo<c)
     v += s.substring(luo,c);
 
-  this.setsimpoff(c+1); // '`'
+  c++;
+  this.setsimpoff(c); // '`'
   str.push({
     type: 'TemplateElement',
     start: c0s,
@@ -5654,9 +5673,9 @@ function() {
         column: this.col-1
       }
     },
-    end: c,
+    end: c-1,
     value: {
-      raw: s.slice(c0s,c).replace(/\r\n|\r/g,'\n'), 
+      raw: s.slice(c0s,c-1).replace(/\r\n|\r/g,'\n'), 
       cooked: v 
     },
     tail: true
@@ -5985,11 +6004,11 @@ this.setsimpoff =
 function(offset) {
   this.col += (this.c = offset) - this.luo;
   // TODO: will luo remain relevant even if
-  // we only use this.c at the start and end of a lexere routine
+  // we only use this.c at the start and end of a lexer routine
   this.luo = offset;
 };
 
-this.setnewloff =
+this.setzoff =
 function(offset) {
   this.luo = offset;
   this.c = offset;
@@ -6899,7 +6918,7 @@ this.parseFor = function() {
 
     return {
       type: kind,
-      loc: { start: c0, end: nbody.loc.end },
+      loc: { start: loc0, end: nbody.loc.end },
       start: c0,
       end: nbody.end,
       right: core(afterHead),
@@ -7466,7 +7485,7 @@ this.parsePat_obj =
 function() {
   this.v<=5 && this.err('ver.patobj');
 
-  var isID = false, c0 = this.c0, loc0 = this.loc();
+  var isID = false, c0 = this.c0, loc0 = this.loc0();
   var name = null, val = null, list = [], isShort = false;
 
   if (this.scope.insideArgs())
@@ -7518,9 +7537,7 @@ function() {
       this.err('obj.prop.is.null');
 
     if (this.peekEq())
-      val = this.parsePat_assig(name);
-    else if (isShort)
-      isShort = false;
+      val = this.parsePat_assig(val);
 
     list.push({
       type: 'Property',
@@ -7832,18 +7849,16 @@ this.parseRegExpLiteral = function() {
         this.err('regex.not.valid') )
        return this.errorHandlerOutput;
 
-     this.col += (c-this.c);
+
+     this.setsimpoff(c);
      var regex = { type: 'Literal', regex: { pattern: patternString, flags: flagsString },
                    start: startc, end: c,
                    value: val, loc: { start: startLoc, end: this.loc() }, 
                    raw: this.src.substring(startc, c) };
-     this.c = c;
 
      this.next () ;
      return regex ;
 };
-
-
 
 },
 function(){
@@ -8415,8 +8430,11 @@ function(ctx) {
       this.ltraw = '/=';
       this.setsimpoff(this.c+1);
     }
-    else
+    else {
+      this.lttype = TK_SIMP_BINARY; // unnecessary
+      this.ltraw = '/';
       this.prec = PREC_MUL; 
+    }
     return true;
 
   case TK_ID:
@@ -8567,7 +8585,7 @@ function() {
     case CH_LINE_FEED:
     case 0x2028: case 0x2029:
       c++;
-      this.setnewloff(c);
+      this.setzoff(c);
       if (!hasNL)
         hasNL = true;
       continue;
@@ -8727,7 +8745,8 @@ function(t) { // is it a template escape?
     ) c++;
   case CH_LINE_FEED:
   case 0x2028: case 0x2029:
-    this.setnewloff(c+2);
+    c++;
+    this.setzoff(c+1);
     v = '';
     setoff = false;
     break;
@@ -9521,8 +9540,8 @@ function() {
     case CH_LINE_FEED:
       if (!nl)
         nl = true;
-      this.setnewloff(c);
       c++;
+      this.setzoff(c);
       continue;
 
     case CH_VTAB:
@@ -9599,8 +9618,8 @@ function() {
     case 0x2028:
     case 0x2029:
       nl = true;
-      this.setnewloff(c);
       c++;
+      this.setzoff(c);
       continue;
 
     default: break SKIPLOOP;

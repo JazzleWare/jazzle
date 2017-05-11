@@ -32,7 +32,7 @@ function() {
     case CH_LINE_FEED:
     case 0x2028: case 0x2029:
       c++;
-      this.setnewloff(c);
+      this.setzoff(c);
       if (!hasNL)
         hasNL = true;
       continue;

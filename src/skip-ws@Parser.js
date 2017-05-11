@@ -21,8 +21,8 @@ function() {
     case CH_LINE_FEED:
       if (!nl)
         nl = true;
-      this.setnewloff(c);
       c++;
+      this.setzoff(c);
       continue;
 
     case CH_VTAB:
@@ -99,8 +99,8 @@ function() {
     case 0x2028:
     case 0x2029:
       nl = true;
-      this.setnewloff(c);
       c++;
+      this.setzoff(c);
       continue;
 
     default: break SKIPLOOP;

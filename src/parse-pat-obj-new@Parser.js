@@ -2,7 +2,7 @@ this.parsePat_obj =
 function() {
   this.v<=5 && this.err('ver.patobj');
 
-  var isID = false, c0 = this.c0, loc0 = this.loc();
+  var isID = false, c0 = this.c0, loc0 = this.loc0();
   var name = null, val = null, list = [], isShort = false;
 
   if (this.scope.insideArgs())
@@ -54,9 +54,7 @@ function() {
       this.err('obj.prop.is.null');
 
     if (this.peekEq())
-      val = this.parsePat_assig(name);
-    else if (isShort)
-      isShort = false;
+      val = this.parsePat_assig(val);
 
     list.push({
       type: 'Property',

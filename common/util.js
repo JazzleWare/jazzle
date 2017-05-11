@@ -41,7 +41,7 @@ mex.TYPES = {
 };
 
 mex.dump = function dump(obj, level, name, isTail, sp ) {
-  return obj;
+  try {
   var space = "", i = 0;
   while (i++ < level-1)
     space += sp;
@@ -113,6 +113,11 @@ mex.dump = function dump(obj, level, name, isTail, sp ) {
   else if (!isTail) { str += '\n' + trailingSpace; }
 
   return space + str ;
+  }
+  catch (e) {
+    console.err('error:', e);
+    return obj;
+  }
 };
   
 mex.obj2str = function(obj) {
@@ -283,14 +288,16 @@ mex.ej_adjust = function(e, j, name) {
 
   delete e.errors; 
 
-  delete j.y;
-
-  delete j.elseScope;
-  delete j.ifScope;
-  delete j.scope;
+  delete j['#elseScope'];
+  delete j['#ifScope'];
+  delete j['#finScope'];
+  delete j['#tryScope'];
+  delete j['#scope'];
   delete j.tokens;
   delete j.argumentPrologue;
 
+  delete j['#y'];
+  
   if (e.tokens) {
     e.tokens = mex.clearComments(e.tokens);
   }

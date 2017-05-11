@@ -173,15 +173,13 @@ this.parseRegExpLiteral = function() {
         this.err('regex.not.valid') )
        return this.errorHandlerOutput;
 
-     this.col += (c-this.c);
+
+     this.setsimpoff(c);
      var regex = { type: 'Literal', regex: { pattern: patternString, flags: flagsString },
                    start: startc, end: c,
                    value: val, loc: { start: startLoc, end: this.loc() }, 
                    raw: this.src.substring(startc, c) };
-     this.c = c;
 
      this.next () ;
      return regex ;
 };
-
-

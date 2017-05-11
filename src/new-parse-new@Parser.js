@@ -16,6 +16,7 @@ function() {
 
   var inner = core(head), elem = null;
 
+  LOOP:
   while (true)
   switch (this.lttype) {
   case CH_SINGLEDOT:
@@ -47,6 +48,7 @@ function() {
       property: core(elem),
       start: head.start,
       end: this.c,
+      object: inner,
       loc: {
         start: head.loc.start,
         end: this.loc() },
@@ -62,22 +64,22 @@ function() {
     head = inner = {
       type: 'NewExpression',
       callee: inner,
-      start: head.start,
+      start: c0,
       end: this.c,
       arguments: elem,
       loc: {
-        start: head.loc.start,
+        start: loc0,
         end: this.loc() },
       '#y': -1
     };
     if (!this.expectT(CH_RPAREN))
       this.err('new.args.is.unfinished');
-    continue;
+    break LOOP;
 
   case CH_BACKTICK:
     elem = this.parseTemplate();
     head = inner = {
-      type: 'TaggedTemplateLiteral',
+      type: 'TaggedTemplateExpression',
       quasi: elem,
       start: head.start,
       end: elem.end,
@@ -90,7 +92,7 @@ function() {
     continue;
 
   default:
-    return {
+    head = {
       type: 'NewExpression',
       callee: inner,
       start: c0,
@@ -101,5 +103,8 @@ function() {
       arguments : [],
       '#y': -1
     };
+    break LOOP;
   }
+
+  return head;
 };

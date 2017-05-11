@@ -45,6 +45,7 @@ function(head) {
         property: core(elem),
         start: head.start,
         end: this.c,
+        object: inner,
         loc: {
           start: head.loc.start,
           end: this.loc() },
@@ -75,7 +76,7 @@ function(head) {
     case CH_BACKTICK:
       elem = this.parseTemplate();
       head = inner = {
-        type: 'TaggedTemplateLiteral',
+        type: 'TaggedTemplateExpression',
         quasi: elem,
         start: head.start,
         end: elem.end,

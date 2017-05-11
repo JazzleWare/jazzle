@@ -3,8 +3,10 @@ function(ctx, st) {
   var firstMod = null, latestMod = null, nonMod = null;
   var mpending = ST_NONE, nina = false; // name is newline async
 
+  var c0 = -1, loc0 = null;
   if (this.lttype === TK_ID) {
     firstMod = latestMod = this.id();
+    c0 = firstMod.start, loc0 = firstMod.loc.start;
 
     MM:
     while (true) {
@@ -57,6 +59,7 @@ function(ctx, st) {
     st |= mpending|ST_GEN;
     if (latestMod)
       latestMod = null;
+    else { c0 = this.c0, loc0 = this.loc0(); }
     mpending = ST_NONE;
     this.next();
   }
@@ -128,7 +131,10 @@ function(ctx, st) {
   if (this.lttype === CH_LPAREN) {
     if (this.v <= 5) this.err('ver.mem.meth');
     var mem = this.parseMeth(memName, ctx, st);
-    // TODO: loc adjustment
+    if (c0 !== -1 && c0 !== mem.start) {
+      mem.start = c0;
+      mem.loc.start = loc0;
+    }
     return mem;
   }
 
