@@ -89,12 +89,12 @@ function(ctx) {
       if (this.scope.insideStrict())
         this.ri();
       break SWITCH;
-          
+
     case 'false': return this.getLit_false();
     case 'await':
       if (this.scope.canAwait()) {
         this.resvchk();
-        if (this.scope.isAnyFnHead())
+        if (this.scope.insideArgs())
           this.err('await.args');
         if (this.canBeStatement)
           this.canBeStatement = false;
@@ -110,7 +110,7 @@ function(ctx) {
       // async(e=await)=>l ;
       return this.suspys = this.id(); 
 
-    case 'async': return this.parseAsync(context);
+    case 'async': return this.parseAsync(this.id(), ctx);
 
     case 'final':
     case 'float':

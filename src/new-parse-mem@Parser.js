@@ -54,9 +54,12 @@ function(ctx, st) {
   }
 
   if (this.peekMul()) {
-    if (this.v<=5) this.err('ver.mem.gen');
+    this.v<=5 && this.err('ver.mem.gen');
     if (nonMod) this.err('gen.has.non.modifier');
-    st |= mpending|ST_GEN;
+    st |= mpending;
+    if (st & ST_ASYNC)
+      this.ga();
+    st |= ST_GEN
     if (latestMod)
       latestMod = null;
     else { c0 = this.c0, loc0 = this.loc0(); }

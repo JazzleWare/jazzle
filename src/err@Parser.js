@@ -64,3 +64,4 @@ this.normalize = function(err) {
   return e;
 };
 
+this.ga = function() { this.err('gen.async'); };

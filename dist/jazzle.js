@@ -3972,6 +3972,7 @@ this.normalize = function(err) {
   return e;
 };
 
+this.ga = function() { this.err('gen.async'); };
 
 },
 function(){
@@ -4121,6 +4122,231 @@ this.loc0 = function() { return  { line: this.li0, column: this.col0 }; };
 
 },
 function(){
+this.parseExport_elemOther =
+function(c0,loc0) {
+  var elem = null, stmt = false;
+  if (this.lttype === TK_ID) {
+    this.canBeStatement = true;
+    switch (this.ltval) {
+    case 'class':
+      elem = this.parseClass(CTX_NONE);
+      break;
+    case 'var':
+      elem = this.parseVar(DT_VAR, CTX_NONE);
+      break;
+    case 'let':
+      elem = this.parseVar(DT_LET, CTX_NONE);
+      break;
+    case 'async':
+      elem = this.id();
+      if (this.peekID('function')) {
+        this.nl && this.err('newline.async');
+        elem = this.parseAsync_fn(elem, CTX_NONE);
+      }
+      else
+        this.err('async.lone');
+      break;
+    case 'function':
+      elem = this.parseFn(CTX_NONE, ST_DECL);
+      break;
+    case 'const':
+      elem = this.parseVar(DT_CONST, CTX_NONE);
+      break;
+    default:
+      this.canBeStatement = false;
+      elem = this.parseNonSeq(PREC_NONE, CTX_NONE);
+      break;
+    }
+    stmt = this.foundStatement;
+  }
+  if (elem === null)
+    this.err('export.named.no.exports');
+
+  if (!stmt)
+    this.semi() || this.err('no.semi');
+
+  return {
+    type: 'ExportNamedDeclaration',
+    start: c0,
+    loc: { start: loc0, end: elem.loc.end },
+    end: elem.end,
+    declaration: elem,
+    specifiers: [],
+    source: null
+  };
+};
+
+this.parseExport_elemList = 
+function(c0,loc0) {
+  this.next();
+  var firstResv = null;
+  var list = [];
+  while (this.lttype === TK_ID) {
+    var lName = this.id();
+    var eName = lName;
+    if (this.lttype === TK_ID) {
+      this.ltval === 'as' || this.err('export.specifier.not.as');
+      this.next();
+      if (this.lttype !== TK_ID)
+        this.err('export.specifier.after.as.id');
+      eName = this.id();
+    }
+    if (!firstResv && this.isResv(lName.name))
+      firstResv = lName;
+
+    list.push({
+      type: 'ExportSpecifier',
+      start: lName.start,
+      loc: { start: lName.loc.start, end: eName.loc.end }, 
+      end: eName.end,
+      exported: eName,
+      local: lName 
+    });
+
+    if (this.lttype === CH_COMMA)
+      this.next();
+    else
+      break;
+  }
+
+  var ec = this.c, eli = this.li, ecol = this.col;
+  this.expectT(CH_RCURLY) || this.err('export.named.list.not.finished');
+
+  var src = null;
+  if (this.peekID('from'))
+    src = this.parseExport_from();
+  else
+    firstResv && this.err('export.named.has.reserved',{tn: firstResv});
+
+  this.semi() || this.err('no.semi');
+  
+  ec = this.semiC || (src && src.end) || ec;
+  var eloc = this.semiLoc || (src && src.loc.end) || { line: li, column: col };
+
+  this.foundStatement = true;
+  return {
+    type: 'ExportNamedDeclaration',
+    start: c0,
+    loc: { start: loc0, end: eloc },
+    end: ec,
+    declaration: null,
+    specifiers: list,
+    source: src
+  };
+};
+
+this.parseExport_elemAll =
+function(c0,loc0) {
+  this.next();
+  var src = null;
+  src = this.parseExport_from();
+  this.semi() || this.err('no.semi');
+  
+  this.foundStatement = true;
+  return {
+    type: 'ExportAllDeclaration',
+    start: c0,
+    loc: { start: loc0, end: this.semiLoc || src.loc.end },
+    end: this.semiC || src.end,
+    source: src
+  };
+};
+
+this.parseExport_elemDefault =
+function(c0,loc0) {
+  this.next();
+  var elem = null, stmt = false;
+
+  if (this.lttype !== TK_ID)
+    elem = this.parseNonSeq(PREC_NONE, CTX_TOP);
+  else {
+    this.canBeStatement = true;
+    switch (this.ltval) {
+    case 'async':
+      elem = this.id(); // 'async'
+      if (this.nl) {
+        this.canBeStatement = false;
+        elem = this.parseAsync_exprHead(elem, CTX_TOP);
+      }
+      else
+        elem = this.parseAsync(elem, CTX_TOP|CTX_DEFAULT) ;
+
+      if (!this.foundStatement) {
+        this.exprHead = elem;
+        elem = this.parseNonSeq(PREC_NONE, CTX_TOP) ;
+      }
+      break;
+    case 'function':
+      elem = this.parseFn(CTX_DEFAULT, ST_DECL);
+      break;
+    case 'class':
+      elem = this.parseClass(CTX_DEFAULT);
+      break;
+    default:
+      this.canBeStatement = false;
+      elem = this.parseNonSeq(PREC_NONE, CTX_TOP);
+      break;
+    }
+    stmt = this.foundStatement;
+  }
+
+  if (!stmt)
+    this.semi() || this.err('no.semi');
+
+  this.foundStatement = true;
+  return {
+    type: 'ExportDefaultDeclaration',    
+    start: c0,
+    loc: { start: loc0, end: this.semiLoc || elem.loc.end },
+    end: this.semiC || elem.end,
+    declaration: core(elem)
+  };
+};
+
+this.parseExport_from =
+function() {
+  this.peekID('from') || this.err('export.from');
+  this.next();
+  this.peekStr() || this.err('export.src');
+
+  return this.parseString(this.lttype);
+};
+
+this.parseExport =
+function() {
+  if (this.v<=5) this.err('ver.exim');
+  this.testStmt() || this.err('not.stmt');
+  this.isScript && this.err('export.not.in.module');
+
+  var c0 = this.c0, loc0 = this.loc0();
+
+  this.next();
+
+  return (
+    this.peekMul() ?
+      this.parseExport_elemAll(c0,loc0) :
+    this.peekID('default') ?
+      this.parseExport_elemDefault(c0,loc0) :
+    this.lttype === CH_LCURLY ?
+      this.parseExport_elemList(c0,loc0) :
+      this.parseExport_elemOther(c0,loc0)
+  );
+};
+
+this.parseExport_elemDefault_async =
+function() {
+  var a = this.id(); // 'async'
+  if (this.nl) {
+    this.canBeStatement = false;
+    this.exprHead = this.parseAsync_exprHead(a);
+    return this.parseNonSeq(PREC_NONE, CTX_TOP);
+  }
+
+  return this.parseAsync(a, CTX_TOP|CTX_DEFAULT);
+};
+
+},
+function(){
 this.getName_cls =
 function(st) {
   var fl = this.scope.flags, name = null;
@@ -4156,6 +4382,133 @@ function(st) {
     this.arorevErr();
 
   return this.id();
+};
+
+},
+function(){
+this.parseImport =
+function() {
+  this.v<=5 && this.err('ver.exim');
+  this.isScript && this.err('import.not.in.module');
+  this.testStmt() || this.err('not.stmt');
+
+  var hasTail = true;
+  var c0 = this.c0, loc0 = this.loc0(), list = [];
+
+  this.next();
+
+  var lName = null;
+  if (this.lttype === TK_ID) {
+    this.validate(this.ltval);
+    lName = this.id();
+    list.push({
+      type: 'ImportDefaultSpecifier',
+      local: lName,
+      start: lName.start,
+      end: lName.end,
+      loc: lName.loc
+    });
+    if (this.lttype === CH_COMMA)
+      this.next();
+    else
+      hasTail = false;
+  }
+
+  if (hasTail) {
+    if (this.peekMul())
+      list.push(this.parseImport_namespace());
+    else if (this.lttype === CH_LCURLY)
+      this.parseImport_slist(list);
+    else {
+      if (list.length) {
+        ASSERT.call(this, list.length === 1,
+          'how come has more than a single specifier been parsed before the comma '+
+          'was reached?!');
+        this.err('import.invalid.specifier.after.comma');
+      }
+      hasTail = false;
+    }
+  }
+
+  // test whether we need `from`
+  if (list.length || hasTail /* any tail */) {
+    this.peekID('from') || this.err('import.from');
+    this.next();
+  }
+
+  this.peekStr() || this.err('import.source.is.not.str');
+  var src = this.parseString(this.lttype);
+
+  this.semi() || this.err('no.semi');
+
+  var ec = this.semiC || src.end, eloc = this.semiLoc || src.loc.end;
+  this.foundStatement = true;
+
+  return {
+    type: 'ImportDeclaration',
+    start: c0,
+    loc: { start: loc0, end: eloc },
+    end: ec, 
+    specifiers: list,
+    source: src
+  };
+};
+
+this.parseImport_slist =
+function(list) {
+  this.next(); // '{'
+  while (this.lttype === TK_ID) {
+    var eName = this.id();
+    var lName = eName;
+    if (this.lttype !== TK_ID)
+      this.validate(lName.name);
+    else {
+      this.ltval === 'as' || this.err('import.specifier.no.as');
+      this.next();
+      this.lttype === TK_ID || this.err('import.specifier.local.not.id');
+      this.validate(this.ltval);
+      lName = this.id();
+    }
+    list.push({
+      type: 'ImportSpecifier',
+      start: eName.start,
+      loc: { start: eName.loc.start, end: lName.loc.end },
+      end: lName.end,
+      imported: eName,
+      local: lName
+    });
+
+    if (this.lttype === CH_COMMA)
+      this.next();
+    else
+      break;
+  }
+
+  this.expectT(CH_RCURLY) || this.err('import.specifier.list.unfinished');
+};
+      
+this.parseImport_namespace =
+function() {
+  var c0 = this.c0, loc0 = this.loc0();
+
+  this.next();
+  if (!this.peekID('as'))
+    this.err('import.namespace.specifier.no.as');
+
+  this.next();
+  if (this.lttype !== TK_ID)
+    this.err('import.namespace.specifier.local.not.id');
+
+  this.validate(this.ltval);
+  var lName = this.id();
+
+  return {
+    type: 'ImportNamespaceSpecifier',
+    start: c0,
+    loc: { start: loc0, end: lName.loc.end },
+    end: lName.end,
+    local: lName
+  };
 };
 
 },
@@ -4226,6 +4579,94 @@ function() {
 
 this.c0_to_c =
 function() { return this.src.substring(this.c0,this.c); };
+
+},
+function(){
+this.parseAsync_otherID =
+function(asyncID, ctx) {
+  if (this.nl)
+    return asyncID;
+
+  this.validate(this.ltval);
+
+  var id = this.id();
+  var n = {
+    type: INTERMEDIATE_ASYNC,
+    id: id,
+    start: asyncID.start,
+    loc: asyncID.loc
+  };
+
+  this.st = ERR_INTERMEDIATE_ASYNC;
+  this.se = n;
+
+  return n;
+};
+
+this.parseAsync_exprHead =
+function(asyncID, ctx) {
+  if (!(ctx & CTX_PAT))
+    return asyncID;
+
+  if (this.lttype === TK_ID)
+    return this.parseAsync_otherID(asyncID, ctx);
+
+  if (this.lttype !== CH_LPAREN)
+    return asyncID;
+
+  var stmt = this.canBeStatement; // save
+  if (stmt)
+    this.canBeStatement = false;
+
+  var nl = this.nl;
+  var list = this.parseParen(CTX_PAT), n = null;
+
+  n = {
+    type: 'CallExpression',
+    callee: asyncID,
+    start: asyncID.start,
+    end: list.end,
+    arguments: list.expr ?
+      list.expr.type === 'SequenceExpression' ?
+        list.expr.expressions :
+        [list.expr] :
+      [],
+    loc: {
+      start: asyncID.loc.start,
+      end: list.loc.end
+    }
+  };
+
+  if (nl) {
+    this.pt = ERR_ASYNC_NEWLINE_BEFORE_PAREN;
+    this.pe = n;
+  }
+
+  if (stmt)
+    this.canBeStatement = true; // restore
+
+  return n;
+};
+
+this.parseAsync_fn =
+function(asyncID, ctx) {
+  if (this.nl) 
+    return asyncID;
+
+  var asyncFn = this.parseFn(ctx, ST_ASYNC);
+  asyncFn.start = asyncID.start;
+  asyncFn.loc.start = asyncID.loc.start;
+
+  return asyncFn;
+};
+
+this.parseAsync =
+function(asyncID, ctx) {
+  if (this.peekID('function'))
+    return this.parseAsync_fn(asyncID, ctx);
+
+  return this.parseAsync_exprHead(asyncID, ctx);
+};
 
 },
 function(){
@@ -4615,12 +5056,12 @@ function(ctx) {
       if (this.scope.insideStrict())
         this.ri();
       break SWITCH;
-          
+
     case 'false': return this.getLit_false();
     case 'await':
       if (this.scope.canAwait()) {
         this.resvchk();
-        if (this.scope.isAnyFnHead())
+        if (this.scope.insideArgs())
           this.err('await.args');
         if (this.canBeStatement)
           this.canBeStatement = false;
@@ -4636,7 +5077,7 @@ function(ctx) {
       // async(e=await)=>l ;
       return this.suspys = this.id(); 
 
-    case 'async': return this.parseAsync(context);
+    case 'async': return this.parseAsync(this.id(), ctx);
 
     case 'final':
     case 'float':
@@ -4921,9 +5362,12 @@ function(ctx, st) {
   }
 
   if (this.peekMul()) {
-    if (this.v<=5) this.err('ver.mem.gen');
+    this.v<=5 && this.err('ver.mem.gen');
     if (nonMod) this.err('gen.has.non.modifier');
-    st |= mpending|ST_GEN;
+    st |= mpending;
+    if (st & ST_ASYNC)
+      this.ga();
+    st |= ST_GEN
     if (latestMod)
       latestMod = null;
     else { c0 = this.c0, loc0 = this.loc0(); }
@@ -6287,9 +6731,9 @@ this.parseArrow = function(arg, ctx)   {
 
   case INTERMEDIATE_ASYNC:
     async = true;
-    st |= ST_ASYNC;
+    sc |= ST_ASYNC;
     this.enterScope(this.scope.spawnFn(sc));
-    this.scope.refDirect_m(_m(arg.id.name));
+    this.scope.refDirect_m(_m(arg.id.name), null);
     this.asArrowFuncArg(arg.id);
     break;
 
@@ -8413,6 +8857,18 @@ function() {
   return this.lttype === TK_SIMP_ASSIG && this.ltraw === '=';
 };
 
+this.peekStr =
+function() {
+
+  switch (this.lttype) {
+  case CH_SINGLE_QUOTE:
+  case CH_MULTI_QUOTE:
+    return true;
+  }
+
+  return false;
+};
+
 },
 function(){
 this.getOp = 
@@ -10087,11 +10543,11 @@ function() {
         a |= SA_CALLSUPER;
       if (this.isGen())
         a |= SA_YIELD;
-      if (this.isAsync())
-        a |= SA_AWAIT;
       if (this.isMem())
         a |= SA_MEMSUPER;
     }
+    if (this.isAsync())
+      a |= SA_AWAIT;
   }
 
   return a;

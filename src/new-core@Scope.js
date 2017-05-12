@@ -16,11 +16,11 @@ function() {
         a |= SA_CALLSUPER;
       if (this.isGen())
         a |= SA_YIELD;
-      if (this.isAsync())
-        a |= SA_AWAIT;
       if (this.isMem())
         a |= SA_MEMSUPER;
     }
+    if (this.isAsync())
+      a |= SA_AWAIT;
   }
 
   return a;

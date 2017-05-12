@@ -12,3 +12,15 @@ this.peekEq =
 function() {
   return this.lttype === TK_SIMP_ASSIG && this.ltraw === '=';
 };
+
+this.peekStr =
+function() {
+
+  switch (this.lttype) {
+  case CH_SINGLE_QUOTE:
+  case CH_MULTI_QUOTE:
+    return true;
+  }
+
+  return false;
+};

@@ -49,9 +49,9 @@ this.parseArrow = function(arg, ctx)   {
 
   case INTERMEDIATE_ASYNC:
     async = true;
-    st |= ST_ASYNC;
+    sc |= ST_ASYNC;
     this.enterScope(this.scope.spawnFn(sc));
-    this.scope.refDirect_m(_m(arg.id.name));
+    this.scope.refDirect_m(_m(arg.id.name), null);
     this.asArrowFuncArg(arg.id);
     break;
 
