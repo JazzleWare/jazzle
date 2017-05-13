@@ -1,0 +1,30 @@
+var parser_tester -> 'parser';
+parser_tester(<:src, params> Parser#new(src, params).parseSrc(), TESTDIRS::TESTPARSER)
+var transpiler_tester -> 'transpiler'
+transpiler_tester(<:src, params> do {
+  var ast = null; ast = Parser#new(src, params).parseSrc()
+  var tr = Transformer#new().transform(ast)
+  var e = Emitter#new().emit(tr)
+  return e.code
+})
+
+parser_tester('./test/tparser') -> src, params { new bundle.Parser }
+transform_tester('./test/ttransformer')
+
+// transformer suite
+var trs = new TestSuite()
+trs.add('assig-test',
+'[a] = b', null,
+'t = jz.arrIter(b); a = t.get(); t.end()')
+
+trs.add('assig-test',
+'[[a]] = b', null,
+'t = jz.arrIter(b); t1 = jz.arrIter(t1); a = t1.get(); t1.end(); t.end()')
+
+nsynth.add('name-test',
+'{ var a; { let a; } }',
+'{ var a; { let a1; } }')
+
+nsynth.add('name-test',
+'{ var a; { let a; (function() { var a1; a; }); }',
+'{ var a; { let a2; (function() { var a1; a2; }); }')

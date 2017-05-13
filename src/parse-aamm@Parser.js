@@ -9,7 +9,7 @@ this.parseUpdate = function(arg, ctx) {
       this.err('unexpected.lookahead');
 
     arg = this.parseTail(arg);
-    if (!this.ensureSimpAssig_soft(core(arg)))
+    if (!this.ensureSAT(core(arg)))
       this.err('incdec.pre.not.simple.assig',{tn:core(arg)});
 
     return {
@@ -20,7 +20,7 @@ this.parseUpdate = function(arg, ctx) {
     };
   }
 
-  if (!this.ensureSimpAssig_soft(core(arg)))
+  if (!this.ensureSAT(core(arg)))
     this.err('incdec.post.not.simple.assig',{tn:core(arg)});
 
   c  = this.c;
