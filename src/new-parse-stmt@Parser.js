@@ -12,9 +12,7 @@ function(allowNull) {
     this.canBeStatement = true;
     // TODO: CTX.PAT|CTX.NO_SIMP
     head = this.parseIDExprHead(CTX_PAT);
-    if (this.foundStatement)
-      this.foundStatement = false;
-    else {
+    if (!this.foundStatement) {
       this.canBeStatement = false;
       this.exprHead = head;
       head = null;
@@ -35,7 +33,12 @@ function(allowNull) {
   }
 
   var finishPrologue = this.scope.insidePrologue();
-  if (head === null) {
+  if (this.foundStatement) {
+    if (head === null)
+      allowNull || this.err('stmt.null');
+    this.foundStatement = false;
+  }
+  else if (head === null) {
     head = this.parseExpr(CTX_NULLABLE|CTX_TOP);
     if (head === null)
       allowNull || this.err('stmt.null');

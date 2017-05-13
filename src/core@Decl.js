@@ -26,7 +26,7 @@ function(n) {
 this.t =
 function(t) {
   ASSERT_EQ.call(this, this.type, DT_NONE);
-  this.t = t;
+  this.type = t;
   return this;
 };
 

@@ -46,7 +46,7 @@ function() {
 };
 
 // TODO: CATCHARG
-var _VARLIKE = DT_FNARG|DT_FNARG;
+var _VARLIKE = DT_FNARG|DT_VAR;
 this.isVarLike =
 function() {
   if (this.isFn())

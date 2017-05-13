@@ -6,7 +6,7 @@ function() {
     var elem = list[i++];
     if (arorev(elem.name))
       this.parser.err('binding.to.arguments.or.eval');
-    if (this.isResv(elem.name))
+    if (this.parser.isResv(elem.name))
       this.parser.err('invalid.argument.in.strict.mode');
   }
 };

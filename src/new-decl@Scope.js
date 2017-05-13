@@ -21,7 +21,7 @@ function(mname, t) {
     isNew = true;
     this.insertDecl_m(mname, tdecl);
   }
-  else { tscope = tdecl.scope; }
+  else { tscope = tdecl.ref.scope; }
 
   if (this !== tscope)
     this.parent.hoistName_m(mname, tdecl, tscope, isNew);

@@ -6,7 +6,7 @@ this.declare = function(id) {
    }
 
    var decl = this.scope.decl_m(_m(id.name), this.declMode);
-   decl && decl.s(id);
+   !decl.site && decl.s(id);
 };
 
 this.enterScope = function(scope) {

@@ -1280,7 +1280,7 @@ function(n) {
 this.t =
 function(t) {
   ASSERT_EQ.call(this, this.type, DT_NONE);
-  this.t = t;
+  this.type = t;
   return this;
 };
 
@@ -1335,7 +1335,7 @@ function() {
 };
 
 // TODO: CATCHARG
-var _VARLIKE = DT_FNARG|DT_FNARG;
+var _VARLIKE = DT_FNARG|DT_VAR;
 this.isVarLike =
 function() {
   if (this.isFn())
@@ -2898,7 +2898,7 @@ function() {
     var elem = list[i++];
     if (arorev(elem.name))
       this.parser.err('binding.to.arguments.or.eval');
-    if (this.isResv(elem.name))
+    if (this.parser.isResv(elem.name))
       this.parser.err('invalid.argument.in.strict.mode');
   }
 };
@@ -4676,9 +4676,6 @@ function() {
   this.testStmt() || this.err('not.stmt');
   this.fixupLabels(false);
 
-  if (!this.scope.canBreak())
-    this.err('break.not.in.breakable');
-
   var c0 = this.c0, loc0 = this.loc0();
   var c = this.c, li = this.li, col = this.col;
 
@@ -4691,6 +4688,8 @@ function() {
     if (target === null)
       this.err('break.no.such.label');
   }
+  else if (!this.scope.canBreak())
+    this.err('break.not.in.breakable');
 
   this.semi() || this.err('no.semi');
 
@@ -5778,23 +5777,21 @@ function(prec, ctx) {
     return this.parseAssignment(head, ctx);
   }
 
-  if (!hasOp) {
-    if (errt_noLeak(ctx)) {
+  if (errt_pat(ctx)) {
+    // alternatively, head.type === NPAREN
+    if (this.parenScope) {
       this.st_flush();
       this.dissolveParen();
     }
-    return head;
+    else if (hasOp || errt_noLeak(ctx))
+      this.st_flush();
   }
 
-  if (errt_noLeak(ctx)) {
-    this.st_flush();
-    this.dissolveParen();
-  }
-
-  do {
+  while (hasOp) {
     if (this.lttype === TK_AA_MM) {
       if (!this.nl) {
         head = this.parseUpdate(head, ctx);
+        hasOp = this.getOp(ctx);
         continue;
       }
       else break;
@@ -5828,7 +5825,9 @@ function(prec, ctx) {
       left: core(head),
       right: core(r)
     };
-  } while (hasOp = this.getOp(ctx));
+
+    hasOp = this.getOp(ctx);
+  }
 
   return head;
 };
@@ -5849,9 +5848,7 @@ function(allowNull) {
     this.canBeStatement = true;
     // TODO: CTX.PAT|CTX.NO_SIMP
     head = this.parseIDExprHead(CTX_PAT);
-    if (this.foundStatement)
-      this.foundStatement = false;
-    else {
+    if (!this.foundStatement) {
       this.canBeStatement = false;
       this.exprHead = head;
       head = null;
@@ -5872,7 +5869,12 @@ function(allowNull) {
   }
 
   var finishPrologue = this.scope.insidePrologue();
-  if (head === null) {
+  if (this.foundStatement) {
+    if (head === null)
+      allowNull || this.err('stmt.null');
+    this.foundStatement = false;
+  }
+  else if (head === null) {
     head = this.parseExpr(CTX_NULLABLE|CTX_TOP);
     if (head === null)
       allowNull || this.err('stmt.null');
@@ -6433,7 +6435,7 @@ function (name) {
 
   case 12:
     return this.v<=5 && name === 'synchronized';
-  default: return true;
+  default: return false;
   }
 };
 
@@ -6883,11 +6885,11 @@ this.parseAssignment = function(head, ctx) {
 
     // record an actual error if we have parsed a potential param or assignment pattern
     if (errt_param(ctx)) {
-      this.pt_pin(c0,li0,col0);
+      this.pin_pt(c0,li0,col0);
       this.pt = ERR_PIN_NOT_AN_EQ;
     }
     if (errt_pat(ctx)) {
-      this.at_pin(c0,li0,col0);
+      this.pin_at(c0,li0,col0);
       this.at = ERR_PIN_NOT_AN_EQ;
     }
   }
@@ -8331,7 +8333,7 @@ this.parseReturn = function () {
   this.foundStatement = true;
   return { 
     type: 'ReturnStatement',
-    argument: r,
+    argument: r && core(r),
     start: c0,
     end: ec,
     loc: { start: loc0, end: eloc }
@@ -9208,7 +9210,7 @@ function(t) { // is it a template escape?
     break;
 
   default:
-    v = src.charAt(c+1);
+    v = s.charAt(c+1);
     c+=2;
   }
 
@@ -9953,7 +9955,7 @@ this.declare = function(id) {
    }
 
    var decl = this.scope.decl_m(_m(id.name), this.declMode);
-   decl && decl.s(id);
+   !decl.site && decl.s(id);
 };
 
 this.enterScope = function(scope) {
@@ -10615,7 +10617,7 @@ function(mname, t) {
     isNew = true;
     this.insertDecl_m(mname, tdecl);
   }
-  else { tscope = tdecl.scope; }
+  else { tscope = tdecl.ref.scope; }
 
   if (this !== tscope)
     this.parent.hoistName_m(mname, tdecl, tscope, isNew);

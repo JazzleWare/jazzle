@@ -126,7 +126,7 @@ function (name) {
 
   case 12:
     return this.v<=5 && name === 'synchronized';
-  default: return true;
+  default: return false;
   }
 };
 

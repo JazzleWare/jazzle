@@ -81,7 +81,7 @@ function(t) { // is it a template escape?
     break;
 
   default:
-    v = src.charAt(c+1);
+    v = s.charAt(c+1);
     c+=2;
   }
 

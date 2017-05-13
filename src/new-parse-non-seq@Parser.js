@@ -35,23 +35,21 @@ function(prec, ctx) {
     return this.parseAssignment(head, ctx);
   }
 
-  if (!hasOp) {
-    if (errt_noLeak(ctx)) {
+  if (errt_pat(ctx)) {
+    // alternatively, head.type === NPAREN
+    if (this.parenScope) {
       this.st_flush();
       this.dissolveParen();
     }
-    return head;
+    else if (hasOp || errt_noLeak(ctx))
+      this.st_flush();
   }
 
-  if (errt_noLeak(ctx)) {
-    this.st_flush();
-    this.dissolveParen();
-  }
-
-  do {
+  while (hasOp) {
     if (this.lttype === TK_AA_MM) {
       if (!this.nl) {
         head = this.parseUpdate(head, ctx);
+        hasOp = this.getOp(ctx);
         continue;
       }
       else break;
@@ -85,7 +83,9 @@ function(prec, ctx) {
       left: core(head),
       right: core(r)
     };
-  } while (hasOp = this.getOp(ctx));
+
+    hasOp = this.getOp(ctx);
+  }
 
   return head;
 };

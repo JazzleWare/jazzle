@@ -85,11 +85,11 @@ this.parseAssignment = function(head, ctx) {
 
     // record an actual error if we have parsed a potential param or assignment pattern
     if (errt_param(ctx)) {
-      this.pt_pin(c0,li0,col0);
+      this.pin_pt(c0,li0,col0);
       this.pt = ERR_PIN_NOT_AN_EQ;
     }
     if (errt_pat(ctx)) {
-      this.at_pin(c0,li0,col0);
+      this.pin_at(c0,li0,col0);
       this.at = ERR_PIN_NOT_AN_EQ;
     }
   }

@@ -23,7 +23,7 @@ this.parseReturn = function () {
   this.foundStatement = true;
   return { 
     type: 'ReturnStatement',
-    argument: r,
+    argument: r && core(r),
     start: c0,
     end: ec,
     loc: { start: loc0, end: eloc }
