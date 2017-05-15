@@ -17,6 +17,13 @@ mex.dirIter = function iter(base, onItem) {
   }
 };                
 
+mex.eachDirItem =
+function(base, onItem) {
+  var list = fs.readdirSync(base), e = 0;
+  while (e < list.length)
+    onItem(base, list[e++]);
+};
+    
 mex.readFile = function(name) {
    return fs.readFileSync(name, 'utf-8'); 
 };

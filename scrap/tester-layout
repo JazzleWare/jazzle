@@ -28,3 +28,28 @@ nsynth.add('name-test',
 nsynth.add('name-test',
 '{ var a; { let a; (function() { var a1; a; }); }',
 '{ var a; { let a2; (function() { var a1; a2; }); }')
+
+function testParser_create() {
+  return TestSuite#new('Parser-Tests', listener)-> this, test {|
+    console.err('testing', test.name)
+    var tester = this.params.TestParser#new(test.params.src, test.params.options)
+    do {
+      var ast = tester.parseSrc()
+      test.actual = ast
+      test.comp = compEAForPass(test.expected, test.actual)
+      this.complete(test, 'pass')
+    }
+    #catch {
+      test.actual = catch.err
+      test.comp = compEAForError(test.expected, test.actual)
+      this.complete(test, 'fail')
+    }
+  }
+}
+
+function testParser_addTests
+
+TestSuite { name, runner, listener, options, comp }
+TestSuite::`{ add, ignore, set, get, complete, has, abort }
+
+Test { name, type, actual, expected, options }
