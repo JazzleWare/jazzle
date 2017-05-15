@@ -1,86 +1,86 @@
-test/test-esprima/fixtures/ES2016/strict-directive/invalid-strict-arrow-expression-array-destructuring
-test/test-esprima/fixtures/ES2016/strict-directive/invalid-strict-arrow-expression-default-value
-test/test-esprima/fixtures/ES2016/strict-directive/invalid-strict-arrow-expression-object-destructuring
-test/test-esprima/fixtures/ES2016/strict-directive/invalid-strict-arrow-expression-rest
-test/test-esprima/fixtures/ES2016/strict-directive/invalid-strict-function-declaration-array-destructuring
-test/test-esprima/fixtures/ES2016/strict-directive/invalid-strict-function-declaration-default-value
-test/test-esprima/fixtures/ES2016/strict-directive/invalid-strict-function-declaration-object-destructuring
-test/test-esprima/fixtures/ES2016/strict-directive/invalid-strict-function-declaration-rest
-test/test-esprima/fixtures/ES2016/strict-directive/invalid-strict-function-expression-array-destructuring
-test/test-esprima/fixtures/ES2016/strict-directive/invalid-strict-function-expression-default-value
-test/test-esprima/fixtures/ES2016/strict-directive/invalid-strict-function-expression-object-destructuring
-test/test-esprima/fixtures/ES2016/strict-directive/invalid-strict-function-expression-rest
-test/test-esprima/fixtures/ES2016/strict-directive/invalid-strict-generator-array-destructuring
-test/test-esprima/fixtures/ES2016/strict-directive/invalid-strict-generator-default-value
-test/test-esprima/fixtures/ES2016/strict-directive/invalid-strict-generator-object-destructuring
-test/test-esprima/fixtures/ES2016/strict-directive/invalid-strict-generator-rest
-test/test-esprima/fixtures/ES2016/strict-directive/invalid-strict-method-array-destructuring
-test/test-esprima/fixtures/ES2016/strict-directive/invalid-strict-method-default-value
-test/test-esprima/fixtures/ES2016/strict-directive/invalid-strict-method-object-destructuring
-test/test-esprima/fixtures/ES2016/strict-directive/invalid-strict-method-rest
-test/test-esprima/fixtures/ES2016/strict-directive/invalid-strict-setter-array-destructuring
-test/test-esprima/fixtures/ES2016/strict-directive/invalid-strict-setter-default-value
-test/test-esprima/fixtures/ES2016/strict-directive/invalid-strict-setter-object-destructuring
-test/test-esprima/fixtures/ES2016/strict-directive/invalid-strict-setter-rest
-test/test-esprima/fixtures/ES6/binding-pattern/array-pattern/dupe-param
-test/test-esprima/fixtures/ES6/binding-pattern/array-pattern/for-let-let #initialiser
-test/test-esprima/fixtures/ES6/binding-pattern/object-pattern/for-let-let #initialiser
-test/test-esprima/fixtures/ES6/export-declaration/export-named-keyword-as-specifier # try
-test/test-esprima/fixtures/ES6/export-declaration/export-named-keyword-specifier # try
-test/test-esprima/fixtures/ES6/generator/invalid-labelled-generator
+test/assets/test-esprima/fixtures/ES2016/strict-directive/invalid-strict-arrow-expression-array-destructuring
+test/assets/test-esprima/fixtures/ES2016/strict-directive/invalid-strict-arrow-expression-default-value
+test/assets/test-esprima/fixtures/ES2016/strict-directive/invalid-strict-arrow-expression-object-destructuring
+test/assets/test-esprima/fixtures/ES2016/strict-directive/invalid-strict-arrow-expression-rest
+test/assets/test-esprima/fixtures/ES2016/strict-directive/invalid-strict-function-declaration-array-destructuring
+test/assets/test-esprima/fixtures/ES2016/strict-directive/invalid-strict-function-declaration-default-value
+test/assets/test-esprima/fixtures/ES2016/strict-directive/invalid-strict-function-declaration-object-destructuring
+test/assets/test-esprima/fixtures/ES2016/strict-directive/invalid-strict-function-declaration-rest
+test/assets/test-esprima/fixtures/ES2016/strict-directive/invalid-strict-function-expression-array-destructuring
+test/assets/test-esprima/fixtures/ES2016/strict-directive/invalid-strict-function-expression-default-value
+test/assets/test-esprima/fixtures/ES2016/strict-directive/invalid-strict-function-expression-object-destructuring
+test/assets/test-esprima/fixtures/ES2016/strict-directive/invalid-strict-function-expression-rest
+test/assets/test-esprima/fixtures/ES2016/strict-directive/invalid-strict-generator-array-destructuring
+test/assets/test-esprima/fixtures/ES2016/strict-directive/invalid-strict-generator-default-value
+test/assets/test-esprima/fixtures/ES2016/strict-directive/invalid-strict-generator-object-destructuring
+test/assets/test-esprima/fixtures/ES2016/strict-directive/invalid-strict-generator-rest
+test/assets/test-esprima/fixtures/ES2016/strict-directive/invalid-strict-method-array-destructuring
+test/assets/test-esprima/fixtures/ES2016/strict-directive/invalid-strict-method-default-value
+test/assets/test-esprima/fixtures/ES2016/strict-directive/invalid-strict-method-object-destructuring
+test/assets/test-esprima/fixtures/ES2016/strict-directive/invalid-strict-method-rest
+test/assets/test-esprima/fixtures/ES2016/strict-directive/invalid-strict-setter-array-destructuring
+test/assets/test-esprima/fixtures/ES2016/strict-directive/invalid-strict-setter-default-value
+test/assets/test-esprima/fixtures/ES2016/strict-directive/invalid-strict-setter-object-destructuring
+test/assets/test-esprima/fixtures/ES2016/strict-directive/invalid-strict-setter-rest
+test/assets/test-esprima/fixtures/ES6/binding-pattern/array-pattern/dupe-param
+test/assets/test-esprima/fixtures/ES6/binding-pattern/array-pattern/for-let-let #initialiser
+test/assets/test-esprima/fixtures/ES6/binding-pattern/object-pattern/for-let-let #initialiser
+test/assets/test-esprima/fixtures/ES6/export-declaration/export-named-keyword-as-specifier # try
+test/assets/test-esprima/fixtures/ES6/export-declaration/export-named-keyword-specifier # try
+test/assets/test-esprima/fixtures/ES6/generator/invalid-labelled-generator
 # test/test-esprima/fixtures/ES6/identifier/invalid_expression_await.module
-test/test-esprima/fixtures/ES6/program/module/invalid-export-in-function.module
-test/test-esprima/fixtures/ES6/program/module/invalid-import-in-function.module
-test/test-esprima/fixtures/ES6/template-literals/literal-escape-sequences # \u0
-test/test-esprima/fixtures/ES6/yield/invalid-yield-strict-function-declaration # valid
-test/test-esprima/fixtures/ES6/yield/invalid-yield-strict-function-expression # valid
-test/test-esprima/fixtures/ES6/yield/yield-generator-arrow-default # yield in an arrow
-test/test-esprima/fixtures/ES6/yield/yield-generator-default-parameter # yield in a generator param
-test/test-esprima/fixtures/declaration/function/dupe-param
-test/test-esprima/fixtures/declaration/function/invalid-strict-labelled-function-declaration
-test/test-esprima/fixtures/expression/primary/object/invalid-getter
-test/test-esprima/fixtures/expression/primary/object/invalid-setter1
-test/test-esprima/fixtures/expression/primary/object/invalid-setter2
-test/test-esprima/fixtures/invalid-syntax/migrated_0201 # valid
-test/test-esprima/fixtures/invalid-syntax/migrated_0202 # valid
-test/test-esprima/fixtures/invalid-syntax/migrated_0205 # valid
-test/test-esprima/fixtures/invalid-syntax/migrated_0206 # valid
-test/test-esprima/fixtures/invalid-syntax/migrated_0208 # valid
+test/assets/test-esprima/fixtures/ES6/program/module/invalid-export-in-function.module
+test/assets/test-esprima/fixtures/ES6/program/module/invalid-import-in-function.module
+test/assets/test-esprima/fixtures/ES6/template-literals/literal-escape-sequences # \u0
+test/assets/test-esprima/fixtures/ES6/yield/invalid-yield-strict-function-declaration # valid
+test/assets/test-esprima/fixtures/ES6/yield/invalid-yield-strict-function-expression # valid
+test/assets/test-esprima/fixtures/ES6/yield/yield-generator-arrow-default # yield in an arrow
+test/assets/test-esprima/fixtures/ES6/yield/yield-generator-default-parameter # yield in a generator param
+test/assets/test-esprima/fixtures/declaration/function/dupe-param
+test/assets/test-esprima/fixtures/declaration/function/invalid-strict-labelled-function-declaration
+test/assets/test-esprima/fixtures/expression/primary/object/invalid-getter
+test/assets/test-esprima/fixtures/expression/primary/object/invalid-setter1
+test/assets/test-esprima/fixtures/expression/primary/object/invalid-setter2
+test/assets/test-esprima/fixtures/invalid-syntax/migrated_0201 # valid
+test/assets/test-esprima/fixtures/invalid-syntax/migrated_0202 # valid
+test/assets/test-esprima/fixtures/invalid-syntax/migrated_0205 # valid
+test/assets/test-esprima/fixtures/invalid-syntax/migrated_0206 # valid
+test/assets/test-esprima/fixtures/invalid-syntax/migrated_0208 # valid
 #test/test-esprima/fixtures/invalid-syntax/migrated_0216
-test/test-esprima/fixtures/invalid-syntax/migrated_0234 # valid
-test/test-esprima/fixtures/invalid-syntax/migrated_0235 # valid
-test/test-esprima/fixtures/invalid-syntax/migrated_0236 # valid
-test/test-esprima/fixtures/statement/iteration/for-let-let
-test/test-esprima/fixtures/statement/iteration/migrated_0012
-test/test-esprima/fixtures/ES6/identifier/module_await
-test/test-esprima/fixtures/es2017/async/methods/invalid-async-class-getter ## valid
-test/test-esprima/fixtures/es2017/async/methods/invalid-async-class-setter ## valid
-test/test-esprima/fixtures/es2017/async/methods/invalid-static-async-class-getter ## valid
-test/test-esprima/fixtures/es2017/async/methods/invalid-static-async-class-setter ## valid
-test/test-esprima/fixtures/es2017/async/arrows/async-arrow-object-expression-parameter ##ObjectExpression
-test/test-esprima/fixtures/es2017/async/arrows/async-arrow-pattern-parameter ##ObjectExpression
-test/test-esprima/fixtures/es2017/async/arrows/async-arrow-spread ## SpreadElement
-test/test-esprima/fixtures/es2017/async/functions/export-default-async-function-expression.module ##FunctionExpression
-test/test-esprima/fixtures/es2017/async/functions/export-default-async-named-function-expression-await.module ##FunctionExpression
-test/test-esprima/fixtures/es2017/async/functions/export-default-async-named-function-expression.module ##FunctionExpression
-test/test-esprima/fixtures/es2017/async/methods/async-method-await ## 'f' location
-test/test-esprima/fixtures/es2017/async/methods/async-method-literal ## Identifier rather than Literal
-test/test-esprima/fixtures/es2017/async/methods/async-method-number ## Identifier rather than Literal
-test/test-esprima/fixtures/es2017/async/methods/async-method ## 'f' location
-test/test-esprima/fixtures/es2017/async/methods/class-async-method-computed ## computed is false 
-test/test-esprima/fixtures/es2017/async/functions/async-if-await
-test/test-esprima/fixtures/es2017/async/functions/async-if
+test/assets/test-esprima/fixtures/invalid-syntax/migrated_0234 # valid
+test/assets/test-esprima/fixtures/invalid-syntax/migrated_0235 # valid
+test/assets/test-esprima/fixtures/invalid-syntax/migrated_0236 # valid
+test/assets/test-esprima/fixtures/statement/iteration/for-let-let
+test/assets/test-esprima/fixtures/statement/iteration/migrated_0012
+test/assets/test-esprima/fixtures/ES6/identifier/module_await
+test/assets/test-esprima/fixtures/es2017/async/methods/invalid-async-class-getter ## valid
+test/assets/test-esprima/fixtures/es2017/async/methods/invalid-async-class-setter ## valid
+test/assets/test-esprima/fixtures/es2017/async/methods/invalid-static-async-class-getter ## valid
+test/assets/test-esprima/fixtures/es2017/async/methods/invalid-static-async-class-setter ## valid
+test/assets/test-esprima/fixtures/es2017/async/arrows/async-arrow-object-expression-parameter ##ObjectExpression
+test/assets/test-esprima/fixtures/es2017/async/arrows/async-arrow-pattern-parameter ##ObjectExpression
+test/assets/test-esprima/fixtures/es2017/async/arrows/async-arrow-spread ## SpreadElement
+test/assets/test-esprima/fixtures/es2017/async/functions/export-default-async-function-expression.module ##FunctionExpression
+test/assets/test-esprima/fixtures/es2017/async/functions/export-default-async-named-function-expression-await.module ##FunctionExpression
+test/assets/test-esprima/fixtures/es2017/async/functions/export-default-async-named-function-expression.module ##FunctionExpression
+test/assets/test-esprima/fixtures/es2017/async/methods/async-method-await ## 'f' location
+test/assets/test-esprima/fixtures/es2017/async/methods/async-method-literal ## Identifier rather than Literal
+test/assets/test-esprima/fixtures/es2017/async/methods/async-method-number ## Identifier rather than Literal
+test/assets/test-esprima/fixtures/es2017/async/methods/async-method ## 'f' location
+test/assets/test-esprima/fixtures/es2017/async/methods/class-async-method-computed ## computed is false 
+test/assets/test-esprima/fixtures/es2017/async/functions/async-if-await
+test/assets/test-esprima/fixtures/es2017/async/functions/async-if
 #test/test-esprima/fixtures/ES6/binding-pattern/array-pattern/var_let_array #let is an actual id
 #test/test-esprima/fixtures/ES6/class/migrated_0009 # static
-test/test-esprima/fixtures/tokenize/migrated_0003
-test/test-esprima/fixtures/tokenize/migrated_0005
-test/test-esprima/fixtures/tokenize/migrated_0006
-test/test-esprima/fixtures/comment/migrated_0017
-test/test-esprima/fixtures/comment/migrated_0018
-test/test-esprima/fixtures/comment/migrated_0019
-test/test-esprima/fixtures/comment/migrated_0020
-test/test-esprima/fixtures/comment/migrated_0021
-test/test-esprima/fixtures/comment/migrated_0026
-test/test-esprima/fixtures/comment/migrated_0027
-test/test-esprima/fixtures/comment/migrated_0028
-test/test-esprima/fixtures/tokenize/migrated_0011
+test/assets/test-esprima/fixtures/tokenize/migrated_0003
+test/assets/test-esprima/fixtures/tokenize/migrated_0005
+test/assets/test-esprima/fixtures/tokenize/migrated_0006
+test/assets/test-esprima/fixtures/comment/migrated_0017
+test/assets/test-esprima/fixtures/comment/migrated_0018
+test/assets/test-esprima/fixtures/comment/migrated_0019
+test/assets/test-esprima/fixtures/comment/migrated_0020
+test/assets/test-esprima/fixtures/comment/migrated_0021
+test/assets/test-esprima/fixtures/comment/migrated_0026
+test/assets/test-esprima/fixtures/comment/migrated_0027
+test/assets/test-esprima/fixtures/comment/migrated_0028
+test/assets/test-esprima/fixtures/tokenize/migrated_0011

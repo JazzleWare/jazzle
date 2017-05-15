@@ -35,7 +35,7 @@ tesu.addIgnorer =
 function(name, ignorer) {
   var mname = _m(name);
   var list = null;
-  if (!HAS.call(this.ignoreMap, mname)) {
+  if (!HAS.call(this.ignorerMap, mname)) {
     this.ignorerNameList.push(name);
     this.ignorerMap[mname] = list = [];
   }
@@ -61,7 +61,7 @@ function(test, actualRes, actualType) {
   test.completeVT(actualRes, actualType);
   var compRes = null;
   try {
-    compRes = this.comp[actualType].call(this, test, actualRes);
+    compRes = this.comp[actualType].call(this, test.expected.value, test.actual.value);
     test.compRes(compRes, 'complete');
   } catch (err) {
     test.compRes(err, 'abort');
@@ -93,10 +93,10 @@ function(test) {
   var li = -1, ni = -1;
 
   ni = 0;
-  while (ni < this.ignoreNameList.length) {
-    var n = this.ignoreNameList[ni];
+  while (ni < this.ignorerNameList.length) {
+    var n = this.ignorerNameList[ni];
     li = 0;
-    var l = this.ignoreMap[_m(n)];
+    var l = this.ignorerMap[_m(n)];
     while (li<l.length) {
       var c = l[li];
       if (c(test))
@@ -118,8 +118,9 @@ function(test) {
     return this.abort(test, err, 'ignorer-test');
   }
     
-  if (ignorer)
+  if (ignorer) {
     return this.ignore(test, ignorer);
+  }
 
   var tester = null;
   try {
@@ -129,12 +130,15 @@ function(test) {
   }
 
   var testRes = null;
+  var ttype = "";
   try {
     testRes = this.tester.run.call(this, tester, test);
-    return this.complete(test, testRes, 'pass');
+    ttype = 'pass';
   } catch (err) {
-    return this.complete(test, err, 'fail');
+    ttype = 'fail';
+    testRes = err;
   }
+  return this.complete(test, testRes, ttype);
 };
 
 tesu.runAll =
@@ -142,6 +146,8 @@ function() {
   var list = this.tests, e = 0;
   while (e<list.length)
     this.runOne(list[e++]);
+
+  this.listener && this.listener.notify('finish', null);
 };
 
 function Test() {
@@ -223,41 +229,45 @@ function(comp,state) {
 //   incompatible: the test completed, and `expected.state == `actual.state, but `expected.value isn't matching `actual.value
 //   compatible: the test completed -- `expected.state == `actual.state and `expected.value mathes `actual.value
 
-t.contrary =
+t.
+contrary =
 function() {
-  if (this.aborted() || this.ignored())
-    return false;
-  return this.actual.type !== this.expected.type;
+  return this.completed() &&
+    this.actual.type !== this.expected.type;
 };
 
-t.incompatible =
+t.
+incompatible =
 function() {
-  if (this.aborted() || this.ignored() || this.contrary())
+  if (!this.completed() || this.contrary())
     return false;
   ASSERT.call(this, this.comp, 'missing comp');
-  return this.comp.compatible;
+  return !this.comp.compatible;
 };
 
-t.expected =
+t.
+asExpected =
 function() {
-  return this.completedAnyway() && !this.incompatible();
+  return this.completed() && !this.contrary() && !this.incompatible();
 };
 
-t.aborted =
+t.
+aborted =
 function() {
   return this.state === 'abort';
 };
 
-t.geci =
+t.
+geci =
 function() {
+  var geci = "";
+  if (this.ignored()) geci += 'g';
+  if (this.asExpected()) geci += 'e';
+  if (this.contrary()) geci += 'c';
+  if (this.incompatible()) geci += 'i';
+  ASSERT.call(this, geci.length === 1, 'unknown geci');
 
-  return (
-    this.ignored() ? 'g' :
-    this.expected() ? 'e' :
-    this.contrary() ? 'c' :
-    this.incompatible() ? 'i' :
-    ASSERT.call(this, false, 'unkown geci')
-  );
+  return geci;
 };
 
   module.exports.TestSuite = TestSuite;

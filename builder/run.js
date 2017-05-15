@@ -156,7 +156,9 @@ console.log("TESTING.....");
 
 try {
    new Function(builder.str).call(exports);
-   require('../test/testrunner.js').runTests(exports.Parser, './test/test-esprima');
+   var ts = require('../test/testers/parser.js')
+     .createParserTester(exports.Parser, './test/assets','.ignore');
+   ts.runAll();
    console.log("TESTING COMPLETE.");
 }
 catch (e) {

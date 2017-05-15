@@ -426,6 +426,13 @@ mex.compareObj_ea = function(expected, actual, name, adjust) {
   return comp;
 }
 
+mex.ASSERT = function ASSERT(cond, message) {
+  if (!cond)
+    throw new Error(message);
+};
+
+mex.HAS = {}.hasOwnProtperty;
+
 mex.toBytes = function(str) {
   var bytes = "", i = 0;
   while (i < str.length) {
