@@ -187,7 +187,7 @@ function loadPossibleTest(uri) {
   return t;
 }
 
- module.exports.createParserTester = createParserTester;
- module.exports.createParserListener = createParserListener;
- module.exports.loadParserTests = loadParserTests;
- module.exports.loadPossibleTest = loadPossibleTest;
+  module.exports.createParserTester = createParserTester;
+  module.exports.createParserListener = createParserListener;
+  module.exports.loadParserTests = loadParserTests;
+  module.exports.loadPossibleTest = loadPossibleTest;
