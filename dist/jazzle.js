@@ -5156,7 +5156,7 @@ function(ctx) {
       }
 
       // ([a]) = 12
-      if (t === ERR_PAREN_UNBINDABLE && this.ensureSimpAssig_soft(elem.expr))
+      if (t === ERR_PAREN_UNBINDABLE && this.ensureSAT(elem.expr))
         t = ERR_NONE_YET;
 
       if (errt_atrack(ctx)) {
