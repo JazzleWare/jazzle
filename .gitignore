@@ -3,3 +3,7 @@
 quarantine/
 scrap/
 lube.*
+yield/
+ttemp/
+*.sh
+./comp.js

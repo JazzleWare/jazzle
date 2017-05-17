@@ -8,7 +8,7 @@ An ECMAScript7-to-ECMAScript5/ECMAScript3 transpiler
 var jazzle = require('./dist/jazzle.js');
 var t = new jazzle.Parser(
   'your(code)',
-  {ecmaVersion: 8, sourceType: 'module' // options, if any
+  {ecmaVersion: 8, sourceType: 'module' } // options, if any
 );
 var n = t.parseProgram();
 ```
