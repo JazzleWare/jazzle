@@ -1,0 +1,5 @@
+*.sw*
+*.*pl
+quarantine/
+scrap/
+lube.*

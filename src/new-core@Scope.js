@@ -12,8 +12,12 @@ function() {
       a |= (this.parent.actions & (SA_CALLSUPER|SA_NEW_TARGET|SA_MEMSUPER));
     else {
       a |= SA_NEW_TARGET;
-      if (this.isCtor())
-        a |= SA_CALLSUPER;
+      if (this.isCtor()) {
+        ASSERT.call(this, this.parent.isClass(),
+          'a ctor can only descend from a class');
+        if (this.parent.hasHeritage())
+          a |= SA_CALLSUPER;
+      }
       if (this.isGen())
         a |= SA_YIELD;
       if (this.isMem())

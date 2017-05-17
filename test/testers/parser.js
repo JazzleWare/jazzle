@@ -80,6 +80,11 @@ function createParserListener() {
           NAMES[test.geci()],
           test.name
         );
+
+      if (test && test.contrary()) {
+        console.error(test);
+        throw new Error('actual type is not matching the expected type');
+      }
           
     },
     stats: {
