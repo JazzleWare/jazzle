@@ -1,7 +1,0 @@
-#!/bin/bash
-stat -c '%s' quarantine/* ttemp/* src/*  |  perl -e '
-  my $sum=0; while (<>) { $sum += $_ }
-  print "$sum\n"'
-echo $@ | xargs stat -c '%s' | perl -e '
-  my $sum=0; while (<>) { $sum += $_ }
-  print "$sum\n"'

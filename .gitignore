@@ -5,6 +5,6 @@ scrap/
 lube.*
 yield/
 *.sh
-./comp.js
+comp.js
 # ttemp/
-./estimate
+estimate
