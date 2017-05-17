@@ -20,3 +20,15 @@ It is going to have a very simple TZ checker (this _is_ a _very_ simple thing --
 This of course might sound a far-reaching utopian device the like of those the Communists wanted to make back when they thought they have reached humanity's holy grail, but please take a look at the previous commits before believing your guesses.
 
 You are free stay patient; in which case, your patience will be much appreciated.
+
+# Build
+building is somewhat easy; first you should of course clone this repo (if you have not yet):
+```sh
+git clone https://github.com/JazzleWare/jazzle
+```
+
+then you should cd to `jazzle` (or any other directory you cloned the repo into), and call the build script
+```sh
+ node ./builder/run.js
+```
+this bundles all the sources in `src` into `dist/jazzle.js`; an example on how to use the bundle when it has been built has been given uptop.
