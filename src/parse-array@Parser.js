@@ -26,6 +26,8 @@ function(ctx) {
   var hasMore = true;
   var hasRest = false, hasNonTailRest = false;
 
+  var y = 0;
+
   while (hasMore) {
     elem = this.parseNonSeq(PREC_NONE, elctx);
     if (elem === null && this.lttype === TK_ELLIPSIS) {
@@ -50,6 +52,8 @@ function(ctx) {
       else break;
     }
  
+    if (elem) y += this.Y(elem);
+
     if (elem && errt_track(elctx)) {
       var elemCore = elem;
       // TODO: [...(a),] = 12

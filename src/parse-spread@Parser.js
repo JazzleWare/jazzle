@@ -25,6 +25,7 @@ function(ctx) {
     loc: { start: loc0, end: arg.loc.end },
     start: c0,
     end: arg.end,
-    argument: core(arg)
+    argument: core(arg),
+    '#y': this.Y(arg)
   };
 };

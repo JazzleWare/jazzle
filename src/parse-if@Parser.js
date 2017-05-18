@@ -44,6 +44,6 @@ this.parseIf = function () {
     alternate: alt,
     '#ifScope': ifScope,
     '#elseScope': elseScope, 
-    '#y': -1
+    '#y': this.Y(cond,nbody)+this.Y0(alt)
   };
 };

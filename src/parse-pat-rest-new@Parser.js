@@ -20,6 +20,7 @@ function() {
     end: arg.end,
     loc: {
       start: loc0,
-      end: arg.loc.end }
+      end: arg.loc.end },
+    '#y': this.Y(arg)
   };
 };

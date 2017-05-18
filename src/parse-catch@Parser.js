@@ -30,7 +30,6 @@ this. parseCatchClause = function () {
        param: catParam ,
        body: catBlock,
        '#scope': scope,
-       '#y': -1
+       '#y': this.Y(catParam)+this.Y(catBlock)
    };
 };
-

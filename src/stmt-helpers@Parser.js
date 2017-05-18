@@ -26,10 +26,13 @@ function(isLoop) {
 
 this.stmtList =
 function () {
-  var stmt = null, list = [];
-  while (stmt = this.parseStatement(true))
+  var stmt = null, y = 0, list = [];
+  while (stmt = this.parseStatement(true)) {
+    y += this.Y0(stmt);
     list.push(stmt);
+  }
   
+  this.yc = y;
   return list;
 };
 

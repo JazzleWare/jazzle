@@ -12,7 +12,7 @@ function(name) {
     loc: {
       start: loc0,
       end: this.loc() },
-    '#y': -1
+    '#y': this.y
   };
 
   if (!this.expectT(CH_RCURLY))

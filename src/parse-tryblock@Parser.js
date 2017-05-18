@@ -45,6 +45,6 @@ this.parseTryStatement = function () {
       end: finOrCat.loc.end },
     '#tryScope': tryScope,
     '#finScope': finScope,
-    '#y': -1
+    '#y': this.Y(tryBlock)+this.Y0(catBlock,finBlock)
   };
 };

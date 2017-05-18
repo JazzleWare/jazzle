@@ -3,7 +3,8 @@ function(memName, ctx, st) {
   if (this.lttype !== CH_LPAREN)
     this.err('meth.paren');
 
-  var val = null;
+  var val = null, computed = memName.type === PAREN ;
+
   if (st & ST_CLSMEM) {
     if (st & ST_STATICMEM) {
       if (ctx & CTX_HASPROTOTYPE)
@@ -40,14 +41,14 @@ function(memName, ctx, st) {
             (st & ST_SETTER) ?
               'set' :
               'method',
-      computed: memName.type === PAREN,
+      computed: computed,
       loc: {
         start: memName.loc.start,
         end: val.loc.end
       },
       value: val,
       'static': !!(st & ST_STATICMEM),
-      '#y': -1
+      '#y': computed ? this.Y(memName) : 0
     };
   }
 
@@ -72,6 +73,6 @@ function(memName, ctx, st) {
     method: !(st & ST_ACCESSOR),
     shorthand: false,
     value: val,
-    '#y': -1
+    '#y': computed ? this.Y(memName) : 0
   };
 };

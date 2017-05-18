@@ -13,6 +13,6 @@ function (head) {
     loc: {
       start: head.loc.start,
       end: e.loc.end },
-    '#y': -1
+    '#y': this.Y(head,e)
   };
 };

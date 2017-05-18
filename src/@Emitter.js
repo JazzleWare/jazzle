@@ -5,4 +5,5 @@ function Emitter(spaceString) {
   this.indentLevel = 0;
   this.code = "";
   this.noWrap_ = false;
+  this.hasLine = false;
 }

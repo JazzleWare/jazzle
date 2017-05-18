@@ -25,13 +25,13 @@ function() {
 
   this.foundStatement = true;
   return  {
-      type: 'WithStatement',
-      loc: { start: loc0, end: nbody.loc.end },
-      start: c0,
-      end: nbody.end,
-      object: obj,
-      body: nbody,
-      '#scope': scope,
-      '#y': -1
+    type: 'WithStatement',
+    loc: { start: loc0, end: nbody.loc.end },
+    start: c0,
+    end: nbody.end,
+    object: obj,
+    body: nbody,
+    '#scope': scope,
+    '#y': this.Y(obj, nbody )
   };
 };

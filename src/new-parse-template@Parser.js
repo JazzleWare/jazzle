@@ -14,6 +14,7 @@ function() {
   var c0s = c, loc0s = this.loc();
 
   var iscr = false;
+  var y = 0;
 
   LOOP:
   while (c<l)
@@ -48,6 +49,7 @@ function() {
       if (e === null)
         this.err('templ.expr.is.a.null');
       ex.push(e);
+      y += this.Y(e);
       if (this.lttype !== CH_RCURLY)
         this.err('templ.expr.is.unfinished');
 
@@ -125,7 +127,7 @@ function() {
     end: c,
     expressions: ex,
     loc: { start: loc0, end : this.loc() },
-    '#y': -1
+    '#y': y
   };
 
   this.next();

@@ -29,9 +29,9 @@ function(ctx) {
     delegate: deleg,
     end: ec,
     loc: { start : loc0, end: eloc },
-    '#y':-1
+    '#y': 1+this.Y0(arg)
   };
- 
+
   if (this.suspys === null)
     this.suspys = n;
 

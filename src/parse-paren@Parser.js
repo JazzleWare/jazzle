@@ -24,7 +24,7 @@ this.parseParen = function(ctx) {
   var lastElem = null, hasTailElem = false;
   this.next();
 
-  var elem = null;
+  var elem = null, y = 0;
   while (true) {
     lastElem = elem;
     elem = this.parseNonSeq(PREC_NONE, elctx);
@@ -45,6 +45,8 @@ this.parseParen = function(ctx) {
       } 
       else break;
     }
+
+    if (elem) y += this.Y(elem);
 
     if (errt_param(elctx)) {
       if (errt_ptrack(elctx)) {
@@ -113,7 +115,8 @@ this.parseParen = function(ctx) {
         loc: {
           start: list[0].loc.start,
           end: list[list.length-1].loc.end
-        } 
+        },
+        '#y': y 
       } : elem && core(elem),
       start: c0,
       end: this.c,
@@ -130,7 +133,7 @@ this.parseParen = function(ctx) {
     }
     else {
       this.st_teot(ERR_EMPTY_LIST_MISSING_ARROW,n,n);
-      this.flushSimpleErrors();
+      this.st_flush();
     }
   }
 

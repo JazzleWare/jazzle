@@ -45,6 +45,6 @@ this.parseSwitchCase = function () {
     end: ec,
     loc: { start: loc0, end: eloc },
     consequent: nbody,
-    '#y': -1
+    '#y': this.Y0(cond)+this.yc
   };
 };

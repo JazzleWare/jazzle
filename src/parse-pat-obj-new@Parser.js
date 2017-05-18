@@ -8,9 +8,12 @@ function() {
   if (this.scope.insideArgs())
     this.scope.enterUniqueArgs();
 
+  var y = 0;
+
   LOOP:
   do {
     this.next();
+    var y0 = 0;
     switch (this.lttype) {
     case TK_ID:
       isID = true;
@@ -19,6 +22,7 @@ function() {
 
     case CH_LSQBRACKET:
       name = this.mem_expr();
+      y0 += this.Y(name);
       break;
 
     case TK_NUM:
@@ -56,6 +60,9 @@ function() {
     if (this.peekEq())
       val = this.parsePat_assig(val);
 
+    y0 += this.Y(val);
+    y += y0;
+
     list.push({
       type: 'Property',
       start: name.start,
@@ -69,7 +76,7 @@ function() {
       value: val,
       method: false, 
       shorthand: isShort,
-      '#y': -1
+      '#y': y0
     });
   } while (this.lttype === CH_COMMA);
 
@@ -79,7 +86,7 @@ function() {
     start: c0,
     end: this.c,
     properties: list,
-    '#y': -1
+    '#y': y
   };
 
   if (!this.expectT(CH_RCURLY))

@@ -104,7 +104,7 @@ this.parseFor = function() {
       right: core(afterHead),
       left: head,
       body: nbody, 
-      '#y': -1,
+      '#y': this.Y(head,afterHead,nbody),
       '#scope': scope
     };
   }
@@ -144,7 +144,7 @@ this.parseFor = function() {
     update: tail && core(tail),
     body: nbody,
     '#scope': scope,
-    '#y': -1
+    '#y': this.Y0(head,afterHead,tail)+this.Y(nbody)
   };
 };
 

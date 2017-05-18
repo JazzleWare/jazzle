@@ -9,6 +9,8 @@ function() {
   if (this.scope.insideArgs())
     this.scope.enterUniqueArgs();
 
+  var y = 0;
+
   this.next();
   while (true) {
     elem = this.parsePat();
@@ -18,6 +20,8 @@ function() {
       list.push(this.parsePat_rest());
       break ;
     }  
+
+    if (elem) y += this.Y(elem);
 
     if (this.lttype === CH_COMMA) {
       list.push(elem);
@@ -34,7 +38,7 @@ function() {
     start: c0,
     end: this.c,
     elements: list,
-    '#y': -1
+    '#y': y
   };
 
   if (!this.expectT(CH_RSQBRACKET))

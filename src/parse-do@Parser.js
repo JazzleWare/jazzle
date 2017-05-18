@@ -48,6 +48,6 @@ function () {
       start: loc0,
       end: { line: li, column: col } },
     '#scope': scope,
-    '#y': -1
+    '#y': this.Y(cond)+this.Y(nbody)
   };
 };

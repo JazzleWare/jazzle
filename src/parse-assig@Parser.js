@@ -105,6 +105,6 @@ this.parseAssignment = function(head, ctx) {
       start: head.loc.start,
       end: right.loc.end
     },
-    '#y': -1
+    '#y': this.Y(head)+this.Y(right)
   };
 };

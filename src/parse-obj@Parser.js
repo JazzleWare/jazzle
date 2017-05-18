@@ -24,6 +24,7 @@ this.parseObj = function(ctx) {
   var ac0 = -1, ali0 = -1, acol0 = -1;
   var sc0 = -1, sli0 = -1, scol0 = -1;
 
+  var y = 0;
   do {
     this.next();
     this.first__proto__ = first__proto__;
@@ -31,6 +32,8 @@ this.parseObj = function(ctx) {
 
     if (elem === null)
       break;
+
+    y += this.Y(elem);
 
     if (!first__proto__ && this.first__proto__)
       first__proto__ = this.first__proto__;
@@ -68,7 +71,7 @@ this.parseObj = function(ctx) {
     start: c0,
     end: this.c,
     loc: { start: loc0, end: this.loc() }, 
-    '#y': -1
+    '#y': y
   };
 
   if (errt_perr(ctx,pt)) {

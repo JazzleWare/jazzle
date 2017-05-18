@@ -10,9 +10,11 @@ function(ctx) {
   ctx |= CTX_TOP;
 
   var e = [core(head)];
+  var y = this.Y(head);
   do {
     this.next();
     latestExpr = this.parseNonSeq(PREC_NONE, ctx);
+    y += this.Y(latestExpr);
     e.push(core(latestExpr));
   } while (this.lttype === CH_COMMA);
 
@@ -25,6 +27,6 @@ function(ctx) {
       start: head.loc.start,
       end: latestExpr.loc.end
     },
-    '#y': -1
+    '#y': y
   };
 };

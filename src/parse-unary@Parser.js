@@ -23,7 +23,8 @@ function(ctx) {
       argument: core(arg),
       start: c0,
       end: arg.end,
-      loc: { start: loc0, end: arg.loc.end }
+      loc: { start: loc0, end: arg.loc.end },
+      '#y': this.Y(arg)
     };
     this.suspys = n;
     return n;
@@ -36,6 +37,7 @@ function(ctx) {
     end: arg.end,
     loc: { start: loc0, end: arg.loc.end },
     argument: core(arg),
-    prefix: true
+    prefix: true,
+    '#y': this.Y(arg)
   };
 };

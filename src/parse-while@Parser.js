@@ -34,6 +34,6 @@ function () {
       end: nbody.loc.end },
     body:nbody,
     '#scope': scope, 
-    '#y': -1
+    '#y': this.Y(cond, nbody)
   };
 };

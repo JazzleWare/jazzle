@@ -2,13 +2,15 @@ this.parseArgList = function () {
   var c0 = -1, li0 = -1, col0 = -1, parenAsync = this.parenAsync,
       elem = null, list = [];
 
+  var y = 0;
+
   do { 
     this.next();
     elem = this.parseNonSeq(PREC_NONE, CTX_NULLABLE|CTX_TOP); 
     if (elem)
       list.push(core(elem));
     else if (this.lttype === TK_ELLIPSIS)
-      list.push(this.parseSpread(CTX_NONE));
+      list.push(elem = this.parseSpread(CTX_NONE));
     else {
       if (list.length !== 0) {
         if (this.v < 7)
@@ -19,6 +21,7 @@ this.parseArgList = function () {
       break;
     }
 
+    y += this.Y(elem);
     if (this.lttype === CH_COMMA) {
       c0 = this.c0;
       li0 = this.li0;
@@ -29,6 +32,8 @@ this.parseArgList = function () {
 
   if (parenAsync !== null)
     this.parenAsync = parenAsync;
+
+  this.yc= y;
 
   return list ;
 };

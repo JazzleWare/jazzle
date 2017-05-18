@@ -18,7 +18,7 @@ function() {
     loc: { 
       start: loc0,
       end: this.loc() },
-    '#y': -1
+    '#y': this.yc
   };
 
   if (!this.expectT(CH_RCURLY))

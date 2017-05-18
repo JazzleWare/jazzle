@@ -16,7 +16,7 @@ this.parseBlock = function () {
       start: loc0, 
       end: this.loc() }, 
     '#scope': scope, 
-    '#y': -1
+    '#y': this.y
   };
 
   if (!this.expectT(CH_RCURLY))

@@ -23,12 +23,14 @@ this.parseSwitch = function () {
 
   this.allow(SA_BREAK);
 
+  var y = 0;
   while (elem = this.parseSwitchCase()) {
     if (elem.test === null) {
        if (hasDefault ) this.err('switch.has.a.dup.default');
        hasDefault = true ;
     }
     cases.push(elem);
+    y += this.Y(elem);
   }
 
   this.foundStatement = true;
@@ -44,7 +46,7 @@ this.parseSwitch = function () {
       start: loc0,
       end: this.loc() }, 
     '#scope': scope,
-    '#y': -1
+    '#y': this.Y(switchExpr)+(y)
   };
 
   if (!this.expectT(CH_RCURLY))

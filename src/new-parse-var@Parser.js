@@ -12,6 +12,8 @@ function(dt, ctx) {
   var loc0 = letID ? letID.loc.start : this.loc0();
   var vpat = null;
 
+  var y = 0;
+
   letID || this.next();
 
   ctx &= CTX_FOR;
@@ -60,6 +62,10 @@ function(dt, ctx) {
       mi = true;
     }
     var ioh = init || vpat;
+
+    var y0 = this.Y(vpat)+(init ? this.Y(init) : 0);
+    y += y0;
+
     list.push({
       type: 'VariableDeclarator',
       id: vpat,
@@ -70,7 +76,7 @@ function(dt, ctx) {
         end: ioh.loc.end 
       },
       init: init && core(init),
-      '#y': -1
+      '#y': y0
     });
 
     if (mi || this.lttype !== CH_COMMA)
@@ -104,6 +110,6 @@ function(dt, ctx) {
     declarations: list,
     loc: { start: loc0, end: eloc },
     end: ec,
-    '#y': -1
+    '#y': y
   };
 };

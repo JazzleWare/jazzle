@@ -50,7 +50,8 @@ function(asyncID, ctx) {
     loc: {
       start: asyncID.loc.start,
       end: list.loc.end
-    }
+    },
+    '#y': this.Y(list)
   };
 
   if (nl) {

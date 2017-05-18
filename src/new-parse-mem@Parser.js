@@ -173,6 +173,7 @@ function(memName, ctx) {
       }
     }
 
+    var computed = memName.type === PAREN ;
     val = {
       type: 'Property',
       start: memName.start,
@@ -180,11 +181,11 @@ function(memName, ctx) {
       end: val.end,
       kind: 'init',
       loc: { start: memName.loc.start, end: val.loc.end },
-      computed: memName.type === PAREN,
+      computed: computed,
       method: false,
       shorthand: false,
       value: core(val),
-      '#y': -1
+      '#y': computed ? this.Y(core(memName)) : 0
     };
 
     if (hasProto)
@@ -234,6 +235,6 @@ function(memName, ctx) {
     method: false,
     value: val,
     computed: false,
-    '#y': -1
+    '#y': 0
   };
 };

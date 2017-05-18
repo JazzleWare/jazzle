@@ -16,7 +16,7 @@ this.parseUpdate = function(arg, ctx) {
       type: 'UpdateExpression', operator: u,
       start: c, end: arg.end, argument: core(arg),
       loc: { start: loc, end: arg.loc.end },
-      prefix: true
+      prefix: true, '#y': this.Y(arg)
     };
   }
 
@@ -33,6 +33,6 @@ this.parseUpdate = function(arg, ctx) {
     type: 'UpdateExpression', operator: u,
     start: arg.start, end: c,
     argument: core(arg), loc: loc,
-    prefix: false
+    prefix: false, '#y': this.Y(arg)
   };
 };

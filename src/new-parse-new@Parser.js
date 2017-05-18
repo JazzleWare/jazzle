@@ -36,7 +36,7 @@ function() {
         start: head.loc.start,
         end: elem.loc.end },
       computed: false,
-      '#y': -1
+      '#y': this.Y(head)
     };
     continue;
 
@@ -53,7 +53,7 @@ function() {
         start: head.loc.start,
         end: this.loc() },
       computed: true,
-      '#y': -1
+      '#y': this.Y(head)+this.Y(elem)
     };
     if (!this.expectT(CH_RSQBRACKET))
       this.err('mem.unfinished');
@@ -70,7 +70,7 @@ function() {
       loc: {
         start: loc0,
         end: this.loc() },
-      '#y': -1
+      '#y': this.Y(head)+this.y
     };
     if (!this.expectT(CH_RPAREN))
       this.err('new.args.is.unfinished');
@@ -87,7 +87,7 @@ function() {
         start: head.loc.start,
         end: elem.loc.end },
       tag: inner,
-      '#y': -1
+      '#y': this.Y(head)+this.Y(elem)
     };
     continue;
 
@@ -101,7 +101,7 @@ function() {
         start: loc0,
         end: head.loc.end },
       arguments : [],
-      '#y': -1
+      '#y': this.Y(head)
     };
     break LOOP;
   }

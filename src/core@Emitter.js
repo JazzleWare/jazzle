@@ -46,6 +46,11 @@ this.write = function(rawStr) {
   ASSERT.call(this, rawStr !== "",
     'not allowed to write empty strings to output');
 
+  if (this.hasLine) {
+    this.hasLine = false;
+    this.l();
+  }
+
   if (this.lineStarted) {
     this.code += this.getOrCreateIndent(this.indentLevel);
     this.lineStarted = false;
@@ -133,4 +138,21 @@ this.emitCallHead = function(n, isStmt, flags) {
 
 this.emitNewHead = function(n, isStmt, flags) {
   return this.eH(n, isStmt, flags|EC_NEW_HEAD);
+};
+
+// write shadow line; differs from `l() in that a newline is only inserted if something comes after it
+this.wsl =
+function() {
+  if (!this.hasLine)
+    this.hasLine = true;
+  return this;
+};
+
+this.csl =
+function() {
+  if (this.hasLine) {
+    this.hasLine = false;
+    return true;
+  }
+  return false;
 };

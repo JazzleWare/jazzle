@@ -62,6 +62,7 @@ function(ctx) {
 
   var mem = null;
 
+  var y = 0;
   while (true) {
     if (this.lttype === CH_SEMI) {
       this.next();
@@ -70,6 +71,7 @@ function(ctx) {
     mem = this.parseMem(mmctx, mmflags);
     if (mem !== null) {
       list.push(mem);
+      y += this.Y(mem);
       if (mem.kind === 'constructor')
         mmctx |= CTX_CTOR_NOT_ALLOWED;
     }
@@ -90,9 +92,9 @@ function(ctx) {
       start: c0b,
       end: this.c,
       body: list,
-      '#y': -1
+      '#y': y
     },
-    '#y': -1,
+    '#y': (superClass ? this.Y(superClass) : 0)+y,
     '#scope': scope
   };
 

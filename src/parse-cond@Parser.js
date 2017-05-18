@@ -16,6 +16,6 @@ this.parseCond = function(cond, ctx) {
       end: alt.loc.end },
     consequent: core(seq),
     alternate: core(alt),
-    '#y': -1
+    '#y': this.Y(cond,alt,seq)
   };
 };

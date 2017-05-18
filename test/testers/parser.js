@@ -85,7 +85,12 @@ function createParserListener() {
         console.error(test);
         throw new Error('actual type is not matching the expected type');
       }
-          
+
+      if (test && test.actual.type === 'pass' && test.incompatible()) {
+        console.error(test);
+        console.error(util.obj2str(test.comp.value));
+        throw new Error('pass but not matching strictly');
+      }
     },
     stats: {
       pass: { g: 0, e: 0, c: 0, i: 0, total: 0 },
