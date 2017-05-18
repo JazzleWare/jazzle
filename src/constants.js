@@ -29,11 +29,12 @@ var CH_1 = char2int('1'),
     CH_UNDERLINE = char2int('_'),
     CH_$ = char2int('$'),
 
+    CH_VTAB = char2int('\v'),
+    CH_BACK = char2int('\b'),
+    CH_FORM_FEED   = char2int( '\f') ,
     CH_TAB = char2int('\t'),
     CH_CARRIAGE_RETURN = char2int('\r'),
     CH_LINE_FEED = char2int('\n'),
-    CH_VTAB = char2int('\v'),
-    CH_FORM_FEED   = char2int( '\f') ,
 
     CH_WHITESPACE = char2int(' '),
 
