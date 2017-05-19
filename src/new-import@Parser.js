@@ -18,7 +18,8 @@ function() {
       local: lName,
       start: lName.start,
       end: lName.end,
-      loc: lName.loc
+      loc: lName.loc,
+      '#y': 0
     });
     if (this.lttype === CH_COMMA)
       this.next();
@@ -62,7 +63,8 @@ function() {
     loc: { start: loc0, end: eloc },
     end: ec, 
     specifiers: list,
-    source: src
+    source: src,
+    '#y': 0
   };
 };
 
@@ -87,7 +89,8 @@ function(list) {
       loc: { start: eName.loc.start, end: lName.loc.end },
       end: lName.end,
       imported: eName,
-      local: lName
+      local: lName,
+      '#y': 0
     });
 
     if (this.lttype === CH_COMMA)
@@ -119,6 +122,7 @@ function() {
     start: c0,
     loc: { start: loc0, end: lName.loc.end },
     end: lName.end,
-    local: lName
+    local: lName,
+    '#y': 0
   };
 };

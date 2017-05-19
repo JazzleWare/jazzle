@@ -48,7 +48,8 @@ function(c0,loc0) {
     end: elem.end,
     declaration: elem,
     specifiers: [],
-    source: null
+    source: null,
+    '#y': 0 
   };
 };
 
@@ -76,7 +77,8 @@ function(c0,loc0) {
       loc: { start: lName.loc.start, end: eName.loc.end }, 
       end: eName.end,
       exported: eName,
-      local: lName 
+      local: lName ,
+      '#y': 0 
     });
 
     if (this.lttype === CH_COMMA)
@@ -107,7 +109,8 @@ function(c0,loc0) {
     end: ec,
     declaration: null,
     specifiers: list,
-    source: src
+    source: src,
+    '#y': 0 
   };
 };
 
@@ -124,7 +127,8 @@ function(c0,loc0) {
     start: c0,
     loc: { start: loc0, end: this.semiLoc || src.loc.end },
     end: this.semiC || src.end,
-    source: src
+    source: src,
+    '#y': 0
   };
 };
 
@@ -175,7 +179,8 @@ function(c0,loc0) {
     start: c0,
     loc: { start: loc0, end: this.semiLoc || elem.loc.end },
     end: this.semiC || elem.end,
-    declaration: core(elem)
+    declaration: core(elem),
+    '#y': 0
   };
 };
 

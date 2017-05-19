@@ -26,6 +26,7 @@ this.parseReturn = function () {
     argument: r && core(r),
     start: c0,
     end: ec,
-    loc: { start: loc0, end: eloc }
+    loc: { start: loc0, end: eloc },
+    '#y': this.Y0(r)
   };
 };

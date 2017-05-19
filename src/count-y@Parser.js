@@ -6,24 +6,9 @@ function base_Y0(n) {
   case 'TemplateElement':
   case 'Literal':
   case 'DebuggerStatement':
-  case 'ArrowFunctionExpression':
-  case 'ThisExpression':
-  case 'BreakStatement':
-  case 'FunctionDeclaration':
-  case 'EmptyStatement':
   case 'Super':
-  case 'ContinueStatement':
-  case 'FunctionExpression':
-  case 'ExportAllDeclaration':
-  case 'ExportDefaultDeclaration':
-  case 'ExportNamedDeclaration':
-  case 'ExportSpecifier':
-  case 'ExpressionStatement':
-  case 'ImportDeclaration':
-  case 'ImportDefaultSpecifier':
-  case 'ImportNamespaceSpecifier':
-  case 'ImportSpecifier':
-    return 0;
+  case 'ThisExpression':
+    return 0; 
   }
 
   if (n.type === PAREN)

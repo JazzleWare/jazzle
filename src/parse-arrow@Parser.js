@@ -108,6 +108,6 @@ this.parseArrow = function(arg, ctx)   {
     generator: false, expression: isExpr,
     body: core(nbody), id : null,
     async: async,
-    '#scope': scope
+    '#scope': scope, '#y': 0
   }; 
 };

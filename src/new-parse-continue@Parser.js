@@ -34,6 +34,7 @@ function() {
     label: label,
     start: c0,
     end: ec,
-    loc: { start: loc0, end: eloc }
+    loc: { start: loc0, end: eloc },
+    '#y': 0
   };
 };

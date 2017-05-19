@@ -2110,24 +2110,9 @@ function base_Y0(n) {
   case 'TemplateElement':
   case 'Literal':
   case 'DebuggerStatement':
-  case 'ArrowFunctionExpression':
-  case 'ThisExpression':
-  case 'BreakStatement':
-  case 'FunctionDeclaration':
-  case 'EmptyStatement':
   case 'Super':
-  case 'ContinueStatement':
-  case 'FunctionExpression':
-  case 'ExportAllDeclaration':
-  case 'ExportDefaultDeclaration':
-  case 'ExportNamedDeclaration':
-  case 'ExportSpecifier':
-  case 'ExpressionStatement':
-  case 'ImportDeclaration':
-  case 'ImportDefaultSpecifier':
-  case 'ImportNamespaceSpecifier':
-  case 'ImportSpecifier':
-    return 0;
+  case 'ThisExpression':
+    return 0; 
   }
 
   if (n.type === PAREN)
@@ -3019,7 +3004,8 @@ function(c0,loc0) {
     end: elem.end,
     declaration: elem,
     specifiers: [],
-    source: null
+    source: null,
+    '#y': 0 
   };
 };
 
@@ -3047,7 +3033,8 @@ function(c0,loc0) {
       loc: { start: lName.loc.start, end: eName.loc.end }, 
       end: eName.end,
       exported: eName,
-      local: lName 
+      local: lName ,
+      '#y': 0 
     });
 
     if (this.lttype === CH_COMMA)
@@ -3078,7 +3065,8 @@ function(c0,loc0) {
     end: ec,
     declaration: null,
     specifiers: list,
-    source: src
+    source: src,
+    '#y': 0 
   };
 };
 
@@ -3095,7 +3083,8 @@ function(c0,loc0) {
     start: c0,
     loc: { start: loc0, end: this.semiLoc || src.loc.end },
     end: this.semiC || src.end,
-    source: src
+    source: src,
+    '#y': 0
   };
 };
 
@@ -3146,7 +3135,8 @@ function(c0,loc0) {
     start: c0,
     loc: { start: loc0, end: this.semiLoc || elem.loc.end },
     end: this.semiC || elem.end,
-    declaration: core(elem)
+    declaration: core(elem),
+    '#y': 0
   };
 };
 
@@ -3253,7 +3243,8 @@ function() {
       local: lName,
       start: lName.start,
       end: lName.end,
-      loc: lName.loc
+      loc: lName.loc,
+      '#y': 0
     });
     if (this.lttype === CH_COMMA)
       this.next();
@@ -3297,7 +3288,8 @@ function() {
     loc: { start: loc0, end: eloc },
     end: ec, 
     specifiers: list,
-    source: src
+    source: src,
+    '#y': 0
   };
 };
 
@@ -3322,7 +3314,8 @@ function(list) {
       loc: { start: eName.loc.start, end: lName.loc.end },
       end: lName.end,
       imported: eName,
-      local: lName
+      local: lName,
+      '#y': 0
     });
 
     if (this.lttype === CH_COMMA)
@@ -3354,7 +3347,8 @@ function() {
     start: c0,
     loc: { start: loc0, end: lName.loc.end },
     end: lName.end,
-    local: lName
+    local: lName,
+    '#y': 0
   };
 };
 
@@ -3552,7 +3546,8 @@ function() {
     label: label,
     start: c0,
     end: ec,
-    loc: { start: loc0, end: eloc }
+    loc: { start: loc0, end: eloc },
+    '#y': 0
   };
 };
 
@@ -3594,7 +3589,8 @@ function() {
     label: label,
     start: c0,
     end: ec,
-    loc: { start: loc0, end: eloc }
+    loc: { start: loc0, end: eloc },
+    '#y': 0
   };
 };
 
@@ -3798,7 +3794,7 @@ function(ctx, st) {
     params: argList,
     expression: false,
     async: (st & ST_ASYNC) !== 0,
-    '#scope': scope
+    '#scope': scope, '#y': 0
   };
 
   this.declMode = declMode_;
@@ -4674,7 +4670,7 @@ function(prec, ctx) {
         end: r.loc.end },
       left: core(head),
       right: core(r),
-      '#y': this.Y(head)+this.Y(r)
+      '#y': this.Y(head, r)
     };
 
     hasOp = this.getOp(ctx);
@@ -4746,7 +4742,8 @@ function(allowNull) {
         end: this.semiC || head.end,
         loc: {
           start: head.loc.start,
-          end: this.semiLoc || head.loc.end }
+          end: this.semiLoc || head.loc.end },
+        '#y': this.Y(head)
       };
     }
   }
@@ -5660,7 +5657,7 @@ this.parseArrow = function(arg, ctx)   {
     generator: false, expression: isExpr,
     body: core(nbody), id : null,
     async: async,
-    '#scope': scope
+    '#scope': scope, '#y': 0
   }; 
 };
 
@@ -5797,7 +5794,7 @@ this.parseBlock = function () {
       start: loc0, 
       end: this.loc() }, 
     '#scope': scope, 
-    '#y': this.y
+    '#y': this.yc
   };
 
   if (!this.expectT(CH_RCURLY))
@@ -6052,7 +6049,7 @@ function(name) {
     loc: {
       start: loc0,
       end: this.loc() },
-    '#y': this.y
+    '#y': this.yc
   };
 
   if (!this.expectT(CH_RCURLY))
@@ -6125,7 +6122,8 @@ function() {
     type: 'EmptyStatement',
     start: this.c0,
     loc: { start: this.loc0(), end: this.loc() },
-    end: this.c
+    end: this.c,
+    '#y': 0
   };
   this.next();
   return n;
@@ -6378,7 +6376,8 @@ this.parseLabel = function(label, allowNull) {
     start: label.start,
     end: stmt.end,
     loc: { start: label.loc.start, end: stmt.loc.end },
-    body: stmt
+    body: stmt,
+    '#y': this.Y0(stmt)
   };
 };
 
@@ -6457,7 +6456,8 @@ function(c0,loc0,c,li,col) {
     start : c0,
     property: prop,
     end: prop.end,
-    loc : { start: loc0, end: prop.loc.end }
+    loc : { start: loc0, end: prop.loc.end },
+    '#y': 0
   };
 };
 
@@ -6996,7 +6996,8 @@ this.parseProgram = function () {
       start: {line: li0, column: col0},
       end: {line: this.li, column: this.col}
     }, 
-    '#scope': this.scope
+    '#scope': this.scope,
+    '#y': 0
   };
 
   if (!this.expectT(TK_EOF))
@@ -7223,7 +7224,8 @@ this.parseReturn = function () {
     argument: r && core(r),
     start: c0,
     end: ec,
-    loc: { start: loc0, end: eloc }
+    loc: { start: loc0, end: eloc },
+    '#y': this.Y0(r)
   };
 };
 
@@ -7474,7 +7476,8 @@ function () {
     loc: {
       start: loc0,
       end: this.semiLoc || ex.loc.end
-    }
+    },
+    '#y': this.Y(ex)
   };
 };
 
@@ -9922,10 +9925,9 @@ this.Transformer = Transformer;
 
 this.transpile = function(src, options) {
   var p = new Parser(src, options);
-  return new Emitter().emitAny(
+  return new Emitter().eA(
     new Transformer().tr(p.parseProgram()),
     EC_NONE,
-    false
-  );
+    false).code ;
 };
 ;}).call (function(){try{return module.exports;}catch(e){return this;}}.call(this))

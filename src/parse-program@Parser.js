@@ -29,7 +29,8 @@ this.parseProgram = function () {
       start: {line: li0, column: col0},
       end: {line: this.li, column: this.col}
     }, 
-    '#scope': this.scope
+    '#scope': this.scope,
+    '#y': 0
   };
 
   if (!this.expectT(TK_EOF))

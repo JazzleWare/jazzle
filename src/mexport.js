@@ -14,9 +14,8 @@ this.Transformer = Transformer;
 
 this.transpile = function(src, options) {
   var p = new Parser(src, options);
-  return new Emitter().emitAny(
+  return new Emitter().eA(
     new Transformer().tr(p.parseProgram()),
     EC_NONE,
-    false
-  );
+    false).code ;
 };

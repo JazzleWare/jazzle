@@ -25,6 +25,7 @@ function(c0,loc0,c,li,col) {
     start : c0,
     property: prop,
     end: prop.end,
-    loc : { start: loc0, end: prop.loc.end }
+    loc : { start: loc0, end: prop.loc.end },
+    '#y': 0
   };
 };

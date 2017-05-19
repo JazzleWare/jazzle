@@ -18,6 +18,7 @@ this.parseLabel = function(label, allowNull) {
     start: label.start,
     end: stmt.end,
     loc: { start: label.loc.start, end: stmt.loc.end },
-    body: stmt
+    body: stmt,
+    '#y': this.Y0(stmt)
   };
 };

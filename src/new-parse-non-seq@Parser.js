@@ -82,7 +82,7 @@ function(prec, ctx) {
         end: r.loc.end },
       left: core(head),
       right: core(r),
-      '#y': this.Y(head)+this.Y(r)
+      '#y': this.Y(head, r)
     };
 
     hasOp = this.getOp(ctx);

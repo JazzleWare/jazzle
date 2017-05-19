@@ -108,7 +108,7 @@ function(ctx, st) {
     params: argList,
     expression: false,
     async: (st & ST_ASYNC) !== 0,
-    '#scope': scope
+    '#scope': scope, '#y': 0
   };
 
   this.declMode = declMode_;

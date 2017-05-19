@@ -59,7 +59,8 @@ function(allowNull) {
         end: this.semiC || head.end,
         loc: {
           start: head.loc.start,
-          end: this.semiLoc || head.loc.end }
+          end: this.semiLoc || head.loc.end },
+        '#y': this.Y(head)
       };
     }
   }

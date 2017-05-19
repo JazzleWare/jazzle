@@ -27,6 +27,7 @@ function () {
     loc: {
       start: loc0,
       end: this.semiLoc || ex.loc.end
-    }
+    },
+    '#y': this.Y(ex)
   };
 };
