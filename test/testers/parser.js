@@ -5,7 +5,7 @@ var path = require('path');
 var ASSERT = util.ASSERT;
 
 function createParserTester(tparser, tdir, tignore) {
-  var ts = new lib.TestSuite('Parser-Tests');
+  var ts = new lib.TestSuite('Parser');
 
   ts.tester.make =
   function(test) {

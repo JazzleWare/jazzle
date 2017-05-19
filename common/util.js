@@ -431,7 +431,7 @@ mex.ASSERT = function ASSERT(cond, message) {
     throw new Error(message);
 };
 
-mex.HAS = {}.hasOwnProtperty;
+mex.HAS = {}.hasOwnProperty;
 
 mex.toBytes = function(str) {
   var bytes = "", i = 0;

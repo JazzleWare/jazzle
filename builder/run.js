@@ -159,6 +159,11 @@ try {
    var ts = require('../test/testers/parser.js')
      .createParserTester(exports.Parser, './test/assets','.ignore');
    ts.runAll();
+
+   ts = require('../test/testers/transpiler.js')
+     .createTranspilerTester(exports.Parser,exports.Transformer,exports.Emitter);
+   ts.runAll();
+
    console.log("TESTING COMPLETE.");
 }
 catch (e) {
