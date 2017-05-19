@@ -393,6 +393,17 @@ Template.from = function(str, i, eof) {
   return template;
 };
 ;
+function Transformer() {
+  // TODO: `inGen or `flag for more contextual info (doesn't `cur have all that, anyway?)
+  // CRUCIAL SCOPES:
+  this.global = null;
+  this.script = null;
+  this.cur = null;
+
+  // the could be per scope (i.e., a scope attibute),
+  this.tempStack = [];
+}
+;
  ConcreteScope.prototype = createObj(Scope.prototype);
  GlobalScope.prototype = createObj(Scope.prototype);
  FunScope.prototype = createObj(ConcreteScope.prototype);
@@ -434,11 +445,12 @@ var CH_1 = char2int('1'),
     CH_UNDERLINE = char2int('_'),
     CH_$ = char2int('$'),
 
+    CH_VTAB = char2int('\v'),
+    CH_BACK = char2int('\b'),
+    CH_FORM_FEED   = char2int( '\f') ,
     CH_TAB = char2int('\t'),
     CH_CARRIAGE_RETURN = char2int('\r'),
     CH_LINE_FEED = char2int('\n'),
-    CH_VTAB = char2int('\v'),
-    CH_FORM_FEED   = char2int( '\f') ,
 
     CH_WHITESPACE = char2int(' '),
 
@@ -738,7 +750,7 @@ function errt_ssyn(err) { return err & ERR_S_SYN; }
 ;
 var Emitters = {};
 var UntransformedEmitters = {};
-var transform = {};
+var TransformerList = {};
 ;
 var VDT_VOID = 1;
 var VDT_TYPEOF = 2;
@@ -762,21 +774,49 @@ var TK_UNBIN = TK_SIMP_BINARY|TK_UNARY;
 var TK_ANY_ASSIG = TK_SIMP_ASSIG|TK_OP_ASSIG;
 var TK_ANY_BINARY = TK_SIMP_BINARY|TK_ANY_ASSIG;
 
+var BINP = {};
+
 var PREC_NONE = 0; // [<start>]
 var PREC_COMMA = nextl(PREC_NONE); // ,
 var PREC_ASSIG = nextr(PREC_COMMA); // =, [<op>]=
 var PREC_COND = nextl(PREC_ASSIG); // ?:
-var PREC_LOG_OR = nextl(PREC_COND); // ||
-var PREC_LOG_AND = nextl(PREC_LOG_OR); // &&
-var PREC_BIT_OR = nextl(PREC_LOG_AND); // |
-var PREC_BIT_XOR = nextl(PREC_BIT_OR); // ^
-var PREC_BIT_AND = nextl(PREC_BIT_XOR); // &
-var PREC_EQ = nextl(PREC_BIT_AND); // !=, ===, ==, !==
-var PREC_COMP = nextl(PREC_EQ); // >, <=, <, >=, instanceof, in
-var PREC_SH = nextl(PREC_COMP); // >>>, >>, <<
-var PREC_ADD = nextl(PREC_SH); // +, -
-var PREC_MUL = nextl(PREC_ADD); // *, /
-var PREC_EX = nextl(PREC_MUL); // **
+
+var PREC_LOG_OR =
+BINP['||'] = 
+nextl(PREC_COND); // ||
+
+var PREC_LOG_AND = 
+BINP['&&'] = 
+nextl(PREC_LOG_OR); // &&
+
+var PREC_BIT_OR = 
+BINP['|'] = 
+nextl(PREC_LOG_AND); // |
+
+var PREC_BIT_XOR = 
+BINP['^'] = 
+nextl(PREC_BIT_OR); // ^
+
+var PREC_BIT_AND = 
+BINP['&'] = 
+nextl(PREC_BIT_XOR); // &
+
+var PREC_EQ = 
+BINP['!='] = BINP['==='] = BINP['=='] = BINP['!=='] = 
+nextl(PREC_BIT_AND); // !=, ===, ==, !==
+
+var PREC_COMP =
+BINP['>'] = BINP['<='] = BINP['<'] = BINP['>='] = 
+nextl(PREC_EQ); // >, <=, <, >=, instanceof, in
+
+var PREC_SH =
+BINP['>>>'] = BINP['>>'] = BINP['<<'] = 
+nextl(PREC_COMP); // >>>, >>, <<
+
+var PREC_ADD = BINP['+'] = BINP['-'] = nextl(PREC_SH); // +, -
+var PREC_MUL = BINP['*'] = nextl(PREC_ADD); // *, /
+var PREC_EX = BINP['**'] = nextl(PREC_MUL); // **
+
 var PREC_UNARY = nextr(PREC_EX); // delete, void, -, +, typeof; not really a right-associative thing
 var PREC_UP = nextr(PREC_UNARY); // ++, --; not really a right-associative thing
 
@@ -794,6 +834,10 @@ function isLog(nPrec) {
     return true;
   }
   return false;
+}
+function bp(o) {
+  ASSERT.call(this, HAS.call(BINP, o), 'unknown operator');
+  return BINP[o];
 }
 function isRA(nPrec) { return nPrec&1; }
 ;
@@ -1364,6 +1408,161 @@ function() {
     return true;
   }
   return false;
+};
+
+},
+function(){
+Emitters['Literal'] =
+function(n, flags, isStmt) {
+  switch (typeof n.value) {
+  case STRING_TYPE: 
+    this.w("'").writeStringValue(n.value).w("'");
+    break;
+  case BOOL_TYPE: 
+    this.w(n.value ? 'true' : 'false');
+    break;
+  case NUMBER_TYPE:
+    this.w(n.value+"");
+    break;
+  default:
+    ASSERT.call(this, false, 'unknown value');
+    break;
+  }
+};
+
+},
+function(){
+this.emitBLE =
+Emitters['BinaryExpression'] =
+function(n, flags, isStmt) {
+  var hasParen = flags & EC_EXPR_HEAD;
+  if (hasParen) { this.w('('); flags = EC_NONE; }
+  var o = n.operator;
+  if (o === '**')
+    return this.emitPow(n, flags);
+
+  var left = n.left, right = n.right;
+  if (isBLE(left))
+    this.emitLeft(left, o, flags);
+  else
+    this.emitBLEP(left, flags);
+
+  this.wm(' ',o,' ');
+
+  if (isBLE(right))
+    this.emitRight(right, o, EC_NONE);
+  else
+    this.emitBLEP(right, EC_NONE);
+
+  hasParen && this.w(')');
+  return true; // something was actually emitted
+};
+
+this.emitRight = 
+function(n, o, flags) {
+  var hasParen = false;
+  var rp = bp(n.operator), lp = bp(o);
+
+  if (lp>rp)
+    hasParen = true;
+  else if (lp === rp)
+    hasParen = isLA(rp);
+
+  if (hasParen) { this.w('('); flags = EC_NONE; }
+  this.emitBLE(n, flags, false);
+  hasParen && this.w(')');
+};
+
+this.emitLeft =
+function(n, o, flags) {
+  var hasParen = false;
+  var rp = bp(o), lp = bp(n.operator);
+
+  if (lp<rp)
+    hasParen = true;
+  else if (lp === rp)
+    hasParen = isRA(lp) ;
+
+  if (hasParen) { this.w('('); flags = EC_NONE; }
+  this.emitBLE(n, flags, false);
+  hasParen && this.w(')');
+};
+
+this.emitBLEP =
+function(n, flags) {
+  switch (n.type) {
+  case 'UnaryExpression': // it has a higher pr than any other op
+  case 'UpdateExpression':
+    return this.emitAny(n, flags, false);
+  }
+  return this.emitHead(n, flags, false);
+};
+
+function isBLE(n) {
+  switch (n.type) {
+  case 'BinaryExpression':
+  case 'LogicalExpression':
+    return true;
+  default:
+    return false;
+  }
+}
+
+},
+function(){
+// write a string value as an ECMAScript string, but without quotes
+this.writeStringValue =
+function(sv) {
+  var ch = -1, len = sv.length, o = 0, luo = o;
+  while (o<len) {
+    ch = sv.charCodeAt(o);
+    if (!this.isStringCh(ch)) {
+      if (luo<o) {
+        this.w(sv.substring(luo,o));
+        luo=o;
+      }
+      this.w(this.stringEscapeFor(ch));
+    }
+    o++;
+  }
+
+  if (luo<o)
+    this.w(sv.substring(luo,o));
+
+  return this;
+};
+
+this.isStringCh =
+function(ch) {
+  switch (ch) {
+  case CH_BACK_SLASH:
+  case CH_SINGLE_QUOTE:
+  case CH_SINGLE_QUOTE:
+    return false;
+  }
+
+  return ch <= CH_COMPLEMENT && ch >= CH_WHITESPACE;
+};
+
+this.stringEscapeFor =
+function(ch) {
+  switch (ch) {
+  case CH_BACK_SLASH: return '\\\\';
+  case CH_SINGLE_QUOTE: return '\\\'';
+  case CH_MULTI_QUOTE: return '\\\"';
+  case CH_VTAB: return '\\v';
+  case CH_BACK: return '\\b';
+  case CH_FORM_FEED: return '\\f';
+  case CH_TAB: return '\\t';
+  case CH_CARRIAGE_RETURN: return '\\r';
+  case CH_LINE_FEED: return '\\n';
+  default:
+    if (ch<=0xFF)
+      return '\\x'+hex2(ch);
+
+    ASSERT.call(this, ch <= 0xFFFF, 'ch not a 16bit');
+    return '\\u'+hex(ch);
+  }
 };
 
 }]  ],
@@ -9650,6 +9849,50 @@ this.applyTo = function(obj, noErrIfUndefNull) {
 };
 
 }]  ],
+[Transformer.prototype, [function(){
+this.tr =
+function(n, ownerBody, isVal) {
+  var ntype = n.type;
+  switch (ntype) {
+  case 'Literal':
+  case '#Untransformed':
+    return n;
+  }
+
+  var transformer = null;
+  if (HAS.call(TransformerList, ntype))
+    transformer = TransformerList[ntype];
+
+  if (transformer === null)
+    throw new Error('could not find <'+ntype+'>-transformer');
+
+  return transformer.call(this, n, ownerBody, isVal);
+};
+
+this.setTS =
+function(ts) {
+  var ts0 = this.tempStack;
+  this.tempStack = ts;
+  return ts0;
+};
+
+this.setScope =
+function(scope) {
+  var cur = null;
+  this.cur = scope ;
+  return cur;
+};
+
+},
+function(){
+TransformerList['BinaryExpression'] =
+function(n, ownerList, isVal) {
+  n.left = this.tr(n.left, null, true);
+  n.right = this.tr(n.right, null, true);
+  return n;
+};
+
+}]  ],
 null,
 null,
 null,
@@ -9672,9 +9915,17 @@ this.Parser = Parser;
 // this.ErrorString = ErrorString;
 // this.Template = Template;
 this.Emitter = Emitter;
-// this.Transformer = Transformer;
+this.Transformer = Transformer;
 // this.Scope = Scope;
 // this.Hitmap = Hitmap;
 // this.GlobalScope = GlobalScope;
 
+this.transpile = function(src, options) {
+  var p = new Parser(src, options);
+  return new Emitter().emitAny(
+    new Transformer().tr(p.parseProgram()),
+    EC_NONE,
+    false
+  );
+};
 ;}).call (function(){try{return module.exports;}catch(e){return this;}}.call(this))

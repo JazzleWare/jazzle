@@ -20,21 +20,49 @@ var TK_UNBIN = TK_SIMP_BINARY|TK_UNARY;
 var TK_ANY_ASSIG = TK_SIMP_ASSIG|TK_OP_ASSIG;
 var TK_ANY_BINARY = TK_SIMP_BINARY|TK_ANY_ASSIG;
 
+var BINP = {};
+
 var PREC_NONE = 0; // [<start>]
 var PREC_COMMA = nextl(PREC_NONE); // ,
 var PREC_ASSIG = nextr(PREC_COMMA); // =, [<op>]=
 var PREC_COND = nextl(PREC_ASSIG); // ?:
-var PREC_LOG_OR = nextl(PREC_COND); // ||
-var PREC_LOG_AND = nextl(PREC_LOG_OR); // &&
-var PREC_BIT_OR = nextl(PREC_LOG_AND); // |
-var PREC_BIT_XOR = nextl(PREC_BIT_OR); // ^
-var PREC_BIT_AND = nextl(PREC_BIT_XOR); // &
-var PREC_EQ = nextl(PREC_BIT_AND); // !=, ===, ==, !==
-var PREC_COMP = nextl(PREC_EQ); // >, <=, <, >=, instanceof, in
-var PREC_SH = nextl(PREC_COMP); // >>>, >>, <<
-var PREC_ADD = nextl(PREC_SH); // +, -
-var PREC_MUL = nextl(PREC_ADD); // *, /
-var PREC_EX = nextl(PREC_MUL); // **
+
+var PREC_LOG_OR =
+BINP['||'] = 
+nextl(PREC_COND); // ||
+
+var PREC_LOG_AND = 
+BINP['&&'] = 
+nextl(PREC_LOG_OR); // &&
+
+var PREC_BIT_OR = 
+BINP['|'] = 
+nextl(PREC_LOG_AND); // |
+
+var PREC_BIT_XOR = 
+BINP['^'] = 
+nextl(PREC_BIT_OR); // ^
+
+var PREC_BIT_AND = 
+BINP['&'] = 
+nextl(PREC_BIT_XOR); // &
+
+var PREC_EQ = 
+BINP['!='] = BINP['==='] = BINP['=='] = BINP['!=='] = 
+nextl(PREC_BIT_AND); // !=, ===, ==, !==
+
+var PREC_COMP =
+BINP['>'] = BINP['<='] = BINP['<'] = BINP['>='] = 
+nextl(PREC_EQ); // >, <=, <, >=, instanceof, in
+
+var PREC_SH =
+BINP['>>>'] = BINP['>>'] = BINP['<<'] = 
+nextl(PREC_COMP); // >>>, >>, <<
+
+var PREC_ADD = BINP['+'] = BINP['-'] = nextl(PREC_SH); // +, -
+var PREC_MUL = BINP['*'] = nextl(PREC_ADD); // *, /
+var PREC_EX = BINP['**'] = nextl(PREC_MUL); // **
+
 var PREC_UNARY = nextr(PREC_EX); // delete, void, -, +, typeof; not really a right-associative thing
 var PREC_UP = nextr(PREC_UNARY); // ++, --; not really a right-associative thing
 
@@ -52,5 +80,9 @@ function isLog(nPrec) {
     return true;
   }
   return false;
+}
+function bp(o) {
+  ASSERT.call(this, HAS.call(BINP, o), 'unknown operator');
+  return BINP[o];
 }
 function isRA(nPrec) { return nPrec&1; }

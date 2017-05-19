@@ -1,11 +1,18 @@
 this.tr =
 function(n, ownerBody, isVal) {
+  var ntype = n.type;
+  switch (ntype) {
+  case 'Literal':
+  case '#Untransformed':
+    return n;
+  }
+
   var transformer = null;
-  if (HAS.call(TransformerList, n.type))
-    transformer = TransformerList[n.type];
+  if (HAS.call(TransformerList, ntype))
+    transformer = TransformerList[ntype];
 
   if (transformer === null)
-    throw new Error('could not find <'+n.type+'>-transformer');
+    throw new Error('could not find <'+ntype+'>-transformer');
 
   return transformer.call(this, n, ownerBody, isVal);
 };

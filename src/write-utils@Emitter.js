@@ -6,7 +6,7 @@ function(sv) {
     ch = sv.charCodeAt(o);
     if (!this.isStringCh(ch)) {
       if (luo<o) {
-        this.w(sv.substring(luo,o);
+        this.w(sv.substring(luo,o));
         luo=o;
       }
       this.w(this.stringEscapeFor(ch));
