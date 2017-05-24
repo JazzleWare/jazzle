@@ -83,6 +83,8 @@ function loadTranspilerTests(ts) {
   mt('binary-expression', "5 * (5 * 5)", "5 * (5 * 5)", o);
   mt('binary-expression', "5 * (5 - 5)", "5 * (5 - 5)", o);
   mt('binary-expression', "5 * 5 - 5", "5 * 5 - 5", o);
+  mt('string-esc', "'\\\"'", "'\\\"'", o);
+  mt('string-esc', "'\\b\\v\\f\\t\\r\\n\\\\\\\"\\\''", "'\\b\\v\\f\\t\\r\\n\\\\\\\"\\\''", o);
 }
 
 function buildTestBuilder(ts) {

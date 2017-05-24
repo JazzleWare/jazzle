@@ -555,7 +555,8 @@ var EC_NONE = 0,
     EC_START_STMT = 2,
     EC_EXPR_HEAD = EC_START_STMT << 1,
     EC_CALL_HEAD = EC_EXPR_HEAD << 1,
-    EC_NON_SEQ = EC_CALL_HEAD << 1;
+    EC_NON_SEQ = EC_CALL_HEAD << 1,
+    EC_IN = EC_NON_SEQ << 1;
 
 var PE_NO_NONVAR = 1,
     PE_NO_LABEL = PE_NO_NONVAR << 1,
@@ -593,27 +594,6 @@ function isHex(e) {
     (e >= CH_0 && e <= CH_9) ||
     (e >= CH_A && e <= CH_F)
   );
-}
-;
-function toBody(b) {
-  if (b.length > 1)
-    return { type: 'BlockStatement', body: b };
-
-  if (b.length === 1)
-    return b[0];
-
-  return { type: 'EmptyStatement' };
-}
-
-function spreadIdx(array, start) {
-  var list = array, i = start;
-  while (i < list.length) {
-    var elem = list[i];
-    if (elem !== null && elem.type === 'SpreadElement')
-      return i;
-    ++i;
-  }
-  return -1;
 }
 ;
 var ERR_FLAG_LEN = 0;
@@ -1136,6 +1116,56 @@ function() { return this.flags & SF_HERITAGE; };
 
 }]  ],
 [ConcreteScope.prototype, [function(){
+this.getL =
+function(gName, idx, from) {
+  var lg = this.getLG(gName);
+  ASSERT.call(this, idx<lg.length, 'nir -- <'+idx+'>');
+  var l = lg[idx];
+  if (from !== null)
+    l.track(from);
+  return l;
+};
+
+this.gocL =
+function(gName, idx, from) {
+  var lg = this.gocLG(gName);
+  ASSERT.call(this, idx<lg.length, 'nir -- <'+idx+'>');
+  var l = lg[idx];
+  if (from !== null)
+    l.track(from);
+  return l;
+};
+
+this.gocLG =
+function(gName) {
+  var lg = this.getLG(gName);
+  return lg || this.createLG(gName);
+};
+
+this.getLG =
+function(gName) {
+  var mname = _m(gName);
+  if (this.liquidDefs.has(mname))
+    return this.liquidDefs.get(mname);
+  return null;
+};
+
+this.createLG =
+function(gName) {
+  var mname = _m(gName);
+  ASSERT.call(this, this.getLG(gName) === null, 'LGr exists');
+  var l = this.createL(gName);
+
+  return this.liquidDefs.set(mname, [l]);
+};
+
+this.createL =
+function(gName) {
+  return new Liquid(gName).r(new Ref(this));
+};
+
+},
+function(){
 this.spCreate_this =
 function(ref) {
   if (!ref)
@@ -1266,32 +1296,32 @@ this.l = function() {
 };
 
 this.emitHead =
-function(n, isStmt, flags) {
-  return this.emitAny(n, isStmt, flags|EC_EXPR_HEAD|EC_NON_SEQ);
+function(n, flags, isStmt) {
+  return this.emitAny(n, flags|EC_EXPR_HEAD|EC_NON_SEQ, isStmt);
 };
 
 this.eH = function(n, isStmt, flags) {
-  this.emitHead(n, isStmt, flags);
+  this.emitHead(n, flags, isStmt);
   return this;
 };
 
-this.emitAny = function(n, isStmt, startStmt) {
+this.emitAny = function(n, flags, isStmt) {
   if (HAS.call(Emitters, n.type))
-    return Emitters[n.type].call(this, n, isStmt, startStmt);
+    return Emitters[n.type].call(this, n, flags, isStmt);
   this.err('unknow.node');
 };
 
-this.eA = function(n, isStmt, startStmt) {
-  this.emitAny(n, isStmt, startStmt); 
+this.eA = function(n, flags, isStmt) {
+  this.emitAny(n, flags, isStmt); 
   return this; 
 };
 
-this.emitNonSeq = function(n, isStmt, flags) {
-  this.emitAny(n, isStmt, flags|EC_NON_SEQ);
+this.emitNonSeq = function(n, flags, isStmt) {
+  this.emitAny(n, flags|EC_NON_SEQ, isStmt);
 };
 
-this.eN = function(n, isStmt, flags) {
-  this.emitNonSeq(n, isStmt, flags);
+this.eN = function(n, flags, isStmt) {
+  this.emitNonSeq(n, flags, isStmt);
   return this;
 };
 
@@ -1385,12 +1415,12 @@ this.jz = function(name) {
   return this.wm('jz','.',name);
 };
 
-this.emitCallHead = function(n, isStmt, flags) {
-  return this.eH(n, isStmt, flags|EC_CALL_HEAD);
+this.emitCallHead = function(n, flags, isStmt) {
+  return this.eH(n, flags|EC_CALL_HEAD, isStmt);
 };
 
-this.emitNewHead = function(n, isStmt, flags) {
-  return this.eH(n, isStmt, flags|EC_NEW_HEAD);
+this.emitNewHead = function(n, flags, isStmt) {
+  return this.eH(n, flags|EC_NEW_HEAD, isStmt);
 };
 
 // write shadow line; differs from `l() in that a newline is only inserted if something comes after it
@@ -1408,6 +1438,75 @@ function() {
     return true;
   }
   return false;
+};
+
+},
+function(){
+// write a string value as an ECMAScript string, but without quotes
+this.writeStringValue =
+function(sv) {
+  var ch = -1, len = sv.length, o = 0, luo = o;
+  while (o<len) {
+    ch = sv.charCodeAt(o);
+    if (!this.isStringCh(ch)) {
+      if (luo<o)
+        this.w(sv.substring(luo,o));
+
+      this.w(this.stringEscapeFor(ch));
+      luo=o+1  ;
+    }
+    o++;
+  }
+
+  if (luo<o)
+    this.w(sv.substring(luo,o));
+
+  return this;
+};
+
+this.isStringCh =
+function(ch) {
+  switch (ch) {
+  case CH_BACK_SLASH:
+  case CH_SINGLE_QUOTE:
+  case CH_MULTI_QUOTE:
+    return false;
+  }
+
+  return ch <= CH_COMPLEMENT && ch >= CH_WHITESPACE;
+};
+
+this.stringEscapeFor =
+function(ch) {
+  switch (ch) {
+  case CH_BACK_SLASH: return '\\\\';
+  case CH_SINGLE_QUOTE: return '\\\'';
+  case CH_MULTI_QUOTE: return '\\\"';
+  case CH_VTAB: return '\\v';
+  case CH_BACK: return '\\b';
+  case CH_FORM_FEED: return '\\f';
+  case CH_TAB: return '\\t';
+  case CH_CARRIAGE_RETURN: return '\\r';
+  case CH_LINE_FEED: return '\\n';
+  default:
+    if (ch<=0xFF)
+      return '\\x'+hex2(ch);
+
+    ASSERT.call(this, ch <= 0xFFFF, 'ch not a 16bit');
+    return '\\u'+hex(ch);
+  }
+};
+
+this.emitCommaList =
+function(list, flags) {
+  var e = 0;
+  while (e < list.length) {
+    if (e) this.s().w(',');
+    this.eN(list[e], flags, false);
+    if (e === 0) flags &= EC_IN;
+    e++;
+  }
+  return this;
 };
 
 },
@@ -1506,63 +1605,38 @@ function(n, flags, isStmt) {
     ASSERT.call(this, false, 'unknown value');
     break;
   }
+  return true;
 };
 
 },
 function(){
-// write a string value as an ECMAScript string, but without quotes
-this.writeStringValue =
-function(sv) {
-  var ch = -1, len = sv.length, o = 0, luo = o;
-  while (o<len) {
-    ch = sv.charCodeAt(o);
-    if (!this.isStringCh(ch)) {
-      if (luo<o) {
-        this.w(sv.substring(luo,o));
-        luo=o;
-      }
-      this.w(this.stringEscapeFor(ch));
-    }
-    o++;
-  }
+Emitters['NewExpression'] =
+function(n, flags, isStmt) {
+  this.w('new').s().emitNewHead(n.callee);
+  this.w('(').emitCommaList(n.arguments).w(')');
 
-  if (luo<o)
-    this.w(sv.substring(luo,o));
-
-  return this;
+  return true;
 };
 
-this.isStringCh =
-function(ch) {
-  switch (ch) {
-  case CH_BACK_SLASH:
-  case CH_SINGLE_QUOTE:
-  case CH_SINGLE_QUOTE:
-    return false;
-  }
-
-  return ch <= CH_COMPLEMENT && ch >= CH_WHITESPACE;
+},
+function(){
+Emitters['UnaryExpression'] = 
+function(n, flags, isStmt) {
+  var lastChar = this.code.charAt(this.code.length-1) ;
+  var o = n.operator;
+  lastChar === o && this.s();
+  this.w(o);
+  this.emitUA(n.argument);
+  return true;
 };
 
-this.stringEscapeFor =
-function(ch) {
-  switch (ch) {
-  case CH_BACK_SLASH: return '\\\\';
-  case CH_SINGLE_QUOTE: return '\\\'';
-  case CH_MULTI_QUOTE: return '\\\"';
-  case CH_VTAB: return '\\v';
-  case CH_BACK: return '\\b';
-  case CH_FORM_FEED: return '\\f';
-  case CH_TAB: return '\\t';
-  case CH_CARRIAGE_RETURN: return '\\r';
-  case CH_LINE_FEED: return '\\n';
-  default:
-    if (ch<=0xFF)
-      return '\\x'+hex2(ch);
-
-    ASSERT.call(this, ch <= 0xFFFF, 'ch not a 16bit');
-    return '\\u'+hex(ch);
+this.emitUA = function(n) {
+  switch (n.type) {
+  case 'UnaryExpression':
+  case 'UpdateExpression':
+    return this.emitAny(n, EC_NONE, false);
   }
+  return this.emitHead(n, EC_NONE, false);
 };
 
 }]  ],
@@ -1836,7 +1910,32 @@ this.newSynthLabelName = function(baseLabelName) {
 };
 
 }]  ],
-null,
+[Liquid.prototype, [function(){
+// TODO: liquids leave no signs in any scope the don't belong to --
+//       they record it in their list of referencing scopes if they
+//       contain any significant names, but they are not recorded in the lsi
+//       of the scope's unresolved references; nothing looks actually wrong with this approach,
+//       except that it is in total contrast to the one taken in the previous version
+this.track =
+function(scope) {
+  var cur = scope, root = this.ref.scope ;
+  while (true) {
+    if (cur.hasSignificantNames()) {
+      if (HAS.call(this.rsMap, cur.scopeID))
+        break;
+      this.rsMap[cur.scopeID] = true;
+      this.ref.rsList.push(cur);
+    }
+    if (cur === root)
+      break;
+    cur = cur.parent;
+    ASSERT.call(this, cur,
+      'reached topmost while pulling up a liquid');
+  }
+  return this;
+};
+
+}]  ],
 null,
 [ParenScope.prototype, [function(){
 this.finish = 
@@ -9459,6 +9558,24 @@ function() {
   return a;
 };
 
+this.accL =
+function(name, idx, scope) {
+  if (scope === null)
+    scope = this.scs;
+  return scope.getL(name, idx, this);
+};
+
+this.setName =
+function(name, snType, sourceDecl) {
+  ASSERT.call(this, this.canHaveName(),
+    'only cls/fn can have a name');
+  ASSERT_EQ.call(this, this.scopeName, null);
+  this.scopeName = 
+    new ScopeName(name, snType, sourceDecl).r(new Ref(this));
+
+  return this.scopeName;
+};
+
 this.determineFlags =
 function() {
   if (this.isParen())
@@ -9485,15 +9602,11 @@ function() {
   return fl;
 };
 
-this.setName =
-function(name, snType, sourceDecl) {
-  ASSERT.call(this, this.canHaveName(),
-    'only cls/fn can have a name');
-  ASSERT_EQ.call(this, this.scopeName, null);
-  this.scopeName = 
-    new ScopeName(name, snType, sourceDecl).r(new Ref(this));
-
-  return this.scopeName;
+this.accocL =
+function(name, idx, scope) {
+  if (scope === null)
+    scope = this.scs;
+  return scope.gocL(name, idx, this);
 };
 
 },
@@ -9895,8 +10008,42 @@ function(n, ownerList, isVal) {
   return n;
 };
 
+},
+function(){
+TransformerList['NewExpression'] =
+function(n, isVal) {
+  n.callee = this.tr(n.callee, true);
+  this.trList(n.arguments, true);
+
+  return n;
+};
+
+},
+function(){
+TransformerList['UnaryExpression'] =
+function(n, ownerList, isVal) {
+  n.argument = this.tr(n.argument, ownerList, true);
+  return n;
+};
+
+},
+function(){
+this.trListChunk =
+function(list, ownerList, isVal, s, e) {
+  if (arguments.length < 5 || e === -1)
+    e = list.length-1;
+  while (s<e) {
+    list[s] = this.tr(list[s], ownerList, isVal);
+    s++ ; 
+  }
+};
+
+this.trList =
+function(list, ownerList, isVal) {
+  return this.trListChunk(list, ownerList, isVal, 0, list.length-1) ;
+};
+
 }]  ],
-null,
 null,
 null,
 null,
@@ -9930,4 +10077,35 @@ this.transpile = function(src, options) {
     EC_NONE,
     false).code ;
 };
+
+this.Scope = Scope; 
+this.FunScope = FunScope; 
+this.CatchScope = CatchScope; 
+this.GlobalScope = GlobalScope; 
+this.ConcreteScope = ConcreteScope; 
+
+this.ST_GLOBAL = 1,
+this.ST_MODULE = ST_GLOBAL << 1,
+this.ST_SCRIPT = ST_MODULE << 1,
+this.ST_EXPR = ST_SCRIPT << 1,
+this.ST_DECL = ST_EXPR << 1,
+this.ST_OBJ = ST_DECL << 1,
+this.ST_FN = ST_OBJ << 1,
+this.ST_CLS = ST_FN << 1,
+this.ST_CLSMEM = ST_CLS << 1,
+this.ST_STATICMEM = ST_CLSMEM << 1,
+this.ST_OBJMEM = ST_STATICMEM << 1,
+this.ST_METH = ST_OBJMEM << 1,
+this.ST_CTOR = ST_METH << 1,
+this.ST_SETTER = ST_CTOR << 1,
+this.ST_GETTER = ST_SETTER << 1,
+this.ST_ACCESSOR = ST_GETTER|ST_SETTER,
+this.ST_ARROW = ST_GETTER << 1,
+this.ST_GEN = ST_ARROW << 1,
+this.ST_ASYNC = ST_GEN << 1,
+this.ST_BLOCK = ST_ASYNC << 1,
+this.ST_BARE = ST_BLOCK << 1,
+this.ST_CATCH = ST_BARE << 1,
+this.ST_PAREN = ST_CATCH << 1,
+this.ST_NONE = 0;
 ;}).call (function(){try{return module.exports;}catch(e){return this;}}.call(this))

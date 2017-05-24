@@ -139,7 +139,8 @@ var EC_NONE = 0,
     EC_START_STMT = 2,
     EC_EXPR_HEAD = EC_START_STMT << 1,
     EC_CALL_HEAD = EC_EXPR_HEAD << 1,
-    EC_NON_SEQ = EC_CALL_HEAD << 1;
+    EC_NON_SEQ = EC_CALL_HEAD << 1,
+    EC_IN = EC_NON_SEQ << 1;
 
 var PE_NO_NONVAR = 1,
     PE_NO_LABEL = PE_NO_NONVAR << 1,

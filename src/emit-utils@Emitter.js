@@ -5,11 +5,11 @@ function(sv) {
   while (o<len) {
     ch = sv.charCodeAt(o);
     if (!this.isStringCh(ch)) {
-      if (luo<o) {
+      if (luo<o)
         this.w(sv.substring(luo,o));
-        luo=o;
-      }
+
       this.w(this.stringEscapeFor(ch));
+      luo=o+1  ;
     }
     o++;
   }
@@ -25,7 +25,7 @@ function(ch) {
   switch (ch) {
   case CH_BACK_SLASH:
   case CH_SINGLE_QUOTE:
-  case CH_SINGLE_QUOTE:
+  case CH_MULTI_QUOTE:
     return false;
   }
 
@@ -51,4 +51,16 @@ function(ch) {
     ASSERT.call(this, ch <= 0xFFFF, 'ch not a 16bit');
     return '\\u'+hex(ch);
   }
+};
+
+this.emitCommaList =
+function(list, flags) {
+  var e = 0;
+  while (e < list.length) {
+    if (e) this.s().w(',');
+    this.eN(list[e], flags, false);
+    if (e === 0) flags &= EC_IN;
+    e++;
+  }
+  return this;
 };

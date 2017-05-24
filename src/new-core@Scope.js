@@ -30,6 +30,24 @@ function() {
   return a;
 };
 
+this.accL =
+function(name, idx, scope) {
+  if (scope === null)
+    scope = this.scs;
+  return scope.getL(name, idx, this);
+};
+
+this.setName =
+function(name, snType, sourceDecl) {
+  ASSERT.call(this, this.canHaveName(),
+    'only cls/fn can have a name');
+  ASSERT_EQ.call(this, this.scopeName, null);
+  this.scopeName = 
+    new ScopeName(name, snType, sourceDecl).r(new Ref(this));
+
+  return this.scopeName;
+};
+
 this.determineFlags =
 function() {
   if (this.isParen())
@@ -56,13 +74,9 @@ function() {
   return fl;
 };
 
-this.setName =
-function(name, snType, sourceDecl) {
-  ASSERT.call(this, this.canHaveName(),
-    'only cls/fn can have a name');
-  ASSERT_EQ.call(this, this.scopeName, null);
-  this.scopeName = 
-    new ScopeName(name, snType, sourceDecl).r(new Ref(this));
-
-  return this.scopeName;
+this.accocL =
+function(name, idx, scope) {
+  if (scope === null)
+    scope = this.scs;
+  return scope.gocL(name, idx, this);
 };

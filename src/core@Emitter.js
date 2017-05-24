@@ -13,32 +13,32 @@ this.l = function() {
 };
 
 this.emitHead =
-function(n, isStmt, flags) {
-  return this.emitAny(n, isStmt, flags|EC_EXPR_HEAD|EC_NON_SEQ);
+function(n, flags, isStmt) {
+  return this.emitAny(n, flags|EC_EXPR_HEAD|EC_NON_SEQ, isStmt);
 };
 
 this.eH = function(n, isStmt, flags) {
-  this.emitHead(n, isStmt, flags);
+  this.emitHead(n, flags, isStmt);
   return this;
 };
 
-this.emitAny = function(n, isStmt, startStmt) {
+this.emitAny = function(n, flags, isStmt) {
   if (HAS.call(Emitters, n.type))
-    return Emitters[n.type].call(this, n, isStmt, startStmt);
+    return Emitters[n.type].call(this, n, flags, isStmt);
   this.err('unknow.node');
 };
 
-this.eA = function(n, isStmt, startStmt) {
-  this.emitAny(n, isStmt, startStmt); 
+this.eA = function(n, flags, isStmt) {
+  this.emitAny(n, flags, isStmt); 
   return this; 
 };
 
-this.emitNonSeq = function(n, isStmt, flags) {
-  this.emitAny(n, isStmt, flags|EC_NON_SEQ);
+this.emitNonSeq = function(n, flags, isStmt) {
+  this.emitAny(n, flags|EC_NON_SEQ, isStmt);
 };
 
-this.eN = function(n, isStmt, flags) {
-  this.emitNonSeq(n, isStmt, flags);
+this.eN = function(n, flags, isStmt) {
+  this.emitNonSeq(n, flags, isStmt);
   return this;
 };
 
@@ -132,12 +132,12 @@ this.jz = function(name) {
   return this.wm('jz','.',name);
 };
 
-this.emitCallHead = function(n, isStmt, flags) {
-  return this.eH(n, isStmt, flags|EC_CALL_HEAD);
+this.emitCallHead = function(n, flags, isStmt) {
+  return this.eH(n, flags|EC_CALL_HEAD, isStmt);
 };
 
-this.emitNewHead = function(n, isStmt, flags) {
-  return this.eH(n, isStmt, flags|EC_NEW_HEAD);
+this.emitNewHead = function(n, flags, isStmt) {
+  return this.eH(n, flags|EC_NEW_HEAD, isStmt);
 };
 
 // write shadow line; differs from `l() in that a newline is only inserted if something comes after it
