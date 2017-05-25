@@ -65,13 +65,29 @@ function(list, flags) {
   return this;
 };
 
+this.emitBody =
+function(stmt) {
+  switch (stmt.type) {
+  case 'BlockStatement':
+    this.s();
+  case 'EmptyStatement':
+    this.eA(stmt, EC_START_STMT, true);
+    return true;
+  }
+  this.l();
+  var em = this.emitAny(stmt, EC_START_STMT, true);
+  if (em)
+    return true;
+  this.w(';');
+  return false;
+};
+
 this.emitStmtList =
 function(list) {
-  var e = 0;
+  var em = false, e = 0;
   while (e < list.length) {
-    var em = this.eA(list[e++], EC_START_STMT, true);
-    this.csl(); // clear shadow line
+    em = this.eA(list[e++], EC_START_STMT, true) || em;
     em && this.wsl();
   }
-  return this;
+  return em;
 };

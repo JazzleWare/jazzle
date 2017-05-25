@@ -1509,15 +1509,31 @@ function(list, flags) {
   return this;
 };
 
+this.emitBody =
+function(stmt) {
+  switch (stmt.type) {
+  case 'BlockStatement':
+    this.s();
+  case 'EmptyStatement':
+    this.eA(stmt, EC_START_STMT, true);
+    return true;
+  }
+  this.l();
+  var em = this.emitAny(stmt, EC_START_STMT, true);
+  if (em)
+    return true;
+  this.w(';');
+  return false;
+};
+
 this.emitStmtList =
 function(list) {
-  var e = 0;
+  var em = false, e = 0;
   while (e < list.length) {
-    var em = this.eA(list[e++], EC_START_STMT, true);
-    this.csl(); // clear shadow line
+    em = this.eA(list[e++], EC_START_STMT, true) || em;
     em && this.wsl();
   }
-  return this;
+  return em;
 };
 
 },
@@ -1604,12 +1620,42 @@ Emitters['BlockStatement'] =
 function(n, flags, isStmt) {
   ASSERT_EQ.call(this, isStmt, true);
   this.w('{');
-  if (n.body.length) {
-    this.i().wsl();
-    this.emitStmtList(n.body).u();
-  }
-  this.w('}');
+  this.i().wsl();
+  this.emitStmtList(n.body) ?
+    this.wsl() : this.csl();
+  this.u().w('}');
   return true;
+};
+
+},
+function(){
+Emitters['IfStatement'] =
+function(n, flags, isStmt) {
+  ASSERT_EQ.call(this, isStmt, true);
+  this.wm('if',' ','(').eA(n.test, EC_NONE, false).w(')').emitIfBody(n.consequent);
+  n.alternate && this.l().w('else').emitElseBody(n.alternate);
+  return true;
+};
+
+this.emitIfBody =
+function(stmt) {
+  switch (stmt.type) {
+  case 'BlockStatement':
+    this.s();
+  case 'EmptyStatement':
+    return this.emitAny(stmt, EC_START_STMT, true);
+  }
+  this.w('{').i().wsl();
+  this.emitAny(stmt, EC_START_STMT, true) ? this.wsl() : this.csl();
+  this.u().w('}');
+  return true;
+};
+
+this.emitElseBody =
+function(stmt) {
+  if (stmt.type === 'IfStatement')
+    return this.s().emitAny(stmt, EC_START_STMT, true);
+  return this.emitBody(stmt);
 };
 
 },
@@ -10046,6 +10092,18 @@ function(n, isVal) {
     list[e] = this.tr(list[e], false);
     e++;
   }
+  return n;
+};
+
+},
+function(){
+TransformerList['IfStatement'] =
+function(n, isVal) {
+  ASSERT_EQ.call(this, isVal, false);
+  n.test = this.tr(n.test, true);
+  n.consequent = this.tr(n.consequent, false);
+  if (n.alternate)
+    n.alternate = this.tr(n.alternate, false);
   return n;
 };
 
