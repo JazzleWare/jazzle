@@ -730,7 +730,7 @@ function errt_ssyn(err) { return err & ERR_S_SYN; }
 ;
 var Emitters = {};
 var UntransformedEmitters = {};
-var TransformerList = {};
+var Transformers = {};
 ;
 var VDT_VOID = 1;
 var VDT_TYPEOF = 2;
@@ -1300,7 +1300,7 @@ function(n, flags, isStmt) {
   return this.emitAny(n, flags|EC_EXPR_HEAD|EC_NON_SEQ, isStmt);
 };
 
-this.eH = function(n, isStmt, flags) {
+this.eH = function(n, flags, isStmt) {
   this.emitHead(n, flags, isStmt);
   return this;
 };
@@ -1561,6 +1561,7 @@ function(n, flags, isStmt) {
     this.emitBLEP(right, EC_NONE);
 
   hasParen && this.w(')');
+  isStmt && this.w(';');
   return true; // something was actually emitted
 };
 
@@ -1629,6 +1630,24 @@ function(n, flags, isStmt) {
 
 },
 function(){
+Emitters['EmptyStatement'] =
+function(n, flags, isStmt) {
+  ASSERT_EQ.call(this, isStmt, true);
+  this.w(';');
+  return true;
+};
+
+},
+function(){
+Emitters['ExpressionStatement'] =
+function(n, flags, isStmt) {
+  ASSERT_EQ.call(this, isStmt, true);
+  ASSERT.call(this, flags & EC_START_STMT, 'must be in stmt context');
+  return this.emitAny(n.expression, flags, true);
+};
+
+},
+function(){
 Emitters['IfStatement'] =
 function(n, flags, isStmt) {
   ASSERT_EQ.call(this, isStmt, true);
@@ -1645,7 +1664,13 @@ function(stmt) {
   case 'EmptyStatement':
     return this.emitAny(stmt, EC_START_STMT, true);
   }
-  this.w('{').i().wsl();
+  if (stmt.type === 'ExpressionStatement') {
+    this.i();
+    var em = this.l().emitAny(stmt, EC_START_STMT, true);
+    this.u();
+    return em;
+  }
+  this.s().w('{').i().wsl();
   this.emitAny(stmt, EC_START_STMT, true) ? this.wsl() : this.csl();
   this.u().w('}');
   return true;
@@ -1676,6 +1701,7 @@ function(n, flags, isStmt) {
     ASSERT.call(this, false, 'unknown value');
     break;
   }
+  isStmt && this.w(';');
   return true;
 };
 
@@ -1686,6 +1712,7 @@ function(n, flags, isStmt) {
   this.w('new').s().emitNewHead(n.callee);
   this.w('(').emitCommaList(n.arguments).w(')');
 
+  isStmt && this.w(';');
   return true;
 };
 
@@ -1701,6 +1728,7 @@ function(n, flags, isStmt) {
   this.w(o);
   this.emitUA(n.argument);
   hasParen && this.w(')');
+  isStmt && this.w(';');
   return true;
 };
 
@@ -1711,6 +1739,26 @@ this.emitUA = function(n) {
     return this.emitAny(n, EC_NONE, false);
   }
   return this.emitHead(n, EC_NONE, false);
+};
+
+},
+function(){
+Emitters['WhileStatement'] =
+function(n, flags, isStmt) {
+  this.wm('while',' ','(').eA(n.test, EC_NONE, false).w(')').emitBody(n.body);
+  return true;
+};
+
+},
+function(){
+Emitters['DoWhileStatement'] =
+function(n, flags, isStmt) {
+  ASSERT_EQ.call(this, isStmt, true);
+  this.wm('do',' ','{').i().wsl();
+  this.emitAny(n.body, EC_START_STMT, true ) ?
+    this.wsl() : this.csl();
+  this.u().wm('}',' ','while',' ','(').eA(n.test, EC_NONE, false).wm(')',';');
+  return true;
 };
 
 }]  ],
@@ -10044,14 +10092,15 @@ this.tr =
 function(n, ownerBody, isVal) {
   var ntype = n.type;
   switch (ntype) {
-  case 'Literal':
+  case 'EmptyStatement':
   case '#Untransformed':
+  case 'Literal':
     return n;
   }
 
   var transformer = null;
-  if (HAS.call(TransformerList, ntype))
-    transformer = TransformerList[ntype];
+  if (HAS.call(Transformers, ntype))
+    transformer = Transformers[ntype];
 
   if (transformer === null)
     throw new Error('could not find <'+ntype+'>-transformer');
@@ -10075,7 +10124,7 @@ function(scope) {
 
 },
 function(){
-TransformerList['BinaryExpression'] =
+Transformers['BinaryExpression'] =
 function(n, ownerList, isVal) {
   n.left = this.tr(n.left, null, true);
   n.right = this.tr(n.right, null, true);
@@ -10084,7 +10133,7 @@ function(n, ownerList, isVal) {
 
 },
 function(){
-TransformerList['BlockStatement'] =
+Transformers['BlockStatement'] =
 function(n, isVal) {
   ASSERT_EQ.call(this, isVal, false);
   var list = n.body, e = 0;
@@ -10097,7 +10146,16 @@ function(n, isVal) {
 
 },
 function(){
-TransformerList['IfStatement'] =
+Transformers['ExpressionStatement'] =
+function(n, isVal) {
+  ASSERT_EQ.call(this, isVal, false);
+  n.expression = this.tr(n.expression, false);
+  return n;
+};
+
+},
+function(){
+Transformers['IfStatement'] =
 function(n, isVal) {
   ASSERT_EQ.call(this, isVal, false);
   n.test = this.tr(n.test, true);
@@ -10109,7 +10167,7 @@ function(n, isVal) {
 
 },
 function(){
-TransformerList['NewExpression'] =
+Transformers['NewExpression'] =
 function(n, isVal) {
   n.callee = this.tr(n.callee, true);
   this.trList(n.arguments, true);
@@ -10119,9 +10177,27 @@ function(n, isVal) {
 
 },
 function(){
-TransformerList['UnaryExpression'] =
+Transformers['UnaryExpression'] =
 function(n, ownerList, isVal) {
   n.argument = this.tr(n.argument, ownerList, true);
+  return n;
+};
+
+},
+function(){
+Transformers['WhileStatement'] =
+function(n, isVal) {
+  n.test = this.tr(n.test, true);
+  n.body = this.tr(n.body, false);
+  return n;
+};
+
+},
+function(){
+Transformers['DoWhileStatement'] =
+function(n, isVal) {
+  n.body = this.tr(n.body, false);
+  n.test = this.tr(n.test, true);
   return n;
 };
 

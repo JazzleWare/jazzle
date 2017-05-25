@@ -21,6 +21,7 @@ function(n, flags, isStmt) {
     this.emitBLEP(right, EC_NONE);
 
   hasParen && this.w(')');
+  isStmt && this.w(';');
   return true; // something was actually emitted
 };
 

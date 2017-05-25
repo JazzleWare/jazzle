@@ -1,3 +1,3 @@
 var Emitters = {};
 var UntransformedEmitters = {};
-var TransformerList = {};
+var Transformers = {};

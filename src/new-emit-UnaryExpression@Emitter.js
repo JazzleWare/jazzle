@@ -8,6 +8,7 @@ function(n, flags, isStmt) {
   this.w(o);
   this.emitUA(n.argument);
   hasParen && this.w(')');
+  isStmt && this.w(';');
   return true;
 };
 

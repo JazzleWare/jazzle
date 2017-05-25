@@ -1,4 +1,4 @@
-TransformerList['IfStatement'] =
+Transformers['IfStatement'] =
 function(n, isVal) {
   ASSERT_EQ.call(this, isVal, false);
   n.test = this.tr(n.test, true);

@@ -14,7 +14,13 @@ function(stmt) {
   case 'EmptyStatement':
     return this.emitAny(stmt, EC_START_STMT, true);
   }
-  this.w('{').i().wsl();
+  if (stmt.type === 'ExpressionStatement') {
+    this.i();
+    var em = this.l().emitAny(stmt, EC_START_STMT, true);
+    this.u();
+    return em;
+  }
+  this.s().w('{').i().wsl();
   this.emitAny(stmt, EC_START_STMT, true) ? this.wsl() : this.csl();
   this.u().w('}');
   return true;

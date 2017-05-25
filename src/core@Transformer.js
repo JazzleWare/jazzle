@@ -2,14 +2,15 @@ this.tr =
 function(n, ownerBody, isVal) {
   var ntype = n.type;
   switch (ntype) {
-  case 'Literal':
+  case 'EmptyStatement':
   case '#Untransformed':
+  case 'Literal':
     return n;
   }
 
   var transformer = null;
-  if (HAS.call(TransformerList, ntype))
-    transformer = TransformerList[ntype];
+  if (HAS.call(Transformers, ntype))
+    transformer = Transformers[ntype];
 
   if (transformer === null)
     throw new Error('could not find <'+ntype+'>-transformer');

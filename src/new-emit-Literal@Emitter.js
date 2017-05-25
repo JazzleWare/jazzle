@@ -14,5 +14,6 @@ function(n, flags, isStmt) {
     ASSERT.call(this, false, 'unknown value');
     break;
   }
+  isStmt && this.w(';');
   return true;
 };

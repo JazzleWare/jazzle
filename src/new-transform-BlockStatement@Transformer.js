@@ -1,4 +1,4 @@
-TransformerList['BlockStatement'] =
+Transformers['BlockStatement'] =
 function(n, isVal) {
   ASSERT_EQ.call(this, isVal, false);
   var list = n.body, e = 0;

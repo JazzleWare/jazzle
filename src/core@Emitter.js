@@ -17,7 +17,7 @@ function(n, flags, isStmt) {
   return this.emitAny(n, flags|EC_EXPR_HEAD|EC_NON_SEQ, isStmt);
 };
 
-this.eH = function(n, isStmt, flags) {
+this.eH = function(n, flags, isStmt) {
   this.emitHead(n, flags, isStmt);
   return this;
 };
