@@ -57,10 +57,21 @@ this.emitCommaList =
 function(list, flags) {
   var e = 0;
   while (e < list.length) {
-    if (e) this.s().w(',');
+    if (e) this.wm(',',' ');
     this.eN(list[e], flags, false);
     if (e === 0) flags &= EC_IN;
     e++;
+  }
+  return this;
+};
+
+this.emitStmtList =
+function(list) {
+  var e = 0;
+  while (e < list.length) {
+    var em = this.eA(list[e++], EC_START_STMT, true);
+    this.csl(); // clear shadow line
+    em && this.wsl();
   }
   return this;
 };

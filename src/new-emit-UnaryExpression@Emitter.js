@@ -1,10 +1,13 @@
 Emitters['UnaryExpression'] = 
 function(n, flags, isStmt) {
-  var lastChar = this.code.charAt(this.code.length-1) ;
   var o = n.operator;
+  var hasParen = flags & EC_EXPR_HEAD;
+  if (hasParen) { this.w('('); flags = EC_NONE; }
+  var lastChar = this.code.charAt(this.code.length-1) ;
   lastChar === o && this.s();
   this.w(o);
   this.emitUA(n.argument);
+  hasParen && this.w(')');
   return true;
 };
 

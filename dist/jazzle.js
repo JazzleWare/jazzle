@@ -1501,10 +1501,21 @@ this.emitCommaList =
 function(list, flags) {
   var e = 0;
   while (e < list.length) {
-    if (e) this.s().w(',');
+    if (e) this.wm(',',' ');
     this.eN(list[e], flags, false);
     if (e === 0) flags &= EC_IN;
     e++;
+  }
+  return this;
+};
+
+this.emitStmtList =
+function(list) {
+  var e = 0;
+  while (e < list.length) {
+    var em = this.eA(list[e++], EC_START_STMT, true);
+    this.csl(); // clear shadow line
+    em && this.wsl();
   }
   return this;
 };
@@ -1589,6 +1600,20 @@ function isBLE(n) {
 
 },
 function(){
+Emitters['BlockStatement'] =
+function(n, flags, isStmt) {
+  ASSERT_EQ.call(this, isStmt, true);
+  this.w('{');
+  if (n.body.length) {
+    this.i().wsl();
+    this.emitStmtList(n.body).u();
+  }
+  this.w('}');
+  return true;
+};
+
+},
+function(){
 Emitters['Literal'] =
 function(n, flags, isStmt) {
   switch (typeof n.value) {
@@ -1622,11 +1647,14 @@ function(n, flags, isStmt) {
 function(){
 Emitters['UnaryExpression'] = 
 function(n, flags, isStmt) {
-  var lastChar = this.code.charAt(this.code.length-1) ;
   var o = n.operator;
+  var hasParen = flags & EC_EXPR_HEAD;
+  if (hasParen) { this.w('('); flags = EC_NONE; }
+  var lastChar = this.code.charAt(this.code.length-1) ;
   lastChar === o && this.s();
   this.w(o);
   this.emitUA(n.argument);
+  hasParen && this.w(')');
   return true;
 };
 
@@ -10005,6 +10033,19 @@ TransformerList['BinaryExpression'] =
 function(n, ownerList, isVal) {
   n.left = this.tr(n.left, null, true);
   n.right = this.tr(n.right, null, true);
+  return n;
+};
+
+},
+function(){
+TransformerList['BlockStatement'] =
+function(n, isVal) {
+  ASSERT_EQ.call(this, isVal, false);
+  var list = n.body, e = 0;
+  while (e < list.length) {
+    list[e] = this.tr(list[e], false);
+    e++;
+  }
   return n;
 };
 
