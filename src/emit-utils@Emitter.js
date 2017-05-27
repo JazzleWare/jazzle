@@ -74,11 +74,12 @@ function(stmt) {
     this.eA(stmt, EC_START_STMT, true);
     return true;
   }
-  this.l();
+  this.l().i();
   var em = this.emitAny(stmt, EC_START_STMT, true);
+  this.u();
   if (em)
     return true;
-  this.w(';');
+  this.w(';'); // TODO: else; rather than else[:newline:]  ;
   return false;
 };
 
@@ -90,4 +91,15 @@ function(list) {
     em && this.wsl();
   }
   return em;
+};
+
+this.emitSAT =
+function(n, flags) {
+  switch (n.type) {
+  case '#ResolvedName':
+    return this.emitSAT_resolvedName(n, flags);
+  case 'MemberExpression':
+    return this.emitSAT_mem(n, flags);
+  }
+  ASSERT.call(this, false, 'got <'+n.type+'>');
 };

@@ -132,12 +132,12 @@ this.jz = function(name) {
   return this.wm('jz','.',name);
 };
 
-this.emitCallHead = function(n, flags, isStmt) {
-  return this.eH(n, flags|EC_CALL_HEAD, isStmt);
+this.emitCallHead = function(n, flags) {
+  return this.eH(n, flags|EC_CALL_HEAD, false);
 };
 
-this.emitNewHead = function(n, flags, isStmt) {
-  return this.eH(n, flags|EC_NEW_HEAD, isStmt);
+this.emitNewHead = function(n) {
+  return this.eH(n, EC_NEW_HEAD, false);
 };
 
 // write shadow line; differs from `l() in that a newline is only inserted if something comes after it

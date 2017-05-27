@@ -1,4 +1,5 @@
 this.emitBLE =
+Emitters['LogicalExpression'] =
 Emitters['BinaryExpression'] =
 function(n, flags, isStmt) {
   var hasParen = flags & EC_EXPR_HEAD;

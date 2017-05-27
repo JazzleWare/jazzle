@@ -157,6 +157,14 @@ function Liquid(category) {
   this.category = category;
 }
 ;
+function LiquidGroup(cat, scope) {
+  this.category = cat;
+  this.scope = scope;
+  this.list = [];
+  this.hasSeal = false;
+  this.length = 0;
+}
+;
 function ModuleScope(sParent, type) {
   Scope.call(this, sParent, type);
 
@@ -526,7 +534,7 @@ var OPTIONS =
 var HAS = {}.hasOwnProperty;
 
 function ASSERT(cond, message) { if (!cond) throw new Error(message); }
-function ASSERT_EQ(val,ex) { ASSERT.call(this, val === ex, 'val must be <'+ex+'>'); }
+function ASSERT_EQ(val,ex) { ASSERT.call(this, val === ex, 'val must be <'+ex+'>, not <'+val+'>'); }
 
 var CTX_NONE = 0,
     CTX_PARAM = 1,
@@ -1116,26 +1124,6 @@ function() { return this.flags & SF_HERITAGE; };
 
 }]  ],
 [ConcreteScope.prototype, [function(){
-this.getL =
-function(gName, idx, from) {
-  var lg = this.getLG(gName);
-  ASSERT.call(this, idx<lg.length, 'nir -- <'+idx+'>');
-  var l = lg[idx];
-  if (from !== null)
-    l.track(from);
-  return l;
-};
-
-this.gocL =
-function(gName, idx, from) {
-  var lg = this.gocLG(gName);
-  ASSERT.call(this, idx<lg.length, 'nir -- <'+idx+'>');
-  var l = lg[idx];
-  if (from !== null)
-    l.track(from);
-  return l;
-};
-
 this.gocLG =
 function(gName) {
   var lg = this.getLG(gName);
@@ -1154,14 +1142,10 @@ this.createLG =
 function(gName) {
   var mname = _m(gName);
   ASSERT.call(this, this.getLG(gName) === null, 'LGr exists');
-  var l = this.createL(gName);
-
-  return this.liquidDefs.set(mname, [l]);
-};
-
-this.createL =
-function(gName) {
-  return new Liquid(gName).r(new Ref(this));
+  var group = new LiquidGroup(gName);
+  group.scope = this;
+  group.newL();
+  return this.liquidDefs.set(mname, group );
 };
 
 },
@@ -1415,12 +1399,12 @@ this.jz = function(name) {
   return this.wm('jz','.',name);
 };
 
-this.emitCallHead = function(n, flags, isStmt) {
-  return this.eH(n, flags|EC_CALL_HEAD, isStmt);
+this.emitCallHead = function(n, flags) {
+  return this.eH(n, flags|EC_CALL_HEAD, false);
 };
 
-this.emitNewHead = function(n, flags, isStmt) {
-  return this.eH(n, flags|EC_NEW_HEAD, isStmt);
+this.emitNewHead = function(n) {
+  return this.eH(n, EC_NEW_HEAD, false);
 };
 
 // write shadow line; differs from `l() in that a newline is only inserted if something comes after it
@@ -1518,11 +1502,12 @@ function(stmt) {
     this.eA(stmt, EC_START_STMT, true);
     return true;
   }
-  this.l();
+  this.l().i();
   var em = this.emitAny(stmt, EC_START_STMT, true);
+  this.u();
   if (em)
     return true;
-  this.w(';');
+  this.w(';'); // TODO: else; rather than else[:newline:]  ;
   return false;
 };
 
@@ -1536,9 +1521,21 @@ function(list) {
   return em;
 };
 
+this.emitSAT =
+function(n, flags) {
+  switch (n.type) {
+  case '#ResolvedName':
+    return this.emitSAT_resolvedName(n, flags);
+  case 'MemberExpression':
+    return this.emitSAT_mem(n, flags);
+  }
+  ASSERT.call(this, false, 'got <'+n.type+'>');
+};
+
 },
 function(){
 this.emitBLE =
+Emitters['LogicalExpression'] =
 Emitters['BinaryExpression'] =
 function(n, flags, isStmt) {
   var hasParen = flags & EC_EXPR_HEAD;
@@ -1707,11 +1704,37 @@ function(n, flags, isStmt) {
 
 },
 function(){
+Emitters['MemberExpression'] =
+function(n, flags, isStmt) {
+  this.eH(n.object, flags, false);
+  if (n.computed)
+    this.w('[').eA(n.property, EC_NONE, false).w(']');
+  else
+    this.dot().writeIdName(n.property);
+  return true;
+};
+
+this.emitSAT_mem = Emitters['MemberExpression'];
+
+},
+function(){
 Emitters['NewExpression'] =
 function(n, flags, isStmt) {
   this.w('new').s().emitNewHead(n.callee);
   this.w('(').emitCommaList(n.arguments).w(')');
 
+  isStmt && this.w(';');
+  return true;
+};
+
+},
+function(){
+Emitters['SequenceExpression'] =
+function(n, flags, isStmt) {
+  var hasParen = flags & (EC_EXPR_HEAD|EC_NON_SEQ);
+  if (hasParen) { this.w('('); flags = EC_NONE; }
+  this.emitCommaList(n.expressions, flags);
+  hasParen && this.w(')');
   isStmt && this.w(';');
   return true;
 };
@@ -1739,6 +1762,27 @@ this.emitUA = function(n) {
     return this.emitAny(n, EC_NONE, false);
   }
   return this.emitHead(n, EC_NONE, false);
+};
+
+},
+function(){
+Emitters['UpdateExpression'] =
+function(n, flags, isStmt) {
+  var hasParen = flags & EC_EXPR_HEAD;
+  if (hasParen) { this.w('('); flags = EC_NONE; }
+  var o = n.operator;
+  if (n.prefix) {
+    if (this.code.charCodeAt(this.code.length-1) === o.charCodeAt(0))
+      this.s();
+    this.w(o);
+    flags = EC_NONE;
+  }
+  this.emitSAT(n.argument, flags);
+  if (!n.prefix)
+    this.w(o);
+  hasParen && this.w(')');
+  isStmt && this.w(';');
+  return true;
 };
 
 },
@@ -2055,6 +2099,32 @@ function(scope) {
       'reached topmost while pulling up a liquid');
   }
   return this;
+};
+
+}]  ],
+[LiquidGroup.prototype, [function(){
+this.getL =
+function(idx) {
+  return idx < this.list.length ?
+    this.list[idx] : null;
+};
+
+this.seal = function() {
+  ASSERT.call(this, !this.hasSeal, 'has seal');
+  this.hasSeal = true;
+  return this;
+};
+
+this.newL =
+function() {
+  ASSERT.call(this, !this.hasSeal, 'has seal');
+
+  var liq = new Liquid(this.category);
+  liq.r(new Ref(this.scope));
+  liq.idx = this.length;
+  this.list.push(liq);
+  this.length = this.list.length;
+  return liq;
 };
 
 }]  ],
@@ -10124,7 +10194,10 @@ function(scope) {
 
 },
 function(){
-Transformers['BinaryExpression'] =
+
+},
+function(){
+Transformers['LogicalExpression'] = Transformers['BinaryExpression'] =
 function(n, ownerList, isVal) {
   n.left = this.tr(n.left, null, true);
   n.right = this.tr(n.right, null, true);
@@ -10167,6 +10240,17 @@ function(n, isVal) {
 
 },
 function(){
+Transformers['MemberExpression'] =
+function(n, isVal) {
+  n.object = this.tr(n.object, true);
+  if (n.computed) n.property = this.tr(n.property, true);
+  return n;
+};
+
+this.trSAT_mem = Transformers['MemberExpression'];
+
+},
+function(){
 Transformers['NewExpression'] =
 function(n, isVal) {
   n.callee = this.tr(n.callee, true);
@@ -10177,9 +10261,25 @@ function(n, isVal) {
 
 },
 function(){
+Transformers['SequenceExpression'] =
+function(n, isVal) {
+  this.trList(n.expressions, isVal);
+  return n;
+};
+
+},
+function(){
 Transformers['UnaryExpression'] =
 function(n, ownerList, isVal) {
   n.argument = this.tr(n.argument, ownerList, true);
+  return n;
+};
+
+},
+function(){
+Transformers['UpdateExpression'] =
+function(n, isVal) {
+  n.argument = this.trSAT(n.argument);
   return n;
 };
 
@@ -10203,19 +10303,94 @@ function(n, isVal) {
 
 },
 function(){
+this.synth_Temp =
+function(liq) {
+  return {
+    kind: 'temp',
+    occupied: 0,
+    liq: liq,
+    type: '#Untransformed'
+  };
+};
+
+this.synth_TempSave =
+function(t, expr) {
+  ASSERT.call(this, isTemp(t), 't is not temp');
+  if (sameTemp(t, expr))
+    return null;
+  return {
+    kind: 'temp-save',
+    right: expr,
+    left: t,
+    type: '#Untransformed'
+  };
+};
+
+},
+function(){
+this.releaseTemp =
+function(t) {
+  ASSERT.call(this, t.occupied, 'unoccupied temp');
+  t.occupied = false;
+  return t;
+};
+ 
+this.saveInTemp =
+function(expr, list) {
+  var t = this.allocTemp();
+  var tsave = this.synth_TempSave(t, expr);
+  tsave && list.push(tsave);
+  return t;
+};
+
+this.createTemp =
+function() {
+  var liq = this.cur.scs.gocLG('<t>').newL();
+  liq.name = 't';
+  return this.synth_Temp(liq);
+};
+
+this.allocTemp =
+function() { 
+  var t = null;
+  if (this.tempStack.length !== 0)
+    t = this.tempStack.pop();
+  else {
+    t = this.createTemp();
+    this.tempStack.push(t);
+  }
+  ASSERT.call(this, t.occupied === false, 'occupied temp');
+  t.liq.track(this.cur);
+
+  return t;
+};
+
+},
+function(){
 this.trListChunk =
-function(list, ownerList, isVal, s, e) {
+function(list, isVal, s, e) {
   if (arguments.length < 5 || e === -1)
     e = list.length-1;
   while (s<e) {
-    list[s] = this.tr(list[s], ownerList, isVal);
+    list[s] = this.tr(list[s], isVal);
     s++ ; 
   }
 };
 
+this.trSAT =
+function(n, isVal) {
+  switch (n.type) {
+  case 'Identifier':
+    return this.trSAT_name(n);
+  case 'MemberExpression':
+    return this.trSAT_mem(n);
+  }
+  ASSERT.call(this, false, 'SAT !== <'+n.type+'>');
+};
+
 this.trList =
-function(list, ownerList, isVal) {
-  return this.trListChunk(list, ownerList, isVal, 0, list.length-1) ;
+function(list, isVal) {
+  return this.trListChunk(list, isVal, 0, list.length-1) ;
 };
 
 }]  ],

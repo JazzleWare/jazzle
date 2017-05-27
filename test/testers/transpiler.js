@@ -28,7 +28,7 @@ function createTranspilerTester(Parser, Transformer, Emitter) {
   ts.tester.run =
   function(tester, test) {
     var n = tester.n, e = tester.e, t = tester.t;
-    e.emitAny(t.tr(n), 0, false);
+    e.emitAny(t.tr(n, !test.get('stmt')), test.get('stmt') ? 2 : 0, test.get('stmt') || false);
     return e.code ;
   };
 
@@ -69,7 +69,7 @@ function createTranspilerListener() {
 }
 
 function loadTranspilerTests(ts) {
-  var mt = buildTestBuilder(ts), o = ['body',0,'expression'];
+  var mt = buildTestBuilder(ts), o = ['body',0,'expression'], e = ['body', 0];
 
   mt('literal-string-single', "'a'", "'a'", o);
   mt('literal-string-multi',"\"a\"", "'a'", o);
@@ -93,14 +93,32 @@ function loadTranspilerTests(ts) {
   mt('new', "new (5 * 12)", "new (5 * 12)()", o);
   mt('new', "(new 5) * 12", "new 5() * 12", o);
   mt('new', "new 5(new 5, 5)", "new 5(new 5(), 5)", o);
+
+  
+  mt('block', "{}", "{}", e, true );
+  mt('block', "{{}}", "{\n  {}\n}", e, true );
+  mt('block', "{{}{}}", "{\n  {}\n  {}\n}", e, true );
+  mt('block', "{{{{}}{{}}}}", "{\n  {\n    {\n      {}\n    }\n    {\n      {}\n    }\n  }\n}", e, true );
+  mt('if', "if (5) {}", "if (5) {}", e, true );
+  mt('ifElse', "if (5) {} else {}", "if (5) {}\nelse {}", e, true );
+  mt('ifElseIf', "if (5) {} else if (12) {}", "if (5) {}\nelse if (12) {}", e, true );
+  mt('ifElseIfElse', "if (5) {} else if (12) {} else {}", "if (5) {}\nelse if (12) {}\nelse {}", e, true );
+  mt('stmtexpr', "5;", "5;", e, true );
+  mt('stmtexpr', "{5}", "{\n  5;\n}", e, true );
+  mt('stmtexpr', "5", "5;", e, true );
+  mt('stmtexpr', "{{}5}", "{\n  {}\n  5;\n}", e, true );
+  mt('stmtexpr', "if (5) new 12; else 5", "if (5)\n  new 12();\nelse\n  5;", e, true );
+  mt('stmtexpr', "{if(5) new 12; else 5; if (5) 12; else new 5()}", "{\n  if (5)\n    new 12();\n  else\n    5;\n  if (5)\n    12;\n  else\n    new 5();\n}", e, true );
+
 }
 
 function buildTestBuilder(ts) {
-  return function makeTest(name, src, e, objPath) {
+  return function makeTest(name, src, e, objPath, isStmt) {
     var test = new lib.Test();
     test.expectVT(e, 'pass');
     test.set('objPath', objPath);
     test.set('src', src);
+    isStmt && test.set('stmt', isStmt);
     test.name = name;
     ts.add(test);
   };
