@@ -1,7 +1,9 @@
 this.releaseTemp =
 function(t) {
   ASSERT.call(this, t.occupied, 'unoccupied temp');
-  t.occupied = false;
+  t.occupied = 0;
+
+  this.tempStack.push(t);
   return t;
 };
  
@@ -25,11 +27,12 @@ function() {
   var t = null;
   if (this.tempStack.length !== 0)
     t = this.tempStack.pop();
-  else {
+  else 
     t = this.createTemp();
-    this.tempStack.push(t);
-  }
-  ASSERT.call(this, t.occupied === false, 'occupied temp');
+
+  ASSERT.call(this, t.occupied === 0, 'occupied temp');
+  t.occupied = 1;
+
   t.liq.track(this.cur);
 
   return t;

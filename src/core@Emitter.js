@@ -114,6 +114,14 @@ this.getOrCreateIndent = function(indentLen) {
   return cache[indentLen];
 };
 
+// swap code
+this.sc =
+function(c) {
+  var c0 = this.code;
+  this.code = c;
+  return c0;
+};
+
 this.startLine = function() {
   this.insertNL();
   this.lineStarted = true;

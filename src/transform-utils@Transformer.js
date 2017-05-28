@@ -23,3 +23,9 @@ this.trList =
 function(list, isVal) {
   return this.trListChunk(list, isVal, 0, list.length-1) ;
 };
+
+this.accessTZ =
+function() {};
+
+this.accessJZ =
+function() {};

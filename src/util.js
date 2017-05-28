@@ -73,6 +73,11 @@ function createObj(baseObj) {
   return new E();
 }
 
+function isTemp(n) {
+  return n.type === '#Untransformed' &&
+    n.kind === 'temp';
+}
+
 function needsConstCheck(n) {
   return n.type === '#ResolvedName' && n.constCheck;
 }
