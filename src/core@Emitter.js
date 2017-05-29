@@ -127,6 +127,12 @@ this.startLine = function() {
   this.lineStarted = true;
 };
 
+this.ac =
+function(c) {
+  this.code += c;
+  return this;
+};
+
 this.insertNL = function() {
   this.code += '\n';
 };

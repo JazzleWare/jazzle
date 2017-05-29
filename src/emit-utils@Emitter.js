@@ -53,6 +53,11 @@ function(ch) {
   }
 };
 
+this.writeIDName =
+function(nameStr) {
+  return this.w(nameStr);
+};
+
 this.emitCommaList =
 function(list, flags) {
   var e = 0;
