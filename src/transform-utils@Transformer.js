@@ -27,15 +27,3 @@ this.trList =
 function(list, isVal) {
   return this.trListChunk(list, isVal, 0, list.length-1) ;
 };
-
-this.findElem =
-function(list, t) {
-  var e = 0;
-  while (e < list.length) {
-    var elem = list[e];
-    if (elem && elem.type === t)
-      return e;
-    e++;
-  }
-  return -1;
-};

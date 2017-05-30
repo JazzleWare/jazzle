@@ -102,6 +102,16 @@ function(expr) {
   };
 };
 
+this.synth_ArrIterGetRest =
+function(iter, at) {
+  return {
+    kind: 'arr-iter-get-rest',
+    type: '#Untransformed' ,
+    iter: iter,
+    idx: at
+  };
+};
+
 this.synth_ObjIter =
 function(iterVal) {
   return {

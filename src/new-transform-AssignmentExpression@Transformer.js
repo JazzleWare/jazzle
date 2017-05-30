@@ -86,7 +86,17 @@ function(n, isVal) {
 
 this.trArrayElem =
 function(left, iter, at) {
-  var right = this.synth_ArrIterGet(iter, at);
+  var right = null;
+  if (left && left.type === 'RestElement') {
+    right = this.synth_ArrIterGetRest(iter, at);
+    left = left.argument;
+  }
+  else
+    right = this.synth_ArrIterGet(iter, at);
+
+  if (left === null)
+    return right;
+
   var assig = this.synth_SynthAssig(left, right);
   return this.tr(assig, false);
 };

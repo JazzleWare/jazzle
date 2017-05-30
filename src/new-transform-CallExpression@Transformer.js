@@ -1,6 +1,6 @@
 Transformers['CallExpression'] =
 function(n, isVal) {
-  var si = this.findElem(n.arguments, 'SpreadElement');
+  var si = findElem(n.arguments, 'SpreadElement');
   if (si === -1) {
     n.callee = this.tr(n.callee, true );
     this.trList(n.arguments, true );

@@ -1090,6 +1090,17 @@ function isTemp(n) {
     n.kind === 'temp';
 }
 
+function findElem(list, t) {
+  var e = 0;
+  while (e < list.length) {
+    var elem = list[e];
+    if (elem && elem.type === t)
+      return e;
+    e++;
+  }
+  return -1;
+}
+
 function needsConstCheck(n) {
   return n.type === '#ResolvedName' && n.constCheck;
 }
@@ -1505,6 +1516,19 @@ function(nameStr) {
   return this.w(nameStr);
 };
 
+this.writeMemName =
+function(memName, asStr) {
+  switch (memName.type) {
+  case 'Literal':
+    return this.eA(memName, EC_NONE, false);
+  case 'Identifier':
+    return asStr ?
+      this.w("'").writeStringValue(memName.name).w("'") :
+      this.writeIDName(memName.name);
+  }
+  ASSERT.call(this, false, 'unknown name');
+};
+
 this.emitCommaList =
 function(list, flags) {
   var e = 0;
@@ -1855,8 +1879,19 @@ this.emitSAT_mem = Emitters['MemberExpression'];
 function(){
 Emitters['NewExpression'] =
 function(n, flags, isStmt) {
-  this.w('new').s().emitNewHead(n.callee);
-  this.w('(').emitCommaList(n.arguments).w(')');
+  var si = findElem(n.arguments, 'SpreadElement');
+  if (si === -1) {
+    this.w('new').s().emitNewHead(n.callee);
+    this.w('(').emitCommaList(n.arguments).w(')');
+  } else {
+    var hasParen = flags & EC_NEW_HEAD;
+    if (hasParen) { this.w('('); flags = EC_NONE; }
+    this.jz('n').w('(').eN(n.callee, EC_NONE, false).wm(',',' ')
+      .jz('arr').w('(').emitElems(n.arguments, 0, n.arguments.length-1);
+
+    this.w(')').w(')');
+    hasParen && this.w(')');
+  }
 
   isStmt && this.w(';');
   return true;
@@ -1910,19 +1945,6 @@ function(n, flags, isStmt) {
 
   isStmt && this.w(';');
   return true;
-};
-
-this.writeMemName =
-function(memName, asStr) {
-  switch (memName.type) {
-  case 'Literal':
-    return this.eA(memName, EC_NONE, false);
-  case 'Identifier':
-    return asStr ?
-      this.w("'").writeStringValue(memName.name).w("'") :
-      this.writeIDName(memName.name);
-  }
-  ASSERT.call(this, false, 'unknown name');
 };
 
 },
@@ -2024,6 +2046,7 @@ UntransformedEmitters['arr-iter-get'] =
 function(n, flags, isStmt) {
   this.eA(n.iter, EC_NONE, false).wm('.','get');
   this.wm('(',')');
+  isStmt && this.w(';');
   return true;
 };
 
@@ -2039,6 +2062,11 @@ UntransformedEmitters['arr-iter'] =
 function(n, flags, isStmt) {
   this.jz('arrIter').w('(').eN(n.iter).w(')');
   return true;
+};
+
+UntransformedEmitters['arr-iter-get-rest'] =
+function(n, flags, isStmt) {
+  return this.eA(n.iter).wm('.','rest').wm('(',')'), true;
 };
 
 },
@@ -2099,7 +2127,7 @@ function(n, flags, isStmt) {
   if (n.computed)
     this.eN(n.idx);
   else
-    this.w("'").writeStringValue(n.idx.name).w("'");
+    this.writeMemName(n.idx, true);
   this.w(')');
   return true;
 };
@@ -10626,7 +10654,17 @@ function(n, isVal) {
 
 this.trArrayElem =
 function(left, iter, at) {
-  var right = this.synth_ArrIterGet(iter, at);
+  var right = null;
+  if (left && left.type === 'RestElement') {
+    right = this.synth_ArrIterGetRest(iter, at);
+    left = left.argument;
+  }
+  else
+    right = this.synth_ArrIterGet(iter, at);
+
+  if (left === null)
+    return right;
+
   var assig = this.synth_SynthAssig(left, right);
   return this.tr(assig, false);
 };
@@ -10669,7 +10707,7 @@ function(n, isVal) {
 function(){
 Transformers['CallExpression'] =
 function(n, isVal) {
-  var si = this.findElem(n.arguments, 'SpreadElement');
+  var si = findElem(n.arguments, 'SpreadElement');
   if (si === -1) {
     n.callee = this.tr(n.callee, true );
     this.trList(n.arguments, true );
@@ -10918,6 +10956,16 @@ function(expr) {
   };
 };
 
+this.synth_ArrIterGetRest =
+function(iter, at) {
+  return {
+    kind: 'arr-iter-get-rest',
+    type: '#Untransformed' ,
+    iter: iter,
+    idx: at
+  };
+};
+
 this.synth_ObjIter =
 function(iterVal) {
   return {
@@ -11019,18 +11067,6 @@ function() {};
 this.trList =
 function(list, isVal) {
   return this.trListChunk(list, isVal, 0, list.length-1) ;
-};
-
-this.findElem =
-function(list, t) {
-  var e = 0;
-  while (e < list.length) {
-    var elem = list[e];
-    if (elem && elem.type === t)
-      return e;
-    e++;
-  }
-  return -1;
 };
 
 }]  ],

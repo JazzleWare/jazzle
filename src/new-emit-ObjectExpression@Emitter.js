@@ -45,16 +45,3 @@ function(n, flags, isStmt) {
   isStmt && this.w(';');
   return true;
 };
-
-this.writeMemName =
-function(memName, asStr) {
-  switch (memName.type) {
-  case 'Literal':
-    return this.eA(memName, EC_NONE, false);
-  case 'Identifier':
-    return asStr ?
-      this.w("'").writeStringValue(memName.name).w("'") :
-      this.writeIDName(memName.name);
-  }
-  ASSERT.call(this, false, 'unknown name');
-};

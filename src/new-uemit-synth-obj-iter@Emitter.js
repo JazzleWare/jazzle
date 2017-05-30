@@ -18,7 +18,7 @@ function(n, flags, isStmt) {
   if (n.computed)
     this.eN(n.idx);
   else
-    this.w("'").writeStringValue(n.idx.name).w("'");
+    this.writeMemName(n.idx, true);
   this.w(')');
   return true;
 };

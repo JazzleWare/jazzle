@@ -58,6 +58,19 @@ function(nameStr) {
   return this.w(nameStr);
 };
 
+this.writeMemName =
+function(memName, asStr) {
+  switch (memName.type) {
+  case 'Literal':
+    return this.eA(memName, EC_NONE, false);
+  case 'Identifier':
+    return asStr ?
+      this.w("'").writeStringValue(memName.name).w("'") :
+      this.writeIDName(memName.name);
+  }
+  ASSERT.call(this, false, 'unknown name');
+};
+
 this.emitCommaList =
 function(list, flags) {
   var e = 0;

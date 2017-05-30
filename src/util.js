@@ -78,6 +78,17 @@ function isTemp(n) {
     n.kind === 'temp';
 }
 
+function findElem(list, t) {
+  var e = 0;
+  while (e < list.length) {
+    var elem = list[e];
+    if (elem && elem.type === t)
+      return e;
+    e++;
+  }
+  return -1;
+}
+
 function needsConstCheck(n) {
   return n.type === '#ResolvedName' && n.constCheck;
 }

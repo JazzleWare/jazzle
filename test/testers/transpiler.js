@@ -93,7 +93,6 @@ function loadTranspilerTests(ts) {
   mt('new', "new (5 * 12)", "new (5 * 12)()", o);
   mt('new', "(new 5) * 12", "new 5() * 12", o);
   mt('new', "new 5(new 5, 5)", "new 5(new 5(), 5)", o);
-
   
   mt('block', "{}", "{}", e, true );
   mt('block', "{{}}", "{\n  {}\n}", e, true );
@@ -109,7 +108,12 @@ function loadTranspilerTests(ts) {
   mt('stmtexpr', "{{}5}", "{\n  {}\n  5;\n}", e, true );
   mt('stmtexpr', "if (5) new 12; else 5", "if (5)\n  new 12();\nelse\n  5;", e, true );
   mt('stmtexpr', "{if(5) new 12; else 5; if (5) 12; else new 5()}", "{\n  if (5)\n    new 12();\n  else\n    5;\n  if (5)\n    12;\n  else\n    new 5();\n}", e, true );
-
+  mt('call-5(5)', "5(5)", "5(5)", o);
+  mt('call-5(5,5)', "5(5,5)", "5(5, 5)", o);
+  mt('call-5[5](5)', "5[5](5)", "5[5](5)", o);
+  mt('call-5(...5)', "5(...5)", "jz.c(5, jz.arr(null, 5))", o);
+  mt('call-5(5,...5)', "5(5,...5)", "jz.c(5, jz.arr([5], 5))", o);
+//mt('call-5[5](...5)', "5[5](...5)", "jz.cm(t1 = 5, t[5], jz.arr(null, 5))", o);
 }
 
 function buildTestBuilder(ts) {
