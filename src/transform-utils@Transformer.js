@@ -1,8 +1,6 @@
 this.trListChunk =
 function(list, isVal, s, e) {
-  if (arguments.length < 5 || e === -1)
-    e = list.length-1;
-  while (s<e) {
+  while (s<=e) {
     list[s] = this.tr(list[s], isVal);
     s++ ; 
   }
@@ -19,13 +17,25 @@ function(n, isVal) {
   ASSERT.call(this, false, 'SAT !== <'+n.type+'>');
 };
 
-this.trList =
-function(list, isVal) {
-  return this.trListChunk(list, isVal, 0, list.length-1) ;
-};
-
 this.accessTZ =
 function() {};
 
 this.accessJZ =
 function() {};
+
+this.trList =
+function(list, isVal) {
+  return this.trListChunk(list, isVal, 0, list.length-1) ;
+};
+
+this.findElem =
+function(list, t) {
+  var e = 0;
+  while (e < list.length) {
+    var elem = list[e];
+    if (elem && elem.type === t)
+      return e;
+    e++;
+  }
+  return -1;
+};

@@ -81,6 +81,17 @@ function(left, right, isB) {
   };
 };
 
+this.synth_Call =
+function(head, mem, list) {
+  return {
+    head: head,
+    mem: mem,
+    list: list,
+    type: '#Untransformed' ,
+    kind: 'call'
+  };
+};
+
 this.synth_U =
 function(expr) {
   this.accessJZ();

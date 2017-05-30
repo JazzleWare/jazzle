@@ -1556,6 +1556,60 @@ function(n, flags) {
   ASSERT.call(this, false, 'got <'+n.type+'>');
 };
 
+this.emitElems =
+function(list, s, e) {
+  var nElem = 0;
+  var hasRest = false;
+  while (s <= e) {
+    var t0 = this.sc("");
+    s = this.emitElems_toRest(list, s);
+    t0 = this.sc(t0);
+    if (s <= e) {
+      if (!hasRest) hasRest = true;
+      nElem && this.w(',').s();
+      t0.length ? this.w('[').ac(t0).w(']') : this.w('null'); // evens are not arrays
+      nElem++;
+      this.w(',').s().eN(list[s].argument, EC_NONE, false);
+      nElem++;
+      s++;
+    }
+    else { this.ac(t0); break; }
+  }
+
+  return hasRest;
+};
+
+this.emitElems_toRest =
+function(list, s) {
+  while (s < list.length) {
+    var elem = list[s];
+    if (elem && elem.type === 'SpreadElement')
+      break;
+    s && this.w(',').s();
+    if (elem)
+      this.eN(elem, EC_NONE, false);
+    else
+      this.w('void 0');
+    s++;
+  }
+  return s;
+};
+
+},
+function(){
+Emitters['ArrayExpression'] =
+function(n, flags, isStmt) {
+  var c0 = this.sc("");
+  var hasRest = this.emitElems(n.elements, 0, n.elements.length-1);
+  c0 = this.sc(c0);
+  if (hasRest)
+    this.jz('arr').w('(').ac(c0).w(')');
+  else
+    this.w('[').ac(c0).w(']');
+  isStmt && this.w(';');
+  return true;
+};
+
 },
 function(){
 Emitters['#SynthAssig'] =
@@ -1664,6 +1718,20 @@ function(n, flags, isStmt) {
     this.wsl() : this.csl();
   this.u().w('}');
   return true;
+};
+
+},
+function(){
+Emitters['CallExpression'] =
+function(n, flags, isStmt) {
+  var hasParen = flags & EC_NEW_HEAD;
+  if (hasParen) { this.w('('); flags = EC_NONE; }
+  this.emitCallHead(n.callee, flags);
+  this.w('(').emitCommaList(n.arguments);
+  this.w(')');
+
+  hasParen && this.w(')');
+  isStmt && this.w(';');
 };
 
 },
@@ -1984,6 +2052,28 @@ function(n, flags, isStmt) {
   if (hasParen) { this.w('('); flags &= EC_IN; }
   this.emitCommaList(n.list, flags);
   hasParen && this.w(')');
+  return true;
+};
+
+},
+function(){
+UntransformedEmitters['call'] = 
+function(n, flags, isStmt) {
+  var hasParen = flags & EC_NEW_HEAD;
+  if (hasParen) { this.w('('); } 
+  if (n.mem !== null)
+    this.jz('cm').w('(').eN(n.head, EC_NONE, false)
+      .w(',').s().eN(n.mem, EC_NONE, false);
+  else
+    this.jz('c').w('(').eN(n.head, EC_NONE, false);
+
+  this.w(',').s();
+  this.jz('arr').w('(').emitElems(n.list, 0, n.list.length-1 );
+  this.w(')').w(')');
+  
+  hasParen && this.w(')');
+  isStmt && this.w(';');
+
   return true;
 };
 
@@ -10440,6 +10530,14 @@ function(scope) {
 
 },
 function(){
+Transformers['ArrayExpression'] =
+function(n, isVal) {
+  this.trList(n.elements, true );
+  return n;
+};
+
+},
+function(){
 var TransformByLeft = {};
 TransformByLeft['ArrayPattern'] =
 function(n, isVal) {
@@ -10569,6 +10667,35 @@ function(n, isVal) {
 
 },
 function(){
+Transformers['CallExpression'] =
+function(n, isVal) {
+  var si = this.findElem(n.arguments, 'SpreadElement');
+  if (si === -1) {
+    n.callee = this.tr(n.callee, true );
+    this.trList(n.arguments, true );
+    return n;
+  }
+
+  var head = n.callee, mem = null;
+  if ( head.type === 'MemberExpression') {
+    var t = this.allocTemp();
+    var h0 = head;
+    head = this.synth_TempSave(t, head.object);
+    h0.object = t;
+    this.releaseTemp(t);
+    h0.property = this.tr(h0.property, true );
+    mem = h0;
+  }
+  else
+    head = this.tr(head, true );
+
+  this.trList(n.arguments, true );
+
+  return this.synth_Call(head, mem, n.arguments);
+};
+
+},
+function(){
 Transformers['ConditionalExpression'] =
 function(n, isVal) {
   n.test = this.tr(n.test, true);
@@ -10639,6 +10766,15 @@ function(){
 Transformers['SequenceExpression'] =
 function(n, isVal) {
   this.trList(n.expressions, isVal);
+  return n;
+};
+
+},
+function(){
+Transformers['SpreadElement'] =
+function(n, isVal) {
+  ASSERT_EQ.call(this, isVal, true);
+  n.argument = this.tr(n.argument, isVal);
   return n;
 };
 
@@ -10761,6 +10897,17 @@ function(left, right, isB) {
   };
 };
 
+this.synth_Call =
+function(head, mem, list) {
+  return {
+    head: head,
+    mem: mem,
+    list: list,
+    type: '#Untransformed' ,
+    kind: 'call'
+  };
+};
+
 this.synth_U =
 function(expr) {
   this.accessJZ();
@@ -10846,9 +10993,7 @@ function() {
 function(){
 this.trListChunk =
 function(list, isVal, s, e) {
-  if (arguments.length < 5 || e === -1)
-    e = list.length-1;
-  while (s<e) {
+  while (s<=e) {
     list[s] = this.tr(list[s], isVal);
     s++ ; 
   }
@@ -10865,16 +11010,28 @@ function(n, isVal) {
   ASSERT.call(this, false, 'SAT !== <'+n.type+'>');
 };
 
-this.trList =
-function(list, isVal) {
-  return this.trListChunk(list, isVal, 0, list.length-1) ;
-};
-
 this.accessTZ =
 function() {};
 
 this.accessJZ =
 function() {};
+
+this.trList =
+function(list, isVal) {
+  return this.trListChunk(list, isVal, 0, list.length-1) ;
+};
+
+this.findElem =
+function(list, t) {
+  var e = 0;
+  while (e < list.length) {
+    var elem = list[e];
+    if (elem && elem.type === t)
+      return e;
+    e++;
+  }
+  return -1;
+};
 
 }]  ],
 null,

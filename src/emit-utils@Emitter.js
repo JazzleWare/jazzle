@@ -108,3 +108,42 @@ function(n, flags) {
   }
   ASSERT.call(this, false, 'got <'+n.type+'>');
 };
+
+this.emitElems =
+function(list, s, e) {
+  var nElem = 0;
+  var hasRest = false;
+  while (s <= e) {
+    var t0 = this.sc("");
+    s = this.emitElems_toRest(list, s);
+    t0 = this.sc(t0);
+    if (s <= e) {
+      if (!hasRest) hasRest = true;
+      nElem && this.w(',').s();
+      t0.length ? this.w('[').ac(t0).w(']') : this.w('null'); // evens are not arrays
+      nElem++;
+      this.w(',').s().eN(list[s].argument, EC_NONE, false);
+      nElem++;
+      s++;
+    }
+    else { this.ac(t0); break; }
+  }
+
+  return hasRest;
+};
+
+this.emitElems_toRest =
+function(list, s) {
+  while (s < list.length) {
+    var elem = list[s];
+    if (elem && elem.type === 'SpreadElement')
+      break;
+    s && this.w(',').s();
+    if (elem)
+      this.eN(elem, EC_NONE, false);
+    else
+      this.w('void 0');
+    s++;
+  }
+  return s;
+};
