@@ -60,6 +60,9 @@ function() { return this.type & ST_DECL; };
 this.isParen =
 function() { return this.type & ST_PAREN; };
 
+this.isHoisted =
+function() { return this.isAnyFn() && this.isDecl(); };
+
 this.isExpr = 
 function() { return this.type & ST_EXPR; };
 

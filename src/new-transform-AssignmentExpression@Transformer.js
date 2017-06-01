@@ -1,6 +1,6 @@
 var TransformByLeft = {};
 TransformByLeft['ArrayPattern'] =
-function(n, isVal) {
+function(n, isVal, isB) {
   n.right = this.tr(n.right, true);
   var s = [],
       t = this.saveInTemp(this.synth_ArrIter(n.right), s),
@@ -9,7 +9,7 @@ function(n, isVal) {
       tElem = null;
 
   while (idx < list.length) {
-    tElem = this.trArrayElem(list[idx], t, idx);
+    tElem = this.trArrayElem(list[idx], t, idx, isB);
     tElem && s.push(tElem);
     idx++;
   }
@@ -22,7 +22,7 @@ function(n, isVal) {
 };
 
 TransformByLeft['ObjectPattern'] =
-function(n, isVal) {
+function(n, isVal, isB) {
   n.right = this.tr(n.right, true);
   var s = [],
       t = this.saveInTemp(this.synth_ObjIter(n.right), s),
@@ -31,7 +31,7 @@ function(n, isVal) {
       tElem = null;
 
   while (i < l.length) {
-    tElem = this.trObjElem(l[i], t);
+    tElem = this.trObjElem(l[i], t, isB);
     tElem && s.push(tElem);
     i++;
   }
@@ -43,7 +43,7 @@ function(n, isVal) {
 };
 
 TransformByLeft['AssignmentPattern'] =
-function(n, isVal) {
+function(n, isVal, isB) {
   var l = n.left.left;
   var d = n.left.right;
   var r = n.right;
@@ -59,33 +59,45 @@ function(n, isVal) {
   var consequent = this.tr(d, true);
   var assig = this.synth_SynthAssig(
     l,
-    this.synth_UCond(test, consequent, t)
+    this.synth_UCond(test, consequent, t),
+    isB
   );
 
   return this.tr(assig, isVal);
 };
 
-
 TransformByLeft['MemberExpression'] =
-function(n, isVal) {
+function(n, isVal, isB) {
+  ASSERT_EQ.call(this, isB, false);
   n.left = this.trSAT(n.left);
   n.right = this.tr(n.right, true);
   return n;
 };
 
+TransformByLeft['Identifier'] =
+function(n, isVal, isB) {
+  n.left = this.toResolvedName(n.left, isB);
+  if (isB) {
+    var target = n.left.target;
+    if (!target.reached)
+      target.reached = true;
+  } 
+  return n;
+};
+
 Transformers['AssignmentExpression'] =
-function(n, isVal) {
-  return TransformByLeft[n.left.type].call(this, n, isVal);
+function(n, isVal, isB) {
+  return TransformByLeft[n.left.type].call(this, n, isVal, false);
 };
 
 Transformers['#SynthAssig'] =
 function(n, isVal) {
   ASSERT_EQ.call(this, isVal, false);
-  return TransformByLeft[n.left.type].call(this, n, isVal);
+  return TransformByLeft[n.left.type].call(this, n, isVal, n.binding);
 };
 
 this.trArrayElem =
-function(left, iter, at) {
+function(left, iter, at, isB) {
   var right = null;
   if (left && left.type === 'RestElement') {
     right = this.synth_ArrIterGetRest(iter, at);
@@ -97,12 +109,12 @@ function(left, iter, at) {
   if (left === null)
     return right;
 
-  var assig = this.synth_SynthAssig(left, right);
+  var assig = this.synth_SynthAssig(left, right, isB);
   return this.tr(assig, false);
 };
 
 this.trObjElem =
-function(elem, iter) {
+function(elem, iter, isB) {
   var name = elem.key;
   if (elem.computed)
     name = elem.key = this.tr(name, true );
@@ -110,5 +122,5 @@ function(elem, iter) {
   var right = this.synth_ObjIterGet(iter, name, elem.computed);
   var left = elem.value;
 
-  return this.tr(this.synth_SynthAssig(left, right), false);
+  return this.tr(this.synth_SynthAssig(left, right), false, isB);
 };

@@ -9771,6 +9771,19 @@ function(childRef, refD) {
   childRef.parent = this;
 };
 
+this.getDecl =
+function() {
+  if (this.targetDecl !== null)
+    return this.targetDecl;
+  var ref = this.parent;
+  while (ref) {
+    if (ref.targetDecl)
+      return this.targetDecl = ref.targetDecl;
+    ref = ref.parent;
+  }
+  ASSERT.call(this, false, 'ref unresolved');
+};
+
 }]  ],
 [Scope.prototype, [function(){
 this.canSmem =
@@ -10055,6 +10068,9 @@ function() { return this.type & ST_DECL; };
 
 this.isParen =
 function() { return this.type & ST_PAREN; };
+
+this.isHoisted =
+function() { return this.isAnyFn() && this.isDecl(); };
 
 this.isExpr = 
 function() { return this.type & ST_EXPR; };
@@ -10558,6 +10574,57 @@ function(scope) {
 
 },
 function(){
+this.toResolvedName =
+function(id, isB) {
+  var name = id.name, target = null;
+  if (isB)
+    target = this.cur.findDecl_m(_m(name));
+  else {
+    var ref = this.findRef_m(_m(name));
+    ASSERT.call(this, ref, 'name is not used in the current scope: <'+name+'>');
+    target = ref.getDecl();
+  }
+
+  ASSERT.call(this, target, 'unresolved <'+name+'>');
+  var hasTZ = !isB && this.needsTZ(decl);
+  
+  if (hasTZ)
+    decl.activateTZ();
+
+  return {
+    target: target,
+    binding: isB,
+    id: id,
+    tz: hasTZ,
+    type: '#Untransformed' ,
+    kind: 'resolved-name'
+  };
+}; 
+
+this.needsTZ =
+function(decl) {
+  if (!decl.isTemporal())
+    return false;
+
+  if (!decl.reached)
+    return true;
+
+  var ownerScope = decl.ref.scope, cur = this.cur;
+  if (ownerScope === cur)
+    return false;
+
+  while (true) {
+    if (cur.parent === ownerScope)
+      break;
+    cur = cur.parent
+    ASSERT.call(this, cur, 'reached top before decl owner is reached -- tz test is only allowed in scopes that '+
+      'can access the decl');
+  }
+  return cur.isHoisted();
+};
+
+},
+function(){
 Transformers['ArrayExpression'] =
 function(n, isVal) {
   this.trList(n.elements, true );
@@ -10568,7 +10635,7 @@ function(n, isVal) {
 function(){
 var TransformByLeft = {};
 TransformByLeft['ArrayPattern'] =
-function(n, isVal) {
+function(n, isVal, isB) {
   n.right = this.tr(n.right, true);
   var s = [],
       t = this.saveInTemp(this.synth_ArrIter(n.right), s),
@@ -10577,7 +10644,7 @@ function(n, isVal) {
       tElem = null;
 
   while (idx < list.length) {
-    tElem = this.trArrayElem(list[idx], t, idx);
+    tElem = this.trArrayElem(list[idx], t, idx, isB);
     tElem && s.push(tElem);
     idx++;
   }
@@ -10590,7 +10657,7 @@ function(n, isVal) {
 };
 
 TransformByLeft['ObjectPattern'] =
-function(n, isVal) {
+function(n, isVal, isB) {
   n.right = this.tr(n.right, true);
   var s = [],
       t = this.saveInTemp(this.synth_ObjIter(n.right), s),
@@ -10599,7 +10666,7 @@ function(n, isVal) {
       tElem = null;
 
   while (i < l.length) {
-    tElem = this.trObjElem(l[i], t);
+    tElem = this.trObjElem(l[i], t, isB);
     tElem && s.push(tElem);
     i++;
   }
@@ -10611,7 +10678,7 @@ function(n, isVal) {
 };
 
 TransformByLeft['AssignmentPattern'] =
-function(n, isVal) {
+function(n, isVal, isB) {
   var l = n.left.left;
   var d = n.left.right;
   var r = n.right;
@@ -10627,33 +10694,45 @@ function(n, isVal) {
   var consequent = this.tr(d, true);
   var assig = this.synth_SynthAssig(
     l,
-    this.synth_UCond(test, consequent, t)
+    this.synth_UCond(test, consequent, t),
+    isB
   );
 
   return this.tr(assig, isVal);
 };
 
-
 TransformByLeft['MemberExpression'] =
-function(n, isVal) {
+function(n, isVal, isB) {
+  ASSERT_EQ.call(this, isB, false);
   n.left = this.trSAT(n.left);
   n.right = this.tr(n.right, true);
   return n;
 };
 
+TransformByLeft['Identifier'] =
+function(n, isVal, isB) {
+  n.left = this.toResolvedName(n.left, isB);
+  if (isB) {
+    var target = n.left.target;
+    if (!target.reached)
+      target.reached = true;
+  } 
+  return n;
+};
+
 Transformers['AssignmentExpression'] =
-function(n, isVal) {
-  return TransformByLeft[n.left.type].call(this, n, isVal);
+function(n, isVal, isB) {
+  return TransformByLeft[n.left.type].call(this, n, isVal, false);
 };
 
 Transformers['#SynthAssig'] =
 function(n, isVal) {
   ASSERT_EQ.call(this, isVal, false);
-  return TransformByLeft[n.left.type].call(this, n, isVal);
+  return TransformByLeft[n.left.type].call(this, n, isVal, n.binding);
 };
 
 this.trArrayElem =
-function(left, iter, at) {
+function(left, iter, at, isB) {
   var right = null;
   if (left && left.type === 'RestElement') {
     right = this.synth_ArrIterGetRest(iter, at);
@@ -10665,12 +10744,12 @@ function(left, iter, at) {
   if (left === null)
     return right;
 
-  var assig = this.synth_SynthAssig(left, right);
+  var assig = this.synth_SynthAssig(left, right, isB);
   return this.tr(assig, false);
 };
 
 this.trObjElem =
-function(elem, iter) {
+function(elem, iter, isB) {
   var name = elem.key;
   if (elem.computed)
     name = elem.key = this.tr(name, true );
@@ -10678,7 +10757,7 @@ function(elem, iter) {
   var right = this.synth_ObjIterGet(iter, name, elem.computed);
   var left = elem.value;
 
-  return this.tr(this.synth_SynthAssig(left, right), false);
+  return this.tr(this.synth_SynthAssig(left, right), false, isB);
 };
 
 },
@@ -10830,6 +10909,33 @@ Transformers['UpdateExpression'] =
 function(n, isVal) {
   n.argument = this.trSAT(n.argument);
   return n;
+};
+
+},
+function(){
+Transformer['VariableDeclrataion'] =
+function(n, isVal) {
+  ASSERT_EQ.call(this, isVal, false);
+  var list = n.declarations, kind = n.kind, l = 0, tr = null;
+  var s = [];
+  while (l < list.length) {
+    tr = this.transformDtor(list[l++], kind );
+    tr && s.push(tr);
+  }
+  return this.synth_AssigList(s);
+};
+
+this.transformDtor =
+function(n, kind) {
+  var assig = null, left = n.id, right = n.init;
+  if (right === null) {
+    if (kind === 'var')
+      return null;
+    right = this.synth_Void0();
+  }
+
+  assig = this.synth_SynthAssig(left, right, true);
+  return this.tr(assig, false);
 };
 
 },
@@ -10994,6 +11100,10 @@ function(iter, at, isC) {
     computed: isC
   };
 };
+
+var SYNTH_VOID0 = { type: '#Untransformed' , kind: 'void0' };
+this.synth_Void0 = function() { return SYNTH_VOID0; };
+
 
 },
 function(){

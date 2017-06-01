@@ -25,3 +25,16 @@ function(childRef, refD) {
 
   childRef.parent = this;
 };
+
+this.getDecl =
+function() {
+  if (this.targetDecl !== null)
+    return this.targetDecl;
+  var ref = this.parent;
+  while (ref) {
+    if (ref.targetDecl)
+      return this.targetDecl = ref.targetDecl;
+    ref = ref.parent;
+  }
+  ASSERT.call(this, false, 'ref unresolved');
+};

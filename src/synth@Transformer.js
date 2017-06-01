@@ -140,3 +140,7 @@ function(iter, at, isC) {
     computed: isC
   };
 };
+
+var SYNTH_VOID0 = { type: '#Untransformed' , kind: 'void0' };
+this.synth_Void0 = function() { return SYNTH_VOID0; };
+

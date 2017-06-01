@@ -114,6 +114,9 @@ function loadTranspilerTests(ts) {
   mt('call-5(...5)', "5(...5)", "jz.c(5, jz.arr(null, 5))", o);
   mt('call-5(5,...5)', "5(5,...5)", "jz.c(5, jz.arr([5], 5))", o);
 //mt('call-5[5](...5)', "5[5](...5)", "jz.cm(t1 = 5, t[5], jz.arr(null, 5))", o);
+  mt('new-5(5)', "new 5(5)", "new 5(5)", o);
+  mt('new-5(...5)', "new 5(...5)","jz.n(5, jz.arr(null, 5))", o);
+
 }
 
 function buildTestBuilder(ts) {
