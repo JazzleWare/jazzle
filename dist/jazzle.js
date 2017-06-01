@@ -1216,6 +1216,14 @@ function(t) {
   return this;
 };
 
+this.activateTZ =
+function() {
+  if (this.hasTZCheck)
+    return false;
+  this.hasTZCheck = true;
+  this.ref.scope.activateTZ();
+  return true;
+};
 
 },
 function(){
@@ -1242,6 +1250,14 @@ function() { return this.type & DT_CLS; };
 
 this.isCatchArg =
 function() { return this.type & DT_CATCHARG; };
+
+this.isTemporal =
+function() {
+  if (this.isFnArg() || this.isCatchArg())
+    return !this.ref.scope.inBody;
+
+  return this.isCls() || this.isLexical();
+};
 
 this.isLLINOSA =
 function() {
@@ -10588,8 +10604,10 @@ function(id, isB) {
   ASSERT.call(this, target, 'unresolved <'+name+'>');
   var hasTZ = !isB && this.needsTZ(decl);
   
-  if (hasTZ)
+  if (hasTZ) {
     decl.activateTZ();
+    this.accessTZ(decl.ref.scope);
+  }
 
   return {
     target: target,

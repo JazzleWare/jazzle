@@ -12,8 +12,10 @@ function(id, isB) {
   ASSERT.call(this, target, 'unresolved <'+name+'>');
   var hasTZ = !isB && this.needsTZ(decl);
   
-  if (hasTZ)
+  if (hasTZ) {
     decl.activateTZ();
+    this.accessTZ(decl.ref.scope);
+  }
 
   return {
     target: target,

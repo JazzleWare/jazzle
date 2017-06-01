@@ -22,6 +22,14 @@ function() { return this.type & DT_CLS; };
 this.isCatchArg =
 function() { return this.type & DT_CATCHARG; };
 
+this.isTemporal =
+function() {
+  if (this.isFnArg() || this.isCatchArg())
+    return !this.ref.scope.inBody;
+
+  return this.isCls() || this.isLexical();
+};
+
 this.isLLINOSA =
 function() {
   return this.isLexicalLike() &&

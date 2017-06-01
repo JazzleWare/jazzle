@@ -30,3 +30,11 @@ function(t) {
   return this;
 };
 
+this.activateTZ =
+function() {
+  if (this.hasTZCheck)
+    return false;
+  this.hasTZCheck = true;
+  this.ref.scope.activateTZ();
+  return true;
+};
