@@ -31,11 +31,9 @@ function createParserTester(tparser, tdir, tignore) {
   };
 
   ts.listener = createParserListener();
-
-  loadParserTests(ts, tdir);
-
   loadIgnores(ts, tignore);
 
+  loadParserTests(ts, tdir);
   return ts;
 }
 

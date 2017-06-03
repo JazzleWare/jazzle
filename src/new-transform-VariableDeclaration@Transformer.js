@@ -1,4 +1,4 @@
-Transformer['VariableDeclrataion'] =
+Transformers['VariableDeclaration'] =
 function(n, isVal) {
   ASSERT_EQ.call(this, isVal, false);
   var list = n.declarations, kind = n.kind, l = 0, tr = null;

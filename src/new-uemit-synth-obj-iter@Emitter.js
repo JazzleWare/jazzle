@@ -21,4 +21,5 @@ function(n, flags, isStmt) {
     this.writeMemName(n.idx, true);
   this.w(')');
   return true;
+
 };

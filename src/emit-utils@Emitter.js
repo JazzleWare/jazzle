@@ -113,12 +113,11 @@ function(list) {
 
 this.emitSAT =
 function(n, flags) {
-  switch (n.type) {
-  case '#ResolvedName':
-    return this.emitSAT_resolvedName(n, flags);
-  case 'MemberExpression':
+  if (n.type === 'MemberExpression')
     return this.emitSAT_mem(n, flags);
-  }
+  if (isResolvedName(n))
+    return this.emitSAT_resolvedName(n, flags);
+
   ASSERT.call(this, false, 'got <'+n.type+'>');
 };
 

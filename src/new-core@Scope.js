@@ -30,11 +30,12 @@ function() {
   return a;
 };
 
-this.accL =
-function(name, idx, scope) {
-  if (scope === null)
-    scope = this.scs;
-  return scope.getL(name, idx, this);
+this.activateTZ =
+function() {
+  var scope = this.scs;
+  if (scope.hasTZCheckPoint)
+    return false;
+  return this.hasTZCheckPoint = true;
 };
 
 this.setName =
@@ -72,11 +73,4 @@ function() {
     fl |= SF_UNIQUE;
 
   return fl;
-};
-
-this.accocL =
-function(name, idx, scope) {
-  if (scope === null)
-    scope = this.scs;
-  return scope.gocL(name, idx, this);
 };

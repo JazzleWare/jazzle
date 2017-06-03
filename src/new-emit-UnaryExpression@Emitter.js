@@ -6,6 +6,12 @@ function(n, flags, isStmt) {
   var lastChar = this.code.charAt(this.code.length-1) ;
   lastChar === o && this.s();
   this.w(o);
+
+  switch (o) {
+  case 'void': case 'delete': case 'typeof':
+    this.s();
+  }
+
   this.emitUA(n.argument);
   hasParen && this.w(')');
   isStmt && this.w(';');

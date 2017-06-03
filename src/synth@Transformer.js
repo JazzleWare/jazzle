@@ -141,6 +141,16 @@ function(iter, at, isC) {
   };
 };
 
-var SYNTH_VOID0 = { type: '#Untransformed' , kind: 'void0' };
+var SYNTH_VOID0 = {
+  type: 'UnaryExpression',
+  operator: 'void',
+  argument: {
+    type: 'Literal',
+    value: 0,
+    raw: '0',
+  },
+  '#y': 0
+};
+
 this.synth_Void0 = function() { return SYNTH_VOID0; };
 

@@ -66,6 +66,19 @@ function() { return this.isAnyFn() && this.isDecl(); };
 this.isExpr = 
 function() { return this.type & ST_EXPR; };
 
+this.isBootable =
+function() {
+  return this.isScript() || this.isFn() || this.isCatch() || this.isModule();
+};
+
+this.isBooted =
+function() {
+  return this.synthNamesUntilNow !== null;
+};
+
+this.isSourceLevel = 
+function() { return this.isScript() || this.isModule(); };
+
 this.isSimpleFn =
 function() { return this.type & (ST_EXPR|ST_DECL); };
 

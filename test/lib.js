@@ -26,8 +26,11 @@ function ASSERT(cond, message) {
 }
 
 tesu.add =
-function(test) {
-  this.tests.push(test); 
+function(test, retain) {
+  if (retain)
+    this.tests.push(test);
+  else
+    this.runOne(test);
   return this;
 };
 

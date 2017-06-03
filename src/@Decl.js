@@ -6,4 +6,5 @@ function Decl() {
   this.hasTZCheck = false;
   this.reached = false;
   this.type = DT_NONE;
+  this.synthName = "";
 }

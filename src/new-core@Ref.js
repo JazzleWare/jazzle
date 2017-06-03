@@ -8,7 +8,7 @@ this.absorb =
 function(childRef, refD) {
   ASSERT.call(this, !childRef.hasTarget,
     'resolved ref are not allowed to get absorbed by another ref');
-  ASSERT.call(this, !childRef.parent,
+  ASSERT.call(this, !childRef.parentRef,
     'a ref with a parent is not allowed to get absorbed by another ref');
 
   if (refD) {
@@ -21,20 +21,20 @@ function(childRef, refD) {
     this.rsList = childRef.rsList.concat(this.rsList);
 
   if (childRef.scope.hasSignificantNames())
-    this.rsList.push(childRef);
+    this.rsList.push(childRef.scope);
 
-  childRef.parent = this;
+  childRef.parentRef = this;
 };
 
 this.getDecl =
 function() {
   if (this.targetDecl !== null)
     return this.targetDecl;
-  var ref = this.parent;
+  var ref = this.parentRef;
   while (ref) {
     if (ref.targetDecl)
       return this.targetDecl = ref.targetDecl;
-    ref = ref.parent;
+    ref = ref.parentRef;
   }
   ASSERT.call(this, false, 'ref unresolved');
 };

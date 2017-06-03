@@ -78,6 +78,11 @@ function isTemp(n) {
     n.kind === 'temp';
 }
 
+function isResolvedName(n) {
+  return n.type === '#Untransformed' &&
+    n.kind === 'resolved-name';
+}
+
 function findElem(list, t) {
   var e = 0;
   while (e < list.length) {

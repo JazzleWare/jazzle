@@ -25,7 +25,7 @@ function ConcreteScope(parent, type) {
   Scope.call(this, parent, type);
 
   this.liquidDefs = new SortedObj();
-  this.synthNamesUntilNow = new SortedObj();
+  this.synthNamesUntilNow = null;
 
   this.spThis = null;
 }
@@ -38,6 +38,7 @@ function Decl() {
   this.hasTZCheck = false;
   this.reached = false;
   this.type = DT_NONE;
+  this.synthName = "";
 }
 ;
 function Emitter(spaceString) {
@@ -152,7 +153,7 @@ function LabelTracker(parent) {
 ;
 function Liquid(category) {
   Decl.call(this);
-
+  this.type |= DT_LIQUID;
   this.rsMap = {};
   this.category = category;
 }
@@ -1090,6 +1091,11 @@ function isTemp(n) {
     n.kind === 'temp';
 }
 
+function isResolvedName(n) {
+  return n.type === '#Untransformed' &&
+    n.kind === 'resolved-name';
+}
+
 function findElem(list, t) {
   var e = 0;
   while (e < list.length) {
@@ -1182,6 +1188,215 @@ function(ref) {
   return this.spThis = spThis;
 };
 
+},
+function(){
+this.synth_boot =
+function() {
+  ASSERT.call(this, this.isSourceLevel(), 'script m');
+  this.synth_boot_init();
+  this.synth_externals_to(null);
+  this.synth_defs_to(this);
+};
+
+this.synth_finish =
+function() {
+  this.synth_liquids_to(this);
+};
+
+this.synth_start =
+function() {
+  ASSERT.call(this, this.isSourceLevel(), 'script m');
+  this.isBooted() || this.synth_boot();
+};
+
+this.synth_liquids_to =
+function(targetScope) {
+  var list = this.liquidDefs, e = 0, len = list.length();
+  while (e < len)
+    this.synth_lg_to(list.at(e++), targetScope);
+};
+
+this.synth_externals_to =
+function(targetScope) {
+  ASSERT.call(this, this.isSourceLevel(), 'script m');
+  ASSERT.call(this, targetScope === null, 'null');
+  var list = this.parent.defs, e = 0, len = list.length();
+  while (e < len)
+    this.synthGlobal(list.at(e++));
+};
+
+this.synth_lg_to =
+function(lg, target) {
+  var list = lg.list, e = 0;
+  while (e < list.length)
+    target.synthLiquid(list[e++]);
+};
+
+this.synth_boot_init =
+function() {
+  ASSERT.call(this, this.isBootable(), 'not bootable');
+  ASSERT.call(this, !this.isBooted(), 'scope has been already booted'); 
+  this.synthNamesUntilNow = new SortedObj();
+};
+
+this.findSynth_m =
+function(mname) {
+  var sn = this.synthNamesUntilNow;
+  return sn.has(mname) ? sn.get(mname) : null;
+};
+
+// can this name escape the current scope anyway?
+// there is a difference between 'can' and 'do', of course -- a name could potentially escape a scope but still remain there because of a synth homonym.
+// on the other hand, some names never escape a scope -- for example, an `arguments` never escapes an emitted function
+this.synth_ref_may_escape_m =
+function(mname) {
+  ASSERT.call(this, this.isSourceLevel(), 'script m');
+  return true;
+};
+
+// can this name get bound in the current scope anyway?
+// there is a difference between being a valid binding name and being a valid binding -- any name that is not a `eval/arguments` (when strict) and is not reserved
+// can be a valid binding name; but even then, they might remain invalid bindings, for example because they may be duplicates of an existing binding
+this.synth_name_is_valid_binding_m =
+function(mname) { return true; };
+
+this.synth_ref_find_homonym_m =
+function(mname) {
+  ASSERT.call(this, this.isSourceLevel(), 'script m');
+  this.isBooted() || this.synth_boot();
+  return this.findSynth_m(mname);
+};
+
+this.synth_decl_find_homonym_m =
+function(mname) {
+  ASSERT.call(this, this.isSourceLevel(), 'script m');
+  this.isBooted() || this.synth_boot();
+  return this.findSynth_m(mname);
+};
+
+this.insertSynth_m =
+function(mname, synth) {
+  var sn = this.synthNamesUntilNow;
+  ASSERT.call(this, !sn.has(mname), '"'+mname+'" exists');
+  return sn.set(mname, synth);
+};
+
+this.synthDecl =
+function(decl) {
+  ASSERT.call(this,
+    decl.isFn() ||
+    decl.isLet() ||
+    decl.isConst() ||
+    decl.isVar() ||
+    decl.isFnArg(),
+    'fun/let/const/var/fnarg'
+  );
+
+  ASSERT.call(this, decl.synthName === "", 'has synth');
+
+  var rsList = decl.ref.rsList;
+  var num = 0;
+  var baseName = decl.name;
+  var mname = "";
+  var synthName = baseName;
+
+  RENAME:
+  do {
+    mname = _m(synthName); 
+    var l = 0;
+    var synth = null;
+
+    while (l < rsList.length) {
+      var scope = rsList[l++];
+      if (!scope.synth_ref_may_escape_m(mname))
+        continue RENAME;
+
+      synth = scope.synth_ref_find_homonym_m(mname);
+      if (synth && synth !== decl)
+        continue RENAME;
+    }
+
+    if (num === 0 && !this.synth_name_is_valid_binding_m(mname)) // shortcut: num === 0 (because currently no invalid name contains a number)
+      continue RENAME;
+
+    synth = this.synth_decl_find_homonym_m(mname);
+    if (synth && synth !== decl)
+      continue RENAME;
+
+    break;
+  } while (synthName = baseName + "" + (num+=1), true);
+
+  decl.synthName = synthName;
+  this.insertSynth_m(mname, decl);
+};
+
+this.synthGlobal =
+function(global) {
+  ASSERT.call(this, this.isSourceLevel(), 'script m');
+  ASSERT.call(this, this.isGlobal(), 'not g');
+
+  var rsList = global.ref.rsList;
+  var original = true;
+  var name = global.name;
+  var mname = _m(name);
+
+  var l = 0;
+  while (l < rsList.length) {
+    var scope = rsList[l++];
+    if (!scope.synth_ref_may_escape(mname)) { original = false; break; }
+    var synth = scope.synth_ref_find_homonym_m(mname);
+    if (synth && synth !== global) { original = false; break; }
+  }
+
+  if (original) {
+    global.synthName = name;
+    this.insertSynth_m(mname, global);
+  } else {
+    var thisL = this.spThis || this.spCreate_this(null);
+    var l = 0;
+    while (l < rsList.length)
+      thisL.track(rsList[l++]);
+  }
+};
+
+this.synthLiquid =
+function(liquid) {
+  ASSERT.call(this, liquid.isLiquid(), 'not liquid');
+  ASSERT.call(this, liquid.synthName === "", 'has init');
+
+  var rsList = liquid.ref.rsList;
+  var num = 0;
+  var baseName = liquid.name;
+  var mname = "";
+  var synthName = baseName;
+
+  RENAME:
+  do {
+    mname = _m(synthName);
+    var l = 0;
+
+    while (l < rsList.length) {
+      var scope = rsList[l++ ];
+      if (!scope.synth_ref_may_escape_m(mname))
+        continue RENAME;
+
+      if (scope.synth_ref_find_homonym_m(mname))
+        continue RENAME;
+    }
+
+    if (!this.synth_name_is_valid_binding_m(mname))
+      continue RENAME;
+
+    if (this.synth_decl_find_homonym_m(mname))
+      continue RENAME;
+
+     break;
+  } while (synthName = baseName + "" + (num+=1), true);
+
+  liquid.synthName = synthName;
+  this.insertSynth_m(mname, liquid );
+};
+
 }]  ],
 [Decl.prototype, [function(){
 this.s =
@@ -1253,10 +1468,14 @@ function() { return this.type & DT_CATCHARG; };
 
 this.isTemporal =
 function() {
-  if (this.isFnArg() || this.isCatchArg())
+  if (this.isFnArg())
     return !this.ref.scope.inBody;
+  if (this.isCatchArg())
+    return !this.ref.scope.inBody;
+  if (this.isFn())
+    return false;
 
-  return this.isCls() || this.isLexical();
+  return this.isCls() || this.isLexicalLike();
 };
 
 this.isLLINOSA =
@@ -1265,6 +1484,9 @@ function() {
     this.ref.scope.insideLoop() &&
     this.ref.i;
 };
+
+this.isLiquid =
+function() { return this.type & DT_LIQUID; };
 
 var _HOISTED = DT_FN|DT_VAR;
 this.isHoisted =
@@ -1587,12 +1809,11 @@ function(list) {
 
 this.emitSAT =
 function(n, flags) {
-  switch (n.type) {
-  case '#ResolvedName':
-    return this.emitSAT_resolvedName(n, flags);
-  case 'MemberExpression':
+  if (n.type === 'MemberExpression')
     return this.emitSAT_mem(n, flags);
-  }
+  if (isResolvedName(n))
+    return this.emitSAT_resolvedName(n, flags);
+
   ASSERT.call(this, false, 'got <'+n.type+'>');
 };
 
@@ -1985,6 +2206,12 @@ function(n, flags, isStmt) {
   var lastChar = this.code.charAt(this.code.length-1) ;
   lastChar === o && this.s();
   this.w(o);
+
+  switch (o) {
+  case 'void': case 'delete': case 'typeof':
+    this.s();
+  }
+
   this.emitUA(n.argument);
   hasParen && this.w(')');
   isStmt && this.w(';');
@@ -2045,6 +2272,14 @@ function(n, flags, isStmt) {
   this.emitAny(n.body, EC_START_STMT, true ) ?
     this.wsl() : this.csl();
   this.u().wm('}',' ','while',' ','(').eA(n.test, EC_NONE, false).wm(')',';');
+  return true;
+};
+
+},
+function(){
+Emitters['Program'] =
+function(n, flags, isStmt) {
+  this.emitStmtList(n.body);
   return true;
 };
 
@@ -2146,7 +2381,22 @@ function(n, flags, isStmt) {
     this.writeMemName(n.idx, true);
   this.w(')');
   return true;
+
 };
+
+},
+function(){
+UntransformedEmitters['resolved-name'] =
+function(n, flags, isStmt) {
+  var str = n.target.ref.scope.scopeID+':'+n.target.name;
+  str += '#['+n.target.synthName+']';
+  if (n.tz) str += '::tz';
+  this.w(str);
+  isStmt && this.w(';');
+  return true;
+};
+
+this.emitSAT_resolvedName = UntransformedEmitters['resolved-name'];
 
 },
 function(){
@@ -2184,6 +2434,9 @@ UntransformedEmitters['ucond'] =
 function(n, flags, isStmt) {
   return Emitters['ConditionalExpression'].call(this, n, flags, isStmt);
 };
+
+},
+function(){
 
 }]  ],
 [ErrorString.prototype, [function(){
@@ -9769,7 +10022,7 @@ this.absorb =
 function(childRef, refD) {
   ASSERT.call(this, !childRef.hasTarget,
     'resolved ref are not allowed to get absorbed by another ref');
-  ASSERT.call(this, !childRef.parent,
+  ASSERT.call(this, !childRef.parentRef,
     'a ref with a parent is not allowed to get absorbed by another ref');
 
   if (refD) {
@@ -9782,20 +10035,20 @@ function(childRef, refD) {
     this.rsList = childRef.rsList.concat(this.rsList);
 
   if (childRef.scope.hasSignificantNames())
-    this.rsList.push(childRef);
+    this.rsList.push(childRef.scope);
 
-  childRef.parent = this;
+  childRef.parentRef = this;
 };
 
 this.getDecl =
 function() {
   if (this.targetDecl !== null)
     return this.targetDecl;
-  var ref = this.parent;
+  var ref = this.parentRef;
   while (ref) {
     if (ref.targetDecl)
       return this.targetDecl = ref.targetDecl;
-    ref = ref.parent;
+    ref = ref.parentRef;
   }
   ASSERT.call(this, false, 'ref unresolved');
 };
@@ -9917,9 +10170,18 @@ this.handOverRefList =
 function(list) {
   var len = list.length(), i = 0;
   while (i<len) {
-    var ref = list.at(i);
-    if (!ref.hasTarget)
-      this.handOver_m(list.keys[i], ref);
+    var ref = list.at(i), mname = list.keys[i];
+    if (ref.d === 0 && ref.i === 0)
+      ASSERT.call(this, ref.hasTarget, 'clean ref can not be free');
+    else {
+      ASSERT.call(this, !ref.hasTarget, 'touched ref can not be bound');
+      var target = this.findDecl_m(mname);
+      if (target) {
+        target.ref.absorbDirect(ref);
+      }
+      else 
+        this.handOver_m(mname, ref);
+    }
     i++;
   }
 };
@@ -9952,7 +10214,11 @@ function(mname, ref) {
   if (ref_this_m(mname))
     return this.spCreate_this(ref);
 
-  return this.parent.spCreate_global(mname, ref);
+  var target = this.findDecl_m(mname);
+  if (target)
+    target.ref.absorbDirect(ref);
+  else
+    return this.parent.spCreate_global(mname, ref);
 };
 
 },
@@ -10091,6 +10357,19 @@ function() { return this.isAnyFn() && this.isDecl(); };
 this.isExpr = 
 function() { return this.type & ST_EXPR; };
 
+this.isBootable =
+function() {
+  return this.isScript() || this.isFn() || this.isCatch() || this.isModule();
+};
+
+this.isBooted =
+function() {
+  return this.synthNamesUntilNow !== null;
+};
+
+this.isSourceLevel = 
+function() { return this.isScript() || this.isModule(); };
+
 this.isSimpleFn =
 function() { return this.type & (ST_EXPR|ST_DECL); };
 
@@ -10146,11 +10425,12 @@ function() {
   return a;
 };
 
-this.accL =
-function(name, idx, scope) {
-  if (scope === null)
-    scope = this.scs;
-  return scope.getL(name, idx, this);
+this.activateTZ =
+function() {
+  var scope = this.scs;
+  if (scope.hasTZCheckPoint)
+    return false;
+  return this.hasTZCheckPoint = true;
 };
 
 this.setName =
@@ -10188,13 +10468,6 @@ function() {
     fl |= SF_UNIQUE;
 
   return fl;
-};
-
-this.accocL =
-function(name, idx, scope) {
-  if (scope === null)
-    scope = this.scs;
-  return scope.gocL(name, idx, this);
 };
 
 },
@@ -10473,6 +10746,15 @@ function() {
     this.verifyForStrictness();
 };
 
+},
+function(){
+this.synth_defs_to =
+function(targetScope) {
+  var list = this.defs, e = 0, len = list.length();
+  while (e < len)
+    targetScope.synthDecl(list.at(e++));
+};
+
 }]  ],
 [ScopeName.prototype, [function(){
 this.hasName_m =
@@ -10583,7 +10865,7 @@ function(ts) {
 
 this.setScope =
 function(scope) {
-  var cur = null;
+  var cur = this.cur;
   this.cur = scope ;
   return cur;
 };
@@ -10596,17 +10878,17 @@ function(id, isB) {
   if (isB)
     target = this.cur.findDecl_m(_m(name));
   else {
-    var ref = this.findRef_m(_m(name));
+    var ref = this.cur.findRef_m(_m(name));
     ASSERT.call(this, ref, 'name is not used in the current scope: <'+name+'>');
     target = ref.getDecl();
   }
 
   ASSERT.call(this, target, 'unresolved <'+name+'>');
-  var hasTZ = !isB && this.needsTZ(decl);
+  var hasTZ = !isB && this.needsTZ(target);
   
   if (hasTZ) {
-    decl.activateTZ();
-    this.accessTZ(decl.ref.scope);
+    target.activateTZ();
+    this.accessTZ(target.ref.scope);
   }
 
   return {
@@ -10631,10 +10913,8 @@ function(decl) {
   if (ownerScope === cur)
     return false;
 
-  while (true) {
-    if (cur.parent === ownerScope)
-      break;
-    cur = cur.parent
+  while (cur.parent !== ownerScope) {
+    cur = cur.parent;
     ASSERT.call(this, cur, 'reached top before decl owner is reached -- tz test is only allowed in scopes that '+
       'can access the decl');
   }
@@ -10730,6 +11010,7 @@ function(n, isVal, isB) {
 TransformByLeft['Identifier'] =
 function(n, isVal, isB) {
   n.left = this.toResolvedName(n.left, isB);
+  n.right = this.tr(n.right, true);
   if (isB) {
     var target = n.left.target;
     if (!target.reached)
@@ -10782,8 +11063,8 @@ function(elem, iter, isB) {
 function(){
 Transformers['LogicalExpression'] = Transformers['BinaryExpression'] =
 function(n, ownerList, isVal) {
-  n.left = this.tr(n.left, null, true);
-  n.right = this.tr(n.right, null, true);
+  n.left = this.tr(n.left, true);
+  n.right = this.tr(n.right, true);
   return n;
 };
 
@@ -10792,11 +11073,10 @@ function(){
 Transformers['BlockStatement'] =
 function(n, isVal) {
   ASSERT_EQ.call(this, isVal, false);
-  var list = n.body, e = 0;
-  while (e < list.length) {
-    list[e] = this.tr(list[e], false);
-    e++;
-  }
+  var e = this.setScope(n['#scope']);
+  this.cur.synth_defs_to(this.cur.scs);
+  this.trList(n.body, isVal);
+  this.setScope(e);
   return n;
 };
 
@@ -10847,6 +11127,13 @@ function(n, isVal) {
   ASSERT_EQ.call(this, isVal, false);
   n.expression = this.tr(n.expression, false);
   return n;
+};
+
+},
+function(){
+Transformers['Identifier'] =
+function(n, isVal) {
+  return this.toResolvedName(n);
 };
 
 },
@@ -10931,7 +11218,7 @@ function(n, isVal) {
 
 },
 function(){
-Transformer['VariableDeclrataion'] =
+Transformers['VariableDeclaration'] =
 function(n, isVal) {
   ASSERT_EQ.call(this, isVal, false);
   var list = n.declarations, kind = n.kind, l = 0, tr = null;
@@ -10971,6 +11258,24 @@ Transformers['DoWhileStatement'] =
 function(n, isVal) {
   n.body = this.tr(n.body, false);
   n.test = this.tr(n.test, true);
+  return n;
+};
+
+},
+function(){
+Transformers['Program'] =
+function(n, isVal) {
+  ASSERT_EQ.call(this, isVal, false);
+  this.script = n['#scope'];
+  this.global = this.script.parent;
+  ASSERT.call(this, this.global.isGlobal(), 'script can not have a non-global parent');
+  var ps = this.setScope(this.script);
+  var ts = this.setTS([]);
+
+  this.cur.synth_start();
+  this.trList(n.body, isVal);
+  this.cur.synth_finish();
+
   return n;
 };
 
@@ -11119,7 +11424,17 @@ function(iter, at, isC) {
   };
 };
 
-var SYNTH_VOID0 = { type: '#Untransformed' , kind: 'void0' };
+var SYNTH_VOID0 = {
+  type: 'UnaryExpression',
+  operator: 'void',
+  argument: {
+    type: 'Literal',
+    value: 0,
+    raw: '0',
+  },
+  '#y': 0
+};
+
 this.synth_Void0 = function() { return SYNTH_VOID0; };
 
 
@@ -11187,10 +11502,27 @@ function(n, isVal) {
 };
 
 this.accessTZ =
-function() {};
+function(scope) {
+  var lg = scope.scs.gocLG('tz');
+  var l = lg.getL(0);
+  if (!l) {
+    l = lg.newL();
+    lg.seal();
+  }
+  return l.track(this.cur);
+};
 
 this.accessJZ =
-function() {};
+function() {
+  return;
+  var lg = this.scriptScope.gocLG('jz');
+  var l = lg.getL(0);
+  if (!l) {
+    l = lg.newL();
+    lg.seal();
+  }
+  return l.track(this.cur);
+};
 
 this.trList =
 function(list, isVal) {

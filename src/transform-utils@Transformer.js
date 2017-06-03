@@ -18,10 +18,27 @@ function(n, isVal) {
 };
 
 this.accessTZ =
-function() {};
+function(scope) {
+  var lg = scope.scs.gocLG('tz');
+  var l = lg.getL(0);
+  if (!l) {
+    l = lg.newL();
+    lg.seal();
+  }
+  return l.track(this.cur);
+};
 
 this.accessJZ =
-function() {};
+function() {
+  return;
+  var lg = this.scriptScope.gocLG('jz');
+  var l = lg.getL(0);
+  if (!l) {
+    l = lg.newL();
+    lg.seal();
+  }
+  return l.track(this.cur);
+};
 
 this.trList =
 function(list, isVal) {

@@ -4,17 +4,17 @@ function(id, isB) {
   if (isB)
     target = this.cur.findDecl_m(_m(name));
   else {
-    var ref = this.findRef_m(_m(name));
+    var ref = this.cur.findRef_m(_m(name));
     ASSERT.call(this, ref, 'name is not used in the current scope: <'+name+'>');
     target = ref.getDecl();
   }
 
   ASSERT.call(this, target, 'unresolved <'+name+'>');
-  var hasTZ = !isB && this.needsTZ(decl);
+  var hasTZ = !isB && this.needsTZ(target);
   
   if (hasTZ) {
-    decl.activateTZ();
-    this.accessTZ(decl.ref.scope);
+    target.activateTZ();
+    this.accessTZ(target.ref.scope);
   }
 
   return {
@@ -39,10 +39,8 @@ function(decl) {
   if (ownerScope === cur)
     return false;
 
-  while (true) {
-    if (cur.parent === ownerScope)
-      break;
-    cur = cur.parent
+  while (cur.parent !== ownerScope) {
+    cur = cur.parent;
     ASSERT.call(this, cur, 'reached top before decl owner is reached -- tz test is only allowed in scopes that '+
       'can access the decl');
   }

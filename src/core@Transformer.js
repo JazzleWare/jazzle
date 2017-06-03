@@ -27,7 +27,7 @@ function(ts) {
 
 this.setScope =
 function(scope) {
-  var cur = null;
+  var cur = this.cur;
   this.cur = scope ;
   return cur;
 };

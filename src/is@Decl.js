@@ -24,10 +24,14 @@ function() { return this.type & DT_CATCHARG; };
 
 this.isTemporal =
 function() {
-  if (this.isFnArg() || this.isCatchArg())
+  if (this.isFnArg())
     return !this.ref.scope.inBody;
+  if (this.isCatchArg())
+    return !this.ref.scope.inBody;
+  if (this.isFn())
+    return false;
 
-  return this.isCls() || this.isLexical();
+  return this.isCls() || this.isLexicalLike();
 };
 
 this.isLLINOSA =
@@ -36,6 +40,9 @@ function() {
     this.ref.scope.insideLoop() &&
     this.ref.i;
 };
+
+this.isLiquid =
+function() { return this.type & DT_LIQUID; };
 
 var _HOISTED = DT_FN|DT_VAR;
 this.isHoisted =
