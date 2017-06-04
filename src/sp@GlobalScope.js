@@ -4,6 +4,7 @@ function(mname, ref) {
   ASSERT.call(this, !newDecl && !this.findDeclAny_m(mname),
     'global scope has already got this name: <'+_u(mname)+'>');
 
+  ref.scope = this;
   newDecl = new Decl().t(DT_GLOBAL).r(ref).n(_u(mname));
   this.insertDecl_m(mname, newDecl);
 
