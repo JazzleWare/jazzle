@@ -24,7 +24,7 @@ function(ctx) {
     if (this.lttype === TK_ID && this.ltval !== 'extends') {
       this.declMode = DT_CLS;
       name = this.getName_cls(st);
-      sourceDecl = this.scope.findDecl_m(_m(name.name));
+      sourceDecl = this.scope.findDeclOwn_m(_m(name.name));
     }
     else if (!(ctx & CTX_DEFAULT))
       this.err('class.decl.has.no.name', {c0:startc,loc0:startLoc});

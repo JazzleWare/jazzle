@@ -3,14 +3,9 @@ function(list) {
   var len = list.length(), i = 0;
   while (i<len) {
     var ref = list.at(i), mname = list.keys[i];
-    if (ref.d || ref.i) {
+    if (ref && (ref.d || ref.i)) {
       ASSERT.call(this, !ref.hasTarget, 'touched ref can not be bound');
-      var target = this.findDecl_m(mname);
-      if (target) {
-        target.ref.absorbDirect(ref);
-      }
-      else 
-        this.handOver_m(mname, ref);
+      this.handOver_m(mname, ref);
     }
     i++;
   }
@@ -44,9 +39,5 @@ function(mname, ref) {
   if (ref_this_m(mname))
     return this.spCreate_this(ref);
 
-  var target = this.findDecl_m(mname);
-  if (target)
-    target.ref.absorbDirect(ref);
-  else
-    return this.parent.spCreate_global(mname, ref);
+  return this.parent.spCreate_global(mname, ref);
 };

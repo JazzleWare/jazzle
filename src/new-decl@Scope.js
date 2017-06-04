@@ -1,6 +1,6 @@
 this.declareHoisted_m =
 function(mname, t) {
-  var tdecl = this.findDecl_m(mname);
+  var tdecl = this.findDeclAny_m(mname);
 
   if (tdecl) {
     if (tdecl.isOverridableByVar())
@@ -14,22 +14,33 @@ function(mname, t) {
   tdecl = this.findVarTarget_m(mname);
   if (!tdecl) {
     tscope = this.scs;
-    tdecl = new Decl()
-      .t(t)
-      .n(_u(mname))
-      .r(new Ref(tscope));
+    tdecl = new Decl().t(t).n(_u(mname)).r(tscope.rocRefU_m(mname));
+    ASSERT.call(this, !tscope.findDeclAny_m(mname), 'override is not allowed');
     isNew = true;
-    this.insertDecl_m(mname, tdecl);
+
   }
   else { tscope = tdecl.ref.scope; }
 
+  this.insertDecl_m(mname, tdecl);
+
   if (this !== tscope)
-    this.parent.hoistName_m(mname, tdecl, tscope, isNew);
+    this.parent.hoistName_m(mname, tdecl, tscope);
+
+  isNew && tscope.addVarTarget_m(mname, tdecl);
 
   return tdecl;
 };
 
-this.findDecl_m = 
+this.findDeclOwn_m =
+function(mname) {
+  var tdecl = this.findDeclAny_m(mname);
+  if (tdecl && this.owns(tdecl))
+    return tdecl;
+
+  return null;
+};
+
+this.findDeclAny_m = 
 function(mname) {
   return this.defs.has(mname) ?
     this.defs.get(mname) : null;
@@ -39,7 +50,7 @@ this.hoistName_m =
 function(mname, tdecl, tscope, isNew) {
   var cur = this;
   while (true) {
-    var existing = cur.findDecl_m(mname);
+    var existing = cur.findDeclAny_m(mname);
     if (existing) {
       if (existing.isOverridableByVar())
         return;
@@ -53,8 +64,6 @@ function(mname, tdecl, tscope, isNew) {
     ASSERT.call(this, cur !== null,
       'reached topmost before reaching target');
   }
-
-  isNew && tscope.addVarTarget_m(mname, tdecl);
 };
 
 this.findParam_m =
@@ -67,7 +76,7 @@ function(mname) {
 
 this.declareLexical_m =
 function(mname, t) {
-  var existing = this.findDecl_m(mname);
+  var existing = this.findDeclAny_m(mname);
   if (!existing) {
     if (this.isAnyFn() || this.isCatch())
       existing = this.findParam_m(mname);
@@ -76,9 +85,7 @@ function(mname, t) {
     this.err('lexical.can.not.override.existing');
 
   var newDecl = null;
-  var ref = this.findRef_m(mname) || new Ref(this);
-
-  newDecl = new Decl().t(t).n(_u(mname)).r(ref);
+  newDecl = new Decl().t(t).n(_u(mname)).r(this.rocRefU_m(mname));
   this.insertDecl_m(mname, newDecl);
 
   return newDecl;
@@ -137,14 +144,13 @@ function(mname, t) {
   ASSERT.call(this, this.isCatch() && !this.inBody,
     'only catch heads are allowed to declare args');
 
-  var existing = this.findDecl_m(mname);
+  var existing = this.findDeclAny_m(mname);
   if (existing)
     this.err('var.catch.is.duplicate');
 
   var newDecl = null;
-  var ref = this.findRef_m(mname) || new Ref(this);
 
-  newDecl = new Decl().t(t).n(_u(mname)).r(ref);
+  newDecl = new Decl().t(t).n(_u(mname)).r(this.rocRefU_m(mname));
 
   this.insertDecl_m(mname, newDecl);
   this.addVarTarget_m(mname, newDecl);
@@ -157,7 +163,7 @@ function(mname, t) {
   ASSERT.call(this, this.isAnyFn() && !this.inBody,
     'only fn heads are allowed to declare args');
 
-  var ref = this.findRef_m(mname) || new Ref(this),
+  var ref = this.findRefAny_m(mname),
       newDecl = new Decl().t(t).n(_u(mname));
 
   var existing = HAS.call(this.argMap, mname) ?
@@ -167,9 +173,10 @@ function(mname, t) {
     this.canDup() || this.err('var.fn.is.dup.arg');
     if (!this.firstDup)
       this.firstDup = existing;
-    newDecl.ref = ref;
+    newDecl.ref = ref; // unnecessary; also, no  Decl::`r() is not needed -- `ref.hasTarget` holds
   }
   else {
+    ref = this.rocRefU_m(mname);
     newDecl.r(ref);
     this.argMap[mname] = newDecl;
     this.addVarTarget_m(mname, newDecl);

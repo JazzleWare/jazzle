@@ -141,7 +141,7 @@ function(decl) {
 this.synthGlobal =
 function(global) {
   ASSERT.call(this, this.isSourceLevel(), 'script m');
-  ASSERT.call(this, this.isGlobal(), 'not g');
+  ASSERT.call(this, global.isGlobal(), 'not g');
 
   var rsList = global.ref.rsList;
   var original = true;

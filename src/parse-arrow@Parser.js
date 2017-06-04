@@ -12,7 +12,7 @@ this.parseArrow = function(arg, ctx)   {
   var sc = ST_ARROW;
   switch ( arg.type ) {
   case 'Identifier':
-    this.scope.findRef_m(_m(arg.name)).d--;
+    this.scope.findRefAny_m(_m(arg.name)).d--;
     this.enterScope(this.scope.spawnFn(sc));
     this.scope.refDirect_m(_m(arg.name), null);
     this.asArrowFuncArg(arg);

@@ -75,13 +75,7 @@ function() {
   return fl;
 };
 
-this.clearUnresolved_m = this.cunm =
-function(mname, scope) {
-  var ref = this.findUnresolved_m(mname);
-  if (ref)
-    this.insertRef_m(mname, null);
-  else if (scope)
-    ref = new Ref(scope);
-
-  return ref;
+this.owns =
+function(tdclr) {
+  return tdclr.ref.scope === this;
 };

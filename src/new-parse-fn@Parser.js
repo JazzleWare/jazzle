@@ -72,7 +72,7 @@ function(ctx, st) {
       this.scope.setName(
         fnName.name,
         st,
-        declScope.findDecl_m(_m(fnName.name)));
+        declScope.findDeclOwn_m(_m(fnName.name)));
     else
       this.scope.setName(
         fnName.name,

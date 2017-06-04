@@ -16,7 +16,7 @@ function() {
 
   var p = this.parent;
   while (i<len) {
-    var mname = list.keys[i], ref = p.findRef_m(mname);
+    var mname = list.keys[i], ref = p.findRefAny_m(mname);
     var elem = list.get(mname);
     if (ref) ref.absorbDirect(elem);
     else { elem.scope = p; p.insertRef_m(mname, elem); }

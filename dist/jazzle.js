@@ -1333,7 +1333,7 @@ function(decl) {
 this.synthGlobal =
 function(global) {
   ASSERT.call(this, this.isSourceLevel(), 'script m');
-  ASSERT.call(this, this.isGlobal(), 'not g');
+  ASSERT.call(this, global.isGlobal(), 'not g');
 
   var rsList = global.ref.rsList;
   var original = true;
@@ -2530,7 +2530,7 @@ function(mname, ref) {
     }
   }
 
-  return this.focRef_m(mname).absorbDirect(ref);
+  return this.focRefAny_m(mname).absorbDirect(ref);
 };
 
 },
@@ -2584,8 +2584,8 @@ function() {
 [GlobalScope.prototype, [function(){
 this.spCreate_global =
 function(mname, ref) {
-  var newDecl = this.findDecl_m(mname);
-  ASSERT.call(this, !newDecl,
+  var newDecl = this.findDeclOwn_m(mname);
+  ASSERT.call(this, !newDecl && !this.findDeclAny_m(mname),
     'global scope has already got this name: <'+_u(mname)+'>');
 
   newDecl = new Decl().t(DT_GLOBAL).r(ref).n(_u(mname));
@@ -2781,7 +2781,7 @@ function() {
 
   var p = this.parent;
   while (i<len) {
-    var mname = list.keys[i], ref = p.findRef_m(mname);
+    var mname = list.keys[i], ref = p.findRefAny_m(mname);
     var elem = list.get(mname);
     if (ref) ref.absorbDirect(elem);
     else { elem.scope = p; p.insertRef_m(mname, elem); }
@@ -2859,8 +2859,8 @@ this.asArrowFuncArg = function(arg) {
     if (this.scope.insideStrict() && arorev(arg.name))
       this.err('binding.to.arguments.or.eval',{tn:arg});
 
+    this.scope.findRefU_m(_m(arg.name)).d--; // one ref is a decl
     this.scope.decl_m(_m(arg.name), DT_FNARG);
-    this.scope.findRef_m(_m(arg.name)).d--; // one ref is a decl
     return;
 
   case 'ArrayExpression':
@@ -4682,7 +4682,7 @@ function(ctx, st) {
       this.scope.setName(
         fnName.name,
         st,
-        declScope.findDecl_m(_m(fnName.name)));
+        declScope.findDeclOwn_m(_m(fnName.name)));
     else
       this.scope.setName(
         fnName.name,
@@ -6485,7 +6485,7 @@ this.parseArrow = function(arg, ctx)   {
   var sc = ST_ARROW;
   switch ( arg.type ) {
   case 'Identifier':
-    this.scope.findRef_m(_m(arg.name)).d--;
+    this.scope.findRefAny_m(_m(arg.name)).d--;
     this.enterScope(this.scope.spawnFn(sc));
     this.scope.refDirect_m(_m(arg.name), null);
     this.asArrowFuncArg(arg);
@@ -6795,7 +6795,7 @@ function(ctx) {
     if (this.lttype === TK_ID && this.ltval !== 'extends') {
       this.declMode = DT_CLS;
       name = this.getName_cls(st);
-      sourceDecl = this.scope.findDecl_m(_m(name.name));
+      sourceDecl = this.scope.findDeclOwn_m(_m(name.name));
     }
     else if (!(ctx & CTX_DEFAULT))
       this.err('class.decl.has.no.name', {c0:startc,loc0:startLoc});
@@ -10171,14 +10171,9 @@ function(list) {
   var len = list.length(), i = 0;
   while (i<len) {
     var ref = list.at(i), mname = list.keys[i];
-    if (ref.d || ref.i) {
+    if (ref && (ref.d || ref.i)) {
       ASSERT.call(this, !ref.hasTarget, 'touched ref can not be bound');
-      var target = this.findDecl_m(mname);
-      if (target) {
-        target.ref.absorbDirect(ref);
-      }
-      else 
-        this.handOver_m(mname, ref);
+      this.handOver_m(mname, ref);
     }
     i++;
   }
@@ -10212,11 +10207,7 @@ function(mname, ref) {
   if (ref_this_m(mname))
     return this.spCreate_this(ref);
 
-  var target = this.findDecl_m(mname);
-  if (target)
-    target.ref.absorbDirect(ref);
-  else
-    return this.parent.spCreate_global(mname, ref);
+  return this.parent.spCreate_global(mname, ref);
 };
 
 },
@@ -10468,22 +10459,16 @@ function() {
   return fl;
 };
 
-this.clearUnresolved_m = this.cunm =
-function(mname, scope) {
-  var ref = this.findUnresolved_m(mname);
-  if (ref)
-    this.insertRef_m(mname, null);
-  else if (scope)
-    ref = new Ref(scope);
-
-  return ref;
+this.owns =
+function(tdclr) {
+  return tdclr.ref.scope === this;
 };
 
 },
 function(){
 this.declareHoisted_m =
 function(mname, t) {
-  var tdecl = this.findDecl_m(mname);
+  var tdecl = this.findDeclAny_m(mname);
 
   if (tdecl) {
     if (tdecl.isOverridableByVar())
@@ -10497,22 +10482,33 @@ function(mname, t) {
   tdecl = this.findVarTarget_m(mname);
   if (!tdecl) {
     tscope = this.scs;
-    tdecl = new Decl()
-      .t(t)
-      .n(_u(mname))
-      .r(new Ref(tscope));
+    tdecl = new Decl().t(t).n(_u(mname)).r(tscope.rocRefU_m(mname));
+    ASSERT.call(this, !tscope.findDeclAny_m(mname), 'override is not allowed');
     isNew = true;
-    this.insertDecl_m(mname, tdecl);
+
   }
   else { tscope = tdecl.ref.scope; }
 
+  this.insertDecl_m(mname, tdecl);
+
   if (this !== tscope)
-    this.parent.hoistName_m(mname, tdecl, tscope, isNew);
+    this.parent.hoistName_m(mname, tdecl, tscope);
+
+  isNew && tscope.addVarTarget_m(mname, tdecl);
 
   return tdecl;
 };
 
-this.findDecl_m = 
+this.findDeclOwn_m =
+function(mname) {
+  var tdecl = this.findDeclAny_m(mname);
+  if (tdecl && this.owns(tdecl))
+    return tdecl;
+
+  return null;
+};
+
+this.findDeclAny_m = 
 function(mname) {
   return this.defs.has(mname) ?
     this.defs.get(mname) : null;
@@ -10522,7 +10518,7 @@ this.hoistName_m =
 function(mname, tdecl, tscope, isNew) {
   var cur = this;
   while (true) {
-    var existing = cur.findDecl_m(mname);
+    var existing = cur.findDeclAny_m(mname);
     if (existing) {
       if (existing.isOverridableByVar())
         return;
@@ -10536,8 +10532,6 @@ function(mname, tdecl, tscope, isNew) {
     ASSERT.call(this, cur !== null,
       'reached topmost before reaching target');
   }
-
-  isNew && tscope.addVarTarget_m(mname, tdecl);
 };
 
 this.findParam_m =
@@ -10550,7 +10544,7 @@ function(mname) {
 
 this.declareLexical_m =
 function(mname, t) {
-  var existing = this.findDecl_m(mname);
+  var existing = this.findDeclAny_m(mname);
   if (!existing) {
     if (this.isAnyFn() || this.isCatch())
       existing = this.findParam_m(mname);
@@ -10559,9 +10553,7 @@ function(mname, t) {
     this.err('lexical.can.not.override.existing');
 
   var newDecl = null;
-  var ref = this.findRef_m(mname) || new Ref(this);
-
-  newDecl = new Decl().t(t).n(_u(mname)).r(ref);
+  newDecl = new Decl().t(t).n(_u(mname)).r(this.rocRefU_m(mname));
   this.insertDecl_m(mname, newDecl);
 
   return newDecl;
@@ -10620,14 +10612,13 @@ function(mname, t) {
   ASSERT.call(this, this.isCatch() && !this.inBody,
     'only catch heads are allowed to declare args');
 
-  var existing = this.findDecl_m(mname);
+  var existing = this.findDeclAny_m(mname);
   if (existing)
     this.err('var.catch.is.duplicate');
 
   var newDecl = null;
-  var ref = this.findRef_m(mname) || new Ref(this);
 
-  newDecl = new Decl().t(t).n(_u(mname)).r(ref);
+  newDecl = new Decl().t(t).n(_u(mname)).r(this.rocRefU_m(mname));
 
   this.insertDecl_m(mname, newDecl);
   this.addVarTarget_m(mname, newDecl);
@@ -10640,7 +10631,7 @@ function(mname, t) {
   ASSERT.call(this, this.isAnyFn() && !this.inBody,
     'only fn heads are allowed to declare args');
 
-  var ref = this.findRef_m(mname) || new Ref(this),
+  var ref = this.findRefAny_m(mname),
       newDecl = new Decl().t(t).n(_u(mname));
 
   var existing = HAS.call(this.argMap, mname) ?
@@ -10650,9 +10641,10 @@ function(mname, t) {
     this.canDup() || this.err('var.fn.is.dup.arg');
     if (!this.firstDup)
       this.firstDup = existing;
-    newDecl.ref = ref;
+    newDecl.ref = ref; // unnecessary; also, no  Decl::`r() is not needed -- `ref.hasTarget` holds
   }
   else {
+    ref = this.rocRefU_m(mname);
     newDecl.r(ref);
     this.argMap[mname] = newDecl;
     this.addVarTarget_m(mname, newDecl);
@@ -10685,7 +10677,7 @@ function(mname) {
 function(){
 this.refDirect_m = 
 function(mname, childRef) {
-  var ref = this.focRef_m(mname);
+  var ref = this.focRefAny_m(mname);
   if (childRef === null) {
     ref.d++;
     return ref;
@@ -10695,20 +10687,53 @@ function(mname, childRef) {
   return ref;
 };
 
-this.focRef_m =
+this.findRefU_m = this.fRo_m =
 function(mname) {
-  var ref = this.findRef_m(mname);
+  return this.refs.has(mname) ? 
+    this.refs.get(mname) : null;
+};
+
+this.findRefAny_m = this.fRa_m =
+function(mname) {
+  var ref = this.findRefU_m(mname);
+  if (ref)
+    return ref;
+
+  var tdecl = this.findDeclOwn_m(mname); // exclude inner vars
+  if (tdecl)
+    return tdecl.ref;
+
+  return null;
+};
+
+this.removeRefU_m =
+function(mname) {
+  var ref = this.findRefU_m(mname);
+  if (ref)
+    this.insertRef_m(mname, null);
+  else
+    ASSERT.call(this, !this.findDeclOwn_m(mname), 'unresolved ref has a decl with the same name?!');
+
+  return null;
+};
+
+this.rocRefU_m =
+function(mname) {
+  var ref = this.removeRefU_m(mname);
+  if (!ref)
+    ref = new Ref(this);
+
+  return ref;
+};
+
+this.focRefAny_m = this.focRa_m =
+function(mname) {
+  var ref = this.findRefAny_m(mname);
   if (!ref) {
     ref = new Ref(this);
     this.insertRef_m(mname, ref);
   }
   return ref;
-};
-
-this.findRef_m =
-function(mname) {
-  return this.refs.has(mname) ? 
-    this.refs.get(mname) : null;
 };
 
 this.insertRef_m =
@@ -10718,7 +10743,7 @@ function(mname, ref) {
 
 this.refIndirect_m =
 function(mname, childRef) {
-  var ref = this.focRef_m(mname);
+  var ref = this.focRefAny_m(mname);
   ASSERT.call(this, childRef !== null,
     'childRef is not allowed to be null when in refIndirect');
 
@@ -10760,8 +10785,10 @@ function(){
 this.synth_defs_to =
 function(targetScope) {
   var list = this.defs, e = 0, len = list.length();
-  while (e < len)
-    targetScope.synthDecl(list.at(e++));
+  while (e < len) {
+    var tdclr = list.at(e++);
+    this.owns(tdclr) && targetScope.synthDecl(tdclr);
+  }
 };
 
 }]  ],
@@ -10885,9 +10912,9 @@ this.toResolvedName =
 function(id, isB) {
   var name = id.name, target = null;
   if (isB)
-    target = this.cur.findDecl_m(_m(name));
+    target = this.cur.findDeclAny_m(_m(name));
   else {
-    var ref = this.cur.findRef_m(_m(name));
+    var ref = this.cur.findRefAny_m(_m(name));
     ASSERT.call(this, ref, 'name is not used in the current scope: <'+name+'>');
     target = ref.getDecl();
   }
