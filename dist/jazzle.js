@@ -10171,9 +10171,7 @@ function(list) {
   var len = list.length(), i = 0;
   while (i<len) {
     var ref = list.at(i), mname = list.keys[i];
-    if (ref.d === 0 && ref.i === 0)
-      ASSERT.call(this, ref.hasTarget, 'clean ref can not be free');
-    else {
+    if (ref.d || ref.i) {
       ASSERT.call(this, !ref.hasTarget, 'touched ref can not be bound');
       var target = this.findDecl_m(mname);
       if (target) {
@@ -10468,6 +10466,17 @@ function() {
     fl |= SF_UNIQUE;
 
   return fl;
+};
+
+this.clearUnresolved_m = this.cunm =
+function(mname, scope) {
+  var ref = this.findUnresolved_m(mname);
+  if (ref)
+    this.insertRef_m(mname, null);
+  else if (scope)
+    ref = new Ref(scope);
+
+  return ref;
 };
 
 },
