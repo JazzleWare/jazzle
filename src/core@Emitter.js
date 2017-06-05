@@ -107,9 +107,8 @@ this.u = function() {
 this.getOrCreateIndent = function(indentLen) {
   var cache = this.indentCache;
   if (indentLen >= cache.length) {
-    if (indentLen !== cache.length)
-      this.err('inceremental.indent');
-    cache.push(cache[cache.length-1] + this.spaceString);
+    while (indentLen >= cache.length)
+      cache.push(cache[cache.length-1] + this.spaceString);
   }
   return cache[indentLen];
 };

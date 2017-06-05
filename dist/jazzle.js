@@ -1628,9 +1628,8 @@ this.u = function() {
 this.getOrCreateIndent = function(indentLen) {
   var cache = this.indentCache;
   if (indentLen >= cache.length) {
-    if (indentLen !== cache.length)
-      this.err('inceremental.indent');
-    cache.push(cache[cache.length-1] + this.spaceString);
+    while (indentLen >= cache.length)
+      cache.push(cache[cache.length-1] + this.spaceString);
   }
   return cache[indentLen];
 };
@@ -1799,12 +1798,18 @@ function(stmt) {
 
 this.emitStmtList =
 function(list) {
-  var em = false, e = 0;
+  var emittedSoFar = 0, e = 0;
   while (e < list.length) {
-    em = this.eA(list[e++], EC_START_STMT, true) || em;
-    em && this.wsl();
+    var t0 = this.sc("");
+    this.eA(list[e++], EC_START_STMT, true);
+    t0 = this.sc(t0);
+    if (t0.length) {
+      emittedSoFar && this.l();
+      this.w(t0);
+      emittedSoFar++;
+    }
   }
-  return em;
+  return emittedSoFar;
 };
 
 this.emitSAT =
@@ -1898,7 +1903,7 @@ function(n, flags, isStmt) {
   if (hasParen) { this.w('('); flags = EC_NONE; }
   var o = n.operator;
   if (o === '**')
-    return this.emitPow(n, flags);
+    return this.emitPow(n, flags, isStmt);
 
   var left = n.left, right = n.right;
   if (isBLE(left))
@@ -1956,6 +1961,16 @@ function(n, flags) {
     return this.emitAny(n, flags, false);
   }
   return this.emitHead(n, flags, false);
+};
+
+this.emitPow =
+function(n, flags, isStmt) {
+  var hasParen = flags & EC_NEW_HEAD;
+  if (hasParen) { this.w('('); flags = EC_NONE; }
+  this.jz('ex').w('(').eN(n.left).w(',').s().eN(n.right).w(')');
+  hasParen && this.w(')');
+  isStmt && this.w(';');
+  return true;
 };
 
 function isBLE(n) {
@@ -2193,6 +2208,34 @@ function(n, flags, isStmt) {
   this.emitCommaList(n.expressions, flags);
   hasParen && this.w(')');
   isStmt && this.w(';');
+  return true;
+};
+
+},
+function(){
+Emitters['SwitchStatement'] =
+function(n, flags, isStmt) {
+  this.wm('switch',' ','(').eA(n.discriminant, EC_NONE, false).wm(')',' ','{');
+  var c0 = this.sc("");
+  this.emitStmtList(n.cases);
+  c0 = this.sc(c0);
+  if (c0.length)
+    this.l().ac(c0).l();
+
+  this.w('}');
+  return true;
+};
+
+Emitters['SwitchCase'] =
+function(n, flags, isStmt) {
+  n.test === null ? this.w('default') : this.wm('case',' ').eA(n.test, EC_NONE, false);
+  this.w(':').i();
+  var t0 = this.sc("");
+  this.emitStmtList(n.consequent);
+  t0 = this.sc(t0);
+  if (t0.length)
+    this.l().w(t0);
+  this.u();
   return true;
 };
 
@@ -2501,6 +2544,33 @@ function(refs) {
   this.refs = this.argRefs;
 };
 
+this.getNonLocalLoopLexicals =
+function() {
+  var argRefs = this.argRefs, e = 0, len = argRefs.length(), target = null;
+  var list = null;
+  while (e < len) {
+    var ref = argRefs.at(e++);
+    if (ref === null)
+      continue;
+
+    target = ref.getDecl();
+    if (target === this.scopeName)
+      continue;
+    if (target === this.spArguments)
+      continue;
+    if (target === this.spThis)
+      continue;
+
+    ASSERT.call(this, !target.isLiquid(), 'got liquid');
+    ASSERT.call(this, !this.owns(target), 'local');
+
+    if (target.isLexicalLike() && target.ref.scope.insideLoop())
+      (list || (list = [])).push(target);
+  }
+
+  return list;
+};
+
 },
 function(){
 this.handOver_m =
@@ -2515,7 +2585,7 @@ function(mname, ref) {
       return this.scopeName.ref.absorbDirect(ref);
   }
 
-  return this.refIndirect_m(mname, ref);
+  return this.parent.refIndirect_m(mname, ref);
 };
 
 this.refInHead =
@@ -10511,6 +10581,13 @@ function(mname) {
 
 this.findDeclAny_m = 
 function(mname) {
+  if (this.isAnyFn() && !this.inBody )
+    return this.findParam_m(mname);
+
+  if (this.isCatch() && !this.inBody )
+    return this.args.has(mname) ?
+      this.args.get(mname) : null;
+
   return this.defs.has(mname) ?
     this.defs.get(mname) : null;
 };
@@ -10715,7 +10792,7 @@ function(mname) {
   else
     ASSERT.call(this, !this.findDeclOwn_m(mname), 'unresolved ref has a decl with the same name?!');
 
-  return null;
+  return ref;
 };
 
 this.rocRefU_m =
@@ -11039,8 +11116,26 @@ function(n, isVal, isB) {
 TransformByLeft['MemberExpression'] =
 function(n, isVal, isB) {
   ASSERT_EQ.call(this, isB, false);
-  n.left = this.trSAT(n.left);
-  n.right = this.tr(n.right, true);
+  if (n.operator === '**=') {
+    var mem = n.left;
+    mem.object = this.tr(mem.object, true );
+    var t1 = this.allocTemp();
+    mem.object = this.synth_TempSave(t1, mem.object);
+    mem.property = this.tr(mem.property, true);
+    var t2 = this.allocTemp();
+    mem.property = this.synth_TempSave(t2, mem.property);
+    this.releaseTemp(t2);
+    this.releaseTemp(t1);
+    var r = this.tr(n.right, true );
+
+    n.left = mem;
+    n.operator = '=';
+    n.right = this.synth_node_BinaryExpression(
+      this.synth_node_MemberExpression(t1,t2), '**', r);
+  } else {
+    n.left = this.trSAT(n.left);
+    n.right = this.tr(n.right, true);
+  }
   return n;
 };
 
@@ -11234,6 +11329,25 @@ Transformers['SpreadElement'] =
 function(n, isVal) {
   ASSERT_EQ.call(this, isVal, true);
   n.argument = this.tr(n.argument, isVal);
+  return n;
+};
+
+},
+function(){
+Transformers['SwitchStatement'] =
+function(n, isVal) {
+  ASSERT_EQ.call(this, isVal, false);
+  n. discriminant = this.tr(n.discriminant, true);
+  this.trList(n.cases, false);
+  return n;
+};
+
+Transformers['SwitchCase'] =
+function(n, isVal) {
+  ASSERT_EQ.call(this, isVal, false);
+  if (n.test !== null)
+    n.test = this.tr(n.test, true);
+  this.trList(n.consequent, false);
   return n;
 };
 
@@ -11472,8 +11586,29 @@ var SYNTH_VOID0 = {
   '#y': 0
 };
 
+this.synth_node_BinaryExpression =
+function(left,o,right,y) {
+  return {
+    left: left,
+    operator: o,
+    right: right,
+    type: 'BinaryExpression',
+    '#y': y || 0
+  };
+};
+
 this.synth_Void0 = function() { return SYNTH_VOID0; };
 
+this.synth_node_MemberExpression =
+function(n,v) {
+  return {
+    type: 'MemberExpression',
+    computed: true,
+    object: n,
+    property: v,
+    '#y': 0
+  };
+};
 
 },
 function(){

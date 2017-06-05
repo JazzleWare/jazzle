@@ -37,7 +37,7 @@ function(mname) {
   else
     ASSERT.call(this, !this.findDeclOwn_m(mname), 'unresolved ref has a decl with the same name?!');
 
-  return null;
+  return ref;
 };
 
 this.rocRefU_m =

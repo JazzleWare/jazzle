@@ -10,7 +10,7 @@ function(mname, ref) {
       return this.scopeName.ref.absorbDirect(ref);
   }
 
-  return this.refIndirect_m(mname, ref);
+  return this.parent.refIndirect_m(mname, ref);
 };
 
 this.refInHead =

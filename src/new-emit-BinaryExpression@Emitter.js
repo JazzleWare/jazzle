@@ -6,7 +6,7 @@ function(n, flags, isStmt) {
   if (hasParen) { this.w('('); flags = EC_NONE; }
   var o = n.operator;
   if (o === '**')
-    return this.emitPow(n, flags);
+    return this.emitPow(n, flags, isStmt);
 
   var left = n.left, right = n.right;
   if (isBLE(left))
@@ -64,6 +64,16 @@ function(n, flags) {
     return this.emitAny(n, flags, false);
   }
   return this.emitHead(n, flags, false);
+};
+
+this.emitPow =
+function(n, flags, isStmt) {
+  var hasParen = flags & EC_NEW_HEAD;
+  if (hasParen) { this.w('('); flags = EC_NONE; }
+  this.jz('ex').w('(').eN(n.left).w(',').s().eN(n.right).w(')');
+  hasParen && this.w(')');
+  isStmt && this.w(';');
+  return true;
 };
 
 function isBLE(n) {

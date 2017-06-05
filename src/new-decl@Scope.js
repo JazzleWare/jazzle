@@ -42,6 +42,13 @@ function(mname) {
 
 this.findDeclAny_m = 
 function(mname) {
+  if (this.isAnyFn() && !this.inBody )
+    return this.findParam_m(mname);
+
+  if (this.isCatch() && !this.inBody )
+    return this.args.has(mname) ?
+      this.args.get(mname) : null;
+
   return this.defs.has(mname) ?
     this.defs.get(mname) : null;
 };

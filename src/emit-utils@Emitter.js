@@ -103,12 +103,18 @@ function(stmt) {
 
 this.emitStmtList =
 function(list) {
-  var em = false, e = 0;
+  var emittedSoFar = 0, e = 0;
   while (e < list.length) {
-    em = this.eA(list[e++], EC_START_STMT, true) || em;
-    em && this.wsl();
+    var t0 = this.sc("");
+    this.eA(list[e++], EC_START_STMT, true);
+    t0 = this.sc(t0);
+    if (t0.length) {
+      emittedSoFar && this.l();
+      this.w(t0);
+      emittedSoFar++;
+    }
   }
-  return em;
+  return emittedSoFar;
 };
 
 this.emitSAT =

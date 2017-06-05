@@ -69,8 +69,26 @@ function(n, isVal, isB) {
 TransformByLeft['MemberExpression'] =
 function(n, isVal, isB) {
   ASSERT_EQ.call(this, isB, false);
-  n.left = this.trSAT(n.left);
-  n.right = this.tr(n.right, true);
+  if (n.operator === '**=') {
+    var mem = n.left;
+    mem.object = this.tr(mem.object, true );
+    var t1 = this.allocTemp();
+    mem.object = this.synth_TempSave(t1, mem.object);
+    mem.property = this.tr(mem.property, true);
+    var t2 = this.allocTemp();
+    mem.property = this.synth_TempSave(t2, mem.property);
+    this.releaseTemp(t2);
+    this.releaseTemp(t1);
+    var r = this.tr(n.right, true );
+
+    n.left = mem;
+    n.operator = '=';
+    n.right = this.synth_node_BinaryExpression(
+      this.synth_node_MemberExpression(t1,t2), '**', r);
+  } else {
+    n.left = this.trSAT(n.left);
+    n.right = this.tr(n.right, true);
+  }
   return n;
 };
 

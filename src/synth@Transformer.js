@@ -152,5 +152,26 @@ var SYNTH_VOID0 = {
   '#y': 0
 };
 
+this.synth_node_BinaryExpression =
+function(left,o,right,y) {
+  return {
+    left: left,
+    operator: o,
+    right: right,
+    type: 'BinaryExpression',
+    '#y': y || 0
+  };
+};
+
 this.synth_Void0 = function() { return SYNTH_VOID0; };
 
+this.synth_node_MemberExpression =
+function(n,v) {
+  return {
+    type: 'MemberExpression',
+    computed: true,
+    object: n,
+    property: v,
+    '#y': 0
+  };
+};
