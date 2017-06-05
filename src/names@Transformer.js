@@ -1,3 +1,29 @@
+this.makeReached =
+function(target) {
+  ASSERT.call(this, target.reached === null, 'reached used');
+  target.reached = this.reachedRef;
+};
+
+this.needsTZ =
+function(decl) {
+  if (!decl.isTemporal())
+    return false;
+
+  if (!decl.isReached())
+    return true;
+
+  var ownerScope = decl.ref.scope, cur = this.cur;
+  if (ownerScope === cur)
+    return false;
+
+  while (cur.parent !== ownerScope) {
+    cur = cur.parent;
+    ASSERT.call(this, cur, 'reached top before decl owner is reached -- tz test is only allowed in scopes that '+
+      'can access the decl');
+  }
+  return cur.isHoisted();
+};
+
 this.toResolvedName =
 function(id, isB) {
   var name = id.name, target = null;
@@ -25,24 +51,4 @@ function(id, isB) {
     type: '#Untransformed' ,
     kind: 'resolved-name'
   };
-}; 
-
-this.needsTZ =
-function(decl) {
-  if (!decl.isTemporal())
-    return false;
-
-  if (!decl.reached)
-    return true;
-
-  var ownerScope = decl.ref.scope, cur = this.cur;
-  if (ownerScope === cur)
-    return false;
-
-  while (cur.parent !== ownerScope) {
-    cur = cur.parent;
-    ASSERT.call(this, cur, 'reached top before decl owner is reached -- tz test is only allowed in scopes that '+
-      'can access the decl');
-  }
-  return cur.isHoisted();
 };

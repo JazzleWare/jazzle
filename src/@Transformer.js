@@ -7,4 +7,5 @@ function Transformer() {
 
   // the could be per scope (i.e., a scope attibute),
   this.tempStack = [];
+  this.reachedRef = {v: true};
 }

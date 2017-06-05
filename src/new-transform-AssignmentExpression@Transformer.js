@@ -98,8 +98,8 @@ function(n, isVal, isB) {
   n.right = this.tr(n.right, true);
   if (isB) {
     var target = n.left.target;
-    if (!target.reached)
-      target.reached = true;
+    if (!target.isReached())
+      this.makeReached(target);
   } 
   return n;
 };

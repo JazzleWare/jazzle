@@ -36,7 +36,7 @@ function Decl() {
   this.name = "";
   this.site = null;
   this.hasTZCheck = false;
-  this.reached = false;
+  this.reached = null;
   this.type = DT_NONE;
   this.synthName = "";
 }
@@ -411,6 +411,7 @@ function Transformer() {
 
   // the could be per scope (i.e., a scope attibute),
   this.tempStack = [];
+  this.reachedRef = {v: true};
 }
 ;
  ConcreteScope.prototype = createObj(Scope.prototype);
@@ -1438,6 +1439,11 @@ function() {
   this.hasTZCheck = true;
   this.ref.scope.activateTZ();
   return true;
+};
+
+this.isReached =
+function() {
+  return this.reached && this.reached.v;
 };
 
 },
@@ -10950,6 +10956,27 @@ this.applyTo = function(obj, noErrIfUndefNull) {
 
 }]  ],
 [Transformer.prototype, [function(){
+this.setTS =
+function(ts) {
+  var ts0 = this.tempStack;
+  this.tempStack = ts;
+  return ts0;
+};
+
+this.setRR =
+function(reachedRef) {
+  var reachedRef = this.reachedRef;
+  this.reachedRef = reachedRef;
+  return reachedRef;
+};
+
+this.setScope =
+function(scope) {
+  var cur = this.cur;
+  this.cur = scope ;
+  return cur;
+};
+
 this.tr =
 function(n, ownerBody, isVal) {
   var ntype = n.type;
@@ -10970,22 +10997,34 @@ function(n, ownerBody, isVal) {
   return transformer.call(this, n, ownerBody, isVal);
 };
 
-this.setTS =
-function(ts) {
-  var ts0 = this.tempStack;
-  this.tempStack = ts;
-  return ts0;
-};
-
-this.setScope =
-function(scope) {
-  var cur = this.cur;
-  this.cur = scope ;
-  return cur;
-};
-
 },
 function(){
+this.makeReached =
+function(target) {
+  ASSERT.call(this, target.reached === null, 'reached used');
+  target.reached = this.reachedRef;
+};
+
+this.needsTZ =
+function(decl) {
+  if (!decl.isTemporal())
+    return false;
+
+  if (!decl.isReached())
+    return true;
+
+  var ownerScope = decl.ref.scope, cur = this.cur;
+  if (ownerScope === cur)
+    return false;
+
+  while (cur.parent !== ownerScope) {
+    cur = cur.parent;
+    ASSERT.call(this, cur, 'reached top before decl owner is reached -- tz test is only allowed in scopes that '+
+      'can access the decl');
+  }
+  return cur.isHoisted();
+};
+
 this.toResolvedName =
 function(id, isB) {
   var name = id.name, target = null;
@@ -11013,26 +11052,6 @@ function(id, isB) {
     type: '#Untransformed' ,
     kind: 'resolved-name'
   };
-}; 
-
-this.needsTZ =
-function(decl) {
-  if (!decl.isTemporal())
-    return false;
-
-  if (!decl.reached)
-    return true;
-
-  var ownerScope = decl.ref.scope, cur = this.cur;
-  if (ownerScope === cur)
-    return false;
-
-  while (cur.parent !== ownerScope) {
-    cur = cur.parent;
-    ASSERT.call(this, cur, 'reached top before decl owner is reached -- tz test is only allowed in scopes that '+
-      'can access the decl');
-  }
-  return cur.isHoisted();
 };
 
 },
@@ -11145,8 +11164,8 @@ function(n, isVal, isB) {
   n.right = this.tr(n.right, true);
   if (isB) {
     var target = n.left.target;
-    if (!target.reached)
-      target.reached = true;
+    if (!target.isReached())
+      this.makeReached(target);
   } 
   return n;
 };
@@ -11337,8 +11356,10 @@ function(){
 Transformers['SwitchStatement'] =
 function(n, isVal) {
   ASSERT_EQ.call(this, isVal, false);
+  var s = this.setScope(n['#scope']);
   n. discriminant = this.tr(n.discriminant, true);
   this.trList(n.cases, false);
+  this.setScope(s);
   return n;
 };
 
@@ -11347,7 +11368,10 @@ function(n, isVal) {
   ASSERT_EQ.call(this, isVal, false);
   if (n.test !== null)
     n.test = this.tr(n.test, true);
+  var rr = this.setRR({v: true});
   this.trList(n.consequent, false);
+  rr = this.setRR(rr);
+  rr .v = false;
   return n;
 };
 

@@ -4,7 +4,7 @@ function Decl() {
   this.name = "";
   this.site = null;
   this.hasTZCheck = false;
-  this.reached = false;
+  this.reached = null;
   this.type = DT_NONE;
   this.synthName = "";
 }

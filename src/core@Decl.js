@@ -38,3 +38,8 @@ function() {
   this.ref.scope.activateTZ();
   return true;
 };
+
+this.isReached =
+function() {
+  return this.reached && this.reached.v;
+};

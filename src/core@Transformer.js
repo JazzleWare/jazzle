@@ -1,3 +1,24 @@
+this.setTS =
+function(ts) {
+  var ts0 = this.tempStack;
+  this.tempStack = ts;
+  return ts0;
+};
+
+this.setRR =
+function(reachedRef) {
+  var reachedRef = this.reachedRef;
+  this.reachedRef = reachedRef;
+  return reachedRef;
+};
+
+this.setScope =
+function(scope) {
+  var cur = this.cur;
+  this.cur = scope ;
+  return cur;
+};
+
 this.tr =
 function(n, ownerBody, isVal) {
   var ntype = n.type;
@@ -16,18 +37,4 @@ function(n, ownerBody, isVal) {
     throw new Error('could not find <'+ntype+'>-transformer');
 
   return transformer.call(this, n, ownerBody, isVal);
-};
-
-this.setTS =
-function(ts) {
-  var ts0 = this.tempStack;
-  this.tempStack = ts;
-  return ts0;
-};
-
-this.setScope =
-function(scope) {
-  var cur = this.cur;
-  this.cur = scope ;
-  return cur;
 };
