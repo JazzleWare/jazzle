@@ -73,6 +73,43 @@ function createObj(baseObj) {
   return new E();
 }
 
+function getIDName(n) {
+  if (n.type === 'Identifier')
+    return n.name;
+  if (n.type === 'Literal' &&
+    typeof n.value === STRING_TYPE &&
+    isIDName(n.value))
+    return n.value;
+  return "";
+};
+
+function isIDName(str) {
+  var e = 0;
+  if (str.length === 0)
+    return false;
+  var ch = str.charCodeAt(e++), ch2 = -1;
+  if (ch >= 0x0d800 && ch <= 0x0dbff) {
+    if (e < str.length)
+      ch = surrogate(ch, str.charCodeAt(e++));
+    else
+      return false;
+  }
+  if (!isIDHead(ch))
+    return false;
+  while (e < str.length) {
+    ch = str.charCodeAt(e++);
+    if (ch >= 0x0d800 && ch <= 0x0dbff) {
+      if (e < str.length)
+        ch = surrogate(ch, str.charCodeAt(e++));
+      else
+        return false;
+    }
+    if (!isIDBody(ch))
+      return false;
+  }
+  return true;
+}
+
 function isTemp(n) {
   return n.type === '#Untransformed' &&
     n.kind === 'temp';

@@ -71,13 +71,10 @@ function(ctx, st) {
     if (isStmt)
       this.scope.setName(
         fnName.name,
-        st,
-        declScope.findDeclOwn_m(_m(fnName.name)));
+        declScope.findDeclOwn_m(_m(fnName.name))
+      ).t(DT_FNNAME);
     else
-      this.scope.setName(
-        fnName.name,
-        st,
-        null);
+      this.scope.setName(fnName.name, null).t(DT_FNNAME);
   }
 
   var argLen =

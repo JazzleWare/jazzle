@@ -22,11 +22,9 @@ function(memName, ctx, st) {
     }
 
     val = this.parseFn(CTX_NONE, st);
-    if (memName.type === 'Identifier')
-      val['#scope'].setName(
-        memName.name,
-        SN_VIRTUAL,
-        null);
+    var idName = getIDName(memName);
+    if (idName !== "")
+      val['#scope'].setName(idName, null).t(DT_FNNAME);
 
     return {
       type: 'MethodDefinition',

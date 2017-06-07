@@ -63,7 +63,7 @@ function(mname) {
 };
 
 // can this name get bound in the current scope anyway?
-// there is a difference between being a valid binding name and being a valid binding -- any name that is not a `eval/arguments` (when strict) and is not reserved
+// there is a difference between being a valid binding name and being a valid binding -- any name that is not an `eval/arguments` (when strict) and is not reserved
 // can be a valid binding name; but even then, they might remain invalid bindings, for example because they may be duplicates of an existing binding
 this.synth_name_is_valid_binding_m =
 function(mname) { return true; };

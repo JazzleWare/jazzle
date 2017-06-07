@@ -67,7 +67,7 @@ var RS_ARGUMENTS = _m('arguments'),
     RS_SCALL = _m('special:scall'),
     RS_THIS = _m('special:this');
 
-var SN_REAL = 1,
-    SN_VIRTUAL = SN_REAL << 1,
-    SN_NONE = 0;
+var ATS_DISTINCT = 1,
+    ATS_UNSURE = ATS_DISTINCT << 1,
+    ATS_SAME = ATS_UNSURE << 1;
 

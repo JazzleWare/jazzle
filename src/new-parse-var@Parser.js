@@ -66,6 +66,7 @@ function(dt, ctx) {
     var y0 = this.Y(vpat)+(init ? this.Y(init) : 0);
     y += y0;
 
+    init && this.inferName(vpat, core(init));
     list.push({
       type: 'VariableDeclarator',
       id: vpat,

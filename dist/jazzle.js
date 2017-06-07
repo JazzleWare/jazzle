@@ -306,12 +306,11 @@ function Scope(sParent, type) {
     this.parent.ch.push(this);
 }
 ;
-function ScopeName(name, snType, src) {
+function ScopeName(name, src) {
   Decl.call(this);
 
   this.name = name;
-  this.snType = snType;
-  this.src = src;
+  this.source = src;
 }
 ;
 function SortedObj(obj) {
@@ -912,9 +911,9 @@ var RS_ARGUMENTS = _m('arguments'),
     RS_SCALL = _m('special:scall'),
     RS_THIS = _m('special:this');
 
-var SN_REAL = 1,
-    SN_VIRTUAL = SN_REAL << 1,
-    SN_NONE = 0;
+var ATS_DISTINCT = 1,
+    ATS_UNSURE = ATS_DISTINCT << 1,
+    ATS_SAME = ATS_UNSURE << 1;
 
 ;
 function _m(name) { return name+'%'; }
@@ -1087,6 +1086,43 @@ function createObj(baseObj) {
   return new E();
 }
 
+function getIDName(n) {
+  if (n.type === 'Identifier')
+    return n.name;
+  if (n.type === 'Literal' &&
+    typeof n.value === STRING_TYPE &&
+    isIDName(n.value))
+    return n.value;
+  return "";
+};
+
+function isIDName(str) {
+  var e = 0;
+  if (str.length === 0)
+    return false;
+  var ch = str.charCodeAt(e++), ch2 = -1;
+  if (ch >= 0x0d800 && ch <= 0x0dbff) {
+    if (e < str.length)
+      ch = surrogate(ch, str.charCodeAt(e++));
+    else
+      return false;
+  }
+  if (!isIDHead(ch))
+    return false;
+  while (e < str.length) {
+    ch = str.charCodeAt(e++);
+    if (ch >= 0x0d800 && ch <= 0x0dbff) {
+      if (e < str.length)
+        ch = surrogate(ch, str.charCodeAt(e++));
+      else
+        return false;
+    }
+    if (!isIDBody(ch))
+      return false;
+  }
+  return true;
+}
+
 function isTemp(n) {
   return n.type === '#Untransformed' &&
     n.kind === 'temp';
@@ -1256,7 +1292,7 @@ function(mname) {
 };
 
 // can this name get bound in the current scope anyway?
-// there is a difference between being a valid binding name and being a valid binding -- any name that is not a `eval/arguments` (when strict) and is not reserved
+// there is a difference between being a valid binding name and being a valid binding -- any name that is not an `eval/arguments` (when strict) and is not reserved
 // can be a valid binding name; but even then, they might remain invalid bindings, for example because they may be duplicates of an existing binding
 this.synth_name_is_valid_binding_m =
 function(mname) { return true; };
@@ -3101,6 +3137,25 @@ function() {
   this.ct = ERR_NONE_YET;
 };
 
+this.inferName =
+function(left, right) {
+  if (right.type !== 'FunctionDeclaration' &&
+    right.type !== 'FunctionExpression')
+    return null;
+  if (right.id)
+    return null;
+
+  var scope = right['#scope'];
+  var t = DT_FN|DT_INFERRED;
+  var name = "";
+
+  name = getIDName(left);
+  if (name === "")
+    return null;
+
+  return scope.setName(name, null).t(t);
+};
+
 },
 function(){
 function base_Y0(n) {
@@ -4758,13 +4813,10 @@ function(ctx, st) {
     if (isStmt)
       this.scope.setName(
         fnName.name,
-        st,
-        declScope.findDeclOwn_m(_m(fnName.name)));
+        declScope.findDeclOwn_m(_m(fnName.name))
+      ).t(DT_FNNAME);
     else
-      this.scope.setName(
-        fnName.name,
-        st,
-        null);
+      this.scope.setName(fnName.name, null).t(DT_FNNAME);
   }
 
   var argLen =
@@ -5326,6 +5378,9 @@ function(memName, ctx) {
     }
 
     var computed = memName.type === PAREN ;
+    if (!(computed && core(memName).type === 'Identifier'))
+      this.inferName(core(memName), core(val));
+
     val = {
       type: 'Property',
       start: memName.start,
@@ -5417,11 +5472,9 @@ function(memName, ctx, st) {
     }
 
     val = this.parseFn(CTX_NONE, st);
-    if (memName.type === 'Identifier')
-      val['#scope'].setName(
-        memName.name,
-        SN_VIRTUAL,
-        null);
+    var idName = getIDName(memName);
+    if (idName !== "")
+      val['#scope'].setName(idName, null).t(DT_FNNAME);
 
     return {
       type: 'MethodDefinition',
@@ -6081,6 +6134,7 @@ function(dt, ctx) {
     var y0 = this.Y(vpat)+(init ? this.Y(init) : 0);
     y += y0;
 
+    init && this.inferName(vpat, core(init));
     list.push({
       type: 'VariableDeclarator',
       id: vpat,
@@ -6760,6 +6814,7 @@ this.parseAssignment = function(head, ctx) {
     }
   }
  
+  this.inferName(head, core(right));
   return {
     type: 'AssignmentExpression',
     operator: o,
@@ -6889,7 +6944,7 @@ function(ctx) {
   scope.makeStrict();
 
   if (name)
-    scope.setName(name.name, SN_REAL, sourceDecl);
+    scope.setName(name.name, sourceDecl).t(DT_CLSNAME);
 
   var superClass = null;
   if (this.lttype === TK_ID && this.ltval === 'extends') {
@@ -7792,6 +7847,7 @@ function (head) {
     this.err('ver.assig');
   this.next() ;
   var e = this.parseNonSeq(PREC_NONE, CTX_TOP);
+  this.inferName(head, core(e));
   return {
     type: 'AssignmentPattern',
     start: head.start,
@@ -10500,12 +10556,12 @@ function() {
 };
 
 this.setName =
-function(name, snType, sourceDecl) {
+function(name, source) {
   ASSERT.call(this, this.canHaveName(),
     'only cls/fn can have a name');
   ASSERT_EQ.call(this, this.scopeName, null);
   this.scopeName = 
-    new ScopeName(name, snType, sourceDecl).r(new Ref(this));
+    new ScopeName(name, source).r(new Ref(this));
 
   return this.scopeName;
 };
@@ -10880,6 +10936,27 @@ function(targetScope) {
 this.hasName_m =
 function(mname) {
   return _m(this.name) === mname;
+};
+
+// attachment state:
+// src null or not an fn decl -> unattached
+// otherwise:
+//   src lexical-like -> unattached
+//   otherwise:
+//     src has no synthName -> uncertain
+//     otherwise:
+//       src has non-matching synthName -> unattached
+//       otherwise -> attached
+this.getAS =
+function() {
+  var src = this.source;
+  if (src === null || !src.isDecl() || src.isLexicalLike())
+    return ATS_DISTINCT;
+  if (src.synthName === "")
+    return ATS_UNSURE; // semi-attached
+  if (src.synthName === src.name)
+    return ATS_SAME;
+  return ATS_DISTINCT;
 };
 
 }]  ],
@@ -11425,6 +11502,107 @@ function(n, isVal) {
   n.test = this.tr(n.test, true);
   n.body = this.tr(n.body, false);
   return n;
+};
+
+},
+function(){
+this.transformRawFn =
+function(n, isVal) {
+  var s = this.setScope(n['#scope'] );
+  this.cur.synth_start();
+  ASSERT.call(this, !this.cur.inBody, 'inBody');
+  var argsPrologue = this.transformParams(n.params);
+  if (argsPrologue) n.params = null;
+  this.activateBody();
+  var fnBody = n.body.body;
+  this.trList(fnBody, false);
+  this.deactivateBody();
+  this.cur.synth_finish();
+  return this.synth_TransformedFn(n, argsPrologue);
+};
+
+this.transformDeclFn =
+function(n) { return this.transformRawFn(n, false); };
+
+this.transformExprFn =
+function(n) {
+  this.synthFnExprName(n['#scope'].scopeName);
+  return this.transformRawFn(n, true);
+};
+
+this.transformParams =
+function(list) {
+  if (this.cur.firstNonSimple)
+    return this.transformParamsToArgumentsPrologue(list);
+
+  var argd = null, argsmap = {}, e = list.length - 1;
+  while (e >= 0) {
+    var a = list[e];
+    var mname = _m(a.name);
+    if (HAS.call(argsmap, mname)) {
+      if (argd === null) {
+        var lg = this.cur.gocLG('argd');
+        argd = lg.getL(0);
+        if (argd === null) {
+          argd = lg.newL();
+          argd.name = '_';
+          lg.seal();
+        }
+        argd.type |= DT_FNARG;
+      }
+      list[e] = argd;
+    }
+    else
+      argsmap[mname] = a;
+    e--;
+  }
+
+  return null;
+};
+
+Transformers['FunctionDeclaration'] =
+function(n, isVal) {
+  ASSERT_EQ.call(this, isVal, false);
+  return this.transformDeclFn(n);
+};
+
+Transformers['FunctionExpression'] =
+function(n, isVal) {
+  ASSERT_EQ.call(this, isVal, true);
+  return this.transformExprFn(n);
+};
+
+this.transformParamsToArgumentsPrologue =
+function(list) {
+  var a = null, t = null, e = 0;
+  var prologue = [];
+  while (e < list.length) {
+    var left = list[e];
+    if (left.type === 'RestElement') {
+      left = left.argument;
+      if (left.type === 'Identifier')
+        prologue.push(this.synth_ArgRest(left, e));
+      else {
+        var t = this.allocTemp();
+        prologue.push(this.synth_ArgRest(t, e));
+        this.releaseTemp(t);
+        a = this.synth_SynthAssig(left, t, true);
+        a = this.tr(a, false);
+        if (a)
+          prologue.push(a);
+      }
+      ASSERT.call(this, e === list.length - 1, 'not last');
+    }
+    else {
+      a = this.synth_SynthAssig(left, this.synth_ArgAt(e));
+      a = this.tr(a, false)
+      if (a)
+        prologue.push(a);
+    }
+    e++;
+  }
+
+  return this.synth_AssigList(prologue);
 };
 
 },

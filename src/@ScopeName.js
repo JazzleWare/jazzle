@@ -1,7 +1,6 @@
-function ScopeName(name, snType, src) {
+function ScopeName(name, src) {
   Decl.call(this);
 
   this.name = name;
-  this.snType = snType;
-  this.src = src;
+  this.source = src;
 }

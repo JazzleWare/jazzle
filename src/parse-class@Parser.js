@@ -41,7 +41,7 @@ function(ctx) {
   scope.makeStrict();
 
   if (name)
-    scope.setName(name.name, SN_REAL, sourceDecl);
+    scope.setName(name.name, sourceDecl).t(DT_CLSNAME);
 
   var superClass = null;
   if (this.lttype === TK_ID && this.ltval === 'extends') {
