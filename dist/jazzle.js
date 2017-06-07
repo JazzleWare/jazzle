@@ -3138,7 +3138,9 @@ function() {
 };
 
 this.inferName =
-function(left, right) {
+function(left, right, isComputed) {
+  if (isComputed && left.type === 'Identifier')
+    return null;
   if (right.type !== 'FunctionDeclaration' &&
     right.type !== 'FunctionExpression')
     return null;
@@ -5378,8 +5380,7 @@ function(memName, ctx) {
     }
 
     var computed = memName.type === PAREN ;
-    if (!(computed && core(memName).type === 'Identifier'))
-      this.inferName(core(memName), core(val));
+    this.inferName(core(memName), core(val), computed );
 
     val = {
       type: 'Property',
@@ -5453,7 +5454,7 @@ function(memName, ctx, st) {
   if (this.lttype !== CH_LPAREN)
     this.err('meth.paren');
 
-  var val = null, computed = memName.type === PAREN ;
+  var val = null, computed = memName.type === PAREN, name = "";
 
   if (st & ST_CLSMEM) {
     if (st & ST_STATICMEM) {
@@ -5472,9 +5473,8 @@ function(memName, ctx, st) {
     }
 
     val = this.parseFn(CTX_NONE, st);
-    var idName = getIDName(memName);
-    if (idName !== "")
-      val['#scope'].setName(idName, null).t(DT_FNNAME);
+
+    this.inferName(core(memName), val, computed);
 
     return {
       type: 'MethodDefinition',
@@ -5502,6 +5502,7 @@ function(memName, ctx, st) {
 
   val = this.parseFn(CTX_NONE, st);
 
+  this.inferName(core(memName), val, computed);
   return {
     type: 'Property',
     key: core(memName),
@@ -6134,7 +6135,7 @@ function(dt, ctx) {
     var y0 = this.Y(vpat)+(init ? this.Y(init) : 0);
     y += y0;
 
-    init && this.inferName(vpat, core(init));
+    init && this.inferName(vpat, core(init), false);
     list.push({
       type: 'VariableDeclarator',
       id: vpat,
@@ -6814,7 +6815,7 @@ this.parseAssignment = function(head, ctx) {
     }
   }
  
-  this.inferName(head, core(right));
+  this.inferName(head, core(right), false);
   return {
     type: 'AssignmentExpression',
     operator: o,
@@ -7847,7 +7848,7 @@ function (head) {
     this.err('ver.assig');
   this.next() ;
   var e = this.parseNonSeq(PREC_NONE, CTX_TOP);
-  this.inferName(head, core(e));
+  this.inferName(head, core(e), false);
   return {
     type: 'AssignmentPattern',
     start: head.start,

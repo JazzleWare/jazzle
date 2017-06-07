@@ -3,7 +3,7 @@ function(memName, ctx, st) {
   if (this.lttype !== CH_LPAREN)
     this.err('meth.paren');
 
-  var val = null, computed = memName.type === PAREN ;
+  var val = null, computed = memName.type === PAREN, name = "";
 
   if (st & ST_CLSMEM) {
     if (st & ST_STATICMEM) {
@@ -22,9 +22,8 @@ function(memName, ctx, st) {
     }
 
     val = this.parseFn(CTX_NONE, st);
-    var idName = getIDName(memName);
-    if (idName !== "")
-      val['#scope'].setName(idName, null).t(DT_FNNAME);
+
+    this.inferName(core(memName), val, computed);
 
     return {
       type: 'MethodDefinition',
@@ -52,6 +51,7 @@ function(memName, ctx, st) {
 
   val = this.parseFn(CTX_NONE, st);
 
+  this.inferName(core(memName), val, computed);
   return {
     type: 'Property',
     key: core(memName),

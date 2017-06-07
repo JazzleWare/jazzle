@@ -94,7 +94,7 @@ this.parseAssignment = function(head, ctx) {
     }
   }
  
-  this.inferName(head, core(right));
+  this.inferName(head, core(right), false);
   return {
     type: 'AssignmentExpression',
     operator: o,

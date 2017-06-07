@@ -9,7 +9,9 @@ function() {
 };
 
 this.inferName =
-function(left, right) {
+function(left, right, isComputed) {
+  if (isComputed && left.type === 'Identifier')
+    return null;
   if (right.type !== 'FunctionDeclaration' &&
     right.type !== 'FunctionExpression')
     return null;

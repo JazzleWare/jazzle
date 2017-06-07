@@ -174,8 +174,7 @@ function(memName, ctx) {
     }
 
     var computed = memName.type === PAREN ;
-    if (!(computed && core(memName).type === 'Identifier'))
-      this.inferName(core(memName), core(val));
+    this.inferName(core(memName), core(val), computed );
 
     val = {
       type: 'Property',

@@ -4,7 +4,7 @@ function (head) {
     this.err('ver.assig');
   this.next() ;
   var e = this.parseNonSeq(PREC_NONE, CTX_TOP);
-  this.inferName(head, core(e));
+  this.inferName(head, core(e), false);
   return {
     type: 'AssignmentPattern',
     start: head.start,
