@@ -49,6 +49,18 @@ function(name, source) {
   return this.scopeName;
 };
 
+this.pushFun =
+function(name, transformedFn) {
+  ASSERT.call(
+    this,
+    transformedFn.type === '#Untransformed' && transformedFn.kind === 'transformed-fn', 'transformed-fn');
+  var mname = _m(name);
+  var list = this.funLists.has(mname) ?
+    this.funLists.get(mname) :
+    this.funLists.set(mname, []);
+  list.push(transformedFn);
+};
+
 this.determineFlags =
 function() {
   if (this.isParen())

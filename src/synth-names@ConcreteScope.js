@@ -128,8 +128,12 @@ function(decl) {
       continue RENAME;
 
     synth = this.synth_decl_find_homonym_m(mname);
-    if (synth && synth !== decl)
-      continue RENAME;
+    if (synth) {
+      if (synth.isName() && synth.getAS() !== ATS_DISTINCT)
+        synth = synth.source;
+      if (synth !== decl)
+        continue RENAME;
+    }
 
     break;
   } while (synthName = baseName + "" + (num+=1), true);
@@ -153,7 +157,11 @@ function(global) {
     var scope = rsList[l++];
     if (!scope.synth_ref_may_escape(mname)) { original = false; break; }
     var synth = scope.synth_ref_find_homonym_m(mname);
-    if (synth && synth !== global) { original = false; break; }
+    if (synth) {
+      if (synth.isName() && synth.getAS() !== ATS_DISTINCT)
+        synth = synth.source;
+      if (synth !== global) { original = false; break; }
+    }
   }
 
   if (original) {

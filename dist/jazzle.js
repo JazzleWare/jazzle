@@ -302,6 +302,8 @@ function Scope(sParent, type) {
           createObj(this.parent.varTargets) :
           this.parent.varTargets;
 
+  this.funLists = new SortedObj();
+
   if (this.parent && this.parent.isParen())
     this.parent.ch.push(this);
 }
@@ -1357,8 +1359,12 @@ function(decl) {
       continue RENAME;
 
     synth = this.synth_decl_find_homonym_m(mname);
-    if (synth && synth !== decl)
-      continue RENAME;
+    if (synth) {
+      if (synth.isName() && synth.getAS() !== ATS_DISTINCT)
+        synth = synth.source;
+      if (synth !== decl)
+        continue RENAME;
+    }
 
     break;
   } while (synthName = baseName + "" + (num+=1), true);
@@ -1382,7 +1388,11 @@ function(global) {
     var scope = rsList[l++];
     if (!scope.synth_ref_may_escape(mname)) { original = false; break; }
     var synth = scope.synth_ref_find_homonym_m(mname);
-    if (synth && synth !== global) { original = false; break; }
+    if (synth) {
+      if (synth.isName() && synth.getAS() !== ATS_DISTINCT)
+        synth = synth.source;
+      if (synth !== global) { original = false; break; }
+    }
   }
 
   if (original) {
@@ -1558,6 +1568,12 @@ function() {
 var _OVERRIDABLE = DT_CATCHARG|_VARLIKE;
 this.isOverridableByVar =
 function() { return this.type & _OVERRIDABLE; };
+
+this.isName =
+function() { return this.type & (DT_FNNAME|DT_CLSNAME); };
+
+this.isInsignificant =
+function() { return this.type & DT_INFERRED; };
 
 }]  ],
 [Emitter.prototype, [function(){
@@ -10567,6 +10583,18 @@ function(name, source) {
   return this.scopeName;
 };
 
+this.pushFun =
+function(name, transformedFn) {
+  ASSERT.call(
+    this,
+    transformedFn.type === '#Untransformed' && transformedFn.kind === 'transformed-fn', 'transformed-fn');
+  var mname = _m(name);
+  var list = this.funLists.has(mname) ?
+    this.funLists.get(mname) :
+    this.funLists.set(mname, []);
+  list.push(transformedFn);
+};
+
 this.determineFlags =
 function() {
   if (this.isParen())
@@ -11523,12 +11551,18 @@ function(n, isVal) {
 };
 
 this.transformDeclFn =
-function(n) { return this.transformRawFn(n, false); };
+function(n) {
+  var target = this.cur.findDeclOwn_m(_m(n.id.name));
+  ASSERT.call(this, target, 'unresolved ('+name+')');
+  n = this.transformRawFn(n, false);
+  return this.synth_ResolvedFn(n, target);
+};
 
 this.transformExprFn =
 function(n) {
   this.synthFnExprName(n['#scope'].scopeName);
-  return this.transformRawFn(n, true);
+  n = this.transformRawFn(n, true);
+  return this.synth_ResolvedFn(n, null);
 };
 
 this.transformParams =
@@ -11553,8 +11587,10 @@ function(list) {
       }
       list[e] = argd;
     }
-    else
-      argsmap[mname] = a;
+    else {
+      a = this.toResolvedName(a, true);
+      argsmap[mname] = list[e] = a;
+    }
     e--;
   }
 
@@ -11564,7 +11600,8 @@ function(list) {
 Transformers['FunctionDeclaration'] =
 function(n, isVal) {
   ASSERT_EQ.call(this, isVal, false);
-  return this.transformDeclFn(n);
+  this.pushFun(n.id.name, this.transformDeclFn(n));
+  return null;
 };
 
 Transformers['FunctionExpression'] =
@@ -11810,6 +11847,16 @@ function(n,v) {
     object: n,
     property: v,
     '#y': 0
+  };
+};
+
+this.synth_ResolvedFn =
+function(n, target) {
+  return {
+    type: '#Untransformed' ,
+    kind: 'resolved-fn' ,
+    fun: n,
+    target: target
   };
 };
 

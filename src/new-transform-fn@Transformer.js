@@ -14,12 +14,18 @@ function(n, isVal) {
 };
 
 this.transformDeclFn =
-function(n) { return this.transformRawFn(n, false); };
+function(n) {
+  var target = this.cur.findDeclOwn_m(_m(n.id.name));
+  ASSERT.call(this, target, 'unresolved ('+name+')');
+  n = this.transformRawFn(n, false);
+  return this.synth_ResolvedFn(n, target);
+};
 
 this.transformExprFn =
 function(n) {
   this.synthFnExprName(n['#scope'].scopeName);
-  return this.transformRawFn(n, true);
+  n = this.transformRawFn(n, true);
+  return this.synth_ResolvedFn(n, null);
 };
 
 this.transformParams =
@@ -44,8 +50,10 @@ function(list) {
       }
       list[e] = argd;
     }
-    else
-      argsmap[mname] = a;
+    else {
+      a = this.toResolvedName(a, true);
+      argsmap[mname] = list[e] = a;
+    }
     e--;
   }
 
@@ -55,7 +63,8 @@ function(list) {
 Transformers['FunctionDeclaration'] =
 function(n, isVal) {
   ASSERT_EQ.call(this, isVal, false);
-  return this.transformDeclFn(n);
+  this.pushFun(n.id.name, this.transformDeclFn(n));
+  return null;
 };
 
 Transformers['FunctionExpression'] =

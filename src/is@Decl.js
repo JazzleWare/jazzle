@@ -72,3 +72,9 @@ function() {
 var _OVERRIDABLE = DT_CATCHARG|_VARLIKE;
 this.isOverridableByVar =
 function() { return this.type & _OVERRIDABLE; };
+
+this.isName =
+function() { return this.type & (DT_FNNAME|DT_CLSNAME); };
+
+this.isInsignificant =
+function() { return this.type & DT_INFERRED; };

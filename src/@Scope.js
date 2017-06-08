@@ -35,6 +35,8 @@ function Scope(sParent, type) {
           createObj(this.parent.varTargets) :
           this.parent.varTargets;
 
+  this.funLists = new SortedObj();
+
   if (this.parent && this.parent.isParen())
     this.parent.ch.push(this);
 }

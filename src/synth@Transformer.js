@@ -175,3 +175,13 @@ function(n,v) {
     '#y': 0
   };
 };
+
+this.synth_ResolvedFn =
+function(n, target) {
+  return {
+    type: '#Untransformed' ,
+    kind: 'resolved-fn' ,
+    fun: n,
+    target: target
+  };
+};
