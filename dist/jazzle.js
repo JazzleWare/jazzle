@@ -1233,7 +1233,7 @@ this.synth_boot =
 function() {
   ASSERT.call(this, this.isSourceLevel(), 'script m');
   this.synth_boot_init();
-  this.synth_externals_to(null);
+  this.synth_externals();
   this.synth_defs_to(this);
 };
 
@@ -1255,10 +1255,9 @@ function(targetScope) {
     this.synth_lg_to(list.at(e++), targetScope);
 };
 
-this.synth_externals_to =
-function(targetScope) {
+this.synth_externals =
+function() {
   ASSERT.call(this, this.isSourceLevel(), 'script m');
-  ASSERT.call(this, targetScope === null, 'null');
   var list = this.parent.defs, e = 0, len = list.length();
   while (e < len)
     this.synthGlobal(list.at(e++));
@@ -2706,6 +2705,75 @@ function() {
     if (this.parser.isResv(elem.name))
       this.parser.err('invalid.argument.in.strict.mode');
   }
+};
+
+},
+function(){
+this.synth_ref_may_escape_m =
+function(mname) { return ref_is_arguments(mname); };
+
+this.synth_name_is_valid_binding_m =
+function(mname) { return true; };
+
+this.synth_ref_find_homonym_m =
+function(mname) {
+  this.isBooted() || this.synth_boot();
+  var synth = this.findSynth_m(mname)
+  if (synth === null && this.hasScopeName_m(mname))
+    synth = this.scopeName;
+  return synth;
+};
+
+this.synth_decl_find_homonym_m =
+function(mname) {
+  this.isBooted() || this.synth_boot();
+  return this.findSynth_m(mname);
+};
+
+this.synth_boot =
+function() {
+  this.synth_boot_init();
+  ASSERT.call(this, !this.inBody, 'inBody');
+  this.synth_args();
+  this.activateBody();
+  this.synth_defs_to(this);
+  this.deactivateBody();
+};
+
+this.synth_start =
+function() {
+  this.isBooted() || this.synth_boot();
+  this.synth_externals();
+};
+
+this.synth_externals =
+function() {
+  ASSERT.call(this, !this.inBody, 'inBody');
+  var list = this.argRefs, e = 0, len = list.length();
+  while (e < len) {
+    var item = list.at(e++);
+    if (item) {
+      var target = item.getDecl(), mname = "";
+      ASSERT.call(this, target.synthName !== "", 'synth');
+
+      mname = _m(target.synthName);
+      ASSERT.call(this, !this.findSynth_m(mname), 'override');
+      this.insertSynth_m(mname, target);
+    }
+  }
+};
+
+this.synth_args =
+function() {
+  var list = this.argList, nmap = {}, e = list.length - 1;
+  while (e >= 0) {
+    var arg = list[e], mname = _m(arg.name);
+    if (!HAS.call(nmap, mname)) {
+      nmap[mname] = arg;
+      this.synthDecl(arg);
+    }
+  }
+  e--;
 };
 
 }]  ],
@@ -5559,6 +5627,9 @@ function() {
   var head = this.parseExprHead(CTX_NONE);
   if (head === null)
     this.err('new.head.is.not.valid');
+
+  if (head.type === 'Identifier')
+    this.scope.refDirect_m(_m(head.name), null);
 
   var inner = core(head), elem = null;
 
@@ -10498,7 +10569,7 @@ function() { return this.type & ST_EXPR; };
 
 this.isBootable =
 function() {
-  return this.isScript() || this.isFn() || this.isCatch() || this.isModule();
+  return this.isScript() || this.isAnyFn() || this.isCatch() || this.isModule();
 };
 
 this.isBooted =
@@ -11542,10 +11613,10 @@ function(n, isVal) {
   ASSERT.call(this, !this.cur.inBody, 'inBody');
   var argsPrologue = this.transformParams(n.params);
   if (argsPrologue) n.params = null;
-  this.activateBody();
+  this.cur.activateBody();
   var fnBody = n.body.body;
   this.trList(fnBody, false);
-  this.deactivateBody();
+  this.cur.deactivateBody();
   this.cur.synth_finish();
   return this.synth_TransformedFn(n, argsPrologue);
 };
@@ -11555,14 +11626,15 @@ function(n) {
   var target = this.cur.findDeclOwn_m(_m(n.id.name));
   ASSERT.call(this, target, 'unresolved ('+name+')');
   n = this.transformRawFn(n, false);
-  return this.synth_ResolvedFn(n, target);
+  n.target = target;
+  return n;
 };
 
 this.transformExprFn =
 function(n) {
   this.synthFnExprName(n['#scope'].scopeName);
   n = this.transformRawFn(n, true);
-  return this.synth_ResolvedFn(n, null);
+  return null;
 };
 
 this.transformParams =

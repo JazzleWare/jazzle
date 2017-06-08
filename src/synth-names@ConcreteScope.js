@@ -2,7 +2,7 @@ this.synth_boot =
 function() {
   ASSERT.call(this, this.isSourceLevel(), 'script m');
   this.synth_boot_init();
-  this.synth_externals_to(null);
+  this.synth_externals();
   this.synth_defs_to(this);
 };
 
@@ -24,10 +24,9 @@ function(targetScope) {
     this.synth_lg_to(list.at(e++), targetScope);
 };
 
-this.synth_externals_to =
-function(targetScope) {
+this.synth_externals =
+function() {
   ASSERT.call(this, this.isSourceLevel(), 'script m');
-  ASSERT.call(this, targetScope === null, 'null');
   var list = this.parent.defs, e = 0, len = list.length();
   while (e < len)
     this.synthGlobal(list.at(e++));

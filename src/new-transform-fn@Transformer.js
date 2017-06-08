@@ -5,10 +5,10 @@ function(n, isVal) {
   ASSERT.call(this, !this.cur.inBody, 'inBody');
   var argsPrologue = this.transformParams(n.params);
   if (argsPrologue) n.params = null;
-  this.activateBody();
+  this.cur.activateBody();
   var fnBody = n.body.body;
   this.trList(fnBody, false);
-  this.deactivateBody();
+  this.cur.deactivateBody();
   this.cur.synth_finish();
   return this.synth_TransformedFn(n, argsPrologue);
 };
@@ -18,14 +18,15 @@ function(n) {
   var target = this.cur.findDeclOwn_m(_m(n.id.name));
   ASSERT.call(this, target, 'unresolved ('+name+')');
   n = this.transformRawFn(n, false);
-  return this.synth_ResolvedFn(n, target);
+  n.target = target;
+  return n;
 };
 
 this.transformExprFn =
 function(n) {
   this.synthFnExprName(n['#scope'].scopeName);
   n = this.transformRawFn(n, true);
-  return this.synth_ResolvedFn(n, null);
+  return null;
 };
 
 this.transformParams =

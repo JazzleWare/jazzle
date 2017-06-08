@@ -14,6 +14,9 @@ function() {
   if (head === null)
     this.err('new.head.is.not.valid');
 
+  if (head.type === 'Identifier')
+    this.scope.refDirect_m(_m(head.name), null);
+
   var inner = core(head), elem = null;
 
   LOOP:

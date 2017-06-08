@@ -68,7 +68,7 @@ function() { return this.type & ST_EXPR; };
 
 this.isBootable =
 function() {
-  return this.isScript() || this.isFn() || this.isCatch() || this.isModule();
+  return this.isScript() || this.isAnyFn() || this.isCatch() || this.isModule();
 };
 
 this.isBooted =
