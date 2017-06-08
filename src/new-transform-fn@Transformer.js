@@ -10,6 +10,7 @@ function(n, isVal) {
   this.trList(fnBody, false);
   this.cur.deactivateBody();
   this.cur.synth_finish();
+  this.setScope(s);
   return this.synth_TransformedFn(n, argsPrologue);
 };
 
@@ -64,7 +65,7 @@ function(list) {
 Transformers['FunctionDeclaration'] =
 function(n, isVal) {
   ASSERT_EQ.call(this, isVal, false);
-  this.pushFun(n.id.name, this.transformDeclFn(n));
+  this.cur.pushFun(n.id.name, this.transformDeclFn(n));
   return null;
 };
 
@@ -82,8 +83,10 @@ function(list) {
     var left = list[e];
     if (left.type === 'RestElement') {
       left = left.argument;
-      if (left.type === 'Identifier')
+      if (left.type === 'Identifier') {
+        left = this.toResolvedName(left, true);
         prologue.push(this.synth_ArgRest(left, e));
+      }
       else {
         var t = this.allocTemp();
         prologue.push(this.synth_ArgRest(t, e));
@@ -96,7 +99,7 @@ function(list) {
       ASSERT.call(this, e === list.length - 1, 'not last');
     }
     else {
-      a = this.synth_SynthAssig(left, this.synth_ArgAt(e));
+      a = this.synth_SynthAssig(left, this.synth_ArgAt(e), true);
       a = this.tr(a, false)
       if (a)
         prologue.push(a);

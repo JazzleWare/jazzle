@@ -141,6 +141,25 @@ function(iter, at, isC) {
   };
 };
 
+this.synth_ArgAt =
+function(at) {
+  return {
+    type: '#Untransformed' ,
+    idx: at,
+    kind: 'arg-at'
+  };
+};
+
+this.synth_ArgRest =
+function(ex, at) {
+  return {
+    idx: at,
+    left: ex,
+    kind: 'arg-rest',
+    type: '#Untransformed'
+  };
+};
+
 var SYNTH_VOID0 = {
   type: 'UnaryExpression',
   operator: 'void',
@@ -176,12 +195,13 @@ function(n,v) {
   };
 };
 
-this.synth_ResolvedFn =
-function(n, target) {
+this.synth_TransformedFn =
+function(n, a) {
   return {
     type: '#Untransformed' ,
-    kind: 'resolved-fn' ,
+    kind: 'transformed-fn' ,
     fun: n,
-    target: target
+    argsPrologue: a,
+    target: null
   };
 };

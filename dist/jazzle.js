@@ -1942,9 +1942,17 @@ function(n, flags, isStmt) {
   if (hasParen) { this.w('('); flags = EC_NONE; }
   this.emitSAT(n.left, flags);
   this.s();
-  this.w(n.operator);
-  this.s();
-  this.eN(n.right, flags & EC_IN, false);
+  if (n.operator === '**=') {
+    ASSERT.call(this, isResolvedName(n.left), 'not rn');
+    this.w('=').s().jz('ex')
+        .w('(').eN(n.left, EC_NONE, false)
+        .w(',').s().eN(n.right, flags & EC_IN, false)
+        .w(')');
+  }
+  else {
+    this.w(n.operator).s().eN(n.right, flags & EC_IN, false);
+  }
+
   hasParen && this.w(')');
   isStmt && this.w(';');
   return true;
@@ -2385,6 +2393,34 @@ function(n, flags, isStmt) {
 
 },
 function(){
+UntransformedEmitters['arg-at'] =
+function(n, flags, isStmt) {
+  ASSERT_EQ.call(this, isStmt, false);
+  this.wm('arguments','[');
+  this.wm(n.idx+"",']');
+
+  return true;
+};
+
+UntransformedEmitters['arg-rest'] =
+function(n, flags, isStmt) {
+  ASSERT_EQ.call(this, isStmt, true);
+
+  var l = n.left;
+  ASSERT.call(this, isResolvedName(l) || isTemp(l), 'neither id nor temp');
+  this.eA(l, EC_NONE, false)
+    .wm(' ','=',' ','[',']',';').l()
+    .wm('while',' ','(').eA(l, EC_NONE, false)
+    .wm('.','length')
+    .wm('+',n.idx+"",' ','<',' ','arguments','.','length',')').i().l()
+    .eA(l, EC_NONE, false).w('[').eA(l, EC_NONE, false).wm('.','length')
+    .w(']')
+    .wm(' ','=',' ','arguments','[','arguments','.','length','+',n.idx,']',';').u();
+  return true;
+};
+
+},
+function(){
 
 
 },
@@ -2514,10 +2550,37 @@ UntransformedEmitters['temp-save'] =
 function(n, flags, isStmt) {
   var hasParen = flags & EC_EXPR_HEAD;
   if (hasParen) { this.w('('); flags &= EC_IN; }
-  this.eA(n.left, flags, false).s().w('=').s().eN(n.right);
+  this.eA(n.left, flags, false).s().w('=').s().eN(n.right, flags & EC_IN, false);
   hasParen && this.w(')');
   isStmt && this.w(';');
   return true;
+};
+
+},
+function(){
+UntransformedEmitters['transformed-fn'] =
+function(n, flags, isStmt) {
+  this.wm('function','(');
+  var raw = n.fun;
+  if (raw.params)
+    this.emitCommaList(raw.params);
+  this.wm(')',' ','{').i();
+
+  var em = 0;
+  var l0 = this.sc(""); // args
+  if (n.argsPrologue)
+    this.eA(n.argsPrologue, EC_START_STMT, true);
+  l0 = this.sc(l0);
+  if (l0.length) { ++em; this.l().w(l0); }
+
+  l0 = this.sc("");
+  this.emitStmtList(raw.body.body);
+  l0 = this.sc(l0);
+  if (l0.length) { ++em; this.l().w(l0); }
+
+  this.u();
+  em && this.l();
+  this.w('}');
 };
 
 },
@@ -2710,7 +2773,7 @@ function() {
 },
 function(){
 this.synth_ref_may_escape_m =
-function(mname) { return ref_is_arguments(mname); };
+function(mname) { return !ref_arguments_m(mname); };
 
 this.synth_name_is_valid_binding_m =
 function(mname) { return true; };
@@ -2719,7 +2782,7 @@ this.synth_ref_find_homonym_m =
 function(mname) {
   this.isBooted() || this.synth_boot();
   var synth = this.findSynth_m(mname)
-  if (synth === null && this.hasScopeName_m(mname))
+  if (synth === null && this.scopeName && this.scopeName.hasName_m(mname))
     synth = this.scopeName;
   return synth;
 };
@@ -2772,8 +2835,8 @@ function() {
       nmap[mname] = arg;
       this.synthDecl(arg);
     }
+    e--;
   }
-  e--;
 };
 
 }]  ],
@@ -11618,6 +11681,7 @@ function(n, isVal) {
   this.trList(fnBody, false);
   this.cur.deactivateBody();
   this.cur.synth_finish();
+  this.setScope(s);
   return this.synth_TransformedFn(n, argsPrologue);
 };
 
@@ -11672,7 +11736,7 @@ function(list) {
 Transformers['FunctionDeclaration'] =
 function(n, isVal) {
   ASSERT_EQ.call(this, isVal, false);
-  this.pushFun(n.id.name, this.transformDeclFn(n));
+  this.cur.pushFun(n.id.name, this.transformDeclFn(n));
   return null;
 };
 
@@ -11690,8 +11754,10 @@ function(list) {
     var left = list[e];
     if (left.type === 'RestElement') {
       left = left.argument;
-      if (left.type === 'Identifier')
+      if (left.type === 'Identifier') {
+        left = this.toResolvedName(left, true);
         prologue.push(this.synth_ArgRest(left, e));
+      }
       else {
         var t = this.allocTemp();
         prologue.push(this.synth_ArgRest(t, e));
@@ -11704,7 +11770,7 @@ function(list) {
       ASSERT.call(this, e === list.length - 1, 'not last');
     }
     else {
-      a = this.synth_SynthAssig(left, this.synth_ArgAt(e));
+      a = this.synth_SynthAssig(left, this.synth_ArgAt(e), true);
       a = this.tr(a, false)
       if (a)
         prologue.push(a);
@@ -11887,6 +11953,25 @@ function(iter, at, isC) {
   };
 };
 
+this.synth_ArgAt =
+function(at) {
+  return {
+    type: '#Untransformed' ,
+    idx: at,
+    kind: 'arg-at'
+  };
+};
+
+this.synth_ArgRest =
+function(ex, at) {
+  return {
+    idx: at,
+    left: ex,
+    kind: 'arg-rest',
+    type: '#Untransformed'
+  };
+};
+
 var SYNTH_VOID0 = {
   type: 'UnaryExpression',
   operator: 'void',
@@ -11922,13 +12007,14 @@ function(n,v) {
   };
 };
 
-this.synth_ResolvedFn =
-function(n, target) {
+this.synth_TransformedFn =
+function(n, a) {
   return {
     type: '#Untransformed' ,
-    kind: 'resolved-fn' ,
+    kind: 'transformed-fn' ,
     fun: n,
-    target: target
+    argsPrologue: a,
+    target: null
   };
 };
 

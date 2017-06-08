@@ -1,5 +1,5 @@
 this.synth_ref_may_escape_m =
-function(mname) { return ref_is_arguments(mname); };
+function(mname) { return !ref_arguments_m(mname); };
 
 this.synth_name_is_valid_binding_m =
 function(mname) { return true; };
@@ -8,7 +8,7 @@ this.synth_ref_find_homonym_m =
 function(mname) {
   this.isBooted() || this.synth_boot();
   var synth = this.findSynth_m(mname)
-  if (synth === null && this.hasScopeName_m(mname))
+  if (synth === null && this.scopeName && this.scopeName.hasName_m(mname))
     synth = this.scopeName;
   return synth;
 };
@@ -61,6 +61,6 @@ function() {
       nmap[mname] = arg;
       this.synthDecl(arg);
     }
+    e--;
   }
-  e--;
 };
