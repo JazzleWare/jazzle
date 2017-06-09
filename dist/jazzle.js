@@ -2568,8 +2568,15 @@ function(n, flags, isStmt) {
 function(){
 UntransformedEmitters['transformed-fn'] =
 function(n, flags, isStmt) {
-  this.wm('function','(');
+  this.wm('function');
   var raw = n.fun;
+  var scopeName = raw['#scope'].scopeName;
+  if (scopeName) {
+    this.s();
+    this.writeIDName(scopeName.name);
+  }
+  this.w('(');
+
   if (raw.params)
     this.emitCommaList(raw.params);
   this.wm(')',' ','{').i();
@@ -2825,7 +2832,7 @@ function() {
     var item = list.at(e++);
     if (item) {
       var target = item.getDecl(), mname = "";
-      ASSERT.call(this, target.synthName !== "", 'synth');
+      ASSERT.call(this, target.synthName !== "" || target.isGlobal(), 'synth');
 
       mname = _m(target.synthName);
       ASSERT.call(this, !this.findSynth_m(mname), 'override');
