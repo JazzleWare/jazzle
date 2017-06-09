@@ -88,6 +88,6 @@ function() {
 };
 
 this.owns =
-function(tdclr) {
-  return tdclr.ref.scope === this;
+function(nd) {
+  return nd.ref.scope === this;
 };

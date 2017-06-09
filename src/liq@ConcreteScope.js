@@ -18,6 +18,6 @@ function(gName) {
   ASSERT.call(this, this.getLG(gName) === null, 'LGr exists');
   var group = new LiquidGroup(gName);
   group.scope = this;
-  group.newL();
+//group.newL();
   return this.liquidDefs.set(mname, group );
 };

@@ -184,6 +184,15 @@ function(left,o,right,y) {
 
 this.synth_Void0 = function() { return SYNTH_VOID0; };
 
+this.synth_SynthName =
+function(liq) {
+  return {
+    type: '#Untransformed' ,
+    kind: 'synth-name',
+    liq: liq
+  };
+};
+
 this.synth_node_MemberExpression =
 function(n,v) {
   return {

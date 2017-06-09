@@ -1205,7 +1205,7 @@ function(gName) {
   ASSERT.call(this, this.getLG(gName) === null, 'LGr exists');
   var group = new LiquidGroup(gName);
   group.scope = this;
-  group.newL();
+//group.newL();
   return this.liquidDefs.set(mname, group );
 };
 
@@ -2533,6 +2533,14 @@ function(n, flags, isStmt) {
 };
 
 this.emitSAT_resolvedName = UntransformedEmitters['resolved-name'];
+
+},
+function(){
+UntransformedEmitters['synth-name'] =
+function(n, flags, isStmt) {
+  this.w(n.liq.synthName);
+  return true;
+};
 
 },
 function(){
@@ -10756,8 +10764,8 @@ function() {
 };
 
 this.owns =
-function(tdclr) {
-  return tdclr.ref.scope === this;
+function(nd) {
+  return nd.ref.scope === this;
 };
 
 },
@@ -11090,7 +11098,7 @@ function(targetScope) {
   var list = this.defs, e = 0, len = list.length();
   while (e < len) {
     var tdclr = list.at(e++);
-    this.owns(tdclr) && targetScope.synthDecl(tdclr);
+    this.owns(tdclr) && !tdclr.isFnArg() && targetScope.synthDecl(tdclr);
   }
 };
 
@@ -11721,7 +11729,7 @@ function(list) {
         }
         argd.type |= DT_FNARG;
       }
-      list[e] = argd;
+      list[e] = this.synth_SynthName(argd );
     }
     else {
       a = this.toResolvedName(a, true);
@@ -11995,6 +12003,15 @@ function(left,o,right,y) {
 };
 
 this.synth_Void0 = function() { return SYNTH_VOID0; };
+
+this.synth_SynthName =
+function(liq) {
+  return {
+    type: '#Untransformed' ,
+    kind: 'synth-name',
+    liq: liq
+  };
+};
 
 this.synth_node_MemberExpression =
 function(n,v) {

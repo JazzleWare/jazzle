@@ -50,7 +50,7 @@ function(list) {
         }
         argd.type |= DT_FNARG;
       }
-      list[e] = argd;
+      list[e] = this.synth_SynthName(argd );
     }
     else {
       a = this.toResolvedName(a, true);
