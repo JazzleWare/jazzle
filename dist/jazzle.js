@@ -1385,7 +1385,7 @@ function(global) {
   var l = 0;
   while (l < rsList.length) {
     var scope = rsList[l++];
-    if (!scope.synth_ref_may_escape(mname)) { original = false; break; }
+    if (!scope.synth_ref_may_escape_m(mname)) { original = false; break; }
     var synth = scope.synth_ref_find_homonym_m(mname);
     if (synth) {
       if (synth.isName() && synth.getAS() !== ATS_DISTINCT)
@@ -10445,6 +10445,7 @@ function() {
 
   var isCatch = this.isCatch();
   this.deactivateBody();
+  this.inBody = true;
   while (e<len) {
     ref = list.at(e);
     mname = list.keys[e];
@@ -10454,6 +10455,7 @@ function() {
       this.refInHead(mname, ref);
     e++;
   }
+  this.inBody = false;
 };
 
 },

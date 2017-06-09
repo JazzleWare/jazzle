@@ -14,6 +14,7 @@ function() {
 
   var isCatch = this.isCatch();
   this.deactivateBody();
+  this.inBody = true;
   while (e<len) {
     ref = list.at(e);
     mname = list.keys[e];
@@ -23,4 +24,5 @@ function() {
       this.refInHead(mname, ref);
     e++;
   }
+  this.inBody = false;
 };
