@@ -25,9 +25,9 @@ function(n) {
 
 this.transformExprFn =
 function(n) {
-  this.synthFnExprName(n['#scope'].scopeName);
+  n.id && this.synthFnExprName(n['#scope'].scopeName);
   n = this.transformRawFn(n, true);
-  return null;
+  return n;
 };
 
 this.transformParams =
@@ -71,7 +71,6 @@ function(n, isVal) {
 
 Transformers['FunctionExpression'] =
 function(n, isVal) {
-  ASSERT_EQ.call(this, isVal, true);
   return this.transformExprFn(n);
 };
 
@@ -108,4 +107,33 @@ function(list) {
   }
 
   return this.synth_AssigList(prologue);
+};
+
+this.synthFnExprName =
+function(fnName) {
+  ASSERT.call(this, fnName.synthName === "", 'synth');
+  ASSERT.call(this, fnName.ref.scope.isExpr(), 'fn not an expr');
+  var baseName = fnName.name, mname = "", synthName = baseName, num = 0;
+  var rsList = fnName.ref.rsList;
+
+  RENAME:
+  do {
+    mname = _m(synthName);
+    var synth = null;
+    var l = 0;
+
+    while (l < rsList.length) {
+      var scope = rsList[l++ ];
+      if (!scope.synth_ref_may_escape_m(mname))
+        continue RENAME;
+
+      synth = scope.synth_ref_find_homonym_m(mname);
+      if (synth && synth !== fnName)
+        continue RENAME;
+    }
+
+    break;
+  } while (synthName = baseName + "" + (num+=1), true);
+
+  fnName.synthName = synthName;
 };
