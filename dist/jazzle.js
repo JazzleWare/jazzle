@@ -1810,6 +1810,17 @@ function(nameStr) {
   return this.w(nameStr);
 };
 
+this.wsndl =
+function(list) {
+  var e = 0;
+  while (e < list.length) {
+    e && this.wm(',',' ');
+    this.writeIDName(list[e].synthName);
+    ++e ;
+  }
+  return true;
+};
+
 this.writeMemName =
 function(memName, asStr) {
   switch (memName.type) {
@@ -2373,6 +2384,45 @@ function(n, flags, isStmt) {
 
 },
 function(){
+this.emitExprFn =
+function(n, flags, isStmt) {
+  var hasParen = flags & EC_START_STMT;
+  var raw = n.fun;
+  var scope = raw['#scope'];
+  var scopeName = scope.scopeName;
+  var lonll = scope.getNonLocalLoopLexicals();
+  var isRenamed = scopeName && scopeName.name !== scopeName.synthName;
+  var hasWrapper = isRenamed || lonll;
+  if (hasWrapper) {
+    if (!hasParen)
+      hasParen = flags & EC_NEW_HEAD;
+  }
+
+  if (hasParen) { this.w('('); flags = EC_NONE; }
+  if (hasWrapper) {
+    this.wm('function','(');
+    lonll && this.wsndl(lonll);
+    this.w(')').s().w('{').i().l();
+    if (isRenamed)
+      this.wm('var',' ',scopeName.synthName,' ','=',' ');
+    else
+      this.wm('return').noWrap().s();
+  }
+  this.emitTransformedFn(n);
+  if (hasWrapper) {
+    this.w(';');
+    if (isRenamed)
+      this.l().w('return').noWrap().s().w(scopeName.synthName).w(';');
+    this.u().l().wm('}','(');
+    lonll && this.wsndl(lonll);
+    this.w(')');
+  }
+  hasParen && this.w(')');
+  isStmt && this.w(';');
+};
+
+},
+function(){
 Emitters['DoWhileStatement'] =
 function(n, flags, isStmt) {
   ASSERT_EQ.call(this, isStmt, true);
@@ -2567,6 +2617,13 @@ function(n, flags, isStmt) {
 },
 function(){
 UntransformedEmitters['transformed-fn'] =
+function(n, flags, isStmt) {
+  return n.target ?
+    this.emitDeclFn(n, flags, isStmt) :
+    this.emitExprFn(n, flags, isStmt);
+};
+
+this.emitTransformedFn =
 function(n, flags, isStmt) {
   this.wm('function');
   var raw = n.fun;
@@ -3317,7 +3374,11 @@ function(left, right, isComputed) {
   if (name === "")
     return null;
 
-  return scope.setName(name, null).t(t);
+  var scopeName = null;
+  scopeName = scope.setName(name, null).t(t);
+  scopeName.synthName = scopeName.name;
+  
+  return scopeName;
 };
 
 },

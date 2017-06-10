@@ -26,5 +26,9 @@ function(left, right, isComputed) {
   if (name === "")
     return null;
 
-  return scope.setName(name, null).t(t);
+  var scopeName = null;
+  scopeName = scope.setName(name, null).t(t);
+  scopeName.synthName = scopeName.name;
+  
+  return scopeName;
 };

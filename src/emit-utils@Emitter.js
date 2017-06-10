@@ -58,6 +58,17 @@ function(nameStr) {
   return this.w(nameStr);
 };
 
+this.wsndl =
+function(list) {
+  var e = 0;
+  while (e < list.length) {
+    e && this.wm(',',' ');
+    this.writeIDName(list[e].synthName);
+    ++e ;
+  }
+  return true;
+};
+
 this.writeMemName =
 function(memName, asStr) {
   switch (memName.type) {

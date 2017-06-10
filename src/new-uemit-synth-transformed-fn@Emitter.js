@@ -1,5 +1,12 @@
 UntransformedEmitters['transformed-fn'] =
 function(n, flags, isStmt) {
+  return n.target ?
+    this.emitDeclFn(n, flags, isStmt) :
+    this.emitExprFn(n, flags, isStmt);
+};
+
+this.emitTransformedFn =
+function(n, flags, isStmt) {
   this.wm('function');
   var raw = n.fun;
   var scopeName = raw['#scope'].scopeName;
