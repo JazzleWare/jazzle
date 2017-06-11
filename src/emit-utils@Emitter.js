@@ -138,6 +138,17 @@ function(n, flags) {
   ASSERT.call(this, false, 'got <'+n.type+'>');
 };
 
+this.emitWrappedInV =
+function(n) {
+  this.wm('{','v',':').s().eN(n, EC_NONE, false).w('}');
+  return true;
+};
+
+this.v =
+function() {
+  return this.wm('.','v');
+};
+
 this.emitElems =
 function(list, s, e) {
   var nElem = 0;
@@ -175,4 +186,20 @@ function(list, s) {
     s++;
   }
   return s;
+};
+
+this.emitAccessChk_tz =
+function(nd) {
+  ASSERT.call(this, nd.hasTZCheck, 'unnecessary tz');
+  var scope = nd.ref.scope;
+  ASSERT.call(this, scope.hasTZCheckPoint, 'could not find any tz');
+  var tz = scope.scs.getLG('tz').getL(0);
+  this.wm(tz.synthName,'<',scope.idx,'&&').jz('tz').wm('(','\'').writeStringValue(nd.name).wm('\'',')');
+  return true;
+};
+
+this.emitAccessChk_invalidSAT =
+function(nd) {
+  this.jz('cc').wm('(','\'').writeStringValue(nd.name).wm('\'',')');
+  return true;
 };

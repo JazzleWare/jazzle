@@ -15,7 +15,7 @@ function(mname) {
 this.getAS =
 function() {
   var src = this.source;
-  if (src === null || !src.isDecl() || src.isLexicalLike())
+  if (src === null || src.isLexicalLike())
     return ATS_DISTINCT;
   if (src.synthName === "")
     return ATS_UNSURE; // semi-attached

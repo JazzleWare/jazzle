@@ -119,8 +119,12 @@ function(decl) {
         continue RENAME;
 
       synth = scope.synth_ref_find_homonym_m(mname);
-      if (synth && synth !== decl)
-        continue RENAME;
+      if (synth) {
+        if (synth.isName() && synth.getAS() !== ATS_DISTINCT)
+          synth = synth.source;
+        if (synth !== decl)
+          continue RENAME;
+      }
     }
 
     if (num === 0 && !this.synth_name_is_valid_binding_m(mname)) // shortcut: num === 0 (because currently no invalid name contains a number)
