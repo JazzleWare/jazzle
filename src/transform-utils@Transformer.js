@@ -23,6 +23,7 @@ function(scope) {
   var l = lg.getL(0);
   if (!l) {
     l = lg.newL();
+    l.name = 'tz';
     lg.seal();
   }
   return l.track(this.cur);

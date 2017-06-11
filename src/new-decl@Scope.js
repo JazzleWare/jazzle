@@ -99,24 +99,37 @@ function(mname, t) {
 };
 
 this.decl_m = function(mname, dt) {
+  var decl = null;
   switch (dt) {
   case DT_LET:
-    return this.decl_let_m(mname, dt);
+    decl = this.decl_let_m(mname, dt);
+    break;
   case DT_FN:
-    return this.decl_fn_m(mname, dt);
+    decl = this.decl_fn_m(mname, dt);
+    break;
   case DT_CONST:
-    return this.decl_const_m(mname, dt);
+    decl = this.decl_const_m(mname, dt);
+    break;
   case DT_VAR:
-    return this.decl_var_m(mname, dt);
+    decl = this.decl_var_m(mname, dt);
+    break;
   case DT_CLS:
-    return this.decl_cls_m(mname, dt);
+    decl = this.decl_cls_m(mname, dt);
+    break;
   case DT_CATCHARG:
-    return this.decl_catchArg_m(mname, dt);
+    decl = this.decl_catchArg_m(mname, dt);
+    break;
   case DT_FNARG:
-    return this.decl_fnArg_m(mname, dt);
+    decl = this.decl_fnArg_m(mname, dt);
+    break;
+  default: 
+    ASSERT.call(this, false, 'unknown decltype');
+
   }
 
-  ASSERT.call(this, false, 'unknown decltype');
+  decl.idx = decl.ref.scope.di_ref.v++;
+
+  return decl;
 };
 
 this.decl_let_m =

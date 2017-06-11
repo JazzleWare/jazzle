@@ -78,3 +78,9 @@ function() { return this.type & (DT_FNNAME|DT_CLSNAME); };
 
 this.isInsignificant =
 function() { return this.type & DT_INFERRED; };
+
+this.isImmutable =
+function() {
+  return this.isConst() || this.isName();
+};
+

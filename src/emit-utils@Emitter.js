@@ -194,7 +194,7 @@ function(nd) {
   var scope = nd.ref.scope;
   ASSERT.call(this, scope.hasTZCheckPoint, 'could not find any tz');
   var tz = scope.scs.getLG('tz').getL(0);
-  this.wm(tz.synthName,'<',scope.idx,'&&').jz('tz').wm('(','\'').writeStringValue(nd.name).wm('\'',')');
+  this.wm(tz.synthName,'<',nd.idx,'&&').jz('tz').wm('(','\'').writeStringValue(nd.name).wm('\'',')');
   return true;
 };
 
