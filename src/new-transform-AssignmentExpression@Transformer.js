@@ -94,7 +94,7 @@ function(n, isVal, isB) {
 
 TransformByLeft['Identifier'] =
 function(n, isVal, isB) {
-  n.left = this.toResolvedName(n.left, isB);
+  n.left = this.toResolvedName(n.left, isB ? 'binding' : 'sat');
   n.right = this.tr(n.right, true);
   if (isB) {
     var target = n.left.target;

@@ -133,7 +133,7 @@ function(n, flags) {
   if (n.type === 'MemberExpression')
     return this.emitSAT_mem(n, flags);
   if (isResolvedName(n))
-    return this.emitSAT_resolvedName(n, flags);
+    return this.emitRName_SAT(n, flags);
 
   ASSERT.call(this, false, 'got <'+n.type+'>');
 };

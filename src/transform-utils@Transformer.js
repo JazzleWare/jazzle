@@ -10,7 +10,7 @@ this.trSAT =
 function(n, isVal) {
   switch (n.type) {
   case 'Identifier':
-    return this.trSAT_name(n);
+    return this.toResolvedName(n, 'sat');
   case 'MemberExpression':
     return this.trSAT_mem(n);
   }

@@ -1895,7 +1895,7 @@ function(n, flags) {
   if (n.type === 'MemberExpression')
     return this.emitSAT_mem(n, flags);
   if (isResolvedName(n))
-    return this.emitSAT_resolvedName(n, flags);
+    return this.emitRName_SAT(n, flags);
 
   ASSERT.call(this, false, 'got <'+n.type+'>');
 };
@@ -2004,7 +2004,6 @@ function(n, flags, isStmt) {
   cc && (this.emitAccessChk_invalidSAT(target), this.w(',').s());
 
   this.emitSAT(left, flags);
-  target.isLLINOSA() && this.v();
 
   this.s();
   if (n.operator === '**=') {
@@ -2034,7 +2033,7 @@ function(n, flags, isStmt) {
 
 this.emitAssignment_binding =
 function(n, flags, isStmt) {
-  this.w('var').s().emitSAT(n.left, EC_NONE );
+  this.w('var').s().emitRName_binding(n.left);
   this.s().w('=').s();
   if (n.left.target.isLLINOSA())
     this.emitWrappedInV(n.right);
@@ -2647,6 +2646,7 @@ function(n, flags, isStmt) {
 
 },
 function(){
+if (false)
 UntransformedEmitters['resolved-name'] =
 function(n, flags, isStmt) {
   var str = n.target.ref.scope.scopeID+':'+n.target.name;
@@ -2657,7 +2657,34 @@ function(n, flags, isStmt) {
   return true;
 };
 
-this.emitSAT_resolvedName = UntransformedEmitters['resolved-name'];
+var bes = {};
+UntransformedEmitters['resolved-name'] =
+function(n, flags, isStmt) {
+  return bes[n.bes].call(this, n, flags, isStmt);
+};
+
+bes['ex'] = this.emitRName_ex =
+bes['sat'] = this.emitRName_SAT =
+function(n, flags, isStmt) {
+  var hasParen = false;
+  var hasZero = false;
+  var tv = n.target.isLLINOSA(); // tail v
+  if (tv)
+    hasZero = hasParen = flags & EC_CALL_HEAD;
+  if (hasParen) { this.w('('); flags = EC_NONE; }
+  hasZero && this.wm('0',',');
+  this.w(n.target.synthName);
+  tv && this.v();
+  hasParen && this.w(')');
+  isStmt && this.w(';');
+  return true;
+};
+
+bes['binding'] = this.emitRName_binding =
+function(n, flags, isStmt) {
+  ASSERT.call(this, isResolvedName(n), 'rn');
+  return this.w(n.target.synthName), true;
+};
 
 },
 function(){
@@ -11169,6 +11196,13 @@ function(mname) {
     return ref;
 
   var tdecl = this.findDeclOwn_m(mname); // exclude inner vars
+  if (tdecl === null) {
+    if (this.isAnyFn())
+      tdecl = this.findParam_m(mname);
+    else if (this.isCatch() && this.args.has(mname))
+      tdecl = this.args.get(mname);
+  }
+
   if (tdecl)
     return tdecl.ref;
 
@@ -11432,8 +11466,9 @@ function(decl) {
 };
 
 this.toResolvedName =
-function(id, isB) {
+function(id, bes) {
   var name = id.name, target = null;
+  var isB = bes === 'binding';
   if (isB)
     target = this.cur.findDeclAny_m(_m(name));
   else {
@@ -11452,7 +11487,7 @@ function(id, isB) {
 
   return {
     target: target,
-    binding: isB,
+    bes: bes,
     id: id,
     tz: hasTZ,
     type: '#Untransformed' ,
@@ -11566,7 +11601,7 @@ function(n, isVal, isB) {
 
 TransformByLeft['Identifier'] =
 function(n, isVal, isB) {
-  n.left = this.toResolvedName(n.left, isB);
+  n.left = this.toResolvedName(n.left, isB ? 'binding' : 'sat');
   n.right = this.tr(n.right, true);
   if (isB) {
     var target = n.left.target;
@@ -11690,12 +11725,14 @@ function(n, isVal) {
 function(){
 Transformers['Identifier'] =
 function(n, isVal) {
-  return this.toResolvedName(n);
+  n = this.toResolvedName(n, 'ex');
+  return n;
 };
 
 this.trSAT_name =
 function(n, isVal) {
-  return this.toResolvedName(n);
+  n = this.toResolvedName(n, 'sat');
+  return n;
 };
 
 },
@@ -11895,7 +11932,7 @@ function(list) {
       list[e] = this.synth_SynthName(argd );
     }
     else {
-      a = this.toResolvedName(a, true);
+      a = this.toResolvedName(a, 'binding');
       argsmap[mname] = list[e] = a;
     }
     e--;
@@ -11925,7 +11962,7 @@ function(list) {
     if (left.type === 'RestElement') {
       left = left.argument;
       if (left.type === 'Identifier') {
-        left = this.toResolvedName(left, true);
+        left = this.toResolvedName(left, 'binding');
         prologue.push(this.synth_ArgRest(left, e));
       }
       else {
@@ -12282,7 +12319,7 @@ this.trSAT =
 function(n, isVal) {
   switch (n.type) {
   case 'Identifier':
-    return this.trSAT_name(n);
+    return this.toResolvedName(n, 'sat');
   case 'MemberExpression':
     return this.trSAT_mem(n);
   }

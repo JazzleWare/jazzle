@@ -23,6 +23,13 @@ function(mname) {
     return ref;
 
   var tdecl = this.findDeclOwn_m(mname); // exclude inner vars
+  if (tdecl === null) {
+    if (this.isAnyFn())
+      tdecl = this.findParam_m(mname);
+    else if (this.isCatch() && this.args.has(mname))
+      tdecl = this.args.get(mname);
+  }
+
   if (tdecl)
     return tdecl.ref;
 

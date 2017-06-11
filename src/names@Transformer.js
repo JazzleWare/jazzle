@@ -25,8 +25,9 @@ function(decl) {
 };
 
 this.toResolvedName =
-function(id, isB) {
+function(id, bes) {
   var name = id.name, target = null;
+  var isB = bes === 'binding';
   if (isB)
     target = this.cur.findDeclAny_m(_m(name));
   else {
@@ -45,7 +46,7 @@ function(id, isB) {
 
   return {
     target: target,
-    binding: isB,
+    bes: bes,
     id: id,
     tz: hasTZ,
     type: '#Untransformed' ,

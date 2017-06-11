@@ -19,7 +19,6 @@ function(n, flags, isStmt) {
   cc && (this.emitAccessChk_invalidSAT(target), this.w(',').s());
 
   this.emitSAT(left, flags);
-  target.isLLINOSA() && this.v();
 
   this.s();
   if (n.operator === '**=') {
@@ -49,7 +48,7 @@ function(n, flags, isStmt) {
 
 this.emitAssignment_binding =
 function(n, flags, isStmt) {
-  this.w('var').s().emitSAT(n.left, EC_NONE );
+  this.w('var').s().emitRName_binding(n.left);
   this.s().w('=').s();
   if (n.left.target.isLLINOSA())
     this.emitWrappedInV(n.right);

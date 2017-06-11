@@ -53,7 +53,7 @@ function(list) {
       list[e] = this.synth_SynthName(argd );
     }
     else {
-      a = this.toResolvedName(a, true);
+      a = this.toResolvedName(a, 'binding');
       argsmap[mname] = list[e] = a;
     }
     e--;
@@ -83,7 +83,7 @@ function(list) {
     if (left.type === 'RestElement') {
       left = left.argument;
       if (left.type === 'Identifier') {
-        left = this.toResolvedName(left, true);
+        left = this.toResolvedName(left, 'binding');
         prologue.push(this.synth_ArgRest(left, e));
       }
       else {

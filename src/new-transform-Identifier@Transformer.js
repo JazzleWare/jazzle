@@ -1,9 +1,11 @@
 Transformers['Identifier'] =
 function(n, isVal) {
-  return this.toResolvedName(n);
+  n = this.toResolvedName(n, 'ex');
+  return n;
 };
 
 this.trSAT_name =
 function(n, isVal) {
-  return this.toResolvedName(n);
+  n = this.toResolvedName(n, 'sat');
+  return n;
 };
