@@ -49,4 +49,5 @@ this.ST_BLOCK = ST_ASYNC << 1,
 this.ST_BARE = ST_BLOCK << 1,
 this.ST_CATCH = ST_BARE << 1,
 this.ST_PAREN = ST_CATCH << 1,
-this.ST_NONE = 0;
+this.ST_NONE = 0; this. PathWalk = PathWalk;
+

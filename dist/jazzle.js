@@ -255,6 +255,10 @@ var Parser = function (src, o) {
 
 };
 ;
+function PathWalk() {
+  this.cur = "";
+}
+;
 function Ref(scope) {
   this.i = 0;
   this.rsList = [];
@@ -10473,6 +10477,73 @@ function(shouldCheck) {
 };
 
 }]  ],
+[PathWalk.prototype, [function(){
+var D = '.'.charCodeAt(0);
+
+var S = '/'.charCodeAt(0);
+
+this.cd =
+function(to) {
+  var coords = {s: 0, e: 0};
+  var cur = this.cur;
+
+  while (getDirLeft(to, coords))
+    cur = joinDirWithSingle(cur, to.substring(coords.s, coords.e));
+
+  this.cur = cur;
+  return this;
+};
+
+function getDirLeft(to, coords) {
+  var s = coords.e;
+  if (s >= to.length)
+    return null;
+
+  var rootSlash = false, ch = to.charCodeAt(s);
+  if (ch === S) {
+    if (s > 0) s++;
+    else rootSlash = true;
+  }
+
+  var e = to.indexOf('/', rootSlash ? s+1 : s);
+  if (e === -1)
+    e = to.length;
+
+  coords.s = s;
+  coords.e = e;
+
+  return coords;
+}
+
+function joinDirWithSingle(cur, l) {
+  if (l.length === 0 || l === '.')
+    return cur;
+  if (l.charCodeAt(0) === S)
+    return l;
+  if (l !== '..')
+    return cur.length ? cur + (cur === '/' ? l : '/' + l) : l;
+
+  ASSERT.call(this, cur.length, 'can not go above the start');
+
+  var slash = cur.lastIndexOf('/');
+//ASSERT.call(this, slash !== -1, 'can not go above [:'+cur+':]');
+  
+  if (slash === -1)
+    return "";
+
+  if (cur.length === 1) {
+    ASSERT.call(this, cur.charCodeAt(0) === S, 'what?');
+    ASSERT.call(this, false, 'can not go above base');
+  }
+
+  if (slash === 0)
+    return '/';
+
+  cur = cur.substring(0, slash);
+  return cur;
+}
+
+}]  ],
 [Ref.prototype, [function(){
 this.absorbDirect =
 function(ref) { return this.absorb(ref, true); };
@@ -12419,5 +12490,6 @@ this.ST_BLOCK = ST_ASYNC << 1,
 this.ST_BARE = ST_BLOCK << 1,
 this.ST_CATCH = ST_BARE << 1,
 this.ST_PAREN = ST_CATCH << 1,
-this.ST_NONE = 0;
+this.ST_NONE = 0; this. PathWalk = PathWalk;
+
 ;}).call (function(){try{return module.exports;}catch(e){return this;}}.call(this))
