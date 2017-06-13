@@ -46,6 +46,7 @@ var Parser = function (src, o) {
 
   this.yc= -1; // occasionally used to put yield counts in
 
+  this.bundleScope = null;
   this.chkDirective = false;
   this.alreadyApplied = false;
   // "pin" location; for errors that might not have been precisely caused by a syntax node, like:

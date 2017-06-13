@@ -101,6 +101,8 @@ function(n, isVal, isB) {
     if (!target.isReached())
       this.makeReached(target);
   } 
+  !isB && n.left.target.ref.assigned();
+
   return n;
 };
 

@@ -46,6 +46,13 @@ function(st) {
 this.canYield = 
 function() { return this.actions & SA_YIELD; };
 
+this.canMakeThis =
+function() {
+  if (this.isAnyFn())
+    return !this.isArrow();
+  return this.isSourceLevel();
+};
+
 this.canReturn = 
 function() { return this.actions & SA_RETURN; };
 

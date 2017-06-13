@@ -73,6 +73,20 @@ var _OVERRIDABLE = DT_CATCHARG|_VARLIKE;
 this.isOverridableByVar =
 function() { return this.type & _OVERRIDABLE; };
 
+this.isIDefault =
+function() { return this.type & DT_IDEFAULT; };
+
+this.isIAliased =
+function() { return this.type & DT_IALIASED; };
+
+this.isINamespace =
+function() { return this.type & DT_INAMESPACE; };
+
+this.isImported =
+function() {
+  return this.isIDefault() || this.isIAliased() || this.isINamespace();
+};
+
 this.isName =
 function() { return this.type & (DT_FNNAME|DT_CLSNAME); };
 
@@ -83,4 +97,3 @@ this.isImmutable =
 function() {
   return this.isConst() || this.isName();
 };
-

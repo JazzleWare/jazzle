@@ -6,4 +6,5 @@ function Ref(scope) {
   this.targetDecl = null;
   this.hasTarget = false;
   this.parentRef = null;
+  this.lhs = 0;
 }

@@ -33,8 +33,8 @@ function(mname, ref) {
   ASSERT.call(this, this.isScript(),
     'a script scope was expected');
 
-  ASSERT.call(this, this.parent.isGlobal(),
-    'script must have a parent scope with type global');
+  ASSERT.call(this, this.parent.isBundle(),
+    'script must have a parent scope with type bundle');
 
   if (ref_this_m(mname))
     return this.spCreate_this(ref);

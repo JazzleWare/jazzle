@@ -1,5 +1,8 @@
 Transformers['UpdateExpression'] =
 function(n, isVal) {
-  n.argument = this.trSAT(n.argument);
+  var arg = this.trSAT(n.argument);
+  n.argument = arg;
+  isResolvedName(arg) && arg.target.ref.assigned();
+
   return n;
 };

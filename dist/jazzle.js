@@ -1,6 +1,21 @@
 (function(){
 "use strict";
 ;
+function BundleScope(globalScope) {
+  if (globalScope === null)
+    globalScope = new GlobalScope();
+  else
+    ASSERT.call(this, globalScope.isGlobal(), 'not global');
+  ConcreteScope.call(this, globalScope, ST_BUNDLE);
+};
+;
+function Bundle() {
+  this.type = '#Bundle';
+  this.subs = {};
+  this.startSub = { ast: null, path: "" };
+  this['#scope'] = null;
+}
+;
 function CatchScope(sParent) {
   Scope.call(this, sParent, ST_CATCH);
 
@@ -228,6 +243,7 @@ var Parser = function (src, o) {
 
   this.yc= -1; // occasionally used to put yield counts in
 
+  this.bundleScope = null;
   this.chkDirective = false;
   this.alreadyApplied = false;
   // "pin" location; for errors that might not have been precisely caused by a syntax node, like:
@@ -267,6 +283,7 @@ function Ref(scope) {
   this.targetDecl = null;
   this.hasTarget = false;
   this.parentRef = null;
+  this.lhs = 0;
 }
 ;
 function Scope(sParent, type) {
@@ -327,6 +344,12 @@ function SortedObj(obj) {
 SortedObj.from = function(parent) {
   return new SortedObj(createObj(parent.obj));
 };
+;
+function SourceScope(parent, st) {
+  Scope.call(this, parent, st);
+  this.asMod = { e: new SortedObj(), i: new SortedObj(), f: new SortedObj() };
+  this.spThis = null;
+}
 ;
 function Template(idxList) {
   this.idxList = idxList;
@@ -428,6 +451,8 @@ function Transformer() {
  ParenScope.prototype = createObj(Scope.prototype);
  ScopeName.prototype = createObj(Decl.prototype);
  Liquid.prototype = createObj(Decl.prototype);
+ SourceScope.prototype = createObj(Scope.prototype);
+ BundleScope.prototype = createObj(ConcreteScope.prototype);
 ;
 var CH_1 = char2int('1'),
     CH_2 = char2int('2'),
@@ -865,7 +890,8 @@ var ST_GLOBAL = 1,
     ST_GETTER = ST_SETTER << 1,
     ST_ACCESSOR = ST_GETTER|ST_SETTER,
     ST_ARROW = ST_GETTER << 1,
-    ST_GEN = ST_ARROW << 1,
+    ST_BUNDLE = ST_ARROW << 1,
+    ST_GEN = ST_BUNDLE << 1,
     ST_ASYNC = ST_GEN << 1,
     ST_BLOCK = ST_ASYNC << 1,
     ST_BARE = ST_BLOCK << 1,
@@ -908,9 +934,13 @@ var DT_CLS = 1,
     DT_ARGUMENTS = DT_LET << 1,
     DT_FNARG = DT_ARGUMENTS << 1,
     DT_CLSNAME = DT_FNARG << 1,
-    DT_FNNAME = DT_CLSNAME << 1,
-    DT_GLOBAL = DT_FNNAME << 1,
-    DT_INFERRED = DT_GLOBAL << 1,
+    DT_IDEFAULT = DT_CLSNAME << 1,
+    DT_IALIASED = DT_IDEFAULT << 1,
+    DT_INAMESPACE = DT_IALIASED << 1,
+    DT_INFERRED = DT_INAMESPACE << 1,
+    DT_GLOBAL = DT_INFERRED << 1,
+    DT_FNNAME = DT_GLOBAL << 1,
+    DT_IMPORTED = DT_IDEFAULT|DT_IALIASED|DT_INAMESPACE,
     DT_NONE = 0;
 
 var RS_ARGUMENTS = _m('arguments'),
@@ -1182,6 +1212,17 @@ function isDirective(n) {
              def[1][e++].call(def[0]);
        }
      }).call([
+[BundleScope.prototype, [function(){
+this.spCreate_global =
+function(mname, ref) {
+  var globalScope = this.parent;
+  ASSERT.call(this, globalScope.isGlobal(), 'global');
+  return  globalScope.findDeclOwn_m(mname) ||
+    globalScope.spCreate_global(mname, ref);
+};
+
+}]  ],
+null,
 null,
 [ClassScope.prototype, [function(){
 this.hasHeritage =
@@ -1215,21 +1256,7 @@ function(gName) {
 
 },
 function(){
-this.spCreate_this =
-function(ref) {
-  if (!ref)
-    ref = new Ref(this);
 
-  ASSERT.call(this, this.spThis === null,
-    'this scope has already got a this liquid');
-
-  // TODO: tz check is also needed for 'this' (in some cases)
-  var spThis = new Liquid('<this>')
-    .r(ref)
-    .n('this_');
-
-  return this.spThis = spThis;
-};
 
 },
 function(){
@@ -1576,6 +1603,20 @@ var _OVERRIDABLE = DT_CATCHARG|_VARLIKE;
 this.isOverridableByVar =
 function() { return this.type & _OVERRIDABLE; };
 
+this.isIDefault =
+function() { return this.type & DT_IDEFAULT; };
+
+this.isIAliased =
+function() { return this.type & DT_IALIASED; };
+
+this.isINamespace =
+function() { return this.type & DT_INAMESPACE; };
+
+this.isImported =
+function() {
+  return this.isIDefault() || this.isIAliased() || this.isINamespace();
+};
+
 this.isName =
 function() { return this.type & (DT_FNNAME|DT_CLSNAME); };
 
@@ -1586,7 +1627,6 @@ this.isImmutable =
 function() {
   return this.isConst() || this.isName();
 };
-
 
 }]  ],
 [Emitter.prototype, [function(){
@@ -4621,17 +4661,19 @@ function() {
 
   this.next();
 
-  var lName = null;
+  var lName = null, decl = null;
   if (this.lttype === TK_ID) {
     this.validate(this.ltval);
     lName = this.id();
+    decl = this.scope.declareImportedName(lName, DT_IDEFAULT);
     list.push({
       type: 'ImportDefaultSpecifier',
       local: lName,
       start: lName.start,
       end: lName.end,
       loc: lName.loc,
-      '#y': 0
+      '#y': 0,
+      '#decl': decl
     });
     if (this.lttype === CH_COMMA)
       this.next();
@@ -4669,6 +4711,7 @@ function() {
   var ec = this.semiC || src.end, eloc = this.semiLoc || src.loc.end;
   this.foundStatement = true;
 
+  this.scope.trackImports(src.value, list);
   return {
     type: 'ImportDeclaration',
     start: c0,
@@ -4695,6 +4738,7 @@ function(list) {
       this.validate(this.ltval);
       lName = this.id();
     }
+    var decl = this.scope.declareImportedName(lName, DT_IALIASED );
     list.push({
       type: 'ImportSpecifier',
       start: eName.start,
@@ -4702,7 +4746,8 @@ function(list) {
       end: lName.end,
       imported: eName,
       local: lName,
-      '#y': 0
+      '#y': 0,
+      '#decl': decl
     });
 
     if (this.lttype === CH_COMMA)
@@ -4729,13 +4774,15 @@ function() {
   this.validate(this.ltval);
   var lName = this.id();
 
+  var decl = this.scope.declareImportedName(lName, DT_INAMESPACE);
   return {
     type: 'ImportNamespaceSpecifier',
     start: c0,
     loc: { start: loc0, end: lName.loc.end },
     end: lName.end,
     local: lName,
-    '#y': 0
+    '#y': 0,
+    '#decl': decl
   };
 };
 
@@ -8359,10 +8406,10 @@ this.parseProgram = function () {
   var c0 = this.c, li0 = this.li, col0 = this.col;
   var ec = -1, eloc = null;
 
-  var globalScope = new GlobalScope();
+  if (this.bundleScope === null)
+    this.bundleScope = new BundleScope(null);
 
-  this.scope = new ConcreteScope(globalScope, ST_SCRIPT);
-  globalScope.scriptScope = this.scope;
+  this.scope = new SourceScope(this.bundleScope, ST_SCRIPT);
 
   this.scope.parser = this;
   if (!this.isScript)
@@ -8374,7 +8421,6 @@ this.parseProgram = function () {
   var list = this.stmtList(); 
 
   this.scope.finish();
-  globalScope.finish();
 
   var n = {
     type: 'Program',
@@ -10586,6 +10632,20 @@ function() {
   ASSERT.call(this, false, 'ref unresolved');
 };
 
+this.assigned =
+function() {
+  var targetRef = this.getDecl().ref;
+  if (targetRef.lhs < 0)
+    targetRef.lhs = 0;
+  return targetRef.lhs++;
+};
+
+this.getLHS =
+function() {
+  var targetRef = this.getDecl().ref;
+  return targetRef.lhs < 0 ? 0 : targetRef.lhs;
+};
+
 }]  ],
 [Scope.prototype, [function(){
 this.canSmem =
@@ -10635,6 +10695,13 @@ function(st) {
 
 this.canYield = 
 function() { return this.actions & SA_YIELD; };
+
+this.canMakeThis =
+function() {
+  if (this.isAnyFn())
+    return !this.isArrow();
+  return this.isSourceLevel();
+};
 
 this.canReturn = 
 function() { return this.actions & SA_RETURN; };
@@ -10736,8 +10803,8 @@ function(mname, ref) {
   ASSERT.call(this, this.isScript(),
     'a script scope was expected');
 
-  ASSERT.call(this, this.parent.isGlobal(),
-    'script must have a parent scope with type global');
+  ASSERT.call(this, this.parent.isBundle(),
+    'script must have a parent scope with type bundle');
 
   if (ref_this_m(mname))
     return this.spCreate_this(ref);
@@ -10897,6 +10964,9 @@ function() { return this.isScript() || this.isModule(); };
 this.isSimpleFn =
 function() { return this.type & (ST_EXPR|ST_DECL); };
 
+this.isBundle =
+function() { return this.type & ST_BUNDLE; };
+
 this.isGlobal =
 function() { return this.type & ST_GLOBAL; };
 
@@ -10904,7 +10974,7 @@ this.isConditional =
 function() { return this.flags & ST_COND; };
 
 this.isConcrete =
-function() { return this.isModule() || this.isAnyFn() || this.isScript(); };
+function() { return this.isBundle() || this.isAnyFn(); };
 
 this.isSoft = 
 function() {
@@ -10980,6 +11050,11 @@ function(name, transformedFn) {
   list.push(transformedFn);
 };
 
+this.owns =
+function(nd) {
+  return nd.ref.scope === this;
+};
+
 this.determineFlags =
 function() {
   if (this.isParen())
@@ -11006,9 +11081,22 @@ function() {
   return fl;
 };
 
-this.owns =
-function(nd) {
-  return nd.ref.scope === this;
+this.spCreate_this =
+function(ref) {
+  ASSERT.call(this, this.canMakeThis(), 'this');
+
+  if (!ref)
+    ref = new Ref(this);
+
+  ASSERT.call(this, this.spThis === null,
+    'this scope has already got a this liquid');
+
+  // TODO: tz check is also needed for 'this' (in some cases)
+  var spThis = new Liquid('<this>')
+    .r(ref)
+    .n('this_');
+
+  return this.spThis = spThis;
 };
 
 },
@@ -11437,6 +11525,48 @@ this.length = function() {
 };
 
 }]  ],
+[SourceScope.prototype, [function(){
+this.declareImportedName =
+function(id, t) {
+  ASSERT.call(this, (t & DT_IMPORTED), 'not im');
+  var mname = _m(id.name);
+  var decl = this.declareLexical_m(mname, t);
+  return decl.s(id );
+};
+
+this.trackImports =
+function(src, list) {
+  // TODO: src might have to get a normalization
+  var mname = _m(src);
+  var im = 
+    this.asMod.i.has(mname) ?
+      this.asMod.i.get(mname) :
+      this.asMod.i.set(mname, new SortedObj());
+
+  var e = 0;
+
+  while (e < list.length) {
+    var sp = list[e++], decl = sp['#decl'];
+    mname = _m(
+      decl.isIDefault() ? '*default*' :
+      decl.isIAliased() ? sp.imported.name :
+      (ASSERT.call(this, decl.isINamespace(), 'namespace'), '*')
+    ); 
+
+    if (!im.has(mname))
+      im.set(mname, decl);
+    else {
+      ASSERT.call(this, decl.ref.scope === this, 'scope');
+
+      // import {a as a0} from './e'; // new decl: 'a0' (new)
+      // import {a as a2} from './e'; // new decl: 'a2' (=a0)
+      sp['#decl'] = im.get(mname);
+      this.insertDecl_m(_m(decl.name), sp['#decl']); 
+    }
+  }
+};
+
+}]  ],
 [Template.prototype, [function(){
 // TODO: add a mechanism to react to cases where latestVal does not have a property (own or inherited)
 // whose name has the same value as idx
@@ -11679,6 +11809,8 @@ function(n, isVal, isB) {
     if (!target.isReached())
       this.makeReached(target);
   } 
+  !isB && n.left.target.ref.assigned();
+
   return n;
 };
 
@@ -11906,7 +12038,10 @@ function(n, ownerList, isVal) {
 function(){
 Transformers['UpdateExpression'] =
 function(n, isVal) {
-  n.argument = this.trSAT(n.argument);
+  var arg = this.trSAT(n.argument);
+  n.argument = arg;
+  isResolvedName(arg) && arg.target.ref.assigned();
+
   return n;
 };
 

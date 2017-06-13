@@ -61,6 +61,11 @@ function(name, transformedFn) {
   list.push(transformedFn);
 };
 
+this.owns =
+function(nd) {
+  return nd.ref.scope === this;
+};
+
 this.determineFlags =
 function() {
   if (this.isParen())
@@ -87,7 +92,20 @@ function() {
   return fl;
 };
 
-this.owns =
-function(nd) {
-  return nd.ref.scope === this;
+this.spCreate_this =
+function(ref) {
+  ASSERT.call(this, this.canMakeThis(), 'this');
+
+  if (!ref)
+    ref = new Ref(this);
+
+  ASSERT.call(this, this.spThis === null,
+    'this scope has already got a this liquid');
+
+  // TODO: tz check is also needed for 'this' (in some cases)
+  var spThis = new Liquid('<this>')
+    .r(ref)
+    .n('this_');
+
+  return this.spThis = spThis;
 };

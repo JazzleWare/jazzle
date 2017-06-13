@@ -82,6 +82,9 @@ function() { return this.isScript() || this.isModule(); };
 this.isSimpleFn =
 function() { return this.type & (ST_EXPR|ST_DECL); };
 
+this.isBundle =
+function() { return this.type & ST_BUNDLE; };
+
 this.isGlobal =
 function() { return this.type & ST_GLOBAL; };
 
@@ -89,7 +92,7 @@ this.isConditional =
 function() { return this.flags & ST_COND; };
 
 this.isConcrete =
-function() { return this.isModule() || this.isAnyFn() || this.isScript(); };
+function() { return this.isBundle() || this.isAnyFn(); };
 
 this.isSoft = 
 function() {

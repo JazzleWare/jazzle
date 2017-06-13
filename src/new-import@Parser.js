@@ -9,17 +9,19 @@ function() {
 
   this.next();
 
-  var lName = null;
+  var lName = null, decl = null;
   if (this.lttype === TK_ID) {
     this.validate(this.ltval);
     lName = this.id();
+    decl = this.scope.declareImportedName(lName, DT_IDEFAULT);
     list.push({
       type: 'ImportDefaultSpecifier',
       local: lName,
       start: lName.start,
       end: lName.end,
       loc: lName.loc,
-      '#y': 0
+      '#y': 0,
+      '#decl': decl
     });
     if (this.lttype === CH_COMMA)
       this.next();
@@ -57,6 +59,7 @@ function() {
   var ec = this.semiC || src.end, eloc = this.semiLoc || src.loc.end;
   this.foundStatement = true;
 
+  this.scope.trackImports(src.value, list);
   return {
     type: 'ImportDeclaration',
     start: c0,
@@ -83,6 +86,7 @@ function(list) {
       this.validate(this.ltval);
       lName = this.id();
     }
+    var decl = this.scope.declareImportedName(lName, DT_IALIASED );
     list.push({
       type: 'ImportSpecifier',
       start: eName.start,
@@ -90,7 +94,8 @@ function(list) {
       end: lName.end,
       imported: eName,
       local: lName,
-      '#y': 0
+      '#y': 0,
+      '#decl': decl
     });
 
     if (this.lttype === CH_COMMA)
@@ -117,12 +122,14 @@ function() {
   this.validate(this.ltval);
   var lName = this.id();
 
+  var decl = this.scope.declareImportedName(lName, DT_INAMESPACE);
   return {
     type: 'ImportNamespaceSpecifier',
     start: c0,
     loc: { start: loc0, end: lName.loc.end },
     end: lName.end,
     local: lName,
-    '#y': 0
+    '#y': 0,
+    '#decl': decl
   };
 };

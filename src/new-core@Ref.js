@@ -38,3 +38,17 @@ function() {
   }
   ASSERT.call(this, false, 'ref unresolved');
 };
+
+this.assigned =
+function() {
+  var targetRef = this.getDecl().ref;
+  if (targetRef.lhs < 0)
+    targetRef.lhs = 0;
+  return targetRef.lhs++;
+};
+
+this.getLHS =
+function() {
+  var targetRef = this.getDecl().ref;
+  return targetRef.lhs < 0 ? 0 : targetRef.lhs;
+};
