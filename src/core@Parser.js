@@ -1,13 +1,3 @@
-this.clearPendingStrictErrors =
-function() {
-  if (this.ct === ERR_NONE_YET)
-    return;
-
-  ASSERT.call(this, this.ct === ERR_PIN_OCTAL_IN_STRICT,
-    'the only strict error allowed currently is ERR_PIN_OCTAL_IN_STRICT');
-  this.ct = ERR_NONE_YET;
-};
-
 this.inferName =
 function(left, right, isComputed) {
   if (isComputed && left.type === 'Identifier')
@@ -31,4 +21,11 @@ function(left, right, isComputed) {
   scopeName.synthName = scopeName.name;
   
   return scopeName;
+};
+
+this.cutEx =
+function() {
+  var ex = this.ex;
+  this.ex = DT_NONE;
+  return ex;
 };

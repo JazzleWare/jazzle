@@ -92,7 +92,7 @@ this.isConditional =
 function() { return this.flags & ST_COND; };
 
 this.isConcrete =
-function() { return this.isBundle() || this.isAnyFn(); };
+function() { return this.isModule() || this.isAnyFn() || this.isScript() || this.isBundle(); };
 
 this.isSoft = 
 function() {

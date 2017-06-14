@@ -5,16 +5,20 @@ function(c0,loc0) {
     this.canBeStatement = true;
     switch (this.ltval) {
     case 'class':
+      this.ex = DT_ESELF;
       elem = this.parseClass(CTX_NONE);
       break;
     case 'var':
+      this.ex = DT_ESELF;
       elem = this.parseVar(DT_VAR, CTX_NONE);
       break;
     case 'let':
+      this.ex = DT_ESELF;
       elem = this.parseVar(DT_LET, CTX_NONE);
       break;
     case 'async':
       elem = this.id();
+      this.ex = DT_ESELF;
       if (this.peekID('function')) {
         this.nl && this.err('newline.async');
         elem = this.parseAsync_fn(elem, CTX_NONE);
@@ -23,9 +27,11 @@ function(c0,loc0) {
         this.err('async.lone');
       break;
     case 'function':
+      this.ex = DT_ESELF;
       elem = this.parseFn(CTX_NONE, ST_DECL);
       break;
     case 'const':
+      this.ex = DT_ESELF;
       elem = this.parseVar(DT_CONST, CTX_NONE);
       break;
     default:

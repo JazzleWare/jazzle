@@ -45,6 +45,7 @@ var Parser = function (src, o) {
   this.missingInit = false;
 
   this.yc= -1; // occasionally used to put yield counts in
+  this.ex = DT_NONE;
 
   this.bundleScope = null;
   this.chkDirective = false;

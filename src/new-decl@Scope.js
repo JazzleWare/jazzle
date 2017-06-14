@@ -100,7 +100,7 @@ function(mname, t) {
 
 this.decl_m = function(mname, dt) {
   var decl = null;
-  switch (dt) {
+  switch (dt & ~DT_EXPORTED) {
   case DT_LET:
     decl = this.decl_let_m(mname, dt);
     break;

@@ -22,7 +22,7 @@ function(ctx) {
     if (!this.scope.canDeclareLexical())
       this.err('class.decl.not.in.block',{c0:c0,loc0:loc0});
     if (this.lttype === TK_ID && this.ltval !== 'extends') {
-      this.declMode = DT_CLS;
+      this.declMode = DT_CLS|this.cutEx();
       name = this.getName_cls(st);
       sourceDecl = this.scope.findDeclOwn_m(_m(name.name));
     }

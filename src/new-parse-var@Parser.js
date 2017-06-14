@@ -20,7 +20,7 @@ function(dt, ctx) {
 
   if (!letID || !ctx || !this.peekID('in')) {
     this.setPatCheck(dt !== DT_VAR);
-    this.declMode = dt;
+    this.declMode = dt|this.cutEx();
     vpat = this.parsePat();
 
     if (vpat === null)

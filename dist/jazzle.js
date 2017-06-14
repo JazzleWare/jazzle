@@ -242,6 +242,7 @@ var Parser = function (src, o) {
   this.missingInit = false;
 
   this.yc= -1; // occasionally used to put yield counts in
+  this.ex = DT_NONE;
 
   this.bundleScope = null;
   this.chkDirective = false;
@@ -347,7 +348,7 @@ SortedObj.from = function(parent) {
 ;
 function SourceScope(parent, st) {
   Scope.call(this, parent, st);
-  this.asMod = { e: new SortedObj(), i: new SortedObj(), f: new SortedObj() };
+  this.asMod = { mex: new SortedObj(), mim: new SortedObj(), mns: new SortedObj() };
   this.spThis = null;
 }
 ;
@@ -940,6 +941,10 @@ var DT_CLS = 1,
     DT_INFERRED = DT_INAMESPACE << 1,
     DT_GLOBAL = DT_INFERRED << 1,
     DT_FNNAME = DT_GLOBAL << 1,
+    DT_EDEFAULT = DT_FNNAME << 1,
+    DT_EALIASED = DT_EDEFAULT << 1,
+    DT_ESELF = DT_EALIASED << 1,
+    DT_EXPORTED = DT_EDEFAULT|DT_EALIASED|DT_ESELF,
     DT_IMPORTED = DT_IDEFAULT|DT_IALIASED|DT_INAMESPACE,
     DT_NONE = 0;
 
@@ -3492,16 +3497,6 @@ this.toAssig = function(head, context) {
 
 },
 function(){
-this.clearPendingStrictErrors =
-function() {
-  if (this.ct === ERR_NONE_YET)
-    return;
-
-  ASSERT.call(this, this.ct === ERR_PIN_OCTAL_IN_STRICT,
-    'the only strict error allowed currently is ERR_PIN_OCTAL_IN_STRICT');
-  this.ct = ERR_NONE_YET;
-};
-
 this.inferName =
 function(left, right, isComputed) {
   if (isComputed && left.type === 'Identifier')
@@ -3525,6 +3520,13 @@ function(left, right, isComputed) {
   scopeName.synthName = scopeName.name;
   
   return scopeName;
+};
+
+this.cutEx =
+function() {
+  var ex = this.ex;
+  this.ex = DT_NONE;
+  return ex;
 };
 
 },
@@ -4388,16 +4390,20 @@ function(c0,loc0) {
     this.canBeStatement = true;
     switch (this.ltval) {
     case 'class':
+      this.ex = DT_ESELF;
       elem = this.parseClass(CTX_NONE);
       break;
     case 'var':
+      this.ex = DT_ESELF;
       elem = this.parseVar(DT_VAR, CTX_NONE);
       break;
     case 'let':
+      this.ex = DT_ESELF;
       elem = this.parseVar(DT_LET, CTX_NONE);
       break;
     case 'async':
       elem = this.id();
+      this.ex = DT_ESELF;
       if (this.peekID('function')) {
         this.nl && this.err('newline.async');
         elem = this.parseAsync_fn(elem, CTX_NONE);
@@ -4406,9 +4412,11 @@ function(c0,loc0) {
         this.err('async.lone');
       break;
     case 'function':
+      this.ex = DT_ESELF;
       elem = this.parseFn(CTX_NONE, ST_DECL);
       break;
     case 'const':
+      this.ex = DT_ESELF;
       elem = this.parseVar(DT_CONST, CTX_NONE);
       break;
     default:
@@ -5173,7 +5181,7 @@ function(ctx, st) {
 
       st |= ST_DECL;
       if (this.lttype === TK_ID) {
-        this.declMode = DT_FN;
+        this.declMode = DT_FN|this.cutEx();
         declScope = this.scope; 
         fnName = this.parsePat();
       }
@@ -6468,7 +6476,7 @@ function(dt, ctx) {
 
   if (!letID || !ctx || !this.peekID('in')) {
     this.setPatCheck(dt !== DT_VAR);
-    this.declMode = dt;
+    this.declMode = dt|this.cutEx();
     vpat = this.parsePat();
 
     if (vpat === null)
@@ -7305,7 +7313,7 @@ function(ctx) {
     if (!this.scope.canDeclareLexical())
       this.err('class.decl.not.in.block',{c0:c0,loc0:loc0});
     if (this.lttype === TK_ID && this.ltval !== 'extends') {
-      this.declMode = DT_CLS;
+      this.declMode = DT_CLS|this.cutEx();
       name = this.getName_cls(st);
       sourceDecl = this.scope.findDeclOwn_m(_m(name.name));
     }
@@ -10974,7 +10982,7 @@ this.isConditional =
 function() { return this.flags & ST_COND; };
 
 this.isConcrete =
-function() { return this.isBundle() || this.isAnyFn(); };
+function() { return this.isModule() || this.isAnyFn() || this.isScript() || this.isBundle(); };
 
 this.isSoft = 
 function() {
@@ -11203,7 +11211,7 @@ function(mname, t) {
 
 this.decl_m = function(mname, dt) {
   var decl = null;
-  switch (dt) {
+  switch (dt & ~DT_EXPORTED) {
   case DT_LET:
     decl = this.decl_let_m(mname, dt);
     break;
@@ -11539,9 +11547,9 @@ function(src, list) {
   // TODO: src might have to get a normalization
   var mname = _m(src);
   var im = 
-    this.asMod.i.has(mname) ?
-      this.asMod.i.get(mname) :
-      this.asMod.i.set(mname, new SortedObj());
+    this.asMod.mim.has(mname) ?
+      this.asMod.mim.get(mname) :
+      this.asMod.mim.set(mname, new SortedObj());
 
   var e = 0;
 
@@ -11555,9 +11563,8 @@ function(src, list) {
 
     if (!im.has(mname))
       im.set(mname, decl);
-    else {
+    else if (im.get(mname !== null)) { // if it is not just a forwarded name (i.e., an `export ... from ...`)
       ASSERT.call(this, decl.ref.scope === this, 'scope');
-
       // import {a as a0} from './e'; // new decl: 'a0' (new)
       // import {a as a2} from './e'; // new decl: 'a2' (=a0)
       sp['#decl'] = im.get(mname);

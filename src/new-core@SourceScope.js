@@ -11,9 +11,9 @@ function(src, list) {
   // TODO: src might have to get a normalization
   var mname = _m(src);
   var im = 
-    this.asMod.i.has(mname) ?
-      this.asMod.i.get(mname) :
-      this.asMod.i.set(mname, new SortedObj());
+    this.asMod.mim.has(mname) ?
+      this.asMod.mim.get(mname) :
+      this.asMod.mim.set(mname, new SortedObj());
 
   var e = 0;
 
@@ -27,9 +27,8 @@ function(src, list) {
 
     if (!im.has(mname))
       im.set(mname, decl);
-    else {
+    else if (im.get(mname !== null)) { // if it is not just a forwarded name (i.e., an `export ... from ...`)
       ASSERT.call(this, decl.ref.scope === this, 'scope');
-
       // import {a as a0} from './e'; // new decl: 'a0' (new)
       // import {a as a2} from './e'; // new decl: 'a2' (=a0)
       sp['#decl'] = im.get(mname);

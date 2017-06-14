@@ -53,7 +53,7 @@ function(ctx, st) {
 
       st |= ST_DECL;
       if (this.lttype === TK_ID) {
-        this.declMode = DT_FN;
+        this.declMode = DT_FN|this.cutEx();
         declScope = this.scope; 
         fnName = this.parsePat();
       }
