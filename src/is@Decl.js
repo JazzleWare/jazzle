@@ -87,6 +87,20 @@ function() {
   return this.isIDefault() || this.isIAliased() || this.isINamespace();
 };
 
+this.isEDefault =
+function() { return this.type & DT_EDEFAULT; };
+
+this.isEAliased =
+function() { return this.type & DT_EALIASED; };
+
+this.isESelf =
+function() { return this.type & DT_ESELF; };
+
+this.isExported =
+function() {
+  return this.isEDefault() || this.isEAliased() || this.isESelf();
+};
+
 this.isName =
 function() { return this.type & (DT_FNNAME|DT_CLSNAME); };
 

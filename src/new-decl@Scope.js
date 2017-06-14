@@ -128,6 +128,8 @@ this.decl_m = function(mname, dt) {
   }
 
   decl.idx = decl.ref.scope.di_ref.v++;
+//if (decl.isExported() && this.hasUnresolvedExport_m(mname))
+//  this.resolveExport_m(mname, decl);
 
   return decl;
 };

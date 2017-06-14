@@ -27,12 +27,14 @@ function(src, list) {
 
     if (!im.has(mname))
       im.set(mname, decl);
-    else if (im.get(mname !== null)) { // if it is not just a forwarded name (i.e., an `export ... from ...`)
+    else if (im.get(mname) !== null) { // if it is not just a forwarded name (i.e., an `export ... from ...`)
       ASSERT.call(this, decl.ref.scope === this, 'scope');
-      // import {a as a0} from './e'; // new decl: 'a0' (new)
-      // import {a as a2} from './e'; // new decl: 'a2' (=a0)
-      sp['#decl'] = im.get(mname);
-      this.insertDecl_m(_m(decl.name), sp['#decl']); 
+      // a; import {a} from 'e'
+      // b; import {a as b} from 'e'
+      var existing = im.get(mname);
+      decl.ref.cut();
+      existing.ref.updateRSList(decl.ref);
+      decl.ref = existing.ref;
     }
   }
 };
