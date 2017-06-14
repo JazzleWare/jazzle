@@ -26,6 +26,9 @@ function(childRef, refD) {
   childRef.parentRef = this;
 };
 
+this.updateStats =
+function(d, i) { this.d += d; this.i += i; };
+
 this.getDecl =
 function() {
   if (this.targetDecl !== null)

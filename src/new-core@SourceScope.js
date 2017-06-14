@@ -31,9 +31,10 @@ function(src, list) {
       ASSERT.call(this, decl.ref.scope === this, 'scope');
       // a; import {a} from 'e'
       // b; import {a as b} from 'e'
-      var existing = im.get(mname);
-      decl.ref.cut();
-      existing.ref.updateRSList(decl.ref);
+      var existing = im.get(mname), ref = decl.ref;
+      ref.cut();
+      existing.ref.updateRSList(ref.rsList);
+      existing.ref.updateStats(ref.d, ref.i);
       decl.ref = existing.ref;
     }
   }
