@@ -1,5 +1,6 @@
 this.parseAsync_otherID =
 function(asyncID, ctx) {
+  this.cutEx();
   if (this.nl)
     return asyncID;
 
@@ -35,6 +36,7 @@ function(asyncID, ctx) {
     this.canBeStatement = false;
 
   var nl = this.nl;
+  this.cutEx();
   var list = this.parseParen(CTX_PAT), n = null;
 
   n = {
@@ -82,5 +84,6 @@ function(asyncID, ctx) {
   if (this.peekID('function'))
     return this.parseAsync_fn(asyncID, ctx);
 
+  this.cutEx();
   return this.parseAsync_exprHead(asyncID, ctx);
 };

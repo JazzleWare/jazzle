@@ -128,8 +128,20 @@ this.decl_m = function(mname, dt) {
   }
 
   decl.idx = decl.ref.scope.di_ref.v++;
-//if (decl.isExported() && this.hasUnresolvedExport_m(mname))
-//  this.resolveExport_m(mname, decl);
+
+  var entry = null;
+  if (decl.isExported()) {
+    entry = this.attachExportedEntry(decl.name);
+    entry.target = decl;
+  } else if (decl.ref.scope.isSourceLevel()) {
+    var sourceScope = decl.ref.scope ;
+    entry = sourceScope.findUnresolvedExportedEntry_m(mname);
+    if (entry) {
+      entry.target = decl;
+      sourceScope.insertUnresolvedExportedEntry_m(mname, null);
+      sourceScope.unresolvedExports.count--;
+    }
+  }
 
   return decl;
 };

@@ -77,6 +77,9 @@ function(c0,loc0) {
     if (!firstResv && this.isResv(lName.name))
       firstResv = lName;
 
+    var entry = this.scope.attachExportedEntry(eName.name);
+    entry.site = eName;
+
     list.push({
       type: 'ExportSpecifier',
       start: lName.start,
@@ -84,7 +87,8 @@ function(c0,loc0) {
       end: eName.end,
       exported: eName,
       local: lName ,
-      '#y': 0 
+      '#y': 0,
+      '#entry': entry 
     });
 
     if (this.lttype === CH_COMMA)
@@ -108,6 +112,8 @@ function(c0,loc0) {
   var eloc = this.semiLoc || (src && src.loc.end) || { line: li, column: col };
 
   this.foundStatement = true;
+
+  this.scope.trackExports(src ? src.value : "", list);
   return {
     type: 'ExportNamedDeclaration',
     start: c0,
@@ -128,6 +134,7 @@ function(c0,loc0) {
   this.semi() || this.err('no.semi');
   
   this.foundStatement = true;
+  this.scope.attachFWNamespace(src.value);
   return {
     type: 'ExportAllDeclaration',
     start: c0,
@@ -143,12 +150,14 @@ function(c0,loc0) {
   this.next();
   var elem = null, stmt = false;
 
+  var entry = this.scope.attachExportedEntry('*default*');
   if (this.lttype !== TK_ID)
-    elem = this.parseNonSeq(PREC_NONE, CTX_TOP);
+    elem = entry.value = this.parseNonSeq(PREC_NONE, CTX_TOP);
   else {
     this.canBeStatement = true;
     switch (this.ltval) {
     case 'async':
+      this.ex = DT_EDEFAULT;
       elem = this.id(); // 'async'
       if (this.nl) {
         this.canBeStatement = false;
@@ -163,14 +172,16 @@ function(c0,loc0) {
       }
       break;
     case 'function':
+      this.ex = DT_EDEFAULT;
       elem = this.parseFn(CTX_DEFAULT, ST_DECL);
       break;
     case 'class':
+      this.ex = DT_EDEFAULT;
       elem = this.parseClass(CTX_DEFAULT);
       break;
     default:
       this.canBeStatement = false;
-      elem = this.parseNonSeq(PREC_NONE, CTX_TOP);
+      elem = entry.value = this.parseNonSeq(PREC_NONE, CTX_TOP);
       break;
     }
     stmt = this.foundStatement;

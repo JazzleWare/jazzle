@@ -349,6 +349,7 @@ SortedObj.from = function(parent) {
 function SourceScope(parent, st) {
   Scope.call(this, parent, st);
   this.asMod = { mex: new SortedObj(), mim: new SortedObj(), mns: new SortedObj() };
+  this.unresolvedExports = { entries: new SortedObj(), count: 0 };
   this.spThis = null;
 }
 ;
@@ -4476,6 +4477,9 @@ function(c0,loc0) {
     if (!firstResv && this.isResv(lName.name))
       firstResv = lName;
 
+    var entry = this.scope.attachExportedEntry(eName.name);
+    entry.site = eName;
+
     list.push({
       type: 'ExportSpecifier',
       start: lName.start,
@@ -4483,7 +4487,8 @@ function(c0,loc0) {
       end: eName.end,
       exported: eName,
       local: lName ,
-      '#y': 0 
+      '#y': 0,
+      '#entry': entry 
     });
 
     if (this.lttype === CH_COMMA)
@@ -4507,6 +4512,8 @@ function(c0,loc0) {
   var eloc = this.semiLoc || (src && src.loc.end) || { line: li, column: col };
 
   this.foundStatement = true;
+
+  this.scope.trackExports(src ? src.value : "", list);
   return {
     type: 'ExportNamedDeclaration',
     start: c0,
@@ -4527,6 +4534,7 @@ function(c0,loc0) {
   this.semi() || this.err('no.semi');
   
   this.foundStatement = true;
+  this.scope.attachFWNamespace(src.value);
   return {
     type: 'ExportAllDeclaration',
     start: c0,
@@ -4542,12 +4550,14 @@ function(c0,loc0) {
   this.next();
   var elem = null, stmt = false;
 
+  var entry = this.scope.attachExportedEntry('*default*');
   if (this.lttype !== TK_ID)
-    elem = this.parseNonSeq(PREC_NONE, CTX_TOP);
+    elem = entry.value = this.parseNonSeq(PREC_NONE, CTX_TOP);
   else {
     this.canBeStatement = true;
     switch (this.ltval) {
     case 'async':
+      this.ex = DT_EDEFAULT;
       elem = this.id(); // 'async'
       if (this.nl) {
         this.canBeStatement = false;
@@ -4562,14 +4572,16 @@ function(c0,loc0) {
       }
       break;
     case 'function':
+      this.ex = DT_EDEFAULT;
       elem = this.parseFn(CTX_DEFAULT, ST_DECL);
       break;
     case 'class':
+      this.ex = DT_EDEFAULT;
       elem = this.parseClass(CTX_DEFAULT);
       break;
     default:
       this.canBeStatement = false;
-      elem = this.parseNonSeq(PREC_NONE, CTX_TOP);
+      elem = entry.value = this.parseNonSeq(PREC_NONE, CTX_TOP);
       break;
     }
     stmt = this.foundStatement;
@@ -4881,6 +4893,7 @@ function() { return this.src.substring(this.c0,this.c); };
 function(){
 this.parseAsync_otherID =
 function(asyncID, ctx) {
+  this.cutEx();
   if (this.nl)
     return asyncID;
 
@@ -4916,6 +4929,7 @@ function(asyncID, ctx) {
     this.canBeStatement = false;
 
   var nl = this.nl;
+  this.cutEx();
   var list = this.parseParen(CTX_PAT), n = null;
 
   n = {
@@ -4963,6 +4977,7 @@ function(asyncID, ctx) {
   if (this.peekID('function'))
     return this.parseAsync_fn(asyncID, ctx);
 
+  this.cutEx();
   return this.parseAsync_exprHead(asyncID, ctx);
 };
 
@@ -11286,8 +11301,20 @@ this.decl_m = function(mname, dt) {
   }
 
   decl.idx = decl.ref.scope.di_ref.v++;
-//if (decl.isExported() && this.hasUnresolvedExport_m(mname))
-//  this.resolveExport_m(mname, decl);
+
+  var entry = null;
+  if (decl.isExported()) {
+    entry = this.attachExportedEntry(decl.name);
+    entry.target = decl;
+  } else if (decl.ref.scope.isSourceLevel()) {
+    var sourceScope = decl.ref.scope ;
+    entry = sourceScope.findUnresolvedExportedEntry_m(mname);
+    if (entry) {
+      entry.target = decl;
+      sourceScope.insertUnresolvedExportedEntry_m(mname, null);
+      sourceScope.unresolvedExports.count--;
+    }
+  }
 
   return decl;
 };
@@ -11614,8 +11641,10 @@ function(src, list) {
       im.set(mname, decl);
     else if (im.get(mname) !== null) { // if it is not just a forwarded name (i.e., an `export ... from ...`)
       ASSERT.call(this, decl.ref.scope === this, 'scope');
-      // a; import {a} from 'e'
-      // b; import {a as b} from 'e'
+      // a;
+      // import {a} from 'e'
+      // b;
+      // import {a as b} from 'e'
       var existing = im.get(mname), ref = decl.ref;
       ref.cut();
       existing.ref.updateRSList(ref.rsList);
@@ -11623,6 +11652,73 @@ function(src, list) {
       decl.ref = existing.ref;
     }
   }
+};
+
+this.attachExportedEntry =
+function(name) {
+  var mname = _m(name);
+  var entry = this.findExportedEntry_m(mname);
+  if (entry)
+    this.parser.err('existing.export');
+  entry = {site: null, target: null, value: null};
+  this.insertExportedEntry_m(mname, entry);
+  return entry;
+};
+
+this.insertExportedEntry_m =
+function(mname, entry) {
+  return this.asMod.mex.set(mname, entry);
+};
+
+this.findExportedEntry_m =
+function(mname) {
+  var ex = this.asMod.mex;
+  return ex.has(mname) ? ex.get(mname) : null;
+};
+
+this.attachFWNamespace =
+function(src) {
+  var mns = this.asMod.mns;
+  var mname = _m(src);
+  mns.has(mname) || mns.set(mname, null);
+};
+
+this.trackExports = 
+function(src, list) {
+  var isFW = src.length > 0, e = 0;
+  while (e < list.length) {
+    var sp = list[e++], mname = _m(sp.local.name), entry = sp['#entry'];
+    var target = isFW ?
+      this.gocImportedName(src, sp.local) :
+      this.findDeclOwn_m(mname);
+    if (target === null)
+      this.insertUnresolvedExportedEntry_m(mname, entry);
+    else
+      entry.target = target;
+  }
+};
+
+this.gocImportedName =
+function(src, id) {
+  var mname = _m(src), im = this.asMod.mim;
+  im = im.has(mname) ? im.get(mname) : im.set(mname, new SortedObj());
+  mname = _m(id.name);
+  if (im.has(mname))
+    return im.get(mname);
+  var nd = new Decl().t(DT_EALIASED).n(id.name).s(id).r(new Ref(this));
+  return im.set(mname, nd );
+};
+
+this.insertUnresolvedExportedEntry_m =
+function(mname, entry) {
+  this.unresolvedExports.entries.set(mname, entry);
+  this.unresolvedExports.count++;
+};
+
+this.findUnresolvedExportedEntry_m =
+function(mname) {
+  var uentries = this.unresolvedExports.entries;
+  return uentries.has(mname) ? uentries.get(mname) : null;
 };
 
 }]  ],

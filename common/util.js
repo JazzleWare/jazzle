@@ -304,6 +304,7 @@ mex.ej_adjust = function(e, j, name) {
   delete j.argumentPrologue;
   delete j['#y'];
   delete j['#decl'];
+  delete j['#entry'];
 
   if (e.tokens) {
     e.tokens = mex.clearComments(e.tokens);
