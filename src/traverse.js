@@ -2,16 +2,13 @@ var D = '.'.charCodeAt(0);
 
 var S = '/'.charCodeAt(0);
 
-this.cd =
-function(to) {
+function cd(cur, to) {
   var coords = {s: 0, e: 0};
-  var cur = this.cur;
 
   while (getDirLeft(to, coords))
     cur = joinDirWithSingle(cur, to.substring(coords.s, coords.e));
 
-  this.cur = cur;
-  return this;
+  return cur;
 };
 
 function getDirLeft(to, coords) {

@@ -1,3 +1,0 @@
-function PathWalk() {
-  this.cur = "";
-}

@@ -14,6 +14,7 @@ function Bundle() {
   this.subs = {};
   this.startSub = { ast: null, path: "" };
   this['#scope'] = null;
+  this.sourceLoader = null;
 }
 ;
 function CatchScope(sParent) {
@@ -272,10 +273,6 @@ var Parser = function (src, o) {
 
 };
 ;
-function PathWalk() {
-  this.cur = "";
-}
-;
 function Ref(scope) {
   this.i = 0;
   this.rsList = [];
@@ -442,6 +439,11 @@ function Transformer() {
   // the could be per scope (i.e., a scope attibute),
   this.tempStack = [];
   this.reachedRef = {v: true};
+}
+;
+function VirtualSourceLoader(fsmap) {
+  this.fsmap = fsmap || {}
+
 }
 ;
  ConcreteScope.prototype = createObj(Scope.prototype);
@@ -965,6 +967,68 @@ function _u(name) {
   return name.substring(0, name.length-1);
 }
 function _full(nameSpace, name) { return nameSpace+':'+name; }
+;
+var D = '.'.charCodeAt(0);
+
+var S = '/'.charCodeAt(0);
+
+function cd(cur, to) {
+  var coords = {s: 0, e: 0};
+
+  while (getDirLeft(to, coords))
+    cur = joinDirWithSingle(cur, to.substring(coords.s, coords.e));
+
+  return cur;
+};
+
+function getDirLeft(to, coords) {
+  var s = coords.e;
+  if (s >= to.length)
+    return null;
+
+  var rootSlash = false, ch = to.charCodeAt(s);
+  if (ch === S) {
+    if (s > 0) s++;
+    else rootSlash = true;
+  }
+
+  var e = to.indexOf('/', rootSlash ? s+1 : s);
+  if (e === -1)
+    e = to.length;
+
+  coords.s = s;
+  coords.e = e;
+
+  return coords;
+}
+
+function joinDirWithSingle(cur, l) {
+  if (l.length === 0 || l === '.')
+    return cur;
+  if (l.charCodeAt(0) === S)
+    return l;
+  if (l !== '..')
+    return cur.length ? cur + (cur === '/' ? l : '/' + l) : l;
+
+  ASSERT.call(this, cur.length, 'can not go above the start');
+
+  var slash = cur.lastIndexOf('/');
+//ASSERT.call(this, slash !== -1, 'can not go above [:'+cur+':]');
+  
+  if (slash === -1)
+    return "";
+
+  if (cur.length === 1) {
+    ASSERT.call(this, cur.charCodeAt(0) === S, 'what?');
+    ASSERT.call(this, false, 'can not go above base');
+  }
+
+  if (slash === 0)
+    return '/';
+
+  cur = cur.substring(0, slash);
+  return cur;
+}
 ;
 var IDS_ = fromRunLenCodes([0,8472,1,21,1,3948,2],
  fromRunLenCodes([0,65,26,6,26,47,1,10,1,4,1,5,23,1,31,1,458,4,12,14,5,7,1,1,1,129,
@@ -10560,73 +10624,6 @@ function(shouldCheck) {
 };
 
 }]  ],
-[PathWalk.prototype, [function(){
-var D = '.'.charCodeAt(0);
-
-var S = '/'.charCodeAt(0);
-
-this.cd =
-function(to) {
-  var coords = {s: 0, e: 0};
-  var cur = this.cur;
-
-  while (getDirLeft(to, coords))
-    cur = joinDirWithSingle(cur, to.substring(coords.s, coords.e));
-
-  this.cur = cur;
-  return this;
-};
-
-function getDirLeft(to, coords) {
-  var s = coords.e;
-  if (s >= to.length)
-    return null;
-
-  var rootSlash = false, ch = to.charCodeAt(s);
-  if (ch === S) {
-    if (s > 0) s++;
-    else rootSlash = true;
-  }
-
-  var e = to.indexOf('/', rootSlash ? s+1 : s);
-  if (e === -1)
-    e = to.length;
-
-  coords.s = s;
-  coords.e = e;
-
-  return coords;
-}
-
-function joinDirWithSingle(cur, l) {
-  if (l.length === 0 || l === '.')
-    return cur;
-  if (l.charCodeAt(0) === S)
-    return l;
-  if (l !== '..')
-    return cur.length ? cur + (cur === '/' ? l : '/' + l) : l;
-
-  ASSERT.call(this, cur.length, 'can not go above the start');
-
-  var slash = cur.lastIndexOf('/');
-//ASSERT.call(this, slash !== -1, 'can not go above [:'+cur+':]');
-  
-  if (slash === -1)
-    return "";
-
-  if (cur.length === 1) {
-    ASSERT.call(this, cur.charCodeAt(0) === S, 'what?');
-    ASSERT.call(this, false, 'can not go above base');
-  }
-
-  if (slash === 0)
-    return '/';
-
-  cur = cur.substring(0, slash);
-  return cur;
-}
-
-}]  ],
 [Ref.prototype, [function(){
 this.absorbDirect =
 function(ref) { return this.absorb(ref, true); };
@@ -12717,6 +12714,28 @@ function(list, isVal) {
 };
 
 }]  ],
+[VirtualSourceLoader.prototype, [function(){
+this.has =
+function(url) {
+  return HAS.call(this.fsmap, _m(url));
+};
+
+this.load =
+function(url) {
+  url = cd("", url);
+  ASSERT.call(this, this.has(url), '[:'+url+':]');
+  return this.fsmap[_m(url)];
+};
+
+this.set =
+function(url, src) {
+  url = cd("", url);
+  this.fsmap[_m(url)] = src;
+  return this;
+};
+
+}]  ],
+null,
 null,
 null,
 null,
@@ -12780,6 +12799,8 @@ this.ST_BLOCK = ST_ASYNC << 1,
 this.ST_BARE = ST_BLOCK << 1,
 this.ST_CATCH = ST_BARE << 1,
 this.ST_PAREN = ST_CATCH << 1,
-this.ST_NONE = 0; this. PathWalk = PathWalk;
+this.ST_NONE = 0; 
+
+this. VirtualSourceLoader = VirtualSourceLoader;
 
 ;}).call (function(){try{return module.exports;}catch(e){return this;}}.call(this))
