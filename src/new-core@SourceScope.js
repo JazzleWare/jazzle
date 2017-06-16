@@ -10,10 +10,11 @@ this.trackImports =
 function(src, list) {
   // TODO: src might have to get a normalization
   var mname = _m(src);
-  var im = 
-    this.asMod.mim.has(mname) ?
-      this.asMod.mim.get(mname) :
-      this.asMod.mim.set(mname, new SortedObj());
+  var im = this.asMod.mim.has(mname) ?
+    this.asMod.mim.get(mname) : null;
+
+  if (im === null)
+    im = this.asMod.mim.set(mname, new SortedObj());
 
   var e = 0;
 
@@ -69,6 +70,8 @@ function(src) {
   var mns = this.asMod.mns;
   var mname = _m(src);
   mns.has(mname) || mns.set(mname, null);
+  if (!this.asMod.mim.has(mname))
+    this.asMod.mim.set(mname, null);
 };
 
 this.trackExports = 

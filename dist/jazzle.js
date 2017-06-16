@@ -9,12 +9,14 @@ function BundleScope(globalScope) {
   ConcreteScope.call(this, globalScope, ST_BUNDLE);
 };
 ;
-function Bundle() {
-  this.type = '#Bundle';
-  this.subs = {};
-  this.startSub = { ast: null, path: "" };
+function Bundler() {
+  this.type = '#Bundler';
+  this.loaded = {};
+  this.main = null;
+  this.path = "";
+  this.resolver = null;
   this['#scope'] = null;
-  this.sourceLoader = null;
+  this['#y'] = 0;
 }
 ;
 function CatchScope(sParent) {
@@ -344,7 +346,7 @@ SortedObj.from = function(parent) {
 };
 ;
 function SourceScope(parent, st) {
-  Scope.call(this, parent, st);
+  ConcreteScope.call(this, parent, st);
   this.asMod = { mex: new SortedObj(), mim: new SortedObj(), mns: new SortedObj() };
   this.unresolvedExports = { entries: new SortedObj(), count: 0 };
   this.spThis = null;
@@ -437,8 +439,10 @@ function Transformer() {
   this.cur = null;
 
   // the could be per scope (i.e., a scope attibute),
+  this.bundler = null;
   this.tempStack = [];
   this.reachedRef = {v: true};
+
 }
 ;
 function VirtualSourceLoader(fsmap) {
@@ -455,7 +459,7 @@ function VirtualSourceLoader(fsmap) {
  ParenScope.prototype = createObj(Scope.prototype);
  ScopeName.prototype = createObj(Decl.prototype);
  Liquid.prototype = createObj(Decl.prototype);
- SourceScope.prototype = createObj(Scope.prototype);
+ SourceScope.prototype = createObj(ConcreteScope.prototype);
  BundleScope.prototype = createObj(ConcreteScope.prototype);
 ;
 var CH_1 = char2int('1'),
@@ -1029,6 +1033,16 @@ function joinDirWithSingle(cur, l) {
   cur = cur.substring(0, slash);
   return cur;
 }
+
+function pathFor(str) {
+  var e = str.lastIndexOf('/');
+  return e === 0 ? '/' : e === -1 ? "" : str.substring(0, e);
+}
+
+function tailFor(str) {
+  var e = str.lastIndexOf('/');
+  return e === -1 ? str : e+1 >= str.length ? "" : str.substring(e+1);
+}
 ;
 var IDS_ = fromRunLenCodes([0,8472,1,21,1,3948,2],
  fromRunLenCodes([0,65,26,6,26,47,1,10,1,4,1,5,23,1,31,1,458,4,12,14,5,7,1,1,1,129,
@@ -1292,7 +1306,55 @@ function(mname, ref) {
 };
 
 }]  ],
-null,
+[Bundler.prototype, [function(){
+this.forProg =
+function(n) {
+  ASSERT.call(this, this.main === null, 'main');
+  ASSERT.call(this, n.type === 'Program', 'program');
+  this.main = n;
+  return this;
+};
+
+this.withPath =
+function(url) {
+  ASSERT.call(this, this.path === "", 'not');
+  this.path = url;
+  return this;
+};
+
+this.cd =
+function(url) {
+  var oPath = this.path;
+  this.path = cd(oPath, url);
+  return oPath;
+};
+
+this.has =
+function(url) {
+  url = cd(this.path, url);
+  return HAS.call(this.loaded, _m(url));
+};
+
+this.load =
+function(url) {
+  url = cd(this.path, url);
+  ASSERT.call(this, !this.has(url));
+  var src = this.resolver.load(url);
+  var n = new Parser(src, {sourceType: 'module'}).parseProgram();
+  this.loaded[_m(url)] = n;
+  var transformer = new Transformer();
+  transformer.bundler = this;
+  return transformer.tr(n, false);
+};
+
+this.get =
+function(url) {
+  url = cd(this.path, url);
+  ASSERT.call(this, this.has(url));
+  return this.loaded[_m(url)];
+};
+
+}]  ],
 null,
 [ClassScope.prototype, [function(){
 this.hasHeritage =
@@ -1579,6 +1641,19 @@ this.t =
 function(t) {
   ASSERT_EQ.call(this, this.type, DT_NONE);
   this.type = t;
+  return this;
+};
+
+this.referTo =
+function(target) {
+  var ref = this.ref;
+  ASSERT.call(this, this.ref.scope.isSourceLevel(), 'source level');
+  ASSERT.call(this, this !== target.ref.getDecl(), 'not itself');
+  ref.cut();
+  target.ref.updateRSList(ref.rsList);
+  target.ref.updateStats(ref.i, ref.d );
+  target.ref.rsList.push(ref.scope);
+  this.ref = target.ref;
   return this;
 };
 
@@ -8533,6 +8608,7 @@ this.parseProgram = function () {
       start: {line: li0, column: col0},
       end: {line: this.li, column: this.col}
     }, 
+    '#imports': null,
     '#scope': this.scope,
     '#y': 0
   };
@@ -11619,10 +11695,11 @@ this.trackImports =
 function(src, list) {
   // TODO: src might have to get a normalization
   var mname = _m(src);
-  var im = 
-    this.asMod.mim.has(mname) ?
-      this.asMod.mim.get(mname) :
-      this.asMod.mim.set(mname, new SortedObj());
+  var im = this.asMod.mim.has(mname) ?
+    this.asMod.mim.get(mname) : null;
+
+  if (im === null)
+    im = this.asMod.mim.set(mname, new SortedObj());
 
   var e = 0;
 
@@ -11678,6 +11755,8 @@ function(src) {
   var mns = this.asMod.mns;
   var mname = _m(src);
   mns.has(mname) || mns.set(mname, null);
+  if (!this.asMod.mim.has(mname))
+    this.asMod.mim.set(mname, null);
 };
 
 this.trackExports = 
@@ -11716,6 +11795,55 @@ this.findUnresolvedExportedEntry_m =
 function(mname) {
   var uentries = this.unresolvedExports.entries;
   return uentries.has(mname) ? uentries.get(mname) : null;
+};
+
+},
+function(){
+this.satisfyWith =
+function(bundler) {
+  var loni = [], e = 0; // list of new imports
+  var mim = this.asMod.mim, m = null;
+  var len = mim.length(), name = "";
+  while (e < len) {
+    name = mim.keys[e];
+    var oPath = bundler.cd(pathFor(name));
+    var curName = tailFor(name);
+    if (bundler.has(curName))
+      m = bundler.get(curName);
+    else {
+      m = bundler.load(curName);
+      loni.push(m);
+    }
+
+    if (this.asMod.mns.has(_m(name)))
+      this.asMod.mns.set(_m(name), m['#scope']);
+
+    m['#scope'].satisfyAll(mim.at(e));
+
+    bundler.path = oPath;
+    e++;
+  }
+
+  return loni;
+};
+
+this.satisfyAll =
+function(list) {
+  var mns = this.asMod.mns, e = 0, len = list.length();
+  while (e < len) {
+    var mname = _m(list.keys[e]);
+    var entry = this.findExportedEntry_m(mname);
+    if (entry === null) {
+      var l = 0, mnsLen = mns.length();
+      while (l < mnsLen)
+        if (entry = mns.at(l++).findExportedEntry_m(mname))
+          break;
+    }
+    if (entry === null)
+      this.err('unsatisfied.import');
+    list.at(e).referTo(entry.target);
+    e++;
+  }
 };
 
 }]  ],
@@ -12377,6 +12505,17 @@ function(fnName) {
 
 },
 function(){
+Transformers['#Bundler'] =
+function(n, isVal) {
+  n.loaded[_m(n.path)] = n.main;
+  ASSERT.call(this, this.bundler === null, 'bundler');
+  this.bundler = n;
+  n.main = this.tr(n.main, false);
+  return n;
+};
+
+},
+function(){
 Transformers['DoWhileStatement'] =
 function(n, isVal) {
   n.body = this.tr(n.body, false);
@@ -12390,8 +12529,11 @@ Transformers['Program'] =
 function(n, isVal) {
   ASSERT_EQ.call(this, isVal, false);
   this.script = n['#scope'];
+  if (this.bundler)
+    n['#imports'] = n['#scope'].satisfyWith(this.bundler);
+
   this.global = this.script.parent;
-  ASSERT.call(this, this.global.isGlobal(), 'script can not have a non-global parent');
+  ASSERT.call(this, this.global.isBundle(), 'script can not have a non-global parent');
   var ps = this.setScope(this.script);
   var ts = this.setTS([]);
 
@@ -12716,21 +12858,25 @@ function(list, isVal) {
 }]  ],
 [VirtualSourceLoader.prototype, [function(){
 this.has =
-function(url) {
-  return HAS.call(this.fsmap, _m(url));
+function(base, sub) {
+  base = cd("", base);
+  sub = cd(base, sub);
+  return HAS.call(this.fsmap, _m(sub));
 };
 
 this.load =
-function(url) {
-  url = cd("", url);
-  ASSERT.call(this, this.has(url), '[:'+url+':]');
-  return this.fsmap[_m(url)];
+function(base, sub) {
+  base = cd("", base);
+  ASSERT.call(this, this.has(base, sub), '[:'+sub+':]');
+  sub = cd(base, sub);
+  return this.fsmap[_m(sub)];
 };
 
 this.set =
-function(url, src) {
-  url = cd("", url);
-  this.fsmap[_m(url)] = src;
+function(base, sub, src) {
+  base = cd("", base);
+  sub = cd(base, sub);
+  this.fsmap[_m(sub)] = src;
   return this;
 };
 
@@ -12802,5 +12948,9 @@ this.ST_PAREN = ST_CATCH << 1,
 this.ST_NONE = 0; 
 
 this. VirtualSourceLoader = VirtualSourceLoader;
+this. Bundler = Bundler;
 
+this.cd = cd;
+this.pathFor = pathFor;
+this.tailFor = tailFor;
 ;}).call (function(){try{return module.exports;}catch(e){return this;}}.call(this))

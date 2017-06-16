@@ -1,7 +1,9 @@
-function Bundle() {
-  this.type = '#Bundle';
-  this.subs = {};
-  this.startSub = { ast: null, path: "" };
+function Bundler() {
+  this.type = '#Bundler';
+  this.loaded = {};
+  this.main = null;
+  this.path = "";
+  this.resolver = null;
   this['#scope'] = null;
-  this.sourceLoader = null;
+  this['#y'] = 0;
 }

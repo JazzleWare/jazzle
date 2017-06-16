@@ -6,6 +6,8 @@ function Transformer() {
   this.cur = null;
 
   // the could be per scope (i.e., a scope attibute),
+  this.bundler = null;
   this.tempStack = [];
   this.reachedRef = {v: true};
+
 }

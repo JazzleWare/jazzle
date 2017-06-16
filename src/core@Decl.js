@@ -30,6 +30,19 @@ function(t) {
   return this;
 };
 
+this.referTo =
+function(target) {
+  var ref = this.ref;
+  ASSERT.call(this, this.ref.scope.isSourceLevel(), 'source level');
+  ASSERT.call(this, this !== target.ref.getDecl(), 'not itself');
+  ref.cut();
+  target.ref.updateRSList(ref.rsList);
+  target.ref.updateStats(ref.i, ref.d );
+  target.ref.rsList.push(ref.scope);
+  this.ref = target.ref;
+  return this;
+};
+
 this.activateTZ =
 function() {
   if (this.hasTZCheck)

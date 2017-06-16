@@ -52,4 +52,8 @@ this.ST_PAREN = ST_CATCH << 1,
 this.ST_NONE = 0; 
 
 this. VirtualSourceLoader = VirtualSourceLoader;
+this. Bundler = Bundler;
 
+this.cd = cd;
+this.pathFor = pathFor;
+this.tailFor = tailFor;

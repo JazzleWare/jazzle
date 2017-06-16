@@ -59,3 +59,13 @@ function joinDirWithSingle(cur, l) {
   cur = cur.substring(0, slash);
   return cur;
 }
+
+function pathFor(str) {
+  var e = str.lastIndexOf('/');
+  return e === 0 ? '/' : e === -1 ? "" : str.substring(0, e);
+}
+
+function tailFor(str) {
+  var e = str.lastIndexOf('/');
+  return e === -1 ? str : e+1 >= str.length ? "" : str.substring(e+1);
+}

@@ -7,5 +7,5 @@
  ParenScope.prototype = createObj(Scope.prototype);
  ScopeName.prototype = createObj(Decl.prototype);
  Liquid.prototype = createObj(Decl.prototype);
- SourceScope.prototype = createObj(Scope.prototype);
+ SourceScope.prototype = createObj(ConcreteScope.prototype);
  BundleScope.prototype = createObj(ConcreteScope.prototype);

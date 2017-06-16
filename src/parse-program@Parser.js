@@ -28,6 +28,7 @@ this.parseProgram = function () {
       start: {line: li0, column: col0},
       end: {line: this.li, column: this.col}
     }, 
+    '#imports': null,
     '#scope': this.scope,
     '#y': 0
   };
