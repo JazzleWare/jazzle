@@ -4,7 +4,7 @@ function(bundler) {
   var mim = this.asMod.mim, m = null;
   var len = mim.length(), name = "";
   while (e < len) {
-    name = mim.keys[e];
+    name = _u(mim.keys[e]);
     var oPath = bundler.cd(pathFor(name));
     var curName = tailFor(name);
     if (bundler.has(curName))
@@ -30,7 +30,7 @@ this.satisfyAll =
 function(list) {
   var mns = this.asMod.mns, e = 0, len = list.length();
   while (e < len) {
-    var mname = _m(list.keys[e]);
+    var mname = list.keys[e];
     var entry = this.findExportedEntry_m(mname);
     if (entry === null) {
       var l = 0, mnsLen = mns.length();

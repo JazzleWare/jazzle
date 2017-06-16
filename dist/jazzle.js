@@ -1318,6 +1318,10 @@ function(n) {
 this.withPath =
 function(url) {
   ASSERT.call(this, this.path === "", 'not');
+  ASSERT.call(this, this.main, 'main');
+  url = cd("", url);
+  this.loaded[_m(url)] = this.main;
+  url = pathFor(url);
   this.path = url;
   return this;
 };
@@ -1337,9 +1341,9 @@ function(url) {
 
 this.load =
 function(url) {
-  url = cd(this.path, url);
-  ASSERT.call(this, !this.has(url));
-  var src = this.resolver.load(url);
+  var normalizedURL = cd(this.path, url);
+  ASSERT.call(this, !this.has(normalizedURL));
+  var src = this.resolver.load(this.path, url);
   var n = new Parser(src, {sourceType: 'module'}).parseProgram();
   this.loaded[_m(url)] = n;
   var transformer = new Transformer();
@@ -1653,7 +1657,9 @@ function(target) {
   target.ref.updateRSList(ref.rsList);
   target.ref.updateStats(ref.i, ref.d );
   target.ref.rsList.push(ref.scope);
-  this.ref = target.ref;
+  ref.hasTarget = false;
+  ref.targetDecl = null;
+  this.ref.parentRef = target.ref;
   return this;
 };
 
@@ -11195,7 +11201,7 @@ function(name, transformedFn) {
 
 this.owns =
 function(nd) {
-  return nd.ref.scope === this;
+  return nd.ref.scope === this && (!nd.isImported());
 };
 
 this.determineFlags =
@@ -11719,11 +11725,8 @@ function(src, list) {
       // import {a} from 'e'
       // b;
       // import {a as b} from 'e'
-      var existing = im.get(mname), ref = decl.ref;
-      ref.cut();
-      existing.ref.updateRSList(ref.rsList);
-      existing.ref.updateStats(ref.d, ref.i);
-      decl.ref = existing.ref;
+      var existing = im.get(mname);
+      decl.referTo(existing);
     }
   }
 };
@@ -11766,7 +11769,7 @@ function(src, list) {
     var sp = list[e++], mname = _m(sp.local.name), entry = sp['#entry'];
     var target = isFW ?
       this.gocImportedName(src, sp.local) :
-      this.findDeclOwn_m(mname);
+      this.findDeclAny_m(mname);
     if (target === null)
       this.insertUnresolvedExportedEntry_m(mname, entry);
     else
@@ -11805,7 +11808,7 @@ function(bundler) {
   var mim = this.asMod.mim, m = null;
   var len = mim.length(), name = "";
   while (e < len) {
-    name = mim.keys[e];
+    name = _u(mim.keys[e]);
     var oPath = bundler.cd(pathFor(name));
     var curName = tailFor(name);
     if (bundler.has(curName))
@@ -11831,7 +11834,7 @@ this.satisfyAll =
 function(list) {
   var mns = this.asMod.mns, e = 0, len = list.length();
   while (e < len) {
-    var mname = _m(list.keys[e]);
+    var mname = list.keys[e];
     var entry = this.findExportedEntry_m(mname);
     if (entry === null) {
       var l = 0, mnsLen = mns.length();
@@ -12363,6 +12366,14 @@ function(n, isVal) {
 
 },
 function(){
+Transformers['ExportNamedDeclaration'] = 
+Transformers['ExportDefaultDeclaration'] =
+Transformers['ExportAllDeclaration'] = function(n, isVal) { return null; };
+Transformers['ImportDeclaration'] =
+function(n, isVal) { return null; };
+
+},
+function(){
 this.transformRawFn =
 function(n, isVal) {
   var s = this.setScope(n['#scope'] );
@@ -12507,7 +12518,6 @@ function(fnName) {
 function(){
 Transformers['#Bundler'] =
 function(n, isVal) {
-  n.loaded[_m(n.path)] = n.main;
   ASSERT.call(this, this.bundler === null, 'bundler');
   this.bundler = n;
   n.main = this.tr(n.main, false);

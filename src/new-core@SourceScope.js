@@ -34,11 +34,8 @@ function(src, list) {
       // import {a} from 'e'
       // b;
       // import {a as b} from 'e'
-      var existing = im.get(mname), ref = decl.ref;
-      ref.cut();
-      existing.ref.updateRSList(ref.rsList);
-      existing.ref.updateStats(ref.d, ref.i);
-      decl.ref = existing.ref;
+      var existing = im.get(mname);
+      decl.referTo(existing);
     }
   }
 };
@@ -81,7 +78,7 @@ function(src, list) {
     var sp = list[e++], mname = _m(sp.local.name), entry = sp['#entry'];
     var target = isFW ?
       this.gocImportedName(src, sp.local) :
-      this.findDeclOwn_m(mname);
+      this.findDeclAny_m(mname);
     if (target === null)
       this.insertUnresolvedExportedEntry_m(mname, entry);
     else

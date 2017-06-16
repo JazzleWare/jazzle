@@ -39,7 +39,9 @@ function(target) {
   target.ref.updateRSList(ref.rsList);
   target.ref.updateStats(ref.i, ref.d );
   target.ref.rsList.push(ref.scope);
-  this.ref = target.ref;
+  ref.hasTarget = false;
+  ref.targetDecl = null;
+  this.ref.parentRef = target.ref;
   return this;
 };
 
