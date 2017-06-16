@@ -11844,7 +11844,8 @@ function(list) {
     }
     if (entry === null)
       this.err('unsatisfied.import');
-    list.at(e).referTo(entry.target);
+    var im = list.at(e);
+    im === entry.target /* a.js: import {e as a} from './a.js'; export let e = 5; */ || im.referTo(entry.target);
     e++;
   }
 };
