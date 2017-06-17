@@ -68,7 +68,7 @@ function(origin, mname, loni, bundler) {
 
     // a.js: export * from './a.js'; import {l} // will blow the stack if the satisfier scope is the same as the origin
     if (entry === null && origin !== satisfierNamespace)
-      entry = satisfierNamespace.findInForwardEntries_m(mname, loni, bundler);
+      entry = satisfierNamespace.findInForwardEntries_m(origin, mname, loni, bundler);
     if (entry)
       return entry;
     e++;
