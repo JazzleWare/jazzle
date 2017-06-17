@@ -11825,7 +11825,7 @@ function(bundler) {
     if (im === null)
       ASSERT.call(this, this.asMod.mns.has(_m(name)), 'if im is null there has to be an entry for it in mns');
     else
-      m['#scope'].satisfyAll(mim.at(e), loni, bundler);
+      m['#scope'].satisfyAll(this, mim.at(e), loni, bundler);
 
     bundler.path = oPath;
     e++;
@@ -11835,13 +11835,13 @@ function(bundler) {
 };
 
 this.satisfyAll =
-function(list, loni, bundler) {
+function(origin, list, loni, bundler) {
   var mns = this.asMod.mns, e = 0, len = list.length();
   while (e < len) {
     var mname = list.keys[e];
     var entry = this.findExportedEntry_m(mname);
     if (entry === null)
-      entry = this.findInForwardEntries_m(mname, loni, bundler);
+      entry = this.findInForwardEntries_m(origin, mname, loni, bundler);
     if (entry === null)
       this.err('unsatisfied.import');
     var im = list.at(e);
@@ -11851,7 +11851,7 @@ function(list, loni, bundler) {
 };
 
 this.findInForwardEntries_m =
-function(mname, loni, bundler) {
+function(origin, mname, loni, bundler) {
   var mns = this.asMod.mns, e = 0, len = mns.length();
   while (e < len) {
     var satisfierNamespace = mns.at(e);
@@ -11869,7 +11869,9 @@ function(mname, loni, bundler) {
       mns.set(mns.keys[e], satisfierNamespace );
     }
     var entry = satisfierNamespace.findExportedEntry_m(mname);
-    if (entry === null)
+
+    // a.js: export * from './a.js'; import {l} // will blow the stack if the satisfier scope is the same as the origin
+    if (entry === null && origin !== satisfierNamespace)
       entry = satisfierNamespace.findInForwardEntries_m(mname, loni, bundler);
     if (entry)
       return entry;
