@@ -11821,7 +11821,11 @@ function(bundler) {
     if (this.asMod.mns.has(_m(name)))
       this.asMod.mns.set(_m(name), m['#scope']);
 
-    m['#scope'].satisfyAll(mim.at(e));
+    var im = mim.at(e);
+    if (im === null)
+      ASSERT.call(this, this.asMod.mns.has(_m(name)), 'if im is null there has to be an entry for it in mns');
+    else
+      m['#scope'].satisfyAll(mim.at(e), loni, bundler);
 
     bundler.path = oPath;
     e++;
@@ -11831,23 +11835,47 @@ function(bundler) {
 };
 
 this.satisfyAll =
-function(list) {
+function(list, loni, bundler) {
   var mns = this.asMod.mns, e = 0, len = list.length();
   while (e < len) {
     var mname = list.keys[e];
     var entry = this.findExportedEntry_m(mname);
-    if (entry === null) {
-      var l = 0, mnsLen = mns.length();
-      while (l < mnsLen)
-        if (entry = mns.at(l++).findExportedEntry_m(mname))
-          break;
-    }
+    if (entry === null)
+      entry = this.findInForwardEntries_m(mname, loni, bundler);
     if (entry === null)
       this.err('unsatisfied.import');
     var im = list.at(e);
     im === entry.target /* a.js: import {e as a} from './a.js'; export let e = 5; */ || im.referTo(entry.target);
     e++;
   }
+};
+
+this.findInForwardEntries_m =
+function(mname, loni, bundler) {
+  var mns = this.asMod.mns, e = 0, len = mns.length();
+  while (e < len) {
+    var satisfierNamespace = mns.at(e);
+    if (satisfierNamespace === null) {
+      var name = _u(mns.keys[e]);
+      var oPath = bundler.cd(pathFor(name));
+      var curName = tailFor(name)
+      if (bundler.has(curName))
+        satisfierNamespace = bundler.get(curName);
+      else {
+        satisfierNamespace = bundler.load(curName);
+        loni.push(satisfierNamespace);
+      }
+      satisfierNamespace = satisfierNamespace['#scope'];
+      mns.set(mns.keys[e], satisfierNamespace );
+    }
+    var entry = satisfierNamespace.findExportedEntry_m(mname);
+    if (entry === null)
+      entry = satisfierNamespace.findInForwardEntries_m(mname, loni, bundler);
+    if (entry)
+      return entry;
+    e++;
+  }
+  return null;
 };
 
 }]  ],

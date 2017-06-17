@@ -17,7 +17,11 @@ function(bundler) {
     if (this.asMod.mns.has(_m(name)))
       this.asMod.mns.set(_m(name), m['#scope']);
 
-    m['#scope'].satisfyAll(mim.at(e), loni, bundler);
+    var im = mim.at(e);
+    if (im === null)
+      ASSERT.call(this, this.asMod.mns.has(_m(name)), 'if im is null there has to be an entry for it in mns');
+    else
+      m['#scope'].satisfyAll(mim.at(e), loni, bundler);
 
     bundler.path = oPath;
     e++;
@@ -26,22 +30,14 @@ function(bundler) {
   return loni;
 };
 
-this.findSatisfierEntry_m =
-function(mname, loni, bundler) {
-  var entry = this.findExportedEntry_m(mname);
-  if (entry === null) 
-    entry = this.findInForwardEntries_m(mname);
-  return entry;
-};
-
 this.satisfyAll =
-function(list, bundler) {
+function(list, loni, bundler) {
   var mns = this.asMod.mns, e = 0, len = list.length();
   while (e < len) {
     var mname = list.keys[e];
     var entry = this.findExportedEntry_m(mname);
     if (entry === null)
-      entry = this.findInForwardEntries_m(mname, bundler);
+      entry = this.findInForwardEntries_m(mname, loni, bundler);
     if (entry === null)
       this.err('unsatisfied.import');
     var im = list.at(e);
@@ -65,8 +61,15 @@ function(mname, loni, bundler) {
         satisfierNamespace = bundler.load(curName);
         loni.push(satisfierNamespace);
       }
+      satisfierNamespace = satisfierNamespace['#scope'];
       mns.set(mns.keys[e], satisfierNamespace );
     }
-    var entry = satisfier
+    var entry = satisfierNamespace.findExportedEntry_m(mname);
+    if (entry === null)
+      entry = satisfierNamespace.findInForwardEntries_m(mname, loni, bundler);
+    if (entry)
+      return entry;
+    e++;
   }
+  return null;
 };
