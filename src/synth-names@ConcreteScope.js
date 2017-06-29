@@ -27,7 +27,7 @@ function(targetScope) {
 this.synth_externals =
 function() {
   ASSERT.call(this, this.isSourceLevel(), 'script m');
-  var list = this.parent.defs, e = 0, len = list.length();
+  var list = this.globals, e = 0, len = list.length()  ;
   while (e < len)
     this.synthGlobal(list.at(e++));
 };
@@ -151,31 +151,47 @@ function(global) {
   ASSERT.call(this, global.isGlobal(), 'not g');
 
   var rsList = global.ref.rsList;
-  var original = true;
+  var num = 0;
   var name = global.name;
-  var mname = _m(name);
+  var synthNames = [name, ""];
 
-  var l = 0;
-  while (l < rsList.length) {
-    var scope = rsList[l++];
-    if (!scope.synth_ref_may_escape_m(mname)) { original = false; break; }
-    var synth = scope.synth_ref_find_homonym_m(mname);
-    if (synth) {
-      if (synth.isName() && synth.getAS() !== ATS_DISTINCT)
-        synth = synth.source;
-      if (synth !== global) { original = false; break; }
+  var m = 0, mname = "";
+
+  RENAME:
+  do {
+    while (m < synthNames.length) {
+      mname = _m(synthNames[m++]);
+      if (mname === _m("")) {
+        ASSERT.call(this, num === 0, 'num');
+        break RENAME;
+      }
+      var l = 0;
+      while (l < rsList.length) {
+        var scope = rsList[l++];
+        if (!scope.synth_ref_may_escape_m(mname))
+          continue RENAME;
+        var synth = scope.synth_ref_find_homonym_m(mname);
+        if (synth) {
+          if (synth.isName() && synth.getAS() !== ATS_DISTINCT)
+            synth = synth.source;
+          if (synth !== global)
+            continue RENAME;
+        }
+      }
     }
-  }
 
-  if (original) {
-    global.synthName = name;
-    this.insertSynth_m(mname, global);
-  } else {
-    var thisL = this.spThis || this.spCreate_this(null);
-    var l = 0;
-    while (l < rsList.length)
-      thisL.track(rsList[l++]);
-  }
+    break;
+  } while (
+    ++num,
+    synthNames[0] = name + "" + num,
+    synthNames[1] = name + "" + num + "u",
+    true
+  );
+
+  global.synthName = synthNames[0];
+
+  this.insertSynth_m(_m(synthNames[0]), global);
+  this.insertSynth_m(_m(synthNames[1]), global /* TODO: s/global/null/ */);
 };
 
 this.synthLiquid =

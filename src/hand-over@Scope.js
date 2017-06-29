@@ -39,5 +39,5 @@ function(mname, ref) {
   if (ref_this_m(mname))
     return this.spCreate_this(ref);
 
-  return this.parent.spCreate_global(mname, ref);
+  return this.spCreate_global(mname, ref);
 };
