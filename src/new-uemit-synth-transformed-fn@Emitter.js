@@ -24,13 +24,15 @@ function(n, flags, isStmt) {
     this.eA(n.argsPrologue, EC_START_STMT, true);
 
   var em = 0;
-  if (this.hasOnW())
-    this.clearOnW();
+  this.hasOnW() ? this.clearOnW() : em++;
 
   this.onW(onW_line);
   this.emitStmtList(raw.body.body);
 
   this.u();
-  this.hasOnW() ? this.clearOnW() : this.l();
+  this.hasOnW() ? this.clearOnW() : em++;
+
+  em && this.l();
+
   this.w('}');
 };
