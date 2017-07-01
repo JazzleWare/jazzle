@@ -191,7 +191,8 @@ function(global) {
   global.synthName = synthNames[0];
 
   this.insertSynth_m(_m(synthNames[0]), global);
-  this.insertSynth_m(_m(synthNames[1]), global /* TODO: s/global/null/ */);
+  if (num > 0)
+    this.insertSynth_m(_m(synthNames[1]), global /* TODO: s/global/null/ */);
 };
 
 this.synthLiquid =

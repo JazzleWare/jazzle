@@ -1596,7 +1596,8 @@ function(global) {
   global.synthName = synthNames[0];
 
   this.insertSynth_m(_m(synthNames[0]), global);
-  this.insertSynth_m(_m(synthNames[1]), global /* TODO: s/global/null/ */);
+  if (num > 0)
+    this.insertSynth_m(_m(synthNames[1]), global /* TODO: s/global/null/ */);
 };
 
 this.synthLiquid =
@@ -2173,16 +2174,19 @@ function(list, selem /* i.e., it contains a spread element */) {
 
 this.emitElems_toRest =
 function(list, s) {
-  while (s < list.length) {
-    var elem = list[s];
-    if (elem) {
-      if (elem.type === 'SpreadElement')
+  var e = s;
+  while (e < list.length) {
+    var elem = list[e];
+    if (elem && elem.type === 'SpreadElement')
         break;
+    e > s && this.w(',').s();
+    if (elem)
       this.eN(elem, EC_NONE, false);
-    } else this.w('void').s().w('0');
-    ++s; 
+    else
+      this.w('void').s().w('0');
+    ++e; 
   }
-  return s;
+  return e;
 };
 
 this.emitAccessChk_tz =
