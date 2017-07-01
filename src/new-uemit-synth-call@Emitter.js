@@ -9,7 +9,7 @@ function(n, flags, isStmt) {
     this.jz('c').w('(').eN(n.head, EC_NONE, false);
 
   this.w(',').s();
-  this.jz('arr').w('(').emitElems(n.list, 0, n.list.length-1 );
+  this.jz('arr').w('(').emitElems(n.list, true);
   this.w(')').w(')');
   
   hasParen && this.w(')');

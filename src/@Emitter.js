@@ -6,4 +6,7 @@ function Emitter(spaceString) {
   this.code = "";
   this.noWrap_ = false;
   this.hasLine = false;
+
+  this.onWrite_fun = null;
+  this.onWrite_arg = null;
 }

@@ -67,6 +67,9 @@ function Emitter(spaceString) {
   this.code = "";
   this.noWrap_ = false;
   this.hasLine = false;
+
+  this.onWrite_fun = null;
+  this.onWrite_arg = null;
 }
 ;
 function ErrorString(stringsAndTemplates) {
@@ -869,6 +872,9 @@ function bp(o) {
   return BINP[o];
 }
 function isRA(nPrec) { return nPrec&1; }
+;
+
+function onW_line(rawStr) { this.l(); } 
 ;
 function ref_arguments_m(mname) {
   return mname === RS_ARGUMENTS;
@@ -1860,6 +1866,11 @@ this.write = function(rawStr) {
   ASSERT.call(this, rawStr !== "",
     'not allowed to write empty strings to output');
 
+  if (this.hasOnW()) {
+    this.invW(rawStr);
+    this.clearOnW();
+  }
+
   if (this.hasLine) {
     this.hasLine = false;
     this.l();
@@ -2104,15 +2115,12 @@ this.emitStmtList =
 function(list) {
   var emittedSoFar = 0, e = 0;
   while (e < list.length) {
-    var t0 = this.sc("");
-    this.eA(list[e++], EC_START_STMT, true);
-    t0 = this.sc(t0);
-    if (t0.length) {
-      emittedSoFar && this.l();
-      this.w(t0);
-      emittedSoFar++;
-    }
+    this
+      .eA(list[e++], EC_START_STMT, true)
+      .onW(onW_line);
   }
+
+  list.length && this.hasOnW() && this.clearOnW();
   return emittedSoFar;
 };
 
@@ -2137,41 +2145,42 @@ function() {
   return this.wm('.','v');
 };
 
-this.emitElems =
-function(list, s, e) {
-  var nElem = 0;
-  var hasRest = false;
-  while (s <= e) {
-    var t0 = this.sc("");
-    s = this.emitElems_toRest(list, s);
-    t0 = this.sc(t0);
-    if (s <= e) {
-      if (!hasRest) hasRest = true;
-      nElem && this.w(',').s();
-      t0.length ? this.w('[').ac(t0).w(']') : this.w('null'); // evens are not arrays
-      nElem++;
-      this.w(',').s().eN(list[s].argument, EC_NONE, false);
-      nElem++;
-      s++;
-    }
-    else { this.ac(t0); break; }
-  }
+this.emitSpread =
+function(n) { this.jz('sp').w('(').eN(n.argument, EC_NONE, false).w(')'); };
 
-  return hasRest;
+// a, b, e, ...l -> [a,b,e],sp(l)
+// a, b, e, l -> a,b,e,l
+this.emitElems =
+function(list, selem /* i.e., it contains a spread element */) {
+  var e = 0, em = 0;
+  while (e < list.length) {
+    em && this.w(',').s();
+    var elem = list[e];
+    if (elem && elem.type === 'SpreadElement') {
+      this.emitSpread(elem);
+      e++;
+    }
+    else {
+      var br = selem || em;
+      br && this.w('[');
+      e = this.emitElems_toRest(list, e);
+      br && this.w(']');
+    }
+    ++em;
+  }
+  return true;
 };
 
 this.emitElems_toRest =
 function(list, s) {
   while (s < list.length) {
     var elem = list[s];
-    if (elem && elem.type === 'SpreadElement')
-      break;
-    s && this.w(',').s();
-    if (elem)
+    if (elem) {
+      if (elem.type === 'SpreadElement')
+        break;
       this.eN(elem, EC_NONE, false);
-    else
-      this.w('void 0');
-    s++;
+    } else this.w('void').s().w('0');
+    ++s; 
   }
   return s;
 };
@@ -2196,13 +2205,19 @@ function(nd) {
 function(){
 Emitters['ArrayExpression'] =
 function(n, flags, isStmt) {
-  var c0 = this.sc("");
-  var hasRest = this.emitElems(n.elements, 0, n.elements.length-1);
-  c0 = this.sc(c0);
-  if (hasRest)
-    this.jz('arr').w('(').ac(c0).w(')');
-  else
-    this.w('[').ac(c0).w(']');
+  var si = n['#si'];
+  var hasParen = false;
+  if (si >= 0) {
+    hasParen = flags & EC_NEW_HEAD;
+    hasParen && this.w('(');
+    this.jz('arr').w('(');
+  }
+
+  this.emitElems(n.elements, true);
+
+  si >= 0 && this.w(')');
+  hasParen && this.w(')');
+
   isStmt && this.w(';');
   return true;
 };
@@ -2365,10 +2380,11 @@ Emitters['BlockStatement'] =
 function(n, flags, isStmt) {
   ASSERT_EQ.call(this, isStmt, true);
   this.w('{');
-  this.i().wsl();
-  this.emitStmtList(n.body) ?
-    this.wsl() : this.csl();
-  this.u().w('}');
+  this.i().onW(onW_line);
+  this.emitStmtList(n.body);
+  this.u();
+  this.hasOnW() ? this.clearOnW() : this.l();
+  this.w('}');
   return true;
 };
 
@@ -2515,7 +2531,7 @@ function(n, flags, isStmt) {
     var hasParen = flags & EC_NEW_HEAD;
     if (hasParen) { this.w('('); flags = EC_NONE; }
     this.jz('n').w('(').eN(n.callee, EC_NONE, false).wm(',',' ')
-      .jz('arr').w('(').emitElems(n.arguments, 0, n.arguments.length-1);
+      .jz('arr').w('(').emitElems(n.arguments, si >= 0);
 
     this.w(')').w(')');
     hasParen && this.w(')');
@@ -2529,14 +2545,21 @@ function(n, flags, isStmt) {
 function(){
 Emitters['ObjectExpression'] =
 function(n, flags, isStmt) {
-  var c0 = this.sc(""), list = n.properties, e = 0;
+  var list = n.properties, ci = n['#ci'], e = 0;
+  var hasParen = false;
+  if (ci >= 0) {
+    hasParen = flags & EC_NEW_HEAD;
+    hasParen && this.w('(');
+    this.jz('obj').w('(');
+  } else {
+    hasParen = flags & EC_START_STMT;
+    hasParen && this.w('(');
+  }
   this.w('{');
 
-  var item = null;
-  while (e < list.length) {
+  var item = null, last = ci >= 0 ? ci : list.length;
+  while (e < last) {
     item = list[e];
-    if (item.computed)
-      break;
     if (e) this.w(',').s();
     this.writeMemName(item.key, false).w(':').s().eN(item.value, EC_NONE, false);
     e++;
@@ -2544,18 +2567,7 @@ function(n, flags, isStmt) {
 
   this.w('}');
 
-  var hasParen = false;
-  if (e >= list.length) {
-    c0 = this.sc(c0);
-    hasParen = flags & EC_START_STMT;
-    hasParen && this.w('(');
-    this.ac(c0);
-    hasParen && this.w(')');
-  } else {
-    c0 = this.sc(c0);
-    hasParen = flags & EC_NEW_HEAD;
-    hasParen && this.w('(');
-    this.jz('obj').w('(').ac(c0);
+  if (ci >= 0) {
     while (e < list.length) {
       this.w(',').s();
       item = list[e];
@@ -2568,8 +2580,9 @@ function(n, flags, isStmt) {
       e++;
     }
     this.w(')');
-    hasParen && this.w(')');
   }
+
+  hasParen && this.w(')');
 
   isStmt && this.w(';');
   return true;
@@ -2592,12 +2605,9 @@ function(){
 Emitters['SwitchStatement'] =
 function(n, flags, isStmt) {
   this.wm('switch',' ','(').eA(n.discriminant, EC_NONE, false).wm(')',' ','{');
-  var c0 = this.sc("");
+  this.onW(onW_line);
   this.emitStmtList(n.cases);
-  c0 = this.sc(c0);
-  if (c0.length)
-    this.l().ac(c0).l();
-
+  this.hasOnW() ? this.clearOnW() : this.l();
   this.w('}');
   return true;
 };
@@ -2605,13 +2615,10 @@ function(n, flags, isStmt) {
 Emitters['SwitchCase'] =
 function(n, flags, isStmt) {
   n.test === null ? this.w('default') : this.wm('case',' ').eA(n.test, EC_NONE, false);
-  this.w(':').i();
-  var t0 = this.sc("");
+  this.w(':').i().onW(onW_line);
   this.emitStmtList(n.consequent);
-  t0 = this.sc(t0);
-  if (t0.length)
-    this.l().w(t0);
   this.u();
+  this.hasOnW() && this.clearOnW();
   return true;
 };
 
@@ -2833,7 +2840,7 @@ function(n, flags, isStmt) {
     this.jz('c').w('(').eN(n.head, EC_NONE, false);
 
   this.w(',').s();
-  this.jz('arr').w('(').emitElems(n.list, 0, n.list.length-1 );
+  this.jz('arr').w('(').emitElems(n.list, true);
   this.w(')').w(')');
   
   hasParen && this.w(')');
@@ -2964,22 +2971,20 @@ function(n, flags, isStmt) {
 
   if (raw.params)
     this.emitCommaList(raw.params);
-  this.wm(')',' ','{').i();
+  this.wm(')',' ','{').i().onW(onW_line);
 
-  var em = 0;
-  var l0 = this.sc(""); // args
   if (n.argsPrologue)
     this.eA(n.argsPrologue, EC_START_STMT, true);
-  l0 = this.sc(l0);
-  if (l0.length) { ++em; this.l().w(l0); }
 
-  l0 = this.sc("");
+  var em = 0;
+  if (this.hasOnW())
+    this.clearOnW();
+
+  this.onW(onW_line);
   this.emitStmtList(raw.body.body);
-  l0 = this.sc(l0);
-  if (l0.length) { ++em; this.l().w(l0); }
 
   this.u();
-  em && this.l();
+  this.hasOnW() ? this.clearOnW() : this.l();
   this.w('}');
 };
 
@@ -3000,6 +3005,29 @@ function(n, flags, isStmt) {
 
 },
 function(){
+
+},
+function(){
+this.onW =
+function() {
+  ASSERT.call(this, arguments.length >= 1, 'arguments');
+  ASSERT.call(this, this.onWrite_fun === null, 'onWrite_fun');
+  this.onWrite_fun = arguments[0];
+  this.onWrite_arg = arguments.length > 1 ? arguments[1] : null;
+};
+
+this.hasOnW =
+function() { return this.onWrite_fun ; };
+
+this.clearOnW =
+function() {
+  ASSERT.call(this, this.hasOnW(), 'hasOnW');
+  this.onWrite_fun = null;
+  this.onWrite_arg = null;
+};
+
+this.invW =
+function(rawStr) { return this.onWrite_fun(); };
 
 }]  ],
 [ErrorString.prototype, [function(){
@@ -7060,12 +7088,13 @@ function(ctx) {
   var hasMore = true;
   var hasRest = false, hasNonTailRest = false;
 
-  var y = 0;
+  var y = 0, si = -1;
 
   while (hasMore) {
     elem = this.parseNonSeq(PREC_NONE, elctx);
     if (elem === null && this.lttype === TK_ELLIPSIS) {
       elem = this.parseSpread(elctx);
+      si = list.length;
       hasRest = true;
     }
     if (this.lttype === CH_COMMA) {
@@ -7146,7 +7175,7 @@ function(ctx) {
     start: c0,
     end: this.c,
     elements : list,
-    '#y': -1
+    '#y': -1, '#si': si
   };
 
   if (errt_perr(ctx,pt)) {
@@ -8113,7 +8142,7 @@ this.parseObj = function(ctx) {
   var ac0 = -1, ali0 = -1, acol0 = -1;
   var sc0 = -1, sli0 = -1, scol0 = -1;
 
-  var y = 0;
+  var y = 0, ci = -1;
   do {
     this.next();
     this.first__proto__ = first__proto__;
@@ -8128,6 +8157,9 @@ this.parseObj = function(ctx) {
       first__proto__ = this.first__proto__;
 
     list.push(core(elem));
+    if (ci === -1 && core(elem).computed)
+      ci = list.length - 1;
+
     if (!errt_track(elctx))
       continue;
 
@@ -8160,7 +8192,8 @@ this.parseObj = function(ctx) {
     start: c0,
     end: this.c,
     loc: { start: loc0, end: this.loc() }, 
-    '#y': y
+    '#y': y,
+    '#ci': ci
   };
 
   if (errt_perr(ctx,pt)) {
@@ -8441,7 +8474,7 @@ function() {
   if (this.scope.insideArgs())
     this.scope.enterUniqueArgs();
 
-  var y = 0;
+  var y = 0, ci = -1;
 
   LOOP:
   do {
@@ -8511,15 +8544,17 @@ function() {
       shorthand: isShort,
       '#y': y0
     });
+    if (ci === -1 && name.type === PAREN)
+      ci = list.length - 1;
   } while (this.lttype === CH_COMMA);
 
   var n = {
+    properties: list,
     type: 'ObjectPattern',
     loc: { start: loc0, end: this.loc() },
     start: c0,
     end: this.c,
-    properties: list,
-    '#y': y
+    '#y': y, '#ci': ci
   };
 
   if (!this.expectT(CH_RCURLY))
@@ -12955,6 +12990,7 @@ function(base, sub, src) {
 };
 
 }]  ],
+null,
 null,
 null,
 null,

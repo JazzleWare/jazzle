@@ -26,12 +26,13 @@ function(ctx) {
   var hasMore = true;
   var hasRest = false, hasNonTailRest = false;
 
-  var y = 0;
+  var y = 0, si = -1;
 
   while (hasMore) {
     elem = this.parseNonSeq(PREC_NONE, elctx);
     if (elem === null && this.lttype === TK_ELLIPSIS) {
       elem = this.parseSpread(elctx);
+      si = list.length;
       hasRest = true;
     }
     if (this.lttype === CH_COMMA) {
@@ -112,7 +113,7 @@ function(ctx) {
     start: c0,
     end: this.c,
     elements : list,
-    '#y': -1
+    '#y': -1, '#si': si
   };
 
   if (errt_perr(ctx,pt)) {

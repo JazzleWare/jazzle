@@ -18,21 +18,19 @@ function(n, flags, isStmt) {
 
   if (raw.params)
     this.emitCommaList(raw.params);
-  this.wm(')',' ','{').i();
+  this.wm(')',' ','{').i().onW(onW_line);
 
-  var em = 0;
-  var l0 = this.sc(""); // args
   if (n.argsPrologue)
     this.eA(n.argsPrologue, EC_START_STMT, true);
-  l0 = this.sc(l0);
-  if (l0.length) { ++em; this.l().w(l0); }
 
-  l0 = this.sc("");
+  var em = 0;
+  if (this.hasOnW())
+    this.clearOnW();
+
+  this.onW(onW_line);
   this.emitStmtList(raw.body.body);
-  l0 = this.sc(l0);
-  if (l0.length) { ++em; this.l().w(l0); }
 
   this.u();
-  em && this.l();
+  this.hasOnW() ? this.clearOnW() : this.l();
   this.w('}');
 };

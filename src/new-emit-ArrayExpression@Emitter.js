@@ -1,12 +1,18 @@
 Emitters['ArrayExpression'] =
 function(n, flags, isStmt) {
-  var c0 = this.sc("");
-  var hasRest = this.emitElems(n.elements, 0, n.elements.length-1);
-  c0 = this.sc(c0);
-  if (hasRest)
-    this.jz('arr').w('(').ac(c0).w(')');
-  else
-    this.w('[').ac(c0).w(']');
+  var si = n['#si'];
+  var hasParen = false;
+  if (si >= 0) {
+    hasParen = flags & EC_NEW_HEAD;
+    hasParen && this.w('(');
+    this.jz('arr').w('(');
+  }
+
+  this.emitElems(n.elements, true);
+
+  si >= 0 && this.w(')');
+  hasParen && this.w(')');
+
   isStmt && this.w(';');
   return true;
 };

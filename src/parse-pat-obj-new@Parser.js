@@ -8,7 +8,7 @@ function() {
   if (this.scope.insideArgs())
     this.scope.enterUniqueArgs();
 
-  var y = 0;
+  var y = 0, ci = -1;
 
   LOOP:
   do {
@@ -78,15 +78,17 @@ function() {
       shorthand: isShort,
       '#y': y0
     });
+    if (ci === -1 && name.type === PAREN)
+      ci = list.length - 1;
   } while (this.lttype === CH_COMMA);
 
   var n = {
+    properties: list,
     type: 'ObjectPattern',
     loc: { start: loc0, end: this.loc() },
     start: c0,
     end: this.c,
-    properties: list,
-    '#y': y
+    '#y': y, '#ci': ci
   };
 
   if (!this.expectT(CH_RCURLY))

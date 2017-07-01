@@ -116,15 +116,12 @@ this.emitStmtList =
 function(list) {
   var emittedSoFar = 0, e = 0;
   while (e < list.length) {
-    var t0 = this.sc("");
-    this.eA(list[e++], EC_START_STMT, true);
-    t0 = this.sc(t0);
-    if (t0.length) {
-      emittedSoFar && this.l();
-      this.w(t0);
-      emittedSoFar++;
-    }
+    this
+      .eA(list[e++], EC_START_STMT, true)
+      .onW(onW_line);
   }
+
+  list.length && this.hasOnW() && this.clearOnW();
   return emittedSoFar;
 };
 
@@ -149,41 +146,42 @@ function() {
   return this.wm('.','v');
 };
 
-this.emitElems =
-function(list, s, e) {
-  var nElem = 0;
-  var hasRest = false;
-  while (s <= e) {
-    var t0 = this.sc("");
-    s = this.emitElems_toRest(list, s);
-    t0 = this.sc(t0);
-    if (s <= e) {
-      if (!hasRest) hasRest = true;
-      nElem && this.w(',').s();
-      t0.length ? this.w('[').ac(t0).w(']') : this.w('null'); // evens are not arrays
-      nElem++;
-      this.w(',').s().eN(list[s].argument, EC_NONE, false);
-      nElem++;
-      s++;
-    }
-    else { this.ac(t0); break; }
-  }
+this.emitSpread =
+function(n) { this.jz('sp').w('(').eN(n.argument, EC_NONE, false).w(')'); };
 
-  return hasRest;
+// a, b, e, ...l -> [a,b,e],sp(l)
+// a, b, e, l -> a,b,e,l
+this.emitElems =
+function(list, selem /* i.e., it contains a spread element */) {
+  var e = 0, em = 0;
+  while (e < list.length) {
+    em && this.w(',').s();
+    var elem = list[e];
+    if (elem && elem.type === 'SpreadElement') {
+      this.emitSpread(elem);
+      e++;
+    }
+    else {
+      var br = selem || em;
+      br && this.w('[');
+      e = this.emitElems_toRest(list, e);
+      br && this.w(']');
+    }
+    ++em;
+  }
+  return true;
 };
 
 this.emitElems_toRest =
 function(list, s) {
   while (s < list.length) {
     var elem = list[s];
-    if (elem && elem.type === 'SpreadElement')
-      break;
-    s && this.w(',').s();
-    if (elem)
+    if (elem) {
+      if (elem.type === 'SpreadElement')
+        break;
       this.eN(elem, EC_NONE, false);
-    else
-      this.w('void 0');
-    s++;
+    } else this.w('void').s().w('0');
+    ++s; 
   }
   return s;
 };
