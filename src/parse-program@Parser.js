@@ -2,10 +2,7 @@ this.parseProgram = function () {
   var c0 = this.c, li0 = this.li, col0 = this.col;
   var ec = -1, eloc = null;
 
-  if (this.bundleScope === null)
-    this.bundleScope = new BundleScope(null);
-
-  this.scope = new SourceScope(this.bundleScope, ST_SCRIPT);
+  this.scope = new SourceScope(new GlobalScope(), ST_SCRIPT);
 
   this.scope.parser = this;
   if (!this.isScript)

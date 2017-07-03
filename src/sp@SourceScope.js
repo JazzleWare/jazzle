@@ -4,7 +4,7 @@ function(mname, ref) {
   ASSERT.call(this, !newDecl && !this.findDeclAny_m(mname),
     'global scope has already got this name: <'+_u(mname)+'>');
 
-  ref.scope = this;
+  ref.scope = this.parent;
   newDecl = new Decl().t(DT_GLOBAL).r(ref).n(_u(mname));
   this.insertGlobal_m(mname, newDecl);
 
@@ -14,11 +14,11 @@ function(mname, ref) {
 this.insertGlobal_m =
 function(mname, global) {
   ASSERT.call(this, global.isGlobal(), 'global');
-  return this.globals.set(mname, global);
+  return this.parent.defs.set(mname, global);
 };
 
 this.findGlobal_m =
 function(mname) {
-  return this.globals.has(mname) ?
-    this.global.get(mname) : null;
+  return this.parent.defs.has(mname) ?
+    this.parent.defs.get(mname) : null;
 };

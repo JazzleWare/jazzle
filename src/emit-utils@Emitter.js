@@ -115,13 +115,17 @@ function(stmt) {
 this.emitStmtList =
 function(list) {
   var emittedSoFar = 0, e = 0;
+  var em = 0, hasOnW = this.hasOnW();
   while (e < list.length) {
-    this
-      .eA(list[e++], EC_START_STMT, true)
-      .onW(onW_line);
+    this.eA(list[e++], EC_START_STMT, true);
+    if (hasOnW && !this.hasOnW()) {
+      ++em;
+      this.onW(onW_line);
+      hasOnW = this.hasOnW();
+    }
   }
 
-  list.length && this.hasOnW() && this.clearOnW();
+  em && this.hasOnW() && this.clearOnW();
   return emittedSoFar;
 };
 

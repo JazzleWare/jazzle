@@ -71,11 +71,6 @@ function() {
   return this.isScript() || this.isAnyFn() || this.isCatch() || this.isModule();
 };
 
-this.isBooted =
-function() {
-  return this.synthNamesUntilNow !== null;
-};
-
 this.isSourceLevel = 
 function() { return this.isScript() || this.isModule(); };
 

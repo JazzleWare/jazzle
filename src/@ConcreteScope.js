@@ -5,4 +5,5 @@ function ConcreteScope(parent, type) {
   this.synthNamesUntilNow = null;
 
   this.spThis = null;
+  this.isBooted = false;
 }

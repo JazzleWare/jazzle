@@ -14,7 +14,7 @@ function() {
 this.synth_start =
 function() {
   ASSERT.call(this, this.isSourceLevel(), 'script m');
-  this.isBooted() || this.synth_boot();
+  this.isBooted || this.synth_boot();
 };
 
 this.synth_liquids_to =
@@ -27,7 +27,7 @@ function(targetScope) {
 this.synth_externals =
 function() {
   ASSERT.call(this, this.isSourceLevel(), 'script m');
-  var list = this.globals, e = 0, len = list.length()  ;
+  var list = this.parent.defs, e = 0, len = list.length()  ;
   while (e < len)
     this.synthGlobal(list.at(e++));
 };
@@ -42,8 +42,10 @@ function(lg, target) {
 this.synth_boot_init =
 function() {
   ASSERT.call(this, this.isBootable(), 'not bootable');
-  ASSERT.call(this, !this.isBooted(), 'scope has been already booted'); 
-  this.synthNamesUntilNow = new SortedObj();
+  ASSERT.call(this, !this.isBooted, 'scope has been already booted'); 
+  if (this.synthNamesUntilNow === null)
+    this.synthNamesUntilNow = new SortedObj();
+  this.isBooted = true;
 };
 
 this.findSynth_m =
@@ -70,20 +72,20 @@ function(mname) { return true; };
 this.synth_ref_find_homonym_m =
 function(mname) {
   ASSERT.call(this, this.isSourceLevel(), 'script m');
-  this.isBooted() || this.synth_boot();
+  this.isBooted || this.synth_boot();
   return this.findSynth_m(mname);
 };
 
 this.synth_decl_find_homonym_m =
 function(mname) {
   ASSERT.call(this, this.isSourceLevel(), 'script m');
-  this.isBooted() || this.synth_boot();
+  this.isBooted || this.synth_boot();
   return this.findSynth_m(mname);
 };
 
 this.insertSynth_m =
 function(mname, synth) {
-  var sn = this.synthNamesUntilNow;
+  var sn = this.synthNamesUntilNow || (this.synthNamesUntilNow = new SortedObj());
   ASSERT.call(this, !sn.has(mname), '"'+mname+'" exists');
   return sn.set(mname, synth);
 };
@@ -149,7 +151,11 @@ this.synthGlobal =
 function(global) {
   ASSERT.call(this, this.isSourceLevel(), 'script m');
   ASSERT.call(this, global.isGlobal(), 'not g');
-
+  if (!global.mustSynth()) {
+    ASSERT.call(this, global.synthName === "", 'synth name');
+    global.synthName = global.name;
+    return;
+  }
   var rsList = global.ref.rsList;
   var num = 0;
   var name = global.name;

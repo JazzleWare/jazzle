@@ -46,6 +46,7 @@ function ConcreteScope(parent, type) {
   this.synthNamesUntilNow = null;
 
   this.spThis = null;
+  this.isBooted = false;
 }
 ;
 function Decl() {
@@ -53,6 +54,7 @@ function Decl() {
   this.idx = -1;
   this.name = "";
   this.site = null;
+  this.msynth = -1;
   this.hasTZCheck = false;
   this.reached = null;
   this.type = DT_NONE;
@@ -1304,13 +1306,7 @@ function isDirective(n) {
        }
      }).call([
 [BundleScope.prototype, [function(){
-this.spCreate_global =
-function(mname, ref) {
-  var globalScope = this.parent;
-  ASSERT.call(this, globalScope.isGlobal(), 'global');
-  return  globalScope.findDeclOwn_m(mname) ||
-    globalScope.spCreate_global(mname, ref);
-};
+
 
 }]  ],
 [Bundler.prototype, [function(){
@@ -1419,7 +1415,7 @@ function() {
 this.synth_start =
 function() {
   ASSERT.call(this, this.isSourceLevel(), 'script m');
-  this.isBooted() || this.synth_boot();
+  this.isBooted || this.synth_boot();
 };
 
 this.synth_liquids_to =
@@ -1432,7 +1428,7 @@ function(targetScope) {
 this.synth_externals =
 function() {
   ASSERT.call(this, this.isSourceLevel(), 'script m');
-  var list = this.globals, e = 0, len = list.length()  ;
+  var list = this.parent.defs, e = 0, len = list.length()  ;
   while (e < len)
     this.synthGlobal(list.at(e++));
 };
@@ -1447,8 +1443,10 @@ function(lg, target) {
 this.synth_boot_init =
 function() {
   ASSERT.call(this, this.isBootable(), 'not bootable');
-  ASSERT.call(this, !this.isBooted(), 'scope has been already booted'); 
-  this.synthNamesUntilNow = new SortedObj();
+  ASSERT.call(this, !this.isBooted, 'scope has been already booted'); 
+  if (this.synthNamesUntilNow === null)
+    this.synthNamesUntilNow = new SortedObj();
+  this.isBooted = true;
 };
 
 this.findSynth_m =
@@ -1475,20 +1473,20 @@ function(mname) { return true; };
 this.synth_ref_find_homonym_m =
 function(mname) {
   ASSERT.call(this, this.isSourceLevel(), 'script m');
-  this.isBooted() || this.synth_boot();
+  this.isBooted || this.synth_boot();
   return this.findSynth_m(mname);
 };
 
 this.synth_decl_find_homonym_m =
 function(mname) {
   ASSERT.call(this, this.isSourceLevel(), 'script m');
-  this.isBooted() || this.synth_boot();
+  this.isBooted || this.synth_boot();
   return this.findSynth_m(mname);
 };
 
 this.insertSynth_m =
 function(mname, synth) {
-  var sn = this.synthNamesUntilNow;
+  var sn = this.synthNamesUntilNow || (this.synthNamesUntilNow = new SortedObj());
   ASSERT.call(this, !sn.has(mname), '"'+mname+'" exists');
   return sn.set(mname, synth);
 };
@@ -1554,7 +1552,11 @@ this.synthGlobal =
 function(global) {
   ASSERT.call(this, this.isSourceLevel(), 'script m');
   ASSERT.call(this, global.isGlobal(), 'not g');
-
+  if (!global.mustSynth()) {
+    ASSERT.call(this, global.synthName === "", 'synth name');
+    global.synthName = global.name;
+    return;
+  }
   var rsList = global.ref.rsList;
   var num = 0;
   var name = global.name;
@@ -1640,6 +1642,37 @@ function(liquid) {
 
 }]  ],
 [Decl.prototype, [function(){
+this.mustSynth =
+function() {
+  if (this.msynth !== -1)
+    return this.msynth;
+
+  var list = this.ref.rsList, e = 0, scope = null, msynth = 0;
+  while (e < list.length) {
+    scope = list[e++ ];
+    if (scope.isAnyFn() && scope.scopeName) {
+      var sn = scope.scopeName;
+      if (sn.getAS() !== ATS_DISTINCT)
+        sn = sn.source;
+      if (this !== sn) {
+        msynth = 1;
+        break;
+      }
+    }
+  }
+
+  if (msynth === 0) {
+    var mname = _m(this.name);
+    e = 0;
+    while (e < list.length)
+      list[e++].insertSynth_m(mname, this);
+  }
+
+  return this.msynth = msynth;
+};
+
+},
+function(){
 this.s =
 function(s) {
   ASSERT_EQ.call(this, this.site, null);
@@ -2121,13 +2154,17 @@ function(stmt) {
 this.emitStmtList =
 function(list) {
   var emittedSoFar = 0, e = 0;
+  var em = 0, hasOnW = this.hasOnW();
   while (e < list.length) {
-    this
-      .eA(list[e++], EC_START_STMT, true)
-      .onW(onW_line);
+    this.eA(list[e++], EC_START_STMT, true);
+    if (hasOnW && !this.hasOnW()) {
+      ++em;
+      this.onW(onW_line);
+      hasOnW = this.hasOnW();
+    }
   }
 
-  list.length && this.hasOnW() && this.clearOnW();
+  em && this.hasOnW() && this.clearOnW();
   return emittedSoFar;
 };
 
@@ -2214,21 +2251,60 @@ function(nd) {
 },
 function(){
 this.emitHead_temps =
-function(scope) {
+function(scope, isScript) {
   var temps = scope.getLG('<t>'), e = 0, len = temps.length();
-  if (len > 0) {
-    this.w('var').s();
-    while (e < len) {
-      e && this.w(',').s();
-      this.w(temps.at(e++).synthName);
-    }
+  while (e < len) {
+    this.w(e ? ',' : 'var').s();
+    this.w(temps.at(e++).synthName);
   }
+  e && this.w(';');
   return this;
 };
 
 this.emitHead_vars =
-function(scope) {
-  var list = scope.defs, e = 0, len = list.length(); 
+function(scope, isScript) {
+  var vars = scope.defs, e = 0, len = vars.length(); 
+  var em = 0, v = null;
+  while (e < len) {
+    v = vars.at(e++);
+    if (v.isVar() && v.isFn()) {
+      this.w(em ? ',' : 'var').s().w(v.synthName);
+      em++;
+    }
+  }
+  em && this.w(';');
+};
+
+this.emitHead_fns =
+function(scope, isScript) {
+  var list = scope.funLists, e = 0, len = list.length();
+  var onw = this.hasOnW(), em = 0;
+  while (e < len) {
+    this.emitFunList(list.at(e++));
+    if (onw && !this.hasOnW()) {
+      ++em;
+      this.onW(onW_line);
+      onw = this.hasOnW();
+    }
+  }
+  em && this.hasOnW() && this.clearOnW();
+};
+
+this.emitHead_llinosa =
+function(scope, isScript) {
+  var list = scope.defs, e = 0, len = list.length();
+  var em = 0, item = null;
+  while (e < len) {
+    item = list.at(e++ );
+    if (item.isLLINOSA()) {
+      this
+        .w(em ? ',' : 'var').s().w(item.synthName)
+        .s().w('=').s()
+        .wm('{','v',':','void',' ','0','}');
+      ++em
+    }
+  }
+  if (e > 0) this.w(';');
 };
 
 },
@@ -3253,7 +3329,7 @@ function(mname) { return true; };
 
 this.synth_ref_find_homonym_m =
 function(mname) {
-  this.isBooted() || this.synth_boot();
+  this.isBooted || this.synth_boot();
   var synth = this.findSynth_m(mname)
   if (synth === null && this.scopeName && this.scopeName.hasName_m(mname))
     synth = this.scopeName;
@@ -3262,7 +3338,7 @@ function(mname) {
 
 this.synth_decl_find_homonym_m =
 function(mname) {
-  this.isBooted() || this.synth_boot();
+  this.isBooted || this.synth_boot();
   return this.findSynth_m(mname);
 };
 
@@ -3278,7 +3354,7 @@ function() {
 
 this.synth_start =
 function() {
-  this.isBooted() || this.synth_boot();
+  this.isBooted || this.synth_boot();
   this.synth_externals();
 };
 
@@ -3293,8 +3369,11 @@ function() {
       ASSERT.call(this, target.synthName !== "" || target.isGlobal(), 'synth');
 
       mname = _m(target.synthName);
-      ASSERT.call(this, !this.findSynth_m(mname), 'override');
-      this.insertSynth_m(mname, target);
+      var synth = this.findSynth_m(mname);
+      if (synth !== target) {
+        ASSERT.call(this, synth === null, 'override');
+        this.insertSynth_m(mname, target);
+      }
     }
   }
 };
@@ -8674,10 +8753,7 @@ this.parseProgram = function () {
   var c0 = this.c, li0 = this.li, col0 = this.col;
   var ec = -1, eloc = null;
 
-  if (this.bundleScope === null)
-    this.bundleScope = new BundleScope(null);
-
-  this.scope = new SourceScope(this.bundleScope, ST_SCRIPT);
+  this.scope = new SourceScope(new GlobalScope(), ST_SCRIPT);
 
   this.scope.parser = this;
   if (!this.isScript)
@@ -11038,8 +11114,8 @@ function(mname, ref) {
   ASSERT.call(this, this.isScript(),
     'a script scope was expected');
 
-  ASSERT.call(this, this.parent.isBundle(),
-    'script must have a parent scope with type bundle');
+  ASSERT.call(this, this.parent.isGlobal(),
+    'script must have a parent scope with type global');
 
   if (ref_this_m(mname))
     return this.spCreate_this(ref);
@@ -11186,11 +11262,6 @@ function() { return this.type & ST_EXPR; };
 this.isBootable =
 function() {
   return this.isScript() || this.isAnyFn() || this.isCatch() || this.isModule();
-};
-
-this.isBooted =
-function() {
-  return this.synthNamesUntilNow !== null;
 };
 
 this.isSourceLevel = 
@@ -11974,7 +12045,7 @@ function(mname, ref) {
   ASSERT.call(this, !newDecl && !this.findDeclAny_m(mname),
     'global scope has already got this name: <'+_u(mname)+'>');
 
-  ref.scope = this;
+  ref.scope = this.parent;
   newDecl = new Decl().t(DT_GLOBAL).r(ref).n(_u(mname));
   this.insertGlobal_m(mname, newDecl);
 
@@ -11984,13 +12055,13 @@ function(mname, ref) {
 this.insertGlobal_m =
 function(mname, global) {
   ASSERT.call(this, global.isGlobal(), 'global');
-  return this.globals.set(mname, global);
+  return this.parent.defs.set(mname, global);
 };
 
 this.findGlobal_m =
 function(mname) {
-  return this.globals.has(mname) ?
-    this.global.get(mname) : null;
+  return this.parent.defs.has(mname) ?
+    this.parent.defs.get(mname) : null;
 };
 
 }]  ],
@@ -12694,7 +12765,7 @@ function(n, isVal) {
     n['#imports'] = n['#scope'].satisfyWith(this.bundler);
 
   this.global = this.script.parent;
-  ASSERT.call(this, this.global.isBundle(), 'script can not have a non-global parent');
+  ASSERT.call(this, this.global.isGlobal(), 'script can not have a non-global parent');
   var ps = this.setScope(this.script);
   var ts = this.setTS([]);
 
