@@ -214,3 +214,14 @@ function(n, a) {
     target: null
   };
 };
+
+this.synth_GlobalUpdate =
+function(assig, isU) {
+  return {
+    isU: isU,
+    kind: 'global-update',
+    assig: assig,
+    type: '#Untransformed'
+  };
+};
+

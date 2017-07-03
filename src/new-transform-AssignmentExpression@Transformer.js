@@ -101,8 +101,11 @@ function(n, isVal, isB) {
     if (!target.isReached())
       this.makeReached(target);
   } 
-  !isB && n.left.target.ref.assigned();
-
+  else {
+    n.left.target.ref.assigned();
+    if (n.left.target.isRG())
+      n = this.synth_GlobalUpdate(n, false);
+  }
   return n;
 };
 

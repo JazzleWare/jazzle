@@ -111,3 +111,9 @@ this.isImmutable =
 function() {
   return this.isConst() || this.isName();
 };
+
+// renamed global
+this.isRG =
+function() {
+  return this.isGlobal() && this.name !== this.synthName;
+};

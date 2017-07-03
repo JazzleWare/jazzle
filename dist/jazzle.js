@@ -1817,6 +1817,12 @@ function() {
   return this.isConst() || this.isName();
 };
 
+// renamed global
+this.isRG =
+function() {
+  return this.isGlobal() && this.name !== this.synthName;
+};
+
 }]  ],
 [Emitter.prototype, [function(){
 this.indent = function() {
@@ -2203,6 +2209,26 @@ this.emitAccessChk_invalidSAT =
 function(nd) {
   this.jz('cc').wm('(','\'').writeStringValue(nd.name).wm('\'',')');
   return true;
+};
+
+},
+function(){
+this.emitHead_temps =
+function(scope) {
+  var temps = scope.getLG('<t>'), e = 0, len = temps.length();
+  if (len > 0) {
+    this.w('var').s();
+    while (e < len) {
+      e && this.w(',').s();
+      this.w(temps.at(e++).synthName);
+    }
+  }
+  return this;
+};
+
+this.emitHead_vars =
+function(scope) {
+  var list = scope.defs, e = 0, len = list.length(); 
 };
 
 },
@@ -2850,6 +2876,19 @@ function(n, flags, isStmt) {
   hasParen && this.w(')');
   isStmt && this.w(';');
 
+  return true;
+};
+
+},
+function(){
+UntransformedEmitters['global-update'] =
+function(n, flags, isStmt) {
+  var hasParen = flags & EC_NEW_HEAD;
+  var td = (n.isU ? n.assig.argument : n.assig.left).target;
+  hasParen && this.w('(');
+  this.wm(td.synthName+'u','(').eN(n.assig, EC_NONE, false).w(')');
+  hasParen && this.w(')');
+  isStmt && this.w(';');
   return true;
 };
 
@@ -12197,8 +12236,11 @@ function(n, isVal, isB) {
     if (!target.isReached())
       this.makeReached(target);
   } 
-  !isB && n.left.target.ref.assigned();
-
+  else {
+    n.left.target.ref.assigned();
+    if (n.left.target.isRG())
+      n = this.synth_GlobalUpdate(n, false);
+  }
   return n;
 };
 
@@ -12428,7 +12470,11 @@ Transformers['UpdateExpression'] =
 function(n, isVal) {
   var arg = this.trSAT(n.argument);
   n.argument = arg;
-  isResolvedName(arg) && arg.target.ref.assigned();
+  if (isResolvedName(arg)) {
+    arg.target.ref.assigned();
+    if (arg.target.isRG())
+      n = this.synth_GlobalUpdate(n, true);
+  }
 
   return n;
 };
@@ -12877,6 +12923,17 @@ function(n, a) {
     target: null
   };
 };
+
+this.synth_GlobalUpdate =
+function(assig, isU) {
+  return {
+    isU: isU,
+    kind: 'global-update',
+    assig: assig,
+    type: '#Untransformed'
+  };
+};
+
 
 },
 function(){
