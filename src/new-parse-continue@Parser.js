@@ -9,6 +9,9 @@ function() {
 
   var c0 = this.c0, loc0 = this.loc0();
   var c = this.c, li = this.li, col = this.col;
+
+  var cb = {};
+  this.suc(cb, 'bef');
   this.next(); // 'continue'
 
   var label = null;
@@ -22,6 +25,7 @@ function() {
       this.err('continue.not.a.loop');
   }
 
+  label && this.spc(label, 'aft');
   this.semi() || this.err('no.semi');
   var ec = this.semiC || (label && label.end) || c;
   var eloc = this.semiLoc ||
@@ -35,6 +39,7 @@ function() {
     start: c0,
     end: ec,
     loc: { start: loc0, end: eloc },
-    '#y': 0
+    '#y': 0,
+    '#c': cb
   };
 };

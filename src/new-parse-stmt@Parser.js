@@ -60,7 +60,7 @@ function(allowNull) {
         loc: {
           start: head.loc.start,
           end: this.semiLoc || head.loc.end },
-        '#y': this.Y(head)
+        '#y': this.Y(head), '#c': {}
       };
     }
   }

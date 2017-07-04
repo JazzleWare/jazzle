@@ -15,6 +15,9 @@ this.parseProgram = function () {
 
   this.scope.finish();
 
+  var cb = {};
+  list.length || this.suc(cb, 'inner');
+
   var n = {
     type: 'Program',
     body: list,
@@ -25,9 +28,10 @@ this.parseProgram = function () {
       start: {line: li0, column: col0},
       end: {line: this.li, column: this.col}
     }, 
-    '#imports': null,
     '#scope': this.scope,
-    '#y': 0
+    '#c': cb,
+    '#y': 0, 
+    '#imports': null
   };
 
   if (!this.expectT(TK_EOF))

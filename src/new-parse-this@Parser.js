@@ -1,10 +1,12 @@
 this.parseThis = function() {
   this.resvchk();
+  var cb = {}; this.suc(cb, 'bef' );
+
   var n = {
     type : 'ThisExpression',
     loc: { start: this.loc0(), end: this.loc() },
     start: this.c0,
-    end : this.c
+    end : this.c, '#c': cb
   };
 
   this.next() ;

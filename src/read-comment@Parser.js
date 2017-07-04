@@ -58,7 +58,7 @@ this.foundComment =
 function(c0,li0,col0,t) {
   var c = this.c, li = this.li, col = this.col;
   if (this.commentBuf === null)
-    this.commentBuf = [];
+    this.commentBuf = new Comments();
   this.commentBuf.push(
     {
       type: t,

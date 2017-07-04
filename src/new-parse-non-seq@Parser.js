@@ -69,6 +69,7 @@ function(prec, ctx) {
     if (curPrec === prec && !isRA(prec))
       break;
 
+    this.spc(core(head), 'aft');
     var o = this.ltraw;
     this.next();
     var r = this.parseNonSeq(curPrec, ctx & CTX_FOR);
@@ -82,7 +83,7 @@ function(prec, ctx) {
         end: r.loc.end },
       left: core(head),
       right: core(r),
-      '#y': this.Y(head, r)
+      '#y': this.Y(head, r), '#c': {}
     };
 
     hasOp = this.getOp(ctx);

@@ -12,11 +12,14 @@ function(ctx) {
   var e = [core(head)];
   var y = this.Y(head);
   do {
+    latestExpr && this.spc(latestExpr, 'aft');
     this.next();
     latestExpr = this.parseNonSeq(PREC_NONE, ctx);
     y += this.Y(latestExpr);
     e.push(core(latestExpr));
   } while (this.lttype === CH_COMMA);
+
+  latestExpr && this.spc(latestExpr, 'aft');
 
   return {
     type: 'SequenceExpression',
@@ -27,6 +30,6 @@ function(ctx) {
       start: head.loc.start,
       end: latestExpr.loc.end
     },
-    '#y': y
+    '#y': y, '#c': {}
   };
 };

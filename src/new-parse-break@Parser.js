@@ -7,6 +7,8 @@ function() {
   var c0 = this.c0, loc0 = this.loc0();
   var c = this.c, li = this.li, col = this.col;
 
+  var cb = {};
+  this.suc(cb, 'bef');
   this.next();
   var label = null;
   if (!this.nl && this.lttype === TK_ID) {
@@ -19,6 +21,7 @@ function() {
   else if (!this.scope.canBreak())
     this.err('break.not.in.breakable');
 
+  label && this.spc(label, 'aft');
   this.semi() || this.err('no.semi');
 
   var ec = this.semiC || (label && label.end) || c;
@@ -33,6 +36,7 @@ function() {
     start: c0,
     end: ec,
     loc: { start: loc0, end: eloc },
-    '#y': 0
+    '#y': 0,
+    '#c': cb
   };
 };

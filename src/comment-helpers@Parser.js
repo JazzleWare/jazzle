@@ -1,13 +1,14 @@
-this.suck =
-function() {
+this.cc =
+function() { // cuts comments
   var commentBuf = this.commentBuf;
   this.commentBuf = null;
   return commentBuf;
 };
 
-this.spew =
-function() {
-  this.lpn.trailingComments = this.commentBuf;
-  this.commentBuf = null;
-  this.lpn = null;
+this.suc =
+function(cb, i) {
+  cb[i] = this.cc();
 };
+
+this.spc =
+function(n, i) { n['#c'][i] = this.cc(); };
