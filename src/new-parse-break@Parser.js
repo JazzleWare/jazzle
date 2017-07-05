@@ -7,7 +7,7 @@ function() {
   var c0 = this.c0, loc0 = this.loc0();
   var c = this.c, li = this.li, col = this.col;
 
-  var cb = {};
+  var cb = {li: li};
   this.suc(cb, 'bef');
   this.next();
   var label = null;
@@ -22,7 +22,7 @@ function() {
     this.err('break.not.in.breakable');
 
   label && this.spc(label, 'aft');
-  this.semi() || this.err('no.semi');
+  this.semi(label ? label.cb : cb, label ? 'aft' : 'break.aft') || this.err('no.semi');
 
   var ec = this.semiC || (label && label.end) || c;
   var eloc = this.semiLoc ||

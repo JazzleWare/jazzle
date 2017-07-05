@@ -1,7 +1,8 @@
 this.semi =
-function() {
+function(cb, i) {
   var t = this.lttype;
   if (t === CH_SEMI) {
+    cb && this.suc(cb, i);
     this.semiC = this.c;
     this.semiLoc = this.loc();
     this.next();
@@ -21,6 +22,7 @@ function() {
     return true;
 
   case CH_RCURLY:
+    cb && this.suc(cb, i);
     this.semiC = this.c0;
     this.semiLoc = this.loc0();
     return true;

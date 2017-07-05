@@ -51,7 +51,7 @@ function(allowNull) {
         finishPrologue = false;
         this.applyDirective(head);
       }
-      this.semi() || this.err('no.semi');
+      this.semi(core(head)['#c'], 'aft') || this.err('no.semi');
       head = {
         type: 'ExpressionStatement',
         expression: core(head),

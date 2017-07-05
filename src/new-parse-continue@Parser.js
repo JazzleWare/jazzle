@@ -26,7 +26,7 @@ function() {
   }
 
   label && this.spc(label, 'aft');
-  this.semi() || this.err('no.semi');
+  this.semi(label ? label.cb : cb, label ? 'aft' : 'cont.aft') || this.err('no.semi');
   var ec = this.semiC || (label && label.end) || c;
   var eloc = this.semiLoc ||
     (label && label.loc.end) ||

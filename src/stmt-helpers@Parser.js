@@ -29,7 +29,6 @@ function () {
   var stmt = null, y = 0, list = [];
   var last = null;
   while (stmt = this.parseStatement(true)) {
-    last && this.spc(last, 'aft');
     y += this.Y0(stmt);
     list.push(stmt);
     last = stmt;

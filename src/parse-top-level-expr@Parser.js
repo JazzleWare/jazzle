@@ -9,7 +9,7 @@ function(ctx) {
   ctx &= CTX_FOR;
   ctx |= CTX_TOP;
 
-  var e = [core(head)];
+  var e = [latestExpr = core(head)];
   var y = this.Y(head);
   do {
     latestExpr && this.spc(latestExpr, 'aft');
@@ -18,8 +18,6 @@ function(ctx) {
     y += this.Y(latestExpr);
     e.push(core(latestExpr));
   } while (this.lttype === CH_COMMA);
-
-  latestExpr && this.spc(latestExpr, 'aft');
 
   return {
     type: 'SequenceExpression',

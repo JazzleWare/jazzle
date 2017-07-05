@@ -3937,6 +3937,570 @@ function(directiveLiteral) {
 
 },
 function(){
+this.onErr = function(errorType, errParams) {
+   var message = "";
+   if (!HAS.call(ErrorBuilders, errorType))
+     message = "Error: " + errorType + "\n" +
+       this.src.substr(this.c-120,120) +
+       ">>>>" + this.src.charAt(this.c+1) + "<<<<" +
+       this.src.substr(this.c, 120);
+
+   else {
+     var errorBuilder = ErrorBuilders[errorType];  
+     var errorInfo = this.buildErrorInfo(errorBuilder, errParams);
+
+     var offset = errorInfo.c0,
+         line = errorInfo.li0,
+         column = errorInfo.col0,
+         errMessage = errorInfo.messageTemplate.applyTo(errParams);
+
+     message += "Error: "+line+":"+column+" (src@"+offset+"): "+errMessage;
+
+     // TODO: add a way to print a 'pin-range', i.e., the particular chunk of the
+     // source code that is causing the error
+   }
+
+   throw new Error(message);
+};
+  
+// TODO: find a way to squash it with normalize
+this.buildErrorInfo = function(builder, params) {
+  if (builder.preprocessor !== null)
+    builder.preprocessor.call(params);
+
+  var errInfo = {
+    messageTemplate: builder.messageTemplate,
+    c: -1, li: -1, col: -1,
+    c0: -1, li0: -1, col0: -1,
+    parser: params['parser'],
+    extra: params.extra
+  };
+
+  var cur0 = params.cur0, cur = params.cur;
+
+  if (HAS.call(builder, 'tn')) {
+    var tn = builder.tn.applyTo(params);
+    if (HAS.call(tn,'start')) cur0.c = tn.start;
+    if (HAS.call(tn,'end')) cur.c = tn.end;
+    if (HAS.call(tn,'loc')) {
+      if (HAS.call(tn.loc, 'start')) {
+        cur0.loc.li = tn.loc.start.line;
+        cur0.loc.col = tn.loc.start.column;
+      }
+      if (HAS.call(tn.loc, 'end')) {
+        cur.loc.li = tn.loc.end.line;
+        cur.loc.col = tn.loc.end.column;
+      }
+    }
+  }
+
+  if (HAS.call(builder, 'cur0'))
+    cur0 = builder.cur0.applyTo(params);
+
+  if (HAS.call(builder, 'cur'))
+    cur = builder.cur.applyTo(params);
+
+  if (HAS.call(builder, 'loc0'))
+    cur0.loc = builder.loc0.applyTo(params);
+
+  if (HAS.call(builder, 'loc'))
+    cur.loc = builder.loc.applyTo(params);
+
+  if (HAS.call(builder, 'li0'))
+    cur0.loc.li = builder.li0.applyTo(params);
+
+  if (HAS.call(builder, 'li'))
+    cur.loc.li = builder.li.applyTo(params);
+
+  if (HAS.call(builder, 'col0'))
+    cur0.loc.col = builder.col0.applyTo(params);
+
+  if (HAS.call(builder, 'col'))
+    cur.loc.col = builder.col.applyTo(params);
+
+  if (HAS.call(builder, 'c0'))
+    cur0.c = builder.c0.applyTo(params);
+
+  if (HAS.call(builder, 'c'))
+    cur.c = builder.c.applyTo(params);
+
+  errInfo.c0 = cur0.c; errInfo.li0 = cur0.loc.li; errInfo.col0 = cur0.loc.col;
+  errInfo.c = cur.c; errInfo.li = cur.loc.li; errInfo.col = cur.loc.col;
+
+  return errInfo;
+};
+
+var ErrorBuilders = {};
+function a(errorType, builderOutline) {
+  if (HAS.call(ErrorBuilders, errorType))
+    throw new Error('Error type has already got a builder: <'+errorType+'>');
+  var builder = {preprocessor:null};
+  for (var name in builderOutline) {
+    if (name === 'm')
+      builder.messageTemplate = ErrorString.from(builderOutline[name]);
+    else if (name === 'p')
+      builder.preprocessor = builderOutline.p; 
+    else
+      builder[name] = Template.from(builderOutline[name]);
+  }
+
+  ErrorBuilders[errorType] = builder;
+
+  return builder;
+}
+
+function set(newErrorType, existingErrorType) {
+  if (HAS.call(ErrorBuilders, newErrorType))
+    throw new Error('cannot override the existing <'+
+      newErrorType+'> with <'+existingErrorType);
+  if (!HAS.call(ErrorBuilders, existingErrorType))
+    throw new Error('error is not defined: <'+existingErrorType+'>');
+  
+  var builder = ErrorBuilders[existingErrorType];
+  ErrorBuilders[newErrorType] = builder;
+
+  return builder;
+}
+
+// TODO: the argument that is coming last is a sample error code; builders must have this value as a property.
+// also a list of options may come after each of these "samples" signifying which options they should be parsed with
+
+a('arg.non.tail', {c0:'c0', li0:'li0',col0:'col0', m: 'unexpected comma -- tail arguments not allowed in versions before 7'}, 'a(b,)');
+
+a('arg.non.tail.in.func', {c0:'c0',li0:'li0',col0:'col0', m: 'unexpected comma -- tail parameters not allowed in versions before 7'}, 'function a(b,) {}', '(a,)=>b');
+
+a('array.unfinished', {c0:'parser.c0', li0: 'parser.li0', col0: 'parser.col0', m: 'a \']\' was expected -- got {parser.lttype}'}, '[a 12');
+
+a('arrow.has.a.paren.async', {tn: 'parser.parenAsync', m: '\'async\' can not have parentheses around it (the \'=>\' at {parser.li0}:{parser.col0} (offset {parser.c0}) requires this to hold'}, '(async)(a,b)=>12');
+
+a('arrow.newline.before.paren.async', {tn:'parser.pe', m: '\'async\' of an async can not have a newline after it'}, 'async\n(a)=>12');
+
+a('arrow.arg.is.await.in.an.async', {tn:'tn', m: 'await is not allowed as an async arrow\'s parameter'}, 'async(a=await)=>12');
+
+a('arrow.missing.after.empty.list', {c0:'parser.se.end', li0:'parser.se.loc.end.line', col0: 'parser.se.loc.end.column', m:'unexpected \')\''}, '()');
+
+a('assig.not.first', {c0:'parser.c0', li0:'parser.li0', col0:'parser.col0', m: 'Unexpected \'=\''}, 'a-b=12');
+
+a('assig.not.simple', {tn:'tn', m: 'an identifier or a member expression was expected; instead got a {tn.type}'}, '([a])--');
+
+a('assig.to.arguments.or.eval', {tn:'parser.se', m:'can not assign to {parser.se.name} while in strict mode'}, '"use strict"; [arguments] = 12');
+
+a('async.gen.not.yet.supported', {c0:'parser.c0', li0:'parser.li0',col0:'parser.col0', m:'unexpected \'*\' -- async generators not yet supported'}, 'async function *l() {}');
+
+a('async.newline', {c0:'parser.c0',li0:'parser.li0',col0:'parser.col0',m:'unexpected newline after async -- async modifier in an object can not have a newline after it'}, '({async l(){}})');
+
+a('await.args', {c0:'parser.c0',li0:'parser.li0',col0:'parser.col0',m:'an async function may not contain \'await\' anywhere in its parameter list'}, 'async function l(e=[await]) {}', 'async function l(await) {}');
+
+// TODO: await.label
+
+a('await.in.strict', {c0:'parser.c0',li0:'parserl.li0',col0:'parser.col0',m: 'await is a reserved word when in a module, no matter it is in an async function or not'}, 'await = 12');
+
+a('rest.binding.arg.not.id', {tn:'tn.argument',m:'binding rests can only have an argument of type \'Identifier\'(which {tn.argument.type} isn\'t) in versions before 7; current version is {parser.v}.'}, 'function a(...[b]){}');
+
+a('binding.to.arguments.or.eval',{tn:'tn',m:'invalid binding name in strict mode: {tn.name}'}, '"use strict"; (arguments)=>12');
+
+a('<unfinished>', {'tn':'tn', m:'unexpected {parser.lttype} -- a {extra.delim} was expected to end the {tn.type} at {tn.loc.start.line}:{tn.loc.start.column} (offset {tn.start})'});
+
+set('block.dependent.is.unfinished', '<unfinished>', 'try { 12');
+
+a('block.dependent.no.opening.curly', {c0:'parser.c0', li0:'parser.li', col0: 'parser.col0', m:'unexpected {parser.lttype} after {extra.name} -- expected {}'}, 'try 12');
+
+set('block.unfinished', '<unfinished>');
+
+a('break.no.such.label',{tn:'tn',m:'no such label: {tn.name}'}, 'while (false) break L;');
+
+a('break.not.in.breakable', {c0:'c0',li0:'li0',col0:'col0',m:'breaks without any targets can only appear inside an iteration statement or a switch'}, 'break;');
+
+set('call.args.is.unfinished', '<unfinished>');
+
+a('catch.has.no.end.paren',{c0:'c0',li0:'li0',col0:'col0',m:'unexpected {parser.lttype} -- a ) was expected'}, 'try {} catch (a) { 12');
+
+a('catch.has.no.opening.paren',{c0:'c0',li0:'li0',col0:'col0',m:'unexpected {parser.lttype} -- a ( was expected'}, 'try {} catch 12');
+
+a('catch.has.an.asiig.param',{c0:'c0',li0:'li0',col0:'col0',m:'the parameter for a catch clause can not be an assignment pattern'},'try{} catch(a=12){}');
+
+a('catch.has.no.param',{c0:'c0',li0:'li0',col0:'col0',m:'a catch clause must have a parameter'}, 'try{} catch(){}');
+
+a('class.constructor.is.a.dup', {tn:'tn',m:'this class has already got a constructor'}, 'class A{constructor(){} constructor(){}}');
+
+// TODO: what about this: class A { static get constructor() {} }
+a('class.constructor.is.special.mem',{tn:'tn',m:'a class member named constructor (or \'constructor\') can not be a getter, generator, setter, or async. (it can be a static member, though.)'}, 'class A{get constructor(){}}');
+
+a('class.decl.has.no.name',{c0:'c0',li0:'li0',col0:'col0',m:'this context requires that the class declaration has a name'}, 'class {}');
+
+a('class.decl.not.in.block',{c0:'c0',li0:'li0',col0:'col0',m:'this scope can not contain a class declaration -- block scope (i.e, those wrapped between {} and }), module scope, and script scope are the only ones that can.'}, 'if (false) class{}');
+
+a('class.label.not.allowed',{c0:'parser.c0',li0:'parser.li0',col0:'parser.col0',m:'can not label a class'}, 'L: class A{}');
+
+a('class.no.curly',{c0:'c0',li0:'li0',col0:'col0',m:'a {} was expected -- got {parser.lttype} instead'},'class L 12');
+
+a('class.prototype.is.static.mem',{tn:'tn',m:'class can not have a static member named prototype'},'class A{static prototype() {}}');
+
+a('class.super.call',{tn:'tn',m:'can not call super in this context'},'class A{constructor(){var a = super()}');
+
+a('class.super.lone',{tn:'tn',m:'unexpected {parser.lttype} after \'super\' -- a "(" or "." or "[" was expected'}, 'class A extends B { constructor() { (super * 12); }}');
+
+a('class.super.mem',{tn:'tn',m:'member access from super not allowed in this context -- super member access must only occur inside an object method or inside a non-static class member'}, 'class A { static b() { (super.l()); }');
+
+set('class.unfinished', '<unfinished>');
+
+a('comment.multi.unfinished', {c0:'parser.c',li0:'parser.li',col0:'parser.col',m:'reached eof before finding a matching */ for the multiline comment at {extra.li0}:{extra.col0} (offset {extra.c0})'},'/* 12');
+
+// TODO: tell what was got
+a('complex.assig.not.pattern',{c0:'c0',li0:'li0',col0:'col0',m:'a \'=\' was expected'},'(a-=12)=>12');
+
+a('cond.colon',{c0:'parser.c0',li0:'parser.li0',col0:'parser.col0',m:'a \':\' was expected; got {parser.lttype}'}, 'a ? b 5');
+
+a('const.has.no.init',{c0:'c0',li0:'li0',col0:'col0',m:'a \'=\' was expected, got {parser.lttype} -- the declarator at {extra.e.loc.start.line}:{extra.e.loc.start.column} (offset {extra.e.start}) is a const  declarator and needs an initialiser.'},'const a' );
+
+a('const.not.in.v5',{c0:'parser.c0',li0:'parser.li0',col0:'parser.col0',m:'in versions before ES2015 (current version is {parser.v}), const is a reserved word and can\'t be an actual identifier reference.'}, 'a * const');
+
+a('continue.no.such.label',{tn:'tn', m:'no such label: {tn.name}'},'while (false) continue L;');
+
+a('continue.not.a.loop.label',{tn:'tn',m:'label {tn.name} is not referring to a loop -- a continue\'s label, if any, must refer to a loop.'},'while (false)L:if(false)continue L;');
+
+a('continue.not.in.loop',{c0:'parser.c0',li0:'parser.li0',col0:'parser.col0',m:'continue is not allowed in this context -- it has to appear in loops only'},'is (false) continue;');
+
+a('decl.label', {c0:'c0',li0:'li0',col0:'col0',m:'{parser.ltval} declarations can not have labels'}, 'L: const a = 12;');
+
+a('delete.arg.not.a.mem',{tn:'tn',m:'when in strict mode code, the delete operator must take a member expression as argument; currently, its argument is a {tn.type}'},  '"use strict"; a * (delete l)');
+
+a('<closing>', {c0:'parser.c0',li0:'parser.li0',col0:'parser.col0',m:'a ) was expected; got {parser.lttype}'});
+
+set('do.has.no.closing.paren', '<closing>');
+
+a('<opening>', {c0:'parser.c0',li0:'parser.li0',col0:'parser.col0',m:'a ( was expected; got {parser.lttype}'});
+
+set('do.has.no.opening.paren', '<opening>');
+
+a('do.has.no.while',{c0:'parser.c0',li0:'parser.li0',col0:'parser.col0',m:'while expected; got {parser.lttype}'}, 'do {};');
+
+a('esc.8.or.9',{c0:'parser.c',li0:'parser.li',col0:'parser.col0',m:'escapes \\8 or \\9 are not syntactically valid escapes'},'"\\8"');
+
+a('exists.in.current',{tn:'tn',m:'\'{tn.name}\' has been actually declared at {extra.loc.start.line}:{extra.loc.start.column} (offset {extra.start})'},'let a;{var a;}');
+
+a('export.all.no.from', {c0:'parser.c0',li0:'parser.li0',col0:'parser.col0',m:'\'from\' expected; got {parser.ltval}'}, 'export * not \'12\'');
+
+a('export.all.not.*', {c0:'parser.c0',li0:'parser.li0',col0:'parser.col0',m:'unexpected {parser.ltraw}; a * was expected'}, 'export - from \'12\'');
+
+a('export.all.source.not.str',{c0:'parser.c0',li0:'parser.li0',col0:'parser.col0',m:'a string literal was expected'}, 'export * from 12');
+
+a('export.async.but.no.function',{c0:'parser.c0',li0:'parser.li0',col0:'parser.col0',m:'function expected to immediately follow async; got {parser.lttype}'},'export async\n12');
+
+a('export.default.const.let',{c0:'parser.c0',li0:'parser.li0',col0:'parser.col0',m:'const and let declarations can\'t be default exports'},'export default let r = 12;');
+
+a('export.named.has.reserved',{tn:'tn',m:'local {tn.name} is actually a reserved word'},'export {a, if as l};');
+
+a('export.named.list.not.finished',{c0:'parser.c0',li0:'parser.li0',col0:'parser.col0',m:'unfinished specifier list -- expected }, got {parser.lttype}'},'export {a 12 from \'l\'');
+
+a('export.named.no.exports',{c0:'parser.c0',li0:'parser.li0',col0:'parser.col0',m:'unexpected {parser.lttype} -- it is not something that can appear at the beginning of an actual declaration'},'export 12');
+
+set('export.named.not.id.from','export.all.no.from');
+
+set('export.named.source.not.str','export.all.source.not.str');
+
+a('export.newline.before.the.function',{c0:'parser.c0',li0:'parser.li0',col0:'parser.col0',m:'a newline is not allowed before \'function\' in exported async declarations.'},'export async\nfunction l() {}');
+
+a('export.not.in.module', {c0:'parser.c0',li0:'parser.li0',col0:'parser.col0'});
+
+a('export.specifier.after.as.id', {c0:'parser.c0',li0:'parser.li0',col0:'parser.col0',m:'got {parser.lttype}; an identifier was expected'}, 'export {a as 12}');
+
+a('export.specifier.not.as', {m:'\'as\' or } was expected; got {parser.lttype}'},'export {a 12 e}');
+
+a('for.decl.multi',{tn:'tn.declarations.1',m:'head of a {extra.2} can only have one declarator'},'for (var a, b in e) break;');
+
+a('for.decl.no.init',{m:'initialiser "=" was expected; got {parser.lttype}'},'for (var [a];;) break;');
+
+a('for.in.has.decl.init',{tn:'tn.declarations.0.init',m:'{tn.kind} declarations and non-Identifier declarators can not have initialisers; also it is not allowed altogether in versions before 7; current version is {parser.v}'},'for (var a = 12 in e) break;');
+
+a('for.in.has.init.assig',{tn:'tn',m:'assignment expressions can not be a {extra.2}\'s head'},'for (a=12 in e) break;');
+
+a('for.iter.no.end.paren',{m:'a ) was expected; got {parser.lttype}'},'for (a in b 5');
+
+a('for.iter.not.of.in',{m:'an \'in\' or \'of\' expected; got {parser.ltval}'},'for (a to e) break;');
+
+a('for.of.var.overrides.catch',{tn:'tn',m:'{tn.name} overrides the surrounding catch block\'s variable of the same name'},'try {} catch (a) { for (var a of l) break;}');
+
+set('for.simple.no.end.paren', 'for.iter.no.end.paren');
+
+a('for.simple.no.init.semi',{m:'a ; was expected; got {parser.lttype}'}, 'for (a 12 b; 12) break;');
+
+set('for.simple.no.test.semi', 'for.simple.no.init.semi');
+
+set('for.with.no.opening.paren', '<opening>');
+
+// TODO: precision
+a('func.args.has.dup',{tn:'tn',m:'{tn.name}: duplicate params are not allowed'}, 'function l([a,a]) {}');
+
+set('func.args.no.end.paren', '<closing>');
+
+set('func.args.no.opening.paren', '<opening>');
+
+a('func.args.not.enough', {m:'unexpected {parser.lttype}'}, '({ get a(l) {} })', '({set a() {}})');
+
+a('func.body.is.unfinished', {m:'a } was expected to end the current function\'s body; got {parser.lttype}'}, 'function l() { 12');
+
+a('func.decl.not.allowed', {m:'the current scope does not allow a function to be declared in it'}, 'while (false) function l() {}');
+
+a('func.label.not.allowed', {m:'can not label this declaration'}, 'L:function* l() {}');
+
+a('func.strict.non.simple.param', {tn:'parser.firstNonSimpArg', m:'a function containing a Use Strict directive can not have any non-simple paramer -- all must be Identifiers'});
+
+a('hex.esc.byte.not.hex', {c0:'parser.c',li0:'parser.li',col0:'parser.col',m:'a hex byte was expected'}, '"\\xab\\xel"');
+
+a('id.esc.must.be.idbody',{cur0:'cur',m:'unicode codepoint with value {extra} is not a valid identifier body codepoint'});
+
+a('id.esc.must.be.id.head',{cur0:'cur',m:'unicode codepoint with value {extra} is not a valid identifier start codepoint'});
+
+a('id.multi.must.be.idhead', {cur0:'cur',m:'the unicode surrogate pair [{extra.0},{extra.1}] don\'t represent an identifier start.'});
+
+a('id.multi.must.be.idbody', {cur0:'cur',m:'the unicode surrogate pair [{extra.0},{extra.1}] don\'t represent an identifier body codepoint'});
+
+a('id.name.has.surrogate.pair',{m:'unicode escapes in identifier names can not be parts of a surrogate pair'});
+
+a('id.u.not.after.slash',{m:'a \'u\' was expected after \\'}, '\\e');
+
+set('if.has.no.closing.paren', '<closing>');
+
+set('if.has.no.opening.paren', '<opening>');
+
+a('import.from',{m:'\'from\' expected'},'import * 12');
+
+a('import.invalid.specifier.after.comma',{m:'unexpected {parser.lttype}'},'import a, 12 from \'l\'');
+
+a('import.namespace.specifier.not.*',{m:'unexpected {parser.ltraw} -- a * was expected'},'import - as \'12\'');
+
+a('import.namespace.specifier.local.not.id', {m:'valid identifier was expected; got {parser.lttype}'},'import {a as 12} from \'12\'');
+
+a('import.namespace.specifier.no.as', {m:'\'as\' expected'}, 'import {a 12 l} from \'12\'');
+
+a('import.not.in.module', {m:'import is not allowed in script mode'});
+
+a('import.source.is.not.str', {m:'string literal was expected'},'import * as a from 12');
+
+a('import.specifier.list.unfinished', {m:'a } was expected; got {parser.lttype}'}, 'import {a as b, e as l 12');
+
+set('import.specifier.local.not.id', 'import.namespace.specifier.local.not.id');
+
+set('import.specifier.no.as', 'import.namespace.specifier.no.as');
+
+a('incdec.post.not.simple.assig',{m:'member expression or identifier expected -- got {tn.type}'},'[a]--');
+
+set('incdec.pre.not.simple.assig', 'incdec.post.not.simple.assig');
+
+a('label.is.a.dup', {m:'{tn.name} has been actually declared at {extra.li0}:{extra:col0} (offset {extra.c0})'}, 'a: a: for (;false;) break;');
+
+// TODO:
+// a('let.dcl.not.in.block',{m: 
+
+a('lexical.decl.not.in.block',{m:'a {extra.kind}-binding can not be declared in this scope'}, 'if (false) const a = 12;');
+
+a('lexical.name.is.let', {m:'let/const bindings can not have the name \'let\''}, 'let [[let=let]=let*let] = 12;');
+
+a('mem.gen.has.no.name',{m:'unexpected {parser.lttype}'},'({**() {}} })');
+
+// v < 5
+a('mem.id.is.null',{m:'got {parser.ltval} -- a valid member identifier was expected'},'a.this');
+
+a('mem.name.not.id',{m:'unexpected {parser.lttype} -- a valid member identifier was expected'}, 'a.12');
+
+a('mem.unfinished',{m:'unexpected {parser.lttype} -- a ] was expected'}, 'a[e 12');
+
+a('meta.new.has.unknown.prop',{m:'\'target\' is currently the only allowed meta property of new; got {parser.ltval}'},'function l() { new.a }');
+
+a('meta.new.not.in.function',{m:'\'new.target\' must be in the body of a function'}, 'new.target');
+
+// TODO: precision
+a('meth.paren',{m:'unexpected {parser.lttype} -- a ( was expected to start method-params'},'({get a 12})');
+
+a('func.decl.has.no.name',{m:'function declaration must have a name in this context'},'function() {}');
+
+a('new.args.is.unfinished',{m:'unexpected {parser.lttype} -- a ) was expected'}, 'new L(12');
+
+a('new.head.is.not.valid',{m:'unexpected {parser.lttype}'}, 'new ?');
+
+a('arrow.newline', {m:'\'=>\' can not have a newline before it'}, 'a \n=>12');
+
+a('nexpr.null.head',{m:'unexpected {parser.lttype} -- something that can start an actual expression was expected'},'a-- * ?');
+
+a('non.tail.rest',{m:'a rest element can not be followed by a comma (a fact that also implies it must be the very last element)'}, '[...a,]=12');
+
+// TODO: this.noSemiAfter(nodeType)
+a('no.semi',{m:'a semicolon was expected (or a \'}\' if appropriate), but got a {parser.lttype}'},'a e'); 
+
+a('not.assignable',{m:'{tn.type} is not a valid assignment left hand side'},'a[0]-- = 12');
+
+a('not.bindable',{m:'{tn.type} can not be treated as an actual binding pattern'});
+
+// TODO: for now it would suffice
+a('not.stmt',{m:'unexpected {parser.lttype} -- it can\'t be used in an expression'},'a * while (false) { break; }');
+
+a('null.stmt',{m:'unexpected {parser.lttype} -- expected something that would start a statement'}, '{ for (a=0;a>=0 && false;a--) }');
+
+a('num.has.no.mantissa',{m:'a mantissa was expected'},'12e?');
+
+a('num.idhead.tail',{m:'a number literal can not immediately precede an identifier head'},'120l');
+
+a('num.legacy.oct',{m:'legacy octals not allowed in strict mode'},'01');
+
+a('num.with.first.not.valid',{m:'{extra} digit not valid'},'0xG','0b5');
+
+a('num.with.no.digits',{m:'{extra} digits were expected to follow -- none found'},'0x','0b');
+
+a('obj.pattern.no.:',{m:'a : was expected -- got {parser.lttype}'},  '({a 12 e, e: a})');
+
+a('obj.prop.assig.not.allowed',{m:'shorthand assignment not allowed in this context, because the containing object can not be an assignment left-hand side'},'-{a=12} = 12');
+
+a('obj.prop.assig.not.assigop',{m:'a \'=\' was expected'},'({a -= 12 } = 12)');
+
+a('obj.prop.assig.not.id',{m:'a shorthand assignment\'s left hand side must be a plain (non-computed) identifier'},'({[a]=12})');
+
+a('obj.prop.is.null',{m:'unexpected {parser.lttype} -- a [, {}, or an Identifier (anything starting a pattern) was expected'},'var {a:-12} = 12');
+
+a('obj.proto.has.dup',{m:'can not have more than a  single property in the form __proto__: <value> or  \'__proto_\': <value>; currently the is already one at {parser.first__proto__.loc.start.line}:{parser.first__proto__.loc.start.column} (offset {parser.first__proto__.start})'}, '({__proto__:12, a, e, \'__proto__\': 12})');
+
+a('obj.unfinished',{m:'unfinished object literal: a } was expected; got {parser.lttype}'},'({e: a 12)');
+
+a('unexpected.lookahead',{m:'unexpected {parser.lttype}'},'-- -a');
+a('param.has.yield.or.super',{p:function(){if(this.tn !== null && this.tn.type === 'Identifier') this.tn = {type:'AwaitExpression',start:this.tn.start,loc:this.tn.loc,end:this.tn.end,argument:null};},m:'{tn.type} isn\'t allowed to appear in this context'},'function* l() { ([a]=[yield])=>12; }');
+
+a('paren.unbindable',{m:'unexpected ) -- bindings should not have parentheses around them, neither should non-simple assignment-patterns'},'([(a)])=>12', '[a,b,e,([l])]=12');
+
+set('pat.array.is.unfinished', 'array.unfinished');
+
+a('pat.obj.is.unfinished',{m:'unexpected {parser.lttype} -- a } was expected'},'var {a=12 l} = 12)');
+
+a('program.unfinished',{m:'unexpected {parser.lttype} -- an EOF was expected'},'a, b, e, l; ?');
+
+a('prop.dyna.is.unfinished',{m:'unexpected {parser.lttype}'},'({[a 12]: e})');
+
+set('prop.dyna.no.expr', 'prop.dyna.is.unfinished');
+
+function regp() {
+  this.col0 = this.col + (this.c0-this.c);
+  if (this.extra === null)
+    this.extra = {};
+
+  this.extra.ch = this.parser.src.charAt(this.c0);
+}
+
+// TODO: precision
+a('regex.flag.is.dup',{p: regp, m:'regex flag is duplicate'},'/a/guymu');
+
+a('regex.newline',{p:regp, m:'regular expressions can not contain a newline'},'/a\n/');
+
+a('regex.newline.esc',{p:regp, m:'regular expressions can not contain escaped newlines'},'/a\\\n/');
+
+a('regex.unfinished',{cur0:'cur',m:'unfinished regex -- a / was expected'},'/a');
+
+// TODO: precision
+a('regex.val.not.in.range',{m:'regex contains an out-of-range value'});
+
+a('reserved.id',{m:'{tn.name} is actually a reserved word in this context'},'"use strict"; var implements = 12;');
+
+a('rest.binding.arg.peek.is.not.id',{m:'unexpected {parser.lttype} -- in versions before 7, a rest\'s argument must be an id'},'var [...[a]] = 12');
+
+a('rest.arg.not.valid',{tn:'tn.argument',m:'a rest\'s argument is not allowed to have a type of {tn.arguments.type}'},'[...a=12]=12');
+
+a('resv.unicode',{cur:'parser.eloc',m:'{parser.ltraw} is actually a reserved word ({parser.ltval}); as such, it can not contain any unicode escapes'},'whil\\u0065 (false) break;');
+
+a('return.not.in.a.function',{m:'return statements are only allowed inside a function'},'return 12');
+
+a('seq.non.tail.expr',{m:'trailing comma was not expected'},'(a,)');
+
+a('shorthand.unassigned',{m:'shorthand assignments are not allowed somewhere other than am assignment\'s left hand side'},'a = [{b=12},]');
+
+a('stmt.null',{m:'unexpected {parser.lttype} because it can not start a statement'},'while (false) ?');
+
+a('strict.err.esc.not.valid',{cur0:'parser.eloc',m:'legacy octals are not allowed in strict mode'},'"\\12"; "use strict"');
+
+a('strict.let.is.id',{m:'let can\'t be used as an id in strict mode'},'"use strict"; a * b * e * l * let');
+
+a('strict.oct.str.esc',{m:'legacy octals not allowed in strict mode'},'"use strict"; "\\12"');
+
+a('strict.oct.str.esc.templ',{m:'legacy octals not allowed inside templates'},'`\\12`');
+
+a('str.newline',{li0: 'parser.li', m:'a string literal may not contain line breaks'},'"a\n"');
+
+a('str.unfinished',{li0: 'parser.li', m:'the string starting at {parser.li0}:{parser.col0} (offset {parser.c0}) not finished'},'"abel');
+
+a('switch.case.has.no.colon',{m:'unexpected {parser.lttype} -- a \':\' was expected'},'switch (a) { case 12 a break; }');
+
+a('switch.has.a.dup.default',{m:'this switch has already got a default'},'swicth (a) { case a: break; case b: break; case e: break; default: break; default: 12; }');
+
+a('switch.has.no.opening.curly',{m:'unexpected {parser.lttype} -- a {} was expected'},'switch (a) 12');
+
+a('switch.has.no.closing.paren',{m:'unexpected {parser.lttype} -- a ) was expected'},'switch (a 12');
+
+a('switch.has.no.opening.paren',{m:'unexpected {parser.lttype} -- a ( was expected'},'switch ?');
+
+a('switch.unfinished',{m:'unexpected {parser.lttype} -- a } was expected'},'switch (a) { case 12: break; ?');
+
+a('templ.expr.is.unfinished',{m:'unexpected {parser.lttype} -- a } was expected at the end of the current interpolated expression'},'`abel${e 12}`');
+
+a('templ.lit.is.unfinished',{m:'the template literal at {extra.loc.start.line}:{extra.loc.start.column} (offset {extra.start}) is unfinished'},'`abel');
+
+a('throw.has.newline',{m:'throw can not have a line-break after it'},'throw \n12');
+
+a('throw.has.no.argument',{m:'unexpected {parser.lttype}'},'throw ?');
+
+a('try.has.no.tain',{m:'unexpected {parser.lttype} -- try must have a \'catch\' or \'finally\' block coming after it'},'try {}\nif (false);');
+
+a('u.curly.is.unfinished',{p: regp, m:'a } was expected'},'\\u{12;');
+
+a('u.curly.not.in.range',{p: regp, m:'unicode codepoints must have a max decimal value of 1114111 (0x10FFFF)'}, '\\u{125400}');
+
+a('u.esc.hex',{p: regp, m:'invalid hex'},'\\u00el');
+
+a('unary.before.an.exponentiation',{m:'left operand for an exponentiation operator is not allowed to be an unparenthesized unary expression'},'-a**e');
+
+a('unexpected.id',{m:'got {parser.ltval} rather than {extra}'},'export * as a from \'12\'');
+
+a('an.id.was.expected',{m:'unexpected {parser.lttype} -- identifier \'{extra}\' was expected'},'export * as a 12 \'l\'');
+
+a('meth.parent',{m:'a ) was expected'},'class A { e: 12 }');
+
+a('obj.meth.no.paren',{m:'a ) was expected'},'({get a: 12})');
+
+a('rest.arg.has.trailing.comma',{m:'trailing comma not expected after rest'},'(...a,)');
+
+a('unexpected.rest',{m:'unexpected rest element'},'(...a)');
+
+a('unfinished.paren',{c0:'tn.end',li0:'tn.loc.end.line',col0:'tn.loc.end.column',m:'the parenthesis at {tn.loc.start.line}:{tn.loc.start.column} (offset {tn.start}) is unfinished'}, '(a,b 12');
+
+a('u.second.esc.not.u',{p:function(){this.col0++;}, cur0:'cur', m:'a \'u\' was expected after the slash', col0:'col'},'\\ee');
+
+a('u.second.not.in.range',{p:function(){this.col0+=(this.c-this.extra);},cur0:'cur',col0:'col',m:'the second surrogate must be in range [0x0dc00, 0x0dfff]'});
+
+a('var.decl.neither.of.in',{m:'unexpected {parser.lttype}'},'var [a] -= 12');
+
+a('var.decl.not.=', {m:'Unexpected {parser.lttype} -- (maybe you mean \'=\'?)'},'var a -= l');
+
+a('var.must.have.init', {m:'a \'=\' was expected -- current declarator needs an initialiser'},'var a, [e]');
+
+a('var.has.no.declarators',{m:'unexpected {parser.lttype}'}, 'var -a = l');
+
+a('var.has.an.empty.declarator',{m:'unexpected {parser.lttype}'}, 'var a, -');
+
+a('while.has.no.closing.paren',{m:'unexpected {parser.lttype} -- a ) was expected'},'while (a 12');
+
+a('while.has.no.opening.paren',{m:'unexpected {parser.lttype} -- a ( was expected'},'while 12) break;');
+
+a('with.has.no.opening.paren',{m:'unexpected {parser.lttype} -- a ( was expected'},'with 12) {}');
+
+a('with.has.no.end.paren',{m:'unexpected {parser.lttype} -- a ) was expected'},'with (a 12 {}');
+
+a('with.strict',{m:'with statements not allowed in strict mode'},'"use strict"; with (l) {}');
+
+a('yield.args',{m:'yield expression not allowed in generator\'s argument list'},'function* l(e=yield 12) {}');
+
+a('yield.as.an.id',{m:'yield is not allowed as an identifier in this context'},'function* l() { var yield = 12 }');
+
+a('yield.has.no.expr.deleg',{m:'unexpected {parser.lttype} -- it can not star an expression'},'function* l() { yield* ?}');
+
+
+},
+function(){
 this.err = function(errorType, errParams) {
   errParams = this.normalize(errParams);
   return this.errorListener.onErr(errorType, errParams);
@@ -4007,6 +4571,127 @@ this.ga = function() { this.err('gen.async'); };
 
 },
 function(){
+this.pt_override =
+function(pt) {
+  return this.pt !== ERR_NONE_YET &&
+    (pt === ERR_NONE_YET || agtb(this.pt, pt));
+};
+
+this.at_override =
+function(at) {
+  return this.at !== ERR_NONE_YET &&
+    (at === ERR_NONE_YET || agtb(this.at, at));
+};
+
+this.st_override =
+function(st) {
+  return this.st !== ERR_NONE_YET &&
+    (st === ERR_NONE_YET || agtb(this.st, st));
+};
+
+this.pt_reset =
+function() { this.pt = ERR_NONE_YET; };
+
+this.at_reset =
+function() { this.at = ERR_NONE_YET; };
+
+this.st_reset =
+function() { this.st = ERR_NONE_YET; };
+
+// tricky map
+var tm = {};
+
+tm[ERR_PAREN_UNBINDABLE] = 'paren.unbindable';
+tm[ERR_SHORTHAND_UNASSIGNED] = 'shorthand.unassigned';
+tm[ERR_NON_TAIL_REST] = 'non.tail.rest';
+tm[ERR_ARGUMENTS_OR_EVAL_ASSIGNED] = 'assig.to.arguments.or.eval';
+tm[ERR_YIELD_OR_SUPER] = 'param.has.yield.or.super';
+tm[ERR_UNEXPECTED_REST] = 'unexpected.rest';
+tm[ERR_EMPTY_LIST_MISSING_ARROW] = 'arrow.missing.after.empty.list';
+tm[ERR_NON_TAIL_EXPR] = 'seq.non.tail.expr';
+tm[ERR_INTERMEDIATE_ASYNC] = 'intermediate.async';
+tm[ERR_ASYNC_NEWLINE_BEFORE_PAREN] = 'async.newline.before.paren';
+tm[ERR_PIN_NOT_AN_EQ] = 'complex.assig.not.pattern';
+
+this.pt_flush =
+function() {
+  ASSERT.call(this, this.pt === ERR_NONE_YET,
+    'pending errors in pt');
+  this.st = this.at = ERR_NONE_YET;
+};
+
+this.at_flush =
+function() {
+  ASSERT.call(this, this.at === ERR_NONE_YET,
+    'pending errors in at');
+  this.st = this.pt = ERR_NONE_YET;
+};
+
+this.st_flush =
+function() {
+  this.at = this.pt = ERR_NONE_YET;
+  if (this.st === ERR_NONE_YET)
+    return;
+  ASSERT.call(this, HAS.call(tm, this.st),
+    'Unknown error value: ' + this.st);
+  var st = this.st, se = this.se, so = this.so;
+  this.st_reset();
+
+  var ep = {};
+  ep.tn = se;
+  if (errt_pin(st)) {
+    var pin = this.pin.s;
+    ep.c0 = pin.c0; ep.li0 = pin.li0; ep.col0 = pin.col0;
+  }
+
+  return this.err(tm[st], ep) ;
+};
+
+this.pt_teot =
+function(t,e,o) { this.pt = t; this.pe = e; this.po = o; };
+
+this.at_teot =
+function(t,e,o) { this.at = t; this.ae = e; this.ao = o; };
+
+this.st_teot =
+function(t,e,o) { this.st = t; this.se = e; this.so = o; };
+
+this.st_adjust_for_toAssig =
+function() {
+  if (this.st === ERR_ARGUMENTS_OR_EVAL_ASSIGNED)
+    this.st = ERR_ARGUMENTS_OR_EVAL_DEFAULT;
+  else
+    this.st = ERR_NONE_YET;
+};
+
+this.pin_at =
+function(c0,li0,col0) { return this.pinErr(this.pin.a,c0,li0,col0); };
+
+this.pin_ct =
+function(c0,li0,col0) { return this.pinErr(this.pin.c,c0,li0,col0); };
+
+this.pin_st =
+function(c0,li0,col0) { return this.pinErr(this.pin.s,c0,li0,col0); };
+
+this.pin_pt =
+function(c0,li0,col0) { return this.pinErr(this.pin.p,c0,li0,col0); };
+
+this.pinErr =
+function(pin,c0,li0,col0) { pin.c0=c0; pin.li0=li0; pin.col0=col0; };
+
+this.strict_esc_chk =
+function() {
+  if (this.ct === ERR_NONE_YET)
+    return;
+
+  ASSERT.call(this, this.ct === ERR_PIN_OCTAL_IN_STRICT,
+    'currently the only error for strict_esc_chk is ERR_PIN_OCTAL_IN_STRICT');
+
+  this.err('strict.octal');
+};
+
+},
+function(){
 this.expectT =
 function(lttype) {
   if (this.lttype === lttype) {
@@ -4020,6 +4705,45 @@ function(lttype) {
 function(){
 this.loc = function() { return { line: this.li, column: this.col }; };
 this.loc0 = function() { return  { line: this.li0, column: this.col0 }; };
+
+},
+function(){
+this.getName_cls =
+function(st) {
+  var fl = this.scope.flags, name = null;
+  this.scope.flags |= SF_STRICT;
+  if (st & ST_DECL)
+    name = this.parsePat();
+  else {
+    this.validate(this.ltval);
+    if (arorev(this.ltval))
+      this.arorevErr();
+    name = this.id();
+  }
+  this.scope.flags = fl;
+  return name;
+};
+
+this.getName_fn =
+function(st) {
+  switch (this.ltval) {
+  case 'yield':
+    if ((st & ST_GEN) || this.scope.insideStrict())
+      this.err('fnexpr.yield');
+    return this.id();
+
+  case 'await':
+    if ((st & ST_ASYNC) || this.scope.insideStrict())
+      this.err('fnexpr.await');
+    return this.id();
+  }
+
+  this.validate(this.ltval);
+  if (this.scope.insideStrict() && arorev(this.ltval))
+    this.arorevErr();
+
+  return this.id();
+};
 
 },
 function(){
@@ -4101,7 +4825,7 @@ function() {
   var c0 = this.c0, loc0 = this.loc0();
   var c = this.c, li = this.li, col = this.col;
 
-  var cb = {};
+  var cb = {li: li};
   this.suc(cb, 'bef');
   this.next();
   var label = null;
@@ -4116,7 +4840,7 @@ function() {
     this.err('break.not.in.breakable');
 
   label && this.spc(label, 'aft');
-  this.semi() || this.err('no.semi');
+  this.semi(label ? label.cb : cb, label ? 'aft' : 'break.aft') || this.err('no.semi');
 
   var ec = this.semiC || (label && label.end) || c;
   var eloc = this.semiLoc ||
@@ -4165,7 +4889,7 @@ function() {
   }
 
   label && this.spc(label, 'aft');
-  this.semi() || this.err('no.semi');
+  this.semi(label ? label.cb : cb, label ? 'aft' : 'cont.aft') || this.err('no.semi');
   var ec = this.semiC || (label && label.end) || c;
   var eloc = this.semiLoc ||
     (label && label.loc.end) ||
@@ -4181,6 +4905,440 @@ function() {
     '#y': 0,
     '#c': cb
   };
+};
+
+},
+function(){
+this.parseExprHead =
+function(ctx) {
+  var head = this.exprHead;
+  if (head !== null) this.exprHead = null;
+  else
+  switch (this.lttype) {
+  case TK_ID:
+    if (head = this.parseIDExprHead(ctx))
+      break;
+
+    // the head is not an id-statement,
+    // but it is not an id-expr either.
+    // this is actually the case for
+    // void, typeof, yield, delete, and await
+    return null;
+
+  case CH_LSQBRACKET:
+    head = this.parseArray(ctx);
+    break;
+
+  case CH_LPAREN:
+    head = this.parseParen(ctx);
+    break;
+
+  case CH_LCURLY:
+    head = this.parseObj(ctx);
+    break;
+
+  case CH_MULTI_QUOTE:
+  case CH_SINGLE_QUOTE:
+    head = this.parseString(this.lttype);
+    break;
+
+  case TK_NUM:
+    head = this.getLit_num();
+    break;
+
+  case CH_DIV:
+    head = this.parseRegExpLiteral();
+    break;
+
+  case CH_BACKTICK:
+    head = this.parseTemplate();
+    break;
+
+  case TK_UNBIN:
+    this.prec = PREC_UNARY;
+    return null;
+
+  default: return null;
+  }
+
+  return head;
+};
+
+},
+function(){
+this.parseIDExprHead =
+function(ctx) {
+  var name = this.ltval;
+  SWITCH:
+  switch (name.length) {
+  case 1:
+    return this.id();
+  case 2:
+    switch (name) {
+    case 'do': return this.parseDoWhile();
+    case 'if': return this.parseIf();
+    case 'in': this.ri();
+    }
+    break;
+
+  case 3:
+    switch (name) {
+    case 'new':
+      if (this.canBeStatement)
+        this.canBeStatement = false;
+      return this.parseNew();
+
+    case 'for': return this.parseFor();
+    case 'try': return this.parseTryStatement();
+    case 'let':
+      return this.parseVar(DT_LET,ctx);
+    case 'var':
+      this.resvchk();
+      return this.parseVar(DT_VAR,ctx);
+
+    case 'int':
+      this.resvchk();
+      this.v <= 5 && this.ri();
+    }
+    break;
+
+  case 4:
+    switch (name) {
+    case 'null': return this.getLit_null();
+    case 'void':
+      this.resvchk();
+      this.lttype = TK_UNARY; 
+      this.vdt = VDT_VOID;
+      return null;
+
+    case 'this': return this.parseThis();
+    case 'true': return this.getLit_true();
+    case 'case':
+      this.resvchk();
+      if (this.canBeStatement) {
+        this.canBeStatement = false ;
+        this.foundStatement = true;
+        return null;
+      }
+      this.ri();
+
+    case 'else': this.ri();
+    case 'with': return this.parseWith();
+
+    case 'enum': this.ri();
+
+    case 'byte': case 'char':
+    case 'goto': case 'long':
+      this.v <= 5 && this.ri();
+    }
+    break;
+
+  case 5:
+    switch (name) {
+    case 'super': return this.parseSuper();
+    case 'break': return this.parseBreak();
+    case 'catch': this.ri();
+    case 'class': return this.parseClass(CTX_NONE);
+    case 'const':
+      this.resvchk();
+      return this.parseVar(DT_CONST,CTX_NONE);
+    case 'throw': return this.parseThrow();
+    case 'while': return this.parseWhile();
+    case 'yield': 
+      if (this.scope.canYield()) {
+        this.resvchk();
+        if (this.scope.insideArgs())
+          this.err('yield.args');
+        if ( this.canBeStatement )
+          this.canBeStatement = false;
+        this.lttype = TK_YIELD;
+        return null;
+      }
+      if (this.scope.insideStrict())
+        this.ri();
+      break SWITCH;
+
+    case 'false': return this.getLit_false();
+    case 'await':
+      if (this.scope.canAwait()) {
+        this.resvchk();
+        if (this.scope.insideArgs())
+          this.err('await.args');
+        if (this.canBeStatement)
+          this.canBeStatement = false;
+        this.lttype = TK_UNARY;
+        this.vdt = VDT_AWAIT;
+        return null;
+      }
+      if (!this.isScript) {
+        this.resvchk();
+        this.err('await.in.strict');
+      }
+
+      // async(e=await)=>l ;
+      return this.suspys = this.id(); 
+
+    case 'async': return this.parseAsync(this.id(), ctx);
+
+    case 'final':
+    case 'float':
+    case 'short':
+      this.v <= 5 && this.ri();
+    }
+    break;
+
+  case 6:
+    switch (name) {
+    case 'static':
+      if (this.scope.insideStrict() || this.v <= 5)
+        this.ri();
+
+    case 'delete':
+    case 'typeof':
+      this.resvchk();
+      this.lttype = TK_UNARY; 
+      this.vdt = name === 'delete' ?
+        VDT_DELETE : VDT_VOID;
+      return null;
+
+    case 'export': return this.parseExport();
+    case 'import': return this.parseImport();
+    case 'return': return this.parseReturn();
+    case 'switch': return this.parseSwitch();
+    case 'public':
+      if (this.scope.insideStrict())
+        this.ri();
+    case 'double':
+    case 'native':
+    case 'throws':
+      this.v <= 5 && this.ri();
+    }
+    break;
+
+  case 7:
+    switch (name) {
+    case 'default':
+      this.resvchk();
+      if (this.canBeStatement) {
+        this.canBeStatement = false;
+        this.foundStatement = true;
+      }
+      return null;
+
+    case 'extends':
+    case 'finally':
+      this.ri();
+
+    case 'package':
+    case 'private':
+      if (this.scope.insideStrict())
+        this.ri();
+
+    case 'boolean':
+      this.v <= 5 && this.ri();
+    }
+
+  case 8:
+    switch (name) {
+    case 'function':
+      return this.parseFn(ctx&CTX_FOR, ST_NONE);
+    case 'debugger':
+      return this.parseDbg();
+    case 'continue':
+      return this.parseContinue();
+    case 'abstract':
+    case 'volatile':
+      this.v <= 5 && this.ri();
+    }
+    break;
+
+  case 9:
+    switch (name) {
+    case 'interface':
+    case 'protected':
+      if (this.scope.insideStrict())
+        this.ri() ;
+    case 'transient':
+      this.v <= 5 && this.ri();
+    }
+    break;
+
+  case 10:
+    switch (name) {
+    case 'instanceof':
+      this.ri();
+    case 'implements':
+      if (this.v <= 5 ||
+        this.scope.insideStrict())
+        this.ri();
+    }
+    break;
+
+  case 12:
+    this.v <= 5 &&
+    name === 'synchronized' &&
+    this.ri();
+  }
+
+  return this.id();
+};
+ 
+this.resvchk = function() {
+  if (this.ct !== ERR_NONE_YET) {
+    ASSERT.call(this.ct === ERR_PIN_UNICODE_IN_RESV,
+      'the error in this.ct is something other than ERR_PIN_UNICODE_IN_RESV: ' + this.ct);
+    this.err('resv.unicode');
+  }
+};
+
+
+},
+function(){
+this.getLit_true = function() {
+  this.resvchk();
+  var cb = {}; this.suc(cb, 'bef' );
+  var n = {
+    type: 'Literal', value: true,
+    start: this.c0, end: this.c,
+    loc: { start: this.loc0(), end: this.loc() },
+    raw: this.ltraw, '#c': cb
+  };
+  this.next();
+  return n;
+};
+
+this.getLit_false = function() {
+  this.resvchk();
+  var cb = {}; this.suc(cb, 'bef');
+  var n = {
+    type: 'Literal', value: false,
+    start: this.c0, end: this.c,
+    loc: { start: this.loc0(), end: this.loc() },
+    raw: this.ltraw, '#c': cb
+  };
+  this.next();
+  return n;
+};
+
+this.getLit_null = function() {
+  this.resvchk();
+  var cb = {}; this.suc(cb, 'bef');
+  var n = {
+    type: 'Literal', value: null,
+    start: this.c0, end: this.c,
+    loc: { start: this.loc0(), end: this.loc() },
+    raw: this.ltraw, '#c': cb
+  };
+  this.next();
+  return n;
+};
+
+this.getLit_num = function () {
+  var cb = {}; this.suc(cb, 'bef' );
+  var n = {
+    type: 'Literal', value: this.ltval,
+    start: this.c0, end: this.c,
+    loc: { start: this.loc0(), end: this.loc() },
+    raw: this.ltraw, '#c': cb
+  };
+  this.next();
+  return n;
+};
+
+},
+function(){
+this.parseNonSeq =
+function(prec, ctx) {
+  var head = this.exprHead;
+  if (head) this.exprHead = null;
+  else head = this.parseExprHead(ctx);
+
+  if (head)
+    head = this.parseTail(head);
+  else
+  switch (this.lttype) {
+  case TK_UNARY:
+  case TK_UNBIN:
+    head = this.parseUnary(ctx);
+    break;
+
+  case TK_AA_MM:
+    head = this.parseUpdate(null, ctx);
+    break;
+
+  case TK_YIELD:
+    if (prec !== PREC_NONE)
+      this.err('yield.as.an.id');
+    return this.parseYield(ctx);
+
+  default:
+    if (!(ctx&CTX_NULLABLE))
+      this.err('nexpr.null.head');
+    return null;
+  }
+
+  var hasOp = this.getOp(ctx);
+  if (this.lttype & TK_ANY_ASSIG) {
+    if (prec !== PREC_NONE)
+      this.err('assig.not.first');
+    return this.parseAssignment(head, ctx);
+  }
+
+  if (errt_pat(ctx)) {
+    // alternatively, head.type === NPAREN
+    if (this.parenScope) {
+      this.st_flush();
+      this.dissolveParen();
+    }
+    else if (hasOp || errt_noLeak(ctx))
+      this.st_flush();
+  }
+
+  while (hasOp) {
+    if (this.lttype === TK_AA_MM) {
+      if (!this.nl) {
+        head = this.parseUpdate(head, ctx);
+        hasOp = this.getOp(ctx);
+        continue;
+      }
+      else break;
+    }
+
+    if (this.lttype === CH_QUESTION) {
+      if (prec === PREC_NONE)
+        head = this.parseCond(head, ctx);
+      break;
+    }
+
+    var curPrec = this.prec;
+    if (prec === PREC_UNARY && curPrec === PREC_EX)
+      this.err('unary.before.an.exponentiation');
+    if (curPrec < prec)
+      break;
+    if (curPrec === prec && !isRA(prec))
+      break;
+
+    this.spc(core(head), 'aft');
+    var o = this.ltraw;
+    this.next();
+    var r = this.parseNonSeq(curPrec, ctx & CTX_FOR);
+    head = {
+      type: isLog(curPrec) ? 'LogicalExpression' : 'BinaryExpression',
+      operator: o,
+      start: head.start,
+      end: r.end,
+      loc: {
+        start: head.loc.start,
+        end: r.loc.end },
+      left: core(head),
+      right: core(r),
+      '#y': this.Y(head, r), '#c': {}
+    };
+
+    hasOp = this.getOp(ctx);
+  }
+
+  return head;
 };
 
 },
@@ -4238,7 +5396,7 @@ function(allowNull) {
         finishPrologue = false;
         this.applyDirective(head);
       }
-      this.semi() || this.err('no.semi');
+      this.semi(core(head)['#c'], 'aft') || this.err('no.semi');
       head = {
         type: 'ExpressionStatement',
         expression: core(head),
@@ -4254,6 +5412,113 @@ function(allowNull) {
 
   if (finishPrologue)
     this.scope.exitPrologue();
+
+  return head;
+};
+
+},
+function(){
+this.parseTail =
+function(head) {
+  if (head.type === 'Identifier')
+    this.scope.refDirect_m(_m(head.name), null);
+
+  switch (this.lttype) {
+  case CH_SINGLEDOT:
+  case CH_LSQBRACKET:
+  case CH_LPAREN:
+  case CH_BACKTICK:
+    this.st_flush();
+  }
+
+  var cb = null;
+  var inner = core(head), elem = null;
+
+  LOOP:
+  while (true) {
+    switch (this.lttype) {
+    case CH_SINGLEDOT:
+      this.spc(inner, 'aft');
+      this.next();
+      if (this.lttype !== TK_ID)
+        this.err('mem.name.not.id');
+      elem = this.mem_id();
+      if (elem === null)
+        this.err('mem.id.is.null');
+      head = inner = {
+        type: 'MemberExpression',
+        property: elem,
+        start: head.start,
+        end: elem.end,
+        object: inner,
+        loc: {
+          start: head.loc.start,
+          end: elem.loc.end },
+        computed: false,
+        '#y': this.Y(head), '#c': {}
+      };
+      continue;
+
+    case CH_LSQBRACKET:
+      this.spc(inner, 'aft');
+      this.next();
+      elem = this.parseExpr(PREC_NONE, CTX_NONE);
+      head = inner = {
+        type: 'MemberExpression',
+        property: core(elem),
+        start: head.start,
+        end: this.c,
+        object: inner,
+        loc: {
+          start: head.loc.start,
+          end: this.loc() },
+        computed: true,
+        '#y': this.Y(head)+this.Y(elem), '#c': {}
+      };
+      this.spc(core(elem), 'aft');
+      if (!this.expectT(CH_RSQBRACKET))
+        this.err('mem.unfinished');
+      continue;
+
+    case CH_LPAREN:
+      this.spc(inner, 'aft');
+      elem = this.parseArgList();
+      cb = {};
+      elem.length || this.suc(cb, 'inner');
+      head = inner = {
+        type: 'CallExpression',
+        callee: inner,
+        start: head.start,
+        end: this.c,
+        arguments: elem,
+        loc: {
+          start: head.loc.start,
+          end: this.loc() },
+        '#y': this.Y(head)+this.y, '#c': cb
+      };
+      if (!this.expectT(CH_RPAREN))
+        this.err('call.args.is.unfinished');
+      continue;
+
+    case CH_BACKTICK:
+      this.spc(inner, 'aft');
+      elem = this.parseTemplate();
+      head = inner = {
+        type: 'TaggedTemplateExpression',
+        quasi: elem,
+        start: head.start,
+        end: elem.end,
+        loc: {
+          start: head.loc.start,
+          end: elem.loc.end },
+        tag: inner,
+        '#y': this.Y(head)+this.Y(elem)
+      };
+      continue;
+
+    default: break LOOP;
+    }
+  }
 
   return head;
 };
@@ -4281,9 +5546,10 @@ this.parseThis = function() {
 },
 function(){
 this.semi =
-function() {
+function(cb, i) {
   var t = this.lttype;
   if (t === CH_SEMI) {
+    cb && this.suc(cb, i);
     this.semiC = this.c;
     this.semiLoc = this.loc();
     this.next();
@@ -4303,6 +5569,7 @@ function() {
     return true;
 
   case CH_RCURLY:
+    cb && this.suc(cb, i);
     this.semiC = this.c0;
     this.semiLoc = this.loc0();
     return true;
@@ -4531,7 +5798,7 @@ function(ctx) {
   ctx &= CTX_FOR;
   ctx |= CTX_TOP;
 
-  var e = [core(head)];
+  var e = [latestExpr = core(head)];
   var y = this.Y(head);
   do {
     latestExpr && this.spc(latestExpr, 'aft');
@@ -4540,8 +5807,6 @@ function(ctx) {
     y += this.Y(latestExpr);
     e.push(core(latestExpr));
   } while (this.lttype === CH_COMMA);
-
-  latestExpr && this.spc(latestExpr, 'aft');
 
   return {
     type: 'SequenceExpression',
@@ -5834,7 +7099,6 @@ function () {
   var stmt = null, y = 0, list = [];
   var last = null;
   while (stmt = this.parseStatement(true)) {
-    last && this.spc(last, 'aft');
     y += this.Y0(stmt);
     list.push(stmt);
     last = stmt;
