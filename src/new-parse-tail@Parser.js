@@ -64,7 +64,7 @@ function(head) {
       this.spc(inner, 'aft');
       elem = this.parseArgList();
       cb = {};
-      elem.length || this.suc(cb, 'inner');
+      this.suc(cb, 'inner'); // a(/* inner */); b(e, /* inner */)
       head = inner = {
         type: 'CallExpression',
         callee: inner,
@@ -92,7 +92,7 @@ function(head) {
           start: head.loc.start,
           end: elem.loc.end },
         tag: inner,
-        '#y': this.Y(head)+this.Y(elem)
+        '#c': {}, '#y': this.Y(head)+this.Y(elem)
       };
       continue;
 

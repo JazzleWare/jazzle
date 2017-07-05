@@ -4,6 +4,7 @@ function() {
   var c0 = this.c0, loc0 = this.loc0();
   var c = this.c, li = this.li, col = this.col;
 
+  var cb = {}; this.suc(cb, 'bef');
   this.next(); // 'new'
   if (this.lttype === CH_SINGLEDOT) {
     this.next();
@@ -23,6 +24,7 @@ function() {
   while (true)
   switch (this.lttype) {
   case CH_SINGLEDOT:
+    this.spc(inner, 'aft');
     this.next();
     if (this.lttype !== TK_ID)
       this.err('mem.name.not.id');
@@ -39,11 +41,12 @@ function() {
         start: head.loc.start,
         end: elem.loc.end },
       computed: false,
-      '#y': this.Y(head)
+      '#y': this.Y(head), '#c': {}
     };
     continue;
 
   case CH_LSQBRACKET:
+    this.spc(inner, 'aft');
     this.next();
     elem = this.parseExpr(PREC_NONE, CTX_NONE);
     head = inner = {
@@ -56,14 +59,17 @@ function() {
         start: head.loc.start,
         end: this.loc() },
       computed: true,
-      '#y': this.Y(head)+this.Y(elem)
+      '#y': this.Y(head)+this.Y(elem), '#c': {}
     };
+    this.spc(core(elem), 'aft');
     if (!this.expectT(CH_RSQBRACKET))
       this.err('mem.unfinished');
     continue;
 
   case CH_LPAREN:
+    this.spc(inner, 'aft');
     elem = this.parseArgList();
+    this.suc(cb, 'inner');
     head = inner = {
       type: 'NewExpression',
       callee: inner,
@@ -73,13 +79,14 @@ function() {
       loc: {
         start: loc0,
         end: this.loc() },
-      '#y': this.Y(head)+this.y
+      '#y': this.Y(head)+this.y, '#c': cb,
     };
     if (!this.expectT(CH_RPAREN))
       this.err('new.args.is.unfinished');
     break LOOP;
 
   case CH_BACKTICK:
+    this.spc(inner, 'aft');
     elem = this.parseTemplate();
     head = inner = {
       type: 'TaggedTemplateExpression',
@@ -90,7 +97,7 @@ function() {
         start: head.loc.start,
         end: elem.loc.end },
       tag: inner,
-      '#y': this.Y(head)+this.Y(elem)
+      '#c': {}, '#y': this.Y(head)+this.Y(elem)
     };
     continue;
 
@@ -104,7 +111,7 @@ function() {
         start: loc0,
         end: head.loc.end },
       arguments : [],
-      '#y': this.Y(head)
+      '#y': this.Y(head), '#c': cb
     };
     break LOOP;
   }

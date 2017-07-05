@@ -22,6 +22,8 @@ this.parseArgList = function () {
     }
 
     y += this.Y(elem);
+    this.spc(core(elem), 'aft');
+
     if (this.lttype === CH_COMMA) {
       c0 = this.c0;
       li0 = this.li0;
