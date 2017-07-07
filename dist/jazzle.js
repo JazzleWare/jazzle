@@ -5365,61 +5365,56 @@ function(ctx, st) {
 
   var cb = {}; this.suc(cb, 'bef');
 
-  if (this.lttype === TK_ID) {
-    firstMod = latestMod = this.id();
-    c0 = firstMod.start, loc0 = firstMod.loc.start;
+  MM:
+  while (this.lttype === TK_ID) {
+    if (latestMod) {
+      this.suc(cb, latestMod.name+'.aft');
+      latestMod = this.id();
+    }
+    else {
+      latestMod = this.id();
+      c0 = latestMod.start, loc0 = latestMod.loc.start;
+    }
+    switch (latestMod.name) {
+    case 'static':
+      st |= mpending;
+      if (!(st & ST_CLSMEM)) { nonMod = latestMod; break MM; }
+      if (st & ST_STATICMEM) { nonMod = latestMod; break MM; }
+      if (st & ST_ASYNC) { nonMod = latestMod; break MM; }
+      mpending = ST_STATICMEM;
+      lpm = latestMod.name;
+      break;
 
-    MM:
-    while (true) {
-      switch (latestMod.name) {
-      case 'static':
-        lpm.length && this.suc(cb, lpm+'.aft');
-        st |= mpending;
-        if (!(st & ST_CLSMEM)) { nonMod = latestMod; break MM; }
-        if (st & ST_STATICMEM) { nonMod = latestMod; break MM; }
-        if (st & ST_ASYNC) { nonMod = latestMod; break MM; }
-        mpending = ST_STATICMEM;
-        lpm = latestMod.name;
-        break;
+    case 'get':
+    case 'set':
+      st |= mpending;
+      nonMod = latestMod;
+      if (st & ST_ACCESSOR) break MM;
+      if (st & ST_ASYNC) break MM;
+      mpending = latestMod.name === 'get' ? ST_GETTER : ST_SETTER;
 
-      case 'get':
-      case 'set':
-        lpm.length && this.suc(cb, lpm+'.aft');
-        st |= mpending;
+      lpm = latestMod.name;
+      break;
+
+    case 'async':
+      st |= mpending;
+      if (this.nl) { // an async with a newline coming after it is not a modifier
+        nina = true;
         nonMod = latestMod;
-        if (st & ST_ACCESSOR) break MM;
-        if (st & ST_ASYNC) break MM;
-        mpending = latestMod.name === 'get' ? ST_GETTER : ST_SETTER;
-
-        lpm = latestMod.name;
-        break;
-
-      case 'async':
-        lpm.length && this.suc(cb, lpm+'.aft');
-        st |= mpending;
-        if (this.nl) { // an async with a newline coming after it is not a modifier
-          nina = true;
-          nonMod = latestMod;
-          break MM;
-        }
-        if (st & ST_ACCESSOR) { nonMod = latestMod; break MM }
-        if (st & ST_ASYNC) { nonMod = latestMod; break MM; }
-        mpending = ST_ASYNC;
-        lpm = latestMod.name;
-        break;
-
-      default:
-        lpm.length && this.suc(cb, lpm+'.aft');
-        st |= mpending;
-        nonMod = latestMod;
-        mpending = ST_NONE;
-        lpm = "";
         break MM;
       }
+      if (st & ST_ACCESSOR) { nonMod = latestMod; break MM }
+      if (st & ST_ASYNC) { nonMod = latestMod; break MM; }
+      mpending = ST_ASYNC;
+      lpm = latestMod.name;
+      break;
 
-      if (this.lttype === TK_ID)
-        latestMod = this.id();
-      else break;
+    default:
+      st |= mpending;
+      nonMod = latestMod;
+      mpending = ST_NONE;
+      lpm = "";
+      break MM;
     }
   }
 
