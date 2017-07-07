@@ -4,6 +4,7 @@ function(memName, ctx, st) {
     this.err('meth.paren');
 
   var val = null, computed = memName.type === PAREN, name = "";
+  var cb = this.cb;
 
   if (st & ST_CLSMEM) {
     if (st & ST_STATICMEM) {
@@ -21,6 +22,7 @@ function(memName, ctx, st) {
         this.err('class.ctor.is.dup',{tn:memName});
     }
 
+    this.spc(core(memName), 'aft');
     val = this.parseFn(CTX_NONE, st);
 
     this.inferName(core(memName), val, computed);
@@ -45,10 +47,11 @@ function(memName, ctx, st) {
       },
       value: val,
       'static': !!(st & ST_STATICMEM),
-      '#y': computed ? this.Y(memName) : 0
+      '#y': computed ? this.Y(memName) : 0, '#c': cb
     };
   }
 
+  this.spc(core(memName), 'aft');
   val = this.parseFn(CTX_NONE, st);
 
   this.inferName(core(memName), val, computed);
@@ -71,6 +74,6 @@ function(memName, ctx, st) {
     method: !(st & ST_ACCESSOR),
     shorthand: false,
     value: val,
-    '#y': computed ? this.Y(memName) : 0
+    '#y': computed ? this.Y(memName) : 0, '#c': cb
   };
 };

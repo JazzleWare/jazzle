@@ -7,6 +7,8 @@ this.parseObj = function(ctx) {
       st = ERR_NONE_YET, se = null, so = null,
       n = null;
 
+  var cb = {};
+  this.suc(cb , 'bef');
   if (ctx & CTX_PAT) {
     elctx |= ctx & CTX_PARPAT;
     elctx |= ctx & CTX_PARPAT_ERR;
@@ -26,6 +28,7 @@ this.parseObj = function(ctx) {
 
   var y = 0, ci = -1;
   do {
+    elem && this.spc(elem, 'aft');
     this.next();
     this.first__proto__ = first__proto__;
     elem = this.parseMem(elctx, ST_OBJMEM);
@@ -68,14 +71,16 @@ this.parseObj = function(ctx) {
     }
   } while (this.lttype === CH_COMMA);
 
+  this.suc(cb, 'inner');
   n = {
     properties: list,
     type: 'ObjectExpression',
     start: c0,
     end: this.c,
     loc: { start: loc0, end: this.loc() }, 
-    '#y': y,
-    '#ci': ci
+    '#c': cb,
+    '#ci': ci,
+    '#y': y
   };
 
   if (errt_perr(ctx,pt)) {

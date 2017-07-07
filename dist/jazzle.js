@@ -231,8 +231,7 @@ var Parser = function (src, o) {
   this.c = 0;
 
   this.luo = 0; // latest used offset
-  this.lpn = null; // latest parsed node
-  
+ 
   this.canBeStatement = false;
   this.foundStatement = false;
 
@@ -277,12 +276,11 @@ var Parser = function (src, o) {
     p: { c:-1, li:-1, col:-1 }
   };
 
+  this.cb = null;
   this.parenAsync = null; // so that things like (async)(a,b)=>12 will not get to parse.
-
   this.commentBuf = null;
   this.errorListener = this; // any object with an `onErr(errType "string", errParams {*})` will do
-  this.parenScope = null;
-
+  this.parenScope = null;  
 };
 ;
 function Ref(scope) {
@@ -4703,6 +4701,15 @@ function(lttype) {
 
 },
 function(){
+this.handleLet =
+function(letID) {
+  if (this.v<=5 || !this.scope.insideStrict())
+    return letID;
+  this.err('let.strict');
+};
+
+},
+function(){
 this.loc = function() { return { line: this.li, column: this.col }; };
 this.loc0 = function() { return  { line: this.li0, column: this.col0 }; };
 
@@ -5194,6 +5201,72 @@ this.resvchk = function() {
 
 },
 function(){
+this.parseParams =
+function(argLen) {
+  var
+    c0 = -1, li0 = -1, col0 = -1,
+    tail = true, elem = null,
+    list = [],
+    gnsa = false;
+
+  if (!this.expectT(CH_LPAREN))
+    this.err('fun.args.no.opening.paren');
+
+  while (list.length !== argLen) {
+    elem = this.parsePat();
+    if (elem) {
+      if (this.peekEq()) {
+        this.scope.enterUniqueArgs();
+        elem = this.parsePat_assig(elem);
+      }
+      if (!gnsa && elem.type !== 'Identifier') {
+        gnsa = true;
+        this.scope.firstNonSimple = elem;
+      }
+      list.push(elem);
+    }
+    else {
+      if (list.length !== 0) // trailing comma
+        this.v<7 &&
+        this.err('arg.non.tail.in.fun',
+          {c0:c0,li0:li0,col0:col0}); // what about when v < 7 and having (a, ...b)?
+
+      break;
+    }
+
+    if (this.lttype === CH_COMMA) {
+      c0 = this.c0;
+      li0 = this.li0;
+      col0 = this.col0;
+      this.spc(elem, 'aft');
+      this.next();
+    }
+    else { tail = false; break; }
+  }
+
+  if (argLen === ARGLEN_ANY) {
+    if (tail && this.lttype === TK_ELLIPSIS) {
+      this.scope.enterUniqueArgs();
+      elem = this.parsePat_rest();
+      list.push(elem);
+      if (!gnsa) {
+        gnsa = true;
+        this.scope.firstNonSimple = elem;
+      }
+    }
+  }
+  else if (list.length !== argLen)
+    this.err('fun.args.not.enough');
+
+  elem && this.spc(elem, 'aft');
+  if (!this.expectT(CH_RPAREN))
+    this.err('fun.args.no.end.paren');
+
+  return list;
+};
+
+},
+function(){
 this.getLit_true = function() {
   this.resvchk();
   var cb = {}; this.suc(cb, 'bef' );
@@ -5243,6 +5316,358 @@ this.getLit_num = function () {
   };
   this.next();
   return n;
+};
+
+},
+function(){
+this.parseMem =
+function(ctx, st) {
+  var firstMod = null, latestMod = null, nonMod = null;
+  var mpending = ST_NONE, nina = false; // name is newline async
+
+  var c0 = -1, loc0 = null;
+
+  var lpm = ""; // latest pending modifier, that is.
+
+  var cb = {}; this.suc(cb, 'bef');
+
+  if (this.lttype === TK_ID) {
+    firstMod = latestMod = this.id();
+    c0 = firstMod.start, loc0 = firstMod.loc.start;
+
+    MM:
+    while (true) {
+      switch (latestMod.name) {
+      case 'static':
+        lpm.length && this.suc(cb, lpm+'.aft');
+        st |= mpending;
+        if (!(st & ST_CLSMEM)) { nonMod = latestMod; break MM; }
+        if (st & ST_STATICMEM) { nonMod = latestMod; break MM; }
+        if (st & ST_ASYNC) { nonMod = latestMod; break MM; }
+        mpending = ST_STATICMEM;
+        lpm = latestMod.name;
+        break;
+
+      case 'get':
+      case 'set':
+        lpm.length && this.suc(cb, lpm+'.aft');
+        st |= mpending;
+        nonMod = latestMod;
+        if (st & ST_ACCESSOR) break MM;
+        if (st & ST_ASYNC) break MM;
+        mpending = latestMod.name === 'get' ? ST_GETTER : ST_SETTER;
+
+        lpm = latestMod.name;
+        break;
+
+      case 'async':
+        lpm.length && this.suc(cb, lpm+'.aft');
+        st |= mpending;
+        if (this.nl) { // an async with a newline coming after it is not a modifier
+          nina = true;
+          nonMod = latestMod;
+          break MM;
+        }
+        if (st & ST_ACCESSOR) { nonMod = latestMod; break MM }
+        if (st & ST_ASYNC) { nonMod = latestMod; break MM; }
+        mpending = ST_ASYNC;
+        lpm = latestMod.name;
+        break;
+
+      default:
+        lpm.length && this.suc(cb, lpm+'.aft');
+        st |= mpending;
+        nonMod = latestMod;
+        mpending = ST_NONE;
+        lpm = "";
+        break MM;
+      }
+
+      if (this.lttype === TK_ID)
+        latestMod = this.id();
+      else break;
+    }
+  }
+
+  if (this.peekMul()) {
+    this.v<=5 && this.err('ver.mem.gen');
+    if (nonMod) this.err('gen.has.non.modifier');
+    lpm.length && this.suc(cb, lpm+'.aft');
+    st |= mpending;
+    if (st & ST_ASYNC)
+      this.ga();
+    st |= ST_GEN
+    if (latestMod)
+      latestMod = null;
+    else { c0 = this.c0, loc0 = this.loc0(); }
+    mpending = ST_NONE;
+    lpm = '*';
+    this.next();
+  }
+
+  var memName = null, nameVal = "";
+  if (mpending === ST_NONE && latestMod) { // if the most recent token is a "real" (i.e., non-get/set) non-modifier ID
+    memName = latestMod;
+    nameVal = memName.name;
+  }
+  else {
+    switch (this.lttype) {
+    case TK_ID:
+      // if the current token is an id, either the most recent token is a '*' (in which case latestMod is null),
+      // or the current token is the first one we have reached since entering parseMem (in which case latestMod is, once again, null).
+      // if mpending is not ST_NONE, we will not have reached the else we are in now; the test below, then, is there for mere safety, as to err is human
+      if (latestMod !== null)
+        this.err('pending.id');
+
+      lpm.length && this.suc(cb, lpm+'.aft');
+      st |= mpending;
+      nameVal = this.ltval;
+      memName = this.mem_id();
+      break;
+
+    case CH_LSQBRACKET:
+      lpm.length && this.suc(cb, lpm+'.aft');
+      st |= mpending;
+      memName = this.mem_expr();
+      break;
+
+    case TK_NUM:
+      lpm.length && this.suc(cb, lpm+'.aft');
+      st |= mpending;
+      memName = this.getLit_num();
+      break;
+
+    case CH_MULTI_QUOTE:
+    case CH_SINGLE_QUOTE:
+      lpm.length && this.suc(cb, lpm+'.aft');
+      st |= mpending;
+      memName = this.parseString(this.lttype);
+      nameVal = memName.value;
+      break;
+
+    default:
+      if (latestMod) {
+        memName = latestMod;
+        // unnecessary because it is either static, async, set, or get
+        nameVal = memName.name;
+      }
+    }
+  }
+
+  if (memName === null) {
+    if (st & ST_GEN)
+      this.err('mem.gen.has.no.name');
+    ASSERT.call(this, this.commentBuf === null, 'comments occupied');
+    this.commentBuf = cb['bef']; // restore the comment buffer
+    return null;
+  }
+
+  if (st & ST_CLSMEM)
+    switch (nameVal) {
+    case 'prototype':
+      ctx |= CTX_HASPROTOTYPE;
+      break;
+
+    case 'constructor':
+      st |= ST_CTOR;
+      break;
+    }
+  else if (this.v>5 && nameVal === '__proto__')
+    ctx |= CTX_HASPROTO;
+
+  
+  this.cb = cb;
+  if (this.lttype === CH_LPAREN) {
+    if (this.v <= 5) this.err('ver.mem.meth');
+    var mem = this.parseMeth(memName, ctx, st);
+    if (c0 !== -1 && c0 !== mem.start) {
+      mem.start = c0;
+      mem.loc.start = loc0;
+    }
+    return mem;
+  }
+
+  if (st & (ST_STATICMEM|ST_GEN|ST_CLSMEM|ST_ASYNC|ST_ACCESSOR))
+    this.err('meth.paren');
+
+  return this.parseNonMethObjMem(memName, ctx);
+};
+
+this.parseNonMethObjMem =
+function(memName, ctx) {
+  var hasProto = ctx & CTX_HASPROTO, firstProto = this.first__proto__;
+  var cb = this.cb, val = null;
+  ctx &= ~CTX_HASPROTO; // unnecessary (?)
+
+  switch (this.lttype) {
+  case CH_COLON:
+    if (hasProto && firstProto)
+      this.err('obj.proto.has.dup',{tn:memName});
+
+    this.spc(core(memName), 'aft');
+    this.next();
+    val = this.parseNonSeq(PREC_NONE, ctx);
+    if (errt_track(ctx) && val.type === PAREN_NODE) {
+      // if there is no error after the parseNonSeq above
+      if (errt_ptrack(ctx) && this.pt === ERR_NONE_YET) {
+        this.pt = ERR_PAREN_UNBINDABLE;
+        this.pe = val;
+      }
+      if (errt_atrack(ctx) && this.at === ERR_NONE_YET &&
+        !this.ensureSAT(val.expr)) {
+        this.at = ERR_PAREN_UNBINDABLE;
+        this.ae = val;
+      }
+    }
+
+    var computed = memName.type === PAREN ;
+    this.inferName(core(memName), core(val), computed );
+
+    val = {
+      type: 'Property',
+      start: memName.start,
+      key: core(memName),
+      end: val.end,
+      kind: 'init',
+      loc: { start: memName.loc.start, end: val.loc.end },
+      computed: computed,
+      method: false,
+      shorthand: false,
+      value: core(val),
+      '#y': computed ? this.Y(core(memName)) : 0, '#c': cb
+    };
+
+    if (hasProto)
+      this.first__proto__ = val;
+
+    return val;
+
+  case TK_SIMP_ASSIG:
+    if (this.v <= 5)
+      this.err('mem.short.assig');
+    if (memName.type !== 'Identifier')
+      this.err('obj.prop.assig.not.id',{tn:memName});
+    if (this.ltraw !== '=')
+      this.err('obj.prop.assig.not.assig');
+    if (errt_noLeak(ctx)) // if the owner is not leaky
+      this.err('obj.prop.assig.not.allowed');
+
+    this.validate(memName.name);
+    this.scope.refDirect_m(_m(memName.name), null);
+    val = this.parseAssignment(memName, ctx);
+    if (errt_strack(ctx) && this.st === ERR_NONE_YET) {
+      this.st = ERR_SHORTHAND_UNASSIGNED;
+      this.se = val;
+    }
+
+    break;
+
+  default:
+    if (this.v <= 5)
+      this.err('mem.short');
+    if (memName.type !== 'Identifier')
+      this.err('obj.prop.assig.not.id',{tn:memName});
+    this.validate(memName.name);
+    this.scope.refDirect_m(_m(memName.name), null);
+    val = memName;
+    break;
+  }
+
+  return {
+    type: 'Property',
+    key: memName,
+    start: val.start,
+    end: val.end,
+    loc: val.loc,
+    kind: 'init',
+    shorthand: true,
+    method: false,
+    value: val,
+    computed: false,
+    '#y': 0, '#c': cb
+  };
+};
+
+},
+function(){
+this.parseMeth =
+function(memName, ctx, st) {
+  if (this.lttype !== CH_LPAREN)
+    this.err('meth.paren');
+
+  var val = null, computed = memName.type === PAREN, name = "";
+  var cb = this.cb;
+
+  if (st & ST_CLSMEM) {
+    if (st & ST_STATICMEM) {
+      if (ctx & CTX_HASPROTOTYPE)
+        this.err('cls.prototype.is.static.mem',
+          {tn:memName});
+      if (st & ST_CTOR)
+        st &= ~ST_CTOR;
+    }
+    if (st & ST_CTOR) {
+      if (st !== (ST_CTOR|ST_CLSMEM))
+        this.err('class.ctor.is.special.mem',
+          {tn:memName});
+      if (ctx & CTX_CTOR_NOT_ALLOWED)
+        this.err('class.ctor.is.dup',{tn:memName});
+    }
+
+    this.spc(core(memName), 'aft');
+    val = this.parseFn(CTX_NONE, st);
+
+    this.inferName(core(memName), val, computed);
+
+    return {
+      type: 'MethodDefinition',
+      key: core(memName),
+      start: memName.start,
+      end: val.end,
+      kind:
+        (st & ST_CTOR) ?
+          'constructor' :
+          (st & ST_GETTER) ?
+            'get' :
+            (st & ST_SETTER) ?
+              'set' :
+              'method',
+      computed: computed,
+      loc: {
+        start: memName.loc.start,
+        end: val.loc.end
+      },
+      value: val,
+      'static': !!(st & ST_STATICMEM),
+      '#y': computed ? this.Y(memName) : 0, '#c': cb
+    };
+  }
+
+  this.spc(core(memName), 'aft');
+  val = this.parseFn(CTX_NONE, st);
+
+  this.inferName(core(memName), val, computed);
+  return {
+    type: 'Property',
+    key: core(memName),
+    start: memName.start,
+    end: val.end,
+    kind:
+      !(st & ST_ACCESSOR) ?
+        'init' :
+        (st & ST_SETTER) ?
+          'set' :
+          'get',
+    computed: memName.type === PAREN,
+    loc: {
+      start: memName.loc.start,
+      end : val.loc.end
+    },
+    method: !(st & ST_ACCESSOR),
+    shorthand: false,
+    value: val,
+    '#y': computed ? this.Y(memName) : 0, '#c': cb
+  };
 };
 
 },
@@ -5648,6 +6073,147 @@ function(head) {
 
 },
 function(){
+this.parseTemplate =
+function() {
+  this.v<=5 && this.err('ver.temp');
+
+  // c is on the char after `
+  var c0 = this.c0, loc0 = this.loc0();
+  var c = this.c, li = this.li, col = this.col;
+  var str = [], ex = [];
+  var v = "";
+  var luo = c;
+
+  var s = this.src, l = s.length;
+
+  var c0s = c, loc0s = this.loc();
+
+  var iscr = false;
+  var y = 0;
+
+  var cb = {}; this.suc(cb, 'bef');
+  LOOP:
+  while (c<l)
+  switch (s.charCodeAt(c)) {
+  case CH_$:
+    if (c+1<l &&
+      s.charCodeAt(c+1) === CH_LCURLY) {
+      if (luo<c)
+        v += s.substring(luo,c);
+
+      this.setsimpoff(c+2);
+      str.push({
+        type: 'TemplateElement', 
+        start: c0s,
+        loc: { 
+          start: loc0s, 
+          end: {
+            line: this.li, 
+            column: this.col-2 
+          }
+        },        
+        end: c,
+        value: {
+          raw: s.slice(c0s, c).replace(/\r\n|\r/g,'\n'), 
+          cooked: v
+        }, 
+        tail: false,
+      });
+
+      this.next(); // prepare the next token
+      var e = this.parseExpr(CTX_TOP);
+      if (e === null)
+        this.err('templ.expr.is.a.null');
+      ex.push(core(e));
+      y += this.Y(e);
+      if (this.lttype !== CH_RCURLY)
+        this.err('templ.expr.is.unfinished');
+
+      this.spc(core(e), 'aft');
+      c = luo = this.c;
+      v = "";
+      c0s = c;
+      loc0s = this.loc();
+    }
+    else
+      c++;
+ 
+    continue;
+
+  case CH_CARRIAGE_RETURN:
+    iscr = true;
+  case CH_LINE_FEED:
+  case 0x2028: case 0x02029:
+    if (luo<c)
+      v += s.substring(luo,c);
+    if (iscr) {
+      if (c+1<l && s.charCodeAt(c+1) === CH_LINE_FEED)
+        c++;
+      iscr = false;
+    }
+    v += s.charAt(c);
+    c++;
+    this.setzoff(c);
+    luo = c;
+    continue;
+
+  case CH_BACK_SLASH:
+    if (luo<c) v += s.substring(luo,c);
+
+    this.setsimpoff(c);
+    v += this.readEsc(true);
+    c = luo = this.c;
+    continue;
+
+  case CH_BACKTICK:
+    break LOOP;
+
+  default: c++;
+  }
+
+  if (c >= l || s.charCodeAt(c) !== CH_BACKTICK)
+    this.err('template.literal.is.unfinished');
+
+  if (luo<c)
+    v += s.substring(luo,c);
+
+  c++;
+  this.setsimpoff(c); // '`'
+  str.push({
+    type: 'TemplateElement',
+    start: c0s,
+    loc: {
+      start: loc0s,
+      end: {
+        line: this.li,
+        column: this.col-1
+      }
+    },
+    end: c-1,
+    value: {
+      raw: s.slice(c0s,c-1).replace(/\r\n|\r/g,'\n'), 
+      cooked: v 
+    },
+    tail: true
+  });
+
+  var n = {
+    type: 'TemplateLiteral',
+    start: c0,
+    quasis: str,
+    end: c,
+    expressions: ex,
+    loc: { start: loc0, end : this.loc() },
+    '#y': y, '#c': cb
+  };
+
+  this.next();
+
+  return n;
+};
+
+},
+function(){
 this.parseThis = function() {
   this.resvchk();
   var cb = {}; this.suc(cb, 'bef' );
@@ -5665,6 +6231,134 @@ this.parseThis = function() {
 };
 
 
+
+},
+function(){
+this.parseVar =
+function(dt, ctx) {
+  if (!this.testStmt()) {
+    if (dt === DT_LET)
+      return this.handleLet(this.id());
+    this.err('not.stmt');
+  }
+
+  var kind = this.ltval;
+  var letID = dt === DT_LET ? this.id() : null;
+  var c0 = letID ? letID.start : this.c0;
+  var loc0 = letID ? letID.loc.start : this.loc0();
+  var vpat = null;
+
+  var y = 0;
+
+  var cb = null;
+  if (letID) 
+    cb = letID['#c'];
+  else { 
+    cb = {}; this.suc(cb, 'bef');
+    this.next();
+  }
+
+  ctx &= CTX_FOR;
+
+  if (!letID || !ctx || !this.peekID('in')) {
+    this.setPatCheck(dt !== DT_VAR);
+    this.declMode = dt|this.cutEx();
+    vpat = this.parsePat();
+
+    if (vpat === null)
+    switch (this.vpatErr) {
+    case PE_NO_NONVAR:
+      this.err('lexical.decl.not.in.block',
+        {c0:c0,loc0:loc0,extra:kind});
+      break;
+
+    case PE_NO_LABEL:
+      this.err('decl.label',{c0:c0,loc0:loc0});
+      break;
+    }
+  }
+
+  if (vpat === null) {
+    if (letID) {
+      this.canBeStatement = true; // restore it to the value it had when parseVar was initially called
+      return this.handleLet(letID);
+    }
+    this.err('var.has.no.declarators');
+  }
+
+  // this.unsatisfiedLabel is intact -- there has been no parsing, only lexing actually
+  this.fixupLabels(false);
+
+  var isConst = dt === DT_CONST, mi = false;
+
+  var list = [], last = null;
+  while (true) {
+    var init = null;
+    if (this.peekEq()) {
+      this.spc(vpat, 'aft');
+      this.next();
+      init = this.parseNonSeq(PREC_NONE, ctx|CTX_TOP);
+    }
+    else if (isConst || vpat.type !== 'Identifier') {
+      !(ctx & CTX_FOR) && this.err('const.has.no.init');
+      list.length && this.err('missing.init');
+      mi = true;
+    }
+    var ioh = init || vpat;
+
+    var y0 = this.Y(vpat)+(init ? this.Y(init) : 0);
+    y += y0;
+
+    init && this.inferName(vpat, core(init), false);
+    list.push(last = {
+      type: 'VariableDeclarator',
+      id: vpat,
+      start: vpat.start,
+      end: ioh.end,
+      loc: {
+        start: vpat.loc.start,
+        end: ioh.loc.end 
+      },
+      init: init && core(init),
+      '#y': y0, '#c': {}
+    });
+
+    if (mi || this.lttype !== CH_COMMA)
+      break;
+
+    this.spc(last, 'aft');
+    this.next();
+
+    vpat = this.parsePat();
+    vpat || this.err('var.has.an.empty.decltor');
+  }
+
+  var lastItem = list[list.length-1];
+  var ec = -1, eloc = null;
+
+  if (!(ctx & CTX_FOR)) {
+    this.semi(last['#c'], 'aft') || this.err('no.semi');
+    ec = this.semiC || lastItem.end;
+    eloc = this.semiLoc || lastItem.loc.end;
+  } else {
+    ec = lastItem.end;
+    eloc = lastItem.loc.end;
+  }
+
+  this.missingInit = mi;
+
+  this.foundStatement = true;
+  return {
+    type: 'VariableDeclaration',
+    kind: kind,
+    start: c0,
+    declarations: list,
+    end: ec,
+    loc: { start: loc0, end: eloc },
+    '#c': cb,
+    '#y': y,
+  };
+};
 
 },
 function(){
@@ -5866,6 +6560,49 @@ function(offset) {
 
 },
 function(){
+this.parseUpdate = function(arg, ctx) {
+  var c = 0, loc = null, u = this.ltraw;
+  if (arg === null) {
+    c = this.c0;
+    loc = this.loc0();
+    var uc = {}; this.suc(uc, 'bef');
+    this.next() ;
+    arg = this.parseExprHead(ctx & CTX_FOR);
+    if (arg === null)
+      this.err('unexpected.lookahead');
+
+    arg = this.parseTail(arg);
+    if (!this.ensureSAT(core(arg)))
+      this.err('incdec.pre.not.simple.assig',{tn:core(arg)});
+
+    return {
+      type: 'UpdateExpression', operator: u,
+      start: c, end: arg.end, argument: core(arg),
+      loc: { start: loc, end: arg.loc.end }, '#c': uc,
+      prefix: true, '#y': this.Y(arg)
+    };
+  }
+
+  this.spc(core(arg), 'aft');
+  if (!this.ensureSAT(core(arg)))
+    this.err('incdec.post.not.simple.assig',{tn:core(arg)});
+
+  c  = this.c;
+  loc = {
+    start: arg.loc.start,
+    end: { line: this.li, column: this.col }
+  };
+  this.next() ;
+  return {
+    type: 'UpdateExpression', operator: u,
+    start: arg.start, end: c,
+    argument: core(arg), loc: loc, '#c': {},
+    prefix: false, '#y': this.Y(arg)
+  };
+};
+
+},
+function(){
 this.parseArgList = function () {
   var c0 = -1, li0 = -1, col0 = -1, parenAsync = this.parenAsync,
       elem = null, list = [];
@@ -5906,6 +6643,356 @@ this.parseArgList = function () {
   this.yc= y;
 
   return list ;
+};
+
+},
+function(){
+this.parseAssignment = function(head, ctx) {
+  var o = this.ltraw;
+  if (o === '=>')
+    return this.parseArrow(head, ctx&CTX_FOR);
+
+  if (head.type === PAREN_NODE) {
+    if (!this.ensureSAT(head.expr)) {
+      this.at = ERR_PAREN_UNBINDABLE;
+      this.ae = this.ao = head;
+      this.throwTricky('a', this.at, this.ae);
+    }
+    else
+      this.dissolveParen();
+  }
+
+  this.spc(core(head), 'aft');
+  var right = null;
+  if (o === '=') {
+    // if this assignment is a pattern
+    if (ctx & CTX_PARPAT)
+      this.st_adjust_for_toAssig();
+
+    var st = ERR_NONE_YET, se = null, so = null,
+        pt = ERR_NONE_YET, pe = null, po = null;
+
+    // S- and P-errors are not modified during toAssig; A-errors might.
+    this.toAssig(core(head), ctx);
+
+    // flush any remaining simple errors, now that there are no more assignment errors;
+    // when toAssig completes, it might have set this.st with an assig-to-arguments-or-eval;
+    // this will get thrown immediately if the assignment is non-leaking, i.e., 
+    // won't tolerate simple errors
+    if ((ctx & CTX_NO_SIMPLE_ERR) && this.st !== ERR_NONE_YET)
+      this.throwTricky('s', this.st);
+
+    var sc0 = -1, sli0 = -1, scol0 = -1,
+        pc0 = -1, pli0 = -1, pcol0 = -1;
+
+    // save all the errors on the left hand side, to restore them after right is parsed
+    if ((ctx & CTX_PARPAT) && this.st !== ERR_NONE_YET) {
+      st = this.st; se = this.se; so = this.so;
+      if (st & ERR_PIN)
+        sc0 = this.pin.s.c0, sli0 = this.pin.s.li0, scol0 = this.pin.s.col0;
+    }
+    if ((ctx & CTX_PARAM) && this.pt !== ERR_NONE_YET) {
+      pt = this.pt; pe = this.pe; po = this.po;
+      if (pt & ERR_PIN)
+        pc0 = this.pin.p.c0, pli0 = this.pin.p.li0, pcol0 = this.pin.p.col0;
+    }
+
+    // toAssig was successful -- clear
+    this.at_flush();
+    if (errt_top(ctx))
+      ctx &= ~CTX_TOP; // a top assig is not a pattern
+
+    this.next(); // '='
+    right = this.parseNonSeq(PREC_NONE,
+      (ctx & CTX_FOR)|CTX_TOP);
+
+    // restore the state of errors in the left hand side, if there are any
+    if (pt !== ERR_NONE_YET) {
+      this.pt = pt; this.pe = pe; this.po = po;
+      errt_pin(pt) && this.pin_pt(pc0,pli0,pcol0);
+    }
+    if (st !== ERR_NONE_YET) {
+      this.st = st; this.se = se; this.so = so;
+      errt_pin(st) && this.pin_st(sc0,sli0,scol0);
+    }
+  }
+  else {
+    // TODO: further scrutiny, like checking for this.at, is necessary (?)
+    if (!this.ensureSAT(core(head)))
+      this.err('assig.not.simple',{tn:core(head)});
+
+    if (errt_top(ctx))
+      ctx &= ~CTX_TOP;
+
+    var c0 = -1, li0 = -1, col0 = -1;
+
+    // if this is an potential assignment pattern, pin the location of the non-'='
+    if (ctx & CTX_PARPAT) {
+      c0 = this.c0; li0 = this.li0; col0 = this.col0;
+    }
+    this.next(); // <:o:>=
+    right = this.parseNonSeq(PREC_NONE, (ctx & CTX_FOR)|CTX_TOP);
+
+    // record an actual error if we have parsed a potential param or assignment pattern
+    if (errt_param(ctx)) {
+      this.pin_pt(c0,li0,col0);
+      this.pt = ERR_PIN_NOT_AN_EQ;
+    }
+    if (errt_pat(ctx)) {
+      this.pin_at(c0,li0,col0);
+      this.at = ERR_PIN_NOT_AN_EQ;
+    }
+  }
+ 
+  this.inferName(head, core(right), false);
+  return {
+    type: 'AssignmentExpression',
+    operator: o,
+    start: head.start,
+    end: right.end,
+    left: head,
+    right: core(right),
+    loc: {
+      start: head.loc.start,
+      end: right.loc.end
+    },
+    '#y': this.Y(head)+this.Y(right), '#c': {}
+  };
+};
+
+},
+function(){
+this.parseObj = function(ctx) {
+  var c0 = this.c0, loc0 = this.loc0(),
+      elem = null, list = [], first__proto__ = null,
+      elctx = CTX_NONE,
+      pt = ERR_NONE_YET, pe = null, po = null,
+      at = ERR_NONE_YET, ae = null, ao = null,
+      st = ERR_NONE_YET, se = null, so = null,
+      n = null;
+
+  var cb = {};
+  this.suc(cb , 'bef');
+  if (ctx & CTX_PAT) {
+    elctx |= ctx & CTX_PARPAT;
+    elctx |= ctx & CTX_PARPAT_ERR;
+  }
+  else 
+    elctx |= CTX_TOP;
+
+  if (errt_track(ctx)) {
+    errt_ptrack(ctx) && this.pt_reset();
+    errt_atrack(ctx) && this.at_reset();
+    errt_strack(ctx) && this.st_reset();
+  }
+
+  var pc0 = -1, pli0 = -1, pcol0 = -1;
+  var ac0 = -1, ali0 = -1, acol0 = -1;
+  var sc0 = -1, sli0 = -1, scol0 = -1;
+
+  var y = 0, ci = -1;
+  do {
+    elem && this.spc(elem, 'aft');
+    this.next();
+    this.first__proto__ = first__proto__;
+    elem = this.parseMem(elctx, ST_OBJMEM);
+
+    if (elem === null)
+      break;
+
+    y += this.Y(elem);
+
+    if (!first__proto__ && this.first__proto__)
+      first__proto__ = this.first__proto__;
+
+    list.push(core(elem));
+    if (ci === -1 && core(elem).computed)
+      ci = list.length - 1;
+
+    if (!errt_track(elctx))
+      continue;
+
+    if (errt_ptrack(elctx) && this.pt_override(pt)) {
+      pt = this.pt, pe = this.pe, po = elem;
+      if (errt_pin(pt))
+        pc0 = this.pin.p.c0, pli0 = this.pin.p.li0, pcol0 = this.pin.p.col0;
+      if (errt_psyn(pt))
+        elctx |= CTX_HAS_A_PARAM_ERR;
+    }
+    if (errt_atrack(elctx) && this.at_override(at)) {
+      at = this.at; ae = this.ae; ao = elem;
+      if (errt_pin(at))
+        ac0 = this.pin.a.c0, ali0 = this.pin.a.li0, acol0 = this.pin.a.col0;
+      if (errt_asyn(at))
+        elctx |= CTX_HAS_AN_ASSIG_ERR;
+    }
+    if (errt_strack(elctx) && this.st_override(st)) {
+      st = this.st; se = this.se; so = elem;
+      if (errt_pin(st))
+        sc0 = this.pin.s.c0, sli0 = this.pin.s.li0, scol0 = this.pin.s.col0;
+      if (errt_ssyn(st))
+        elctx |= CTX_HAS_A_SIMPLE_ERR;
+    }
+  } while (this.lttype === CH_COMMA);
+
+  this.suc(cb, 'inner');
+  n = {
+    properties: list,
+    type: 'ObjectExpression',
+    start: c0,
+    end: this.c,
+    loc: { start: loc0, end: this.loc() }, 
+    '#c': cb,
+    '#ci': ci,
+    '#y': y
+  };
+
+  if (errt_perr(ctx,pt)) {
+    this.pt_teot(pt,pe,po);
+    errt_pin(pt) && this.pin_pt(pc0,pli0,pcol0);
+  }
+  if (errt_aerr(ctx,at)) {
+    this.at_teot(at,ae,ao);
+    errt_pin(at) && this.pin_at(ac0,ali0,acol0);
+  }
+  if (errt_serr(ctx,st)) {
+    this.st_teot(st,se,so);
+    errt_pin(st) && this.pin_st(sc0,sli0,scol0);
+  }
+
+  if (!this.expectT(CH_RCURLY))
+    this.err('obj.unfinished');
+
+  return n;
+};
+
+
+},
+function(){
+this.parsePat_assig = 
+function (head) {
+  if (this.v <= 5)
+    this.err('ver.assig');
+  this.spc(head, 'aft');
+  this.next() ;
+  var e = this.parseNonSeq(PREC_NONE, CTX_TOP);
+  this.inferName(head, core(e), false);
+  return {
+    type: 'AssignmentPattern',
+    start: head.start,
+    left: head,
+    end: e.end,
+    right: core(e),
+    loc: {
+      start: head.loc.start,
+      end: e.loc.end },
+    '#y': this.Y(head,e), '#c': {}
+  };
+};
+
+},
+function(){
+this.parsePat_obj =
+function() {
+  this.v<=5 && this.err('ver.patobj');
+
+  var isID = false, c0 = this.c0, loc0 = this.loc0();
+  var name = null, val = null, list = [], isShort = false;
+
+  if (this.scope.insideArgs())
+    this.scope.enterUniqueArgs();
+
+  var cb = {}, ci = -1, y = 0;
+
+  this.suc(cb, 'bef');
+  var elem = null;
+
+  LOOP:
+  do {
+    elem && this.spc(elem, 'aft');
+    this.next();
+    var y0 = 0;
+    switch (this.lttype) {
+    case TK_ID:
+      isID = true;
+      name = this.id();
+      break;
+
+    case CH_LSQBRACKET:
+      name = this.mem_expr();
+      y0 += this.Y(name);
+      break;
+
+    case TK_NUM:
+      name = this.getLit_num();
+      break;
+
+    case CH_SINGLE_QUOTE:
+    case CH_MULTI_QUOTE:
+      name = this.parseString(this.lttype);
+      break;
+
+    default: break LOOP;
+    }
+
+    isShort = isID;
+    if (isID) {
+      if (this.expectT(CH_COLON)) {
+        isShort = false;
+        val = this.parsePat();
+      }
+      else {
+        this.validate(name.name);
+        val = name;
+      }
+    }
+    else {
+      if (!this.expectT(CH_COLON))
+        this.err('obj.pattern.no.:');
+      val = this.parsePat();
+    }
+
+    if (val === null)
+      this.err('obj.prop.is.null');
+
+    if (this.peekEq())
+      val = this.parsePat_assig(val);
+
+    y0 += this.Y(val);
+    y += y0;
+
+    list.push(elem = {
+      type: 'Property',
+      start: name.start,
+      key: core(name),
+      end: val.end,
+      loc: {
+        start: name.loc.start,
+        end: val.loc.end },
+      kind: 'init',
+      computed: name.type === PAREN,
+      value: val,
+      method: false, 
+      shorthand: isShort,
+      '#y': y0, '#c': {}
+    });
+    if (ci === -1 && name.type === PAREN)
+      ci = list.length - 1;
+  } while (this.lttype === CH_COMMA);
+
+  var n = {
+    properties: list,
+    type: 'ObjectPattern',
+    loc: { start: loc0, end: this.loc() },
+    start: c0,
+    end: this.c,
+    '#y': y, '#ci': ci, '#c': {}
+  };
+
+  if (!this.expectT(CH_RCURLY))
+    this.err('pat.obj.is.unfinished');
+
+  return n;
 };
 
 },

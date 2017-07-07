@@ -3,6 +3,7 @@ this.parseUpdate = function(arg, ctx) {
   if (arg === null) {
     c = this.c0;
     loc = this.loc0();
+    var uc = {}; this.suc(uc, 'bef');
     this.next() ;
     arg = this.parseExprHead(ctx & CTX_FOR);
     if (arg === null)
@@ -15,11 +16,12 @@ this.parseUpdate = function(arg, ctx) {
     return {
       type: 'UpdateExpression', operator: u,
       start: c, end: arg.end, argument: core(arg),
-      loc: { start: loc, end: arg.loc.end },
+      loc: { start: loc, end: arg.loc.end }, '#c': uc,
       prefix: true, '#y': this.Y(arg)
     };
   }
 
+  this.spc(core(arg), 'aft');
   if (!this.ensureSAT(core(arg)))
     this.err('incdec.post.not.simple.assig',{tn:core(arg)});
 
@@ -32,7 +34,7 @@ this.parseUpdate = function(arg, ctx) {
   return {
     type: 'UpdateExpression', operator: u,
     start: arg.start, end: c,
-    argument: core(arg), loc: loc,
+    argument: core(arg), loc: loc, '#c': {},
     prefix: false, '#y': this.Y(arg)
   };
 };

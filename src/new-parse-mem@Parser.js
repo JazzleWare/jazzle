@@ -4,6 +4,11 @@ function(ctx, st) {
   var mpending = ST_NONE, nina = false; // name is newline async
 
   var c0 = -1, loc0 = null;
+
+  var lpm = ""; // latest pending modifier, that is.
+
+  var cb = {}; this.suc(cb, 'bef');
+
   if (this.lttype === TK_ID) {
     firstMod = latestMod = this.id();
     c0 = firstMod.start, loc0 = firstMod.loc.start;
@@ -12,23 +17,29 @@ function(ctx, st) {
     while (true) {
       switch (latestMod.name) {
       case 'static':
+        lpm.length && this.suc(cb, lpm+'.aft');
         st |= mpending;
         if (!(st & ST_CLSMEM)) { nonMod = latestMod; break MM; }
         if (st & ST_STATICMEM) { nonMod = latestMod; break MM; }
         if (st & ST_ASYNC) { nonMod = latestMod; break MM; }
         mpending = ST_STATICMEM;
+        lpm = latestMod.name;
         break;
 
       case 'get':
       case 'set':
+        lpm.length && this.suc(cb, lpm+'.aft');
         st |= mpending;
         nonMod = latestMod;
         if (st & ST_ACCESSOR) break MM;
         if (st & ST_ASYNC) break MM;
         mpending = latestMod.name === 'get' ? ST_GETTER : ST_SETTER;
+
+        lpm = latestMod.name;
         break;
 
       case 'async':
+        lpm.length && this.suc(cb, lpm+'.aft');
         st |= mpending;
         if (this.nl) { // an async with a newline coming after it is not a modifier
           nina = true;
@@ -38,12 +49,15 @@ function(ctx, st) {
         if (st & ST_ACCESSOR) { nonMod = latestMod; break MM }
         if (st & ST_ASYNC) { nonMod = latestMod; break MM; }
         mpending = ST_ASYNC;
+        lpm = latestMod.name;
         break;
 
       default:
+        lpm.length && this.suc(cb, lpm+'.aft');
         st |= mpending;
         nonMod = latestMod;
         mpending = ST_NONE;
+        lpm = "";
         break MM;
       }
 
@@ -56,6 +70,7 @@ function(ctx, st) {
   if (this.peekMul()) {
     this.v<=5 && this.err('ver.mem.gen');
     if (nonMod) this.err('gen.has.non.modifier');
+    lpm.length && this.suc(cb, lpm+'.aft');
     st |= mpending;
     if (st & ST_ASYNC)
       this.ga();
@@ -64,6 +79,7 @@ function(ctx, st) {
       latestMod = null;
     else { c0 = this.c0, loc0 = this.loc0(); }
     mpending = ST_NONE;
+    lpm = '*';
     this.next();
   }
 
@@ -81,23 +97,27 @@ function(ctx, st) {
       if (latestMod !== null)
         this.err('pending.id');
 
+      lpm.length && this.suc(cb, lpm+'.aft');
       st |= mpending;
       nameVal = this.ltval;
       memName = this.mem_id();
       break;
 
     case CH_LSQBRACKET:
+      lpm.length && this.suc(cb, lpm+'.aft');
       st |= mpending;
       memName = this.mem_expr();
       break;
 
     case TK_NUM:
+      lpm.length && this.suc(cb, lpm+'.aft');
       st |= mpending;
       memName = this.getLit_num();
       break;
 
     case CH_MULTI_QUOTE:
     case CH_SINGLE_QUOTE:
+      lpm.length && this.suc(cb, lpm+'.aft');
       st |= mpending;
       memName = this.parseString(this.lttype);
       nameVal = memName.value;
@@ -115,6 +135,8 @@ function(ctx, st) {
   if (memName === null) {
     if (st & ST_GEN)
       this.err('mem.gen.has.no.name');
+    ASSERT.call(this, this.commentBuf === null, 'comments occupied');
+    this.commentBuf = cb['bef']; // restore the comment buffer
     return null;
   }
 
@@ -131,6 +153,8 @@ function(ctx, st) {
   else if (this.v>5 && nameVal === '__proto__')
     ctx |= CTX_HASPROTO;
 
+  
+  this.cb = cb;
   if (this.lttype === CH_LPAREN) {
     if (this.v <= 5) this.err('ver.mem.meth');
     var mem = this.parseMeth(memName, ctx, st);
@@ -150,7 +174,7 @@ function(ctx, st) {
 this.parseNonMethObjMem =
 function(memName, ctx) {
   var hasProto = ctx & CTX_HASPROTO, firstProto = this.first__proto__;
-  var val = null;
+  var cb = this.cb, val = null;
   ctx &= ~CTX_HASPROTO; // unnecessary (?)
 
   switch (this.lttype) {
@@ -158,6 +182,7 @@ function(memName, ctx) {
     if (hasProto && firstProto)
       this.err('obj.proto.has.dup',{tn:memName});
 
+    this.spc(core(memName), 'aft');
     this.next();
     val = this.parseNonSeq(PREC_NONE, ctx);
     if (errt_track(ctx) && val.type === PAREN_NODE) {
@@ -187,7 +212,7 @@ function(memName, ctx) {
       method: false,
       shorthand: false,
       value: core(val),
-      '#y': computed ? this.Y(core(memName)) : 0
+      '#y': computed ? this.Y(core(memName)) : 0, '#c': cb
     };
 
     if (hasProto)
@@ -237,6 +262,6 @@ function(memName, ctx) {
     method: false,
     value: val,
     computed: false,
-    '#y': 0
+    '#y': 0, '#c': cb
   };
 };

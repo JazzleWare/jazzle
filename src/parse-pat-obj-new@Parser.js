@@ -8,10 +8,14 @@ function() {
   if (this.scope.insideArgs())
     this.scope.enterUniqueArgs();
 
-  var y = 0, ci = -1;
+  var cb = {}, ci = -1, y = 0;
+
+  this.suc(cb, 'bef');
+  var elem = null;
 
   LOOP:
   do {
+    elem && this.spc(elem, 'aft');
     this.next();
     var y0 = 0;
     switch (this.lttype) {
@@ -63,7 +67,7 @@ function() {
     y0 += this.Y(val);
     y += y0;
 
-    list.push({
+    list.push(elem = {
       type: 'Property',
       start: name.start,
       key: core(name),
@@ -76,7 +80,7 @@ function() {
       value: val,
       method: false, 
       shorthand: isShort,
-      '#y': y0
+      '#y': y0, '#c': {}
     });
     if (ci === -1 && name.type === PAREN)
       ci = list.length - 1;
@@ -88,7 +92,7 @@ function() {
     loc: { start: loc0, end: this.loc() },
     start: c0,
     end: this.c,
-    '#y': y, '#ci': ci
+    '#y': y, '#ci': ci, '#c': {}
   };
 
   if (!this.expectT(CH_RCURLY))

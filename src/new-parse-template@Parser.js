@@ -16,6 +16,7 @@ function() {
   var iscr = false;
   var y = 0;
 
+  var cb = {}; this.suc(cb, 'bef');
   LOOP:
   while (c<l)
   switch (s.charCodeAt(c)) {
@@ -48,11 +49,12 @@ function() {
       var e = this.parseExpr(CTX_TOP);
       if (e === null)
         this.err('templ.expr.is.a.null');
-      ex.push(e);
+      ex.push(core(e));
       y += this.Y(e);
       if (this.lttype !== CH_RCURLY)
         this.err('templ.expr.is.unfinished');
 
+      this.spc(core(e), 'aft');
       c = luo = this.c;
       v = "";
       c0s = c;
@@ -127,7 +129,7 @@ function() {
     end: c,
     expressions: ex,
     loc: { start: loc0, end : this.loc() },
-    '#y': y
+    '#y': y, '#c': cb
   };
 
   this.next();

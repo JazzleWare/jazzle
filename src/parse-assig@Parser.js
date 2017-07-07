@@ -13,6 +13,7 @@ this.parseAssignment = function(head, ctx) {
       this.dissolveParen();
   }
 
+  this.spc(core(head), 'aft');
   var right = null;
   if (o === '=') {
     // if this assignment is a pattern
@@ -106,6 +107,6 @@ this.parseAssignment = function(head, ctx) {
       start: head.loc.start,
       end: right.loc.end
     },
-    '#y': this.Y(head)+this.Y(right)
+    '#y': this.Y(head)+this.Y(right), '#c': {}
   };
 };

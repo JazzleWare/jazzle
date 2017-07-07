@@ -14,7 +14,13 @@ function(dt, ctx) {
 
   var y = 0;
 
-  letID || this.next();
+  var cb = null;
+  if (letID) 
+    cb = letID['#c'];
+  else { 
+    cb = {}; this.suc(cb, 'bef');
+    this.next();
+  }
 
   ctx &= CTX_FOR;
 
@@ -49,10 +55,11 @@ function(dt, ctx) {
 
   var isConst = dt === DT_CONST, mi = false;
 
-  var list = [];
+  var list = [], last = null;
   while (true) {
     var init = null;
     if (this.peekEq()) {
+      this.spc(vpat, 'aft');
       this.next();
       init = this.parseNonSeq(PREC_NONE, ctx|CTX_TOP);
     }
@@ -67,7 +74,7 @@ function(dt, ctx) {
     y += y0;
 
     init && this.inferName(vpat, core(init), false);
-    list.push({
+    list.push(last = {
       type: 'VariableDeclarator',
       id: vpat,
       start: vpat.start,
@@ -77,12 +84,13 @@ function(dt, ctx) {
         end: ioh.loc.end 
       },
       init: init && core(init),
-      '#y': y0
+      '#y': y0, '#c': {}
     });
 
     if (mi || this.lttype !== CH_COMMA)
       break;
 
+    this.spc(last, 'aft');
     this.next();
 
     vpat = this.parsePat();
@@ -93,7 +101,7 @@ function(dt, ctx) {
   var ec = -1, eloc = null;
 
   if (!(ctx & CTX_FOR)) {
-    this.semi() || this.err('no.semi');
+    this.semi(last['#c'], 'aft') || this.err('no.semi');
     ec = this.semiC || lastItem.end;
     eloc = this.semiLoc || lastItem.loc.end;
   } else {
@@ -109,8 +117,9 @@ function(dt, ctx) {
     kind: kind,
     start: c0,
     declarations: list,
-    loc: { start: loc0, end: eloc },
     end: ec,
-    '#y': y
+    loc: { start: loc0, end: eloc },
+    '#c': cb,
+    '#y': y,
   };
 };

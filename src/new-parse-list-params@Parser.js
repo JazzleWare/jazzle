@@ -26,7 +26,7 @@ function(argLen) {
       if (list.length !== 0) // trailing comma
         this.v<7 &&
         this.err('arg.non.tail.in.fun',
-          {c0:c0,li0:li0,col0:col0});
+          {c0:c0,li0:li0,col0:col0}); // what about when v < 7 and having (a, ...b)?
 
       break;
     }
@@ -35,6 +35,7 @@ function(argLen) {
       c0 = this.c0;
       li0 = this.li0;
       col0 = this.col0;
+      this.spc(elem, 'aft');
       this.next();
     }
     else { tail = false; break; }
@@ -54,6 +55,7 @@ function(argLen) {
   else if (list.length !== argLen)
     this.err('fun.args.not.enough');
 
+  elem && this.spc(elem, 'aft');
   if (!this.expectT(CH_RPAREN))
     this.err('fun.args.no.end.paren');
 

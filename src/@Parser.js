@@ -21,8 +21,7 @@ var Parser = function (src, o) {
   this.c = 0;
 
   this.luo = 0; // latest used offset
-  this.lpn = null; // latest parsed node
-  
+ 
   this.canBeStatement = false;
   this.foundStatement = false;
 
@@ -67,10 +66,9 @@ var Parser = function (src, o) {
     p: { c:-1, li:-1, col:-1 }
   };
 
+  this.cb = null;
   this.parenAsync = null; // so that things like (async)(a,b)=>12 will not get to parse.
-
   this.commentBuf = null;
   this.errorListener = this; // any object with an `onErr(errType "string", errParams {*})` will do
-  this.parenScope = null;
-
+  this.parenScope = null;  
 };
