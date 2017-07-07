@@ -1,7 +1,9 @@
 this.parseCond = function(cond, ctx) {
+  this.spc(core(cond), 'aft');
   this.next(); // '?'
-  var seq = this.parseNonSeq(PREC_NONE, CTX_TOP);
 
+  var seq = this.parseNonSeq(PREC_NONE, CTX_TOP);
+  this.spc(core(seq), 'aft');
   if (!this.expectT(CH_COLON))
     this.err('cond.colon',{extra:[cond,seq,context]});
 
@@ -16,6 +18,6 @@ this.parseCond = function(cond, ctx) {
       end: alt.loc.end },
     consequent: core(seq),
     alternate: core(alt),
-    '#y': this.Y(cond,alt,seq)
+    '#y': this.Y(cond,alt,seq), '#c': {}
   };
 };

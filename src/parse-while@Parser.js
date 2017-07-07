@@ -9,14 +9,18 @@ function () {
   this.allow(SA_BREAK|SA_CONTINUE);
   this.scope.flags |= SF_LOOP;
 
-  var c0 = this.c0, loc0 = this.loc0();
+  var c0 = this.c0, cb = {}, loc0 = this.loc0();
+
+  this.suc(cb, 'bef');
   this.next(); // 'while'
 
+  this.suc(cb, 'while.aft');
   if (!this.expectT(CH_LPAREN))
     this.err('while.has.no.opening.paren');
  
   var cond = core(this.parseExpr(CTX_TOP));
 
+  this.spc(cond, 'aft');
   if (!this.expectT(CH_RPAREN))
     this.err('while.has.no.closing.paren');
 
@@ -34,6 +38,6 @@ function () {
       end: nbody.loc.end },
     body:nbody,
     '#scope': scope, 
-    '#y': this.Y(cond, nbody)
+    '#y': this.Y(cond, nbody), '#c': cb
   };
 };

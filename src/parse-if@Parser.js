@@ -7,14 +7,18 @@ this.parseIf = function () {
   var ifScope = this.scope; 
   this.scope.flags |= SF_INSIDEIF;
 
-  var c0 = this.c0, loc0 = this.loc0();
+  var c0 = this.c0, cb = {}, loc0 = this.loc0();
 
+  this.suc(cb, 'bef');
   this.next(); // 'if'
+
+  this.suc(cb, 'aft.if');
   if (!this.expectT(CH_LPAREN))
     this.err('if.has.no.opening.paren');
 
   var cond = core(this.parseExpr(CTX_TOP));
 
+  this.spc(cond, 'aft');
   if (!this.expectT(CH_RPAREN))
     this.err('if.has.no.closing.paren');
 
@@ -43,7 +47,8 @@ this.parseIf = function () {
     consequent: nbody,
     alternate: alt,
     '#ifScope': ifScope,
-    '#elseScope': elseScope, 
-    '#y': this.Y(cond,nbody)+this.Y0(alt)
+    '#y': this.Y(cond,nbody)+this.Y0(alt),
+    '#c': cb,
+    '#elseScope': elseScope
   };
 };

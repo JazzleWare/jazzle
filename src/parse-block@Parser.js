@@ -5,6 +5,8 @@ this.parseBlock = function () {
   var scope = this.scope;
 
   var c0 = this.c0, loc0 = this.loc0();
+
+  var cb = {}; this.suc(cb, 'bef' );
   this.next(); // '{'
 
   var n = {
@@ -16,9 +18,10 @@ this.parseBlock = function () {
       start: loc0, 
       end: this.loc() }, 
     '#scope': scope, 
-    '#y': this.yc
+    '#y': this.yc, '#c': cb
   };
 
+  this.suc(cb, 'inner');
   if (!this.expectT(CH_RCURLY))
     this.err('block.unfinished');
 

@@ -5,11 +5,14 @@ function() {
 
   var c0 = this.c0;
   var loc0 = this.loc0();
+
+  var cb = {}; this.suc(cb, 'bef' );
   this.next(); // '{'
 
   this.enterPrologue();
   var list = this.stmtList();
 
+  this.suc(cb, 'inner');
   var n = {
     type : 'BlockStatement',
     body: list,
@@ -18,7 +21,7 @@ function() {
     loc: { 
       start: loc0,
       end: this.loc() },
-    '#y': this.yc
+    '#y': this.yc, '#c': cb
   };
 
   if (!this.expectT(CH_RCURLY))

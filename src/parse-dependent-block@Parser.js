@@ -1,6 +1,9 @@
 this.parseDependent = 
 function(name) {
-  var c0 = this.c0, loc0 = this.loc0();
+  var c0 = this.c0, cb = {}, loc0 = this.loc0();
+
+  this.suc(cb, 'bef');
+
   if (!this.expectT(CH_LCURLY))
     this.err('block.dependent.no.opening.curly',{extra:{name:name}});
 
@@ -12,8 +15,10 @@ function(name) {
     loc: {
       start: loc0,
       end: this.loc() },
-    '#y': this.yc
+    '#y': this.yc, '#c': cb
   };
+
+  this.suc(cb, 'inner');
 
   if (!this.expectT(CH_RCURLY))
     this.err('block.dependent.is.unfinished',{tn:n, extra:{delim:'}'}});

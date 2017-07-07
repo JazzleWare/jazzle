@@ -3,8 +3,9 @@ this.parseTryStatement = function () {
   this.testStmt() || this.err('not.stmt');
   this.fixupLabels(false);
 
-  var c0 = this.c0, loc0 = this.loc0();
+  var c0 = this.c0, cb = {}, loc0 = this.loc0();
 
+  this.suc(cb, 'bef');
   this.next(); // 'try'
 
   this.enterScope(this.scope.spawnBlock()); 
@@ -21,6 +22,7 @@ this.parseTryStatement = function () {
   var finScope = null;
   if (this.lttype === TK_ID && this.ltval === 'finally') {
     this.resvchk();
+    this.suc(cb, 'finally.bef') ;
     this.next();
     this.enterScope(this.scope.spawnBare()); 
     finScope = this.scope;
@@ -43,8 +45,10 @@ this.parseTryStatement = function () {
     loc: {
       start: loc0,
       end: finOrCat.loc.end },
-    '#tryScope': tryScope,
+    '#y': this.Y(tryBlock)+this.Y0(catBlock,finBlock),
     '#finScope': finScope,
-    '#y': this.Y(tryBlock)+this.Y0(catBlock,finBlock)
+    '#c': cb,
+    '#tryScope': tryScope,
+
   };
 };

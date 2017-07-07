@@ -7,8 +7,9 @@ this.id = function() {
     loc: {
       start: this.loc0(),
       end: this.loc() },
-    raw: this.ltraw
+    raw: this.ltraw, '#c': {}
   };
+  this.spc(id, 'bef');
   this.next() ;
   return id;
 };

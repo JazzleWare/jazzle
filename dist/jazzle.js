@@ -4973,6 +4973,40 @@ function(ctx) {
 
 },
 function(){
+this.parseFunBody =
+function() {
+  if (this.lttype !== CH_LCURLY)
+    this.err('fun.body.not.a.curly');
+
+  var c0 = this.c0;
+  var loc0 = this.loc0();
+
+  var cb = {}; this.suc(cb, 'bef' );
+  this.next(); // '{'
+
+  this.enterPrologue();
+  var list = this.stmtList();
+
+  this.suc(cb, 'inner');
+  var n = {
+    type : 'BlockStatement',
+    body: list,
+    start: c0,
+    end: this.c,
+    loc: { 
+      start: loc0,
+      end: this.loc() },
+    '#y': this.yc, '#c': cb
+  };
+
+  if (!this.expectT(CH_RCURLY))
+    this.err('fun.body.is.unfinished');
+
+  return n;
+};
+
+},
+function(){
 this.parseIDExprHead =
 function(ctx) {
   var name = this.ltval;
@@ -6762,6 +6796,365 @@ this.parseAssignment = function(head, ctx) {
 
 },
 function(){
+this.parseBlock = function () {
+  this.fixupLabels(false);
+
+  this.enterScope(this.scope.spawnBlock()); 
+  var scope = this.scope;
+
+  var c0 = this.c0, loc0 = this.loc0();
+
+  var cb = {}; this.suc(cb, 'bef' );
+  this.next(); // '{'
+
+  var n = {
+    type: 'BlockStatement',
+    body: this.stmtList(),
+    start: c0,
+    end: this.c,
+    loc: {
+      start: loc0, 
+      end: this.loc() }, 
+    '#scope': scope, 
+    '#y': this.yc, '#c': cb
+  };
+
+  this.suc(cb, 'inner');
+  if (!this.expectT(CH_RCURLY))
+    this.err('block.unfinished');
+
+  this.exitScope(); 
+
+  return n;
+};
+
+},
+function(){
+this. parseCatchClause = function () {
+   var c0 = this.c0, cb = {}, loc0 = this.loc0();
+
+   this.suc(cb, 'bef');
+   this.next(); // 'catch'
+   this.suc(cb, 'catch.aft');
+
+   this.enterScope(this.scope.spawnCatch());
+   if (!this.expectT(CH_LPAREN))
+     this.err('catch.has.no.opening.paren',{c0:c0,loc0:loc0});
+
+   this.declMode = DT_CATCHARG;
+   var catParam = this.parsePat();
+   if (this.peekEq())
+     this.err('catch.has.an.assig.param',{c0:startc,loc0:startLoc,extra:catParam});
+
+   this.declMode = DT_NONE;
+   if (catParam === null)
+     this.err('catch.has.no.param',{c0:startc,loc0:startLoc});
+
+   this.spc(catParam, 'aft');
+   if (!this.expectT(CH_RPAREN))
+     this.err('catch.has.no.end.paren',{c0:startc,loc0:startLoc,extra:catParam});
+
+   this.scope.activateBody();
+   var catBlock = this.parseDependent('catch');
+   var scope = this.exitScope();
+
+   return {
+       type: 'CatchClause',
+       loc: { start: loc0, end: catBlock.loc.end },
+       start: c0,
+       end: catBlock.end,
+       param: catParam ,
+       body: catBlock,
+       '#scope': scope,
+       '#y': this.Y(catParam)+this.Y(catBlock)
+   };
+};
+
+},
+function(){
+this.parseClass = 
+function(ctx) {
+  if (this.v <= 5)
+    this.err('ver.class');
+  if (this.unsatisfiedLabel)
+    this.err('class.label.not.allowed');
+
+  var c0 = this.c0, cb = {}, loc0 = this.loc0();
+
+  this.suc(cb, 'bef');
+
+  var isStmt = false, name = null;
+  if (this.canBeStatement) {
+    isStmt = true;
+    this.canBeStatement = false;
+  }
+
+  this.next(); // 'class'
+
+  var sourceDecl = null;
+  var st = ST_NONE;
+  if (isStmt) {
+    st = ST_DECL;
+    if (!this.scope.canDeclareLexical())
+      this.err('class.decl.not.in.block',{c0:c0,loc0:loc0});
+    if (this.lttype === TK_ID && this.ltval !== 'extends') {
+      this.declMode = DT_CLS|this.cutEx();
+      name = this.getName_cls(st);
+      sourceDecl = this.scope.findDeclOwn_m(_m(name.name));
+    }
+    else if (!(ctx & CTX_DEFAULT))
+      this.err('class.decl.has.no.name', {c0:startc,loc0:startLoc});
+  }
+  else {
+    st = ST_EXPR;
+    if (this.lttype === TK_ID && this.ltval !== 'extends')
+      name = this.getName_cls(st);
+  }
+
+  this.enterScope(this.scope.spawnCls(st));
+  var scope = this.scope;
+
+  scope.makeStrict();
+
+  if (name)
+    scope.setName(name.name, sourceDecl).t(DT_CLSNAME);
+
+  var superClass = null;
+  if (this.lttype === TK_ID && this.ltval === 'extends') {
+    name ? this.spc(name, 'aft') : this.suc(cb, 'class.aft');
+    this.next();
+    superClass = this.parseExprHead(CTX_NONE);
+  }
+
+  var mmflags = ST_CLSMEM, mmctx = CTX_NONE;
+
+  if (superClass)
+    this.scope.flags |= SF_HERITAGE;
+
+  var list = [];
+  var c0b = this.c0, loc0b  = this.loc0();
+
+  var cbb = {}; this.suc(cbb, 'bef');
+  cbb['semis'] = [];
+  if (!this.expectT(CH_LCURLY))
+    this.err('class.no.curly',{c0:startc,loc0:startLoc,extra:{n:name,s:superClass,c:ctx}});
+
+  var mem = null;
+
+  var y = 0;
+  while (true) {
+    if (this.lttype === CH_SEMI) {
+      cbb.semis.push([list.length, this.cc()]);
+      this.next();
+      continue;
+    }
+    mem = this.parseMem(mmctx, mmflags);
+    if (mem !== null) {
+      list.push(mem);
+      y += this.Y(mem);
+      if (mem.kind === 'constructor')
+        mmctx |= CTX_CTOR_NOT_ALLOWED;
+    }
+    else break;
+  }
+
+  var eloc = this.loc();
+  var n = {
+    type: isStmt ? 'ClassDeclaration' : 'ClassExpression',
+    id: name,
+    start: c0,
+    end: this.c,
+    superClass: superClass,
+    loc: { start: loc0, end: eloc },
+    body: {
+      type: 'ClassBody',
+      loc: { start: loc0b, end: eloc },
+      start: c0b,
+      end: this.c,
+      body: list,
+      '#y': y, '#c': cbb
+    },
+    '#y': (superClass ? this.Y(superClass) : 0)+y,
+    '#scope': scope, '#c': cb
+  };
+
+  this.suc(cbb, 'inner');
+  if (!this.expectT(CH_RCURLY))
+    this.err('class.unfinished',{tn:n, extra:{delim:'}'}});
+
+  this.exitScope();
+
+  if (isStmt)
+    this.foundStatement = true;
+
+  return n;
+};
+
+this.parseSuper = function() {
+  if (this.v <=5 ) this.err('ver.super');
+
+  var cb = {}; this.suc(cb, 'bef');
+  var n = {
+    type: 'Super',
+    loc: { start: this.loc0(), end: this.loc() },
+    start: this.c0,
+    end: this.c ,
+   '#c': cb
+  };
+ 
+  this.next();
+  switch (this.lttype) {
+  case CH_LPAREN:
+    if (!this.scope.canScall())
+      this.err('class.super.call',{tn:n});
+    this.scope.refDirect_m(RS_SCALL, null);
+    break;
+ 
+  case CH_SINGLEDOT:
+  case CH_LSQBRACKET:
+    if (!this.scope.canSmem())
+      this.err('class.super.mem',{tn:n});
+    break ;
+  
+  default: this.err('class.super.lone',{tn:n}); 
+  }
+ 
+  return n;
+};
+
+},
+function(){
+this.parseCond = function(cond, ctx) {
+  this.spc(core(cond), 'aft');
+  this.next(); // '?'
+
+  var seq = this.parseNonSeq(PREC_NONE, CTX_TOP);
+  this.spc(core(seq), 'aft');
+  if (!this.expectT(CH_COLON))
+    this.err('cond.colon',{extra:[cond,seq,context]});
+
+  var alt = this.parseNonSeq(PREC_NONE, (ctx&CTX_FOR)|CTX_TOP);
+  return {
+    type: 'ConditionalExpression',
+    test: core(cond),
+    start: cond.start,
+    end: alt.end,
+    loc: {
+      start: cond.loc.start,
+      end: alt.loc.end },
+    consequent: core(seq),
+    alternate: core(alt),
+    '#y': this.Y(cond,alt,seq), '#c': {}
+  };
+};
+
+},
+function(){
+this.parseDependent = 
+function(name) {
+  var c0 = this.c0, cb = {}, loc0 = this.loc0();
+
+  this.suc(cb, 'bef');
+
+  if (!this.expectT(CH_LCURLY))
+    this.err('block.dependent.no.opening.curly',{extra:{name:name}});
+
+  var n = {
+    type: 'BlockStatement',
+    body: this.stmtList(),
+    start: c0,
+    end: this.c,
+    loc: {
+      start: loc0,
+      end: this.loc() },
+    '#y': this.yc, '#c': cb
+  };
+
+  this.suc(cb, 'inner');
+
+  if (!this.expectT(CH_RCURLY))
+    this.err('block.dependent.is.unfinished',{tn:n, extra:{delim:'}'}});
+
+  return n;
+};
+
+},
+function(){
+this.id = function() {
+  var id = {
+    type: 'Identifier',
+    name: this.ltval,
+    start: this.c0,
+    end: this.c,
+    loc: {
+      start: this.loc0(),
+      end: this.loc() },
+    raw: this.ltraw, '#c': {}
+  };
+  this.spc(id, 'bef');
+  this.next() ;
+  return id;
+};
+
+},
+function(){
+this.parseIf = function () {
+  this.resvchk();
+  !this.testStmt() && this.err('not.stmt');
+  this.fixupLabels(false);
+
+  this.enterScope(this.scope.spawnBare());
+  var ifScope = this.scope; 
+  this.scope.flags |= SF_INSIDEIF;
+
+  var c0 = this.c0, cb = {}, loc0 = this.loc0();
+
+  this.suc(cb, 'bef');
+  this.next(); // 'if'
+
+  this.suc(cb, 'aft.if');
+  if (!this.expectT(CH_LPAREN))
+    this.err('if.has.no.opening.paren');
+
+  var cond = core(this.parseExpr(CTX_TOP));
+
+  this.spc(cond, 'aft');
+  if (!this.expectT(CH_RPAREN))
+    this.err('if.has.no.closing.paren');
+
+  var nbody = this.parseStatement(false);
+  this.exitScope(); 
+
+  var alt = null, elseScope = null;
+  if (this.lttype === TK_ID && this.ltval === 'else') {
+    this.resvchk();
+    this.next(); // 'else'
+    this.enterScope(this.scope.spawnBare());
+    elseScope = this.scope; 
+    alt = this.parseStatement(false);
+    this.exitScope();
+  }
+
+  this.foundStatement = true;
+  return {
+    type: 'IfStatement',
+    test: cond,
+    start: c0,
+    end: (alt||nbody).end,
+    loc: {
+      start: loc0,
+      end: (alt||nbody).loc.end },
+    consequent: nbody,
+    alternate: alt,
+    '#ifScope': ifScope,
+    '#y': this.Y(cond,nbody)+this.Y0(alt),
+    '#c': cb,
+    '#elseScope': elseScope
+  };
+};
+
+},
+function(){
 this.parseObj = function(ctx) {
   var c0 = this.c0, loc0 = this.loc0(),
       elem = null, list = [], first__proto__ = null,
@@ -7041,6 +7434,201 @@ this.parseProgram = function () {
 
 },
 function(){
+this.parseString =
+function(startChar) {
+  var c = this.c, s = this.src, l = s.length, v = "";
+  var luo = c, surrogateTail = -1, ch = -1;
+
+  var cb = {}; this.suc(cb, 'bef');
+
+  LOOP:
+  while (c<l) {
+    ch = s.charCodeAt(c);
+    if (ch === CH_BACK_SLASH) {
+      if (luo < c)
+        v += s.substring(luo,c);
+      this.setsimpoff(c);
+      v += this.readEsc(false);
+      c = luo = this.c;
+    }
+    else
+      switch (ch) {
+      case startChar:
+        if (luo < c)
+          v += s.substring(luo,c);
+        c++;
+        break LOOP;
+
+      case CH_CARRIAGE_RETURN:
+      case CH_LINE_FEED:
+      case 0x2028: case 0x2029:
+        this.setsimpoff(c);
+        this.err('str.newline');
+
+      default: c++;
+      }
+  }
+
+  this.setsimpoff(c);
+  if (ch !== startChar)
+    this.err('str.unfinished');
+
+  var n = {
+    type: 'Literal',
+    value: v,
+    start: this.c0,
+    end: c,
+    raw: this.c0_to_c(),
+    loc: {
+      start: { line: this.li0, column: this.col0 },
+      end: { line: this.li, column: this.col }
+    }, '#c': cb
+  };
+
+  // not the most elegant solution, but for what it does (catching legacy numbers),
+  // it is fitting; a better solution which won't require re-parsing the number
+  // will eventually come instead of the block below (NUM_START token, much like the way the strings are handled)
+  if (this.chkDirective) {
+    this.chkDirective = false;
+    if (c<l) {
+      this.skipWS();
+      c = this.c;
+      if (this.scat(c) === CH_0) {
+        this.applyDirective(n);
+        this.alreadyApplied = true;
+      }
+    }
+  }
+  this.next();
+
+  return n;
+};
+
+},
+function(){
+this.parseSwitchCase = function () {
+  var c0 = -1, cb = {}, loc0 = null;
+
+  var nbody = null, cond = null;
+
+  if (this.lttype === TK_ID) 
+  switch (this.ltval) {
+  case 'default':
+    this.resvchk();
+    this.suc(cb, 'bef');
+    c0 = this.c0;
+    loc0 = this.loc0();
+    this.next();
+    this.suc(cb, 'default.aft');
+    break ;
+
+  case 'case':
+    this.resvchk();
+    this.suc(cb, 'bef');
+    c0 = this.c0;
+    loc0 = this.loc0();
+    this.next(); // 'case'
+    cond = core(this.parseExpr(CTX_TOP)) ;
+    this.spc(cond, 'aft');
+    break;
+
+  default: return null;
+  } else return null;
+
+  var c = this.c, li = this.li, col = this.col;
+  if (!this.expectT(CH_COLON))
+    this.err('switch.case.has.no.colon');
+
+  nbody = this.stmtList();
+  var last = nbody.length ? nbody[nbody.length-1] : null;
+
+  var ec = -1, eloc = null;
+  if (last) {
+    ec = last.end;
+    eloc = last.loc.end;
+  } else {
+    ec = c;
+    eloc = { line: li, column: col };
+  }
+
+  this.suc(cb, 'inner');
+  return {
+    type: 'SwitchCase',
+    test: cond,
+    start: c0,
+    end: ec,
+    loc: { start: loc0, end: eloc },
+    consequent: nbody,
+    '#y': this.Y0(cond)+this.yc, '#c': cb
+  };
+};
+
+},
+function(){
+this.parseSwitch = function () {
+  this.resvchk();
+  !this.testStmt() && this.err('not.stmt');
+  this.fixupLabels(false) ;
+
+  var c0 = this.c0, loc0 = this.loc0(),
+      cases = [], hasDefault = false , elem = null;
+
+  var cb = {}; this.suc(cb, 'bef');
+  this.next(); // 'switch'
+  this.suc(cb, 'switch.aft');
+  if (!this.expectT(CH_LPAREN))
+    this.err('switch.has.no.opening.paren');
+
+  var switchExpr = core(this.parseExpr(CTX_TOP));
+  this.spc(switchExpr, 'aft');
+
+  if (!this.expectT(CH_RPAREN))
+    this.err('switch.has.no.closing.paren');
+
+  this.suc(cb, 'cases.bef');
+  if (!this.expectT(CH_LCURLY))
+    this.err('switch.has.no.opening.curly');
+
+  this.enterScope(this.scope.spawnBlock()); 
+  var scope = this.scope;
+
+  this.allow(SA_BREAK);
+
+  var y = 0;
+  while (elem = this.parseSwitchCase()) {
+    if (elem.test === null) {
+       if (hasDefault ) this.err('switch.has.a.dup.default');
+       hasDefault = true ;
+    }
+    cases.push(elem);
+    y += this.Y(elem);
+  }
+
+  this.foundStatement = true;
+  this.exitScope(); 
+
+  var n = {
+    type: 'SwitchStatement',
+    cases: cases,
+    start: c0,
+    discriminant: switchExpr,
+    end: this.c,
+    loc: {
+      start: loc0,
+      end: this.loc() }, 
+    '#scope': scope,
+    '#y': this.Y(switchExpr)+(y), '#c': cb
+  };
+
+  this.suc(cb, 'inner');
+  if (!this.expectT(CH_RCURLY))
+    this.err('switch.unfinished');
+
+  return n;
+};
+
+},
+function(){
 this.parseExpr =
 function(ctx) {
   var head = this.parseNonSeq(PREC_NONE, ctx);
@@ -7073,6 +7661,198 @@ function(ctx) {
     },
     '#y': y, '#c': {}
   };
+};
+
+},
+function(){
+this.parseTryStatement = function () {
+  this.resvchk();
+  this.testStmt() || this.err('not.stmt');
+  this.fixupLabels(false);
+
+  var c0 = this.c0, cb = {}, loc0 = this.loc0();
+
+  this.suc(cb, 'bef');
+  this.next(); // 'try'
+
+  this.enterScope(this.scope.spawnBlock()); 
+
+  var tryBlock = this.parseDependent('try');
+  var tryScope = this.scope; 
+
+  this.exitScope(); 
+
+  var finBlock = null, catBlock  = null;
+  if (this.lttype === TK_ID && this.ltval === 'catch')
+    catBlock = this.parseCatchClause();
+
+  var finScope = null;
+  if (this.lttype === TK_ID && this.ltval === 'finally') {
+    this.resvchk();
+    this.suc(cb, 'finally.bef') ;
+    this.next();
+    this.enterScope(this.scope.spawnBare()); 
+    finScope = this.scope;
+    finBlock = this.parseDependent('finally');
+    this.exitScope(); 
+  }
+
+  var finOrCat = finBlock || catBlock;
+
+  finOrCat || this.err('try.has.no.tail');
+  this.foundStatement = true;
+
+  return  {
+    type: 'TryStatement',
+    block: tryBlock,
+    start: c0,
+    end: finOrCat.end,
+    handler: catBlock,
+    finalizer: finBlock,
+    loc: {
+      start: loc0,
+      end: finOrCat.loc.end },
+    '#y': this.Y(tryBlock)+this.Y0(catBlock,finBlock),
+    '#finScope': finScope,
+    '#c': cb,
+    '#tryScope': tryScope,
+
+  };
+};
+
+},
+function(){
+this.parseWhile = 
+function () {
+  this.resvchk();
+  this.testStmt() || this.err('not.stmt');
+  this.fixupLabels(true);
+
+  this.enterScope(this.scope.spawnBare());
+  var scope = this.scope; 
+  this.allow(SA_BREAK|SA_CONTINUE);
+  this.scope.flags |= SF_LOOP;
+
+  var c0 = this.c0, cb = {}, loc0 = this.loc0();
+
+  this.suc(cb, 'bef');
+  this.next(); // 'while'
+
+  this.suc(cb, 'while.aft');
+  if (!this.expectT(CH_LPAREN))
+    this.err('while.has.no.opening.paren');
+ 
+  var cond = core(this.parseExpr(CTX_TOP));
+
+  this.spc(cond, 'aft');
+  if (!this.expectT(CH_RPAREN))
+    this.err('while.has.no.closing.paren');
+
+  var nbody = this.parseStatement(false);
+  this.foundStatement = true;
+
+  var scope = this.exitScope();
+  return {
+    type: 'WhileStatement',
+    test: cond,
+    start: c0,
+    end: nbody.end,
+    loc: {
+      start: loc0,
+      end: nbody.loc.end },
+    body:nbody,
+    '#scope': scope, 
+    '#y': this.Y(cond, nbody), '#c': cb
+  };
+};
+
+},
+function(){
+this.parseWith = 
+function() {
+  this.resvchk();
+  this.testStmt() || this.err('not.stmt');
+  if (this.scope.insideStrict())
+    this.err('with.strict')  ;
+
+  this.fixupLabels(false);
+
+  this.enterScope(this.scope.spawnBare());
+  var scope = this.scope;
+
+  var c0 = this.c0, cb = {}, loc0 = this.loc0();
+
+  this.suc(cb, 'bef');
+  this.next(); // 'with'
+
+  this.suc(cb, 'with.aft' );
+  if (!this.expectT(CH_LPAREN))
+    this.err('with.has.no.opening.paren');
+
+  var obj = core(this.parseExpr(CTX_TOP));
+
+  this.spc(obj, 'aft' );
+  if (!this.expectT(CH_RPAREN))
+    this.err('with.has.no.end.paren');
+
+  var nbody = this.parseStatement(true);
+  this.exitScope();
+
+  this.foundStatement = true;
+  return  {
+    type: 'WithStatement',
+    loc: { start: loc0, end: nbody.loc.end },
+    start: c0,
+    end: nbody.end,
+    object: obj,
+    body: nbody,
+    '#scope': scope,
+    '#y': this.Y(obj, nbody ), '#c': cb
+  };
+};
+
+},
+function(){
+this.parseYield = 
+function(ctx) {
+  var c = this.c, li = this.li, col = this.col;
+  var deleg = false, arg = null;
+  var c0 = this.c0, cb = {}, loc0 = this.loc0();
+
+  this.suc(cb, 'bef');
+  this.next(); // 'yield'
+
+  if (!this.nl) {
+    if (this.peekMul()) {
+      deleg = true;
+      this.suc(cb, '*.bef');
+      this.next(); // '*'
+      arg = this.parseNonSeq(PREC_NONE, ctx&CTX_FOR);
+      if (!arg)
+        this.err('yield.has.no.expr.deleg');
+    }
+    else
+      arg = this.parseNonSeq(PREC_NONE, (ctx&CTX_FOR)|CTX_NULLABLE);
+  }
+
+  var ec = -1, eloc = null;
+  if (arg) { ec = arg.end; eloc = arg.loc.end; }
+  else { ec = c; eloc = { line: li, column: col }; }
+
+  var n = {
+    type: 'YieldExpression',
+    argument: arg && core(arg),
+    start: c0,
+    delegate: deleg,
+    end: ec,
+    loc: { start : loc0, end: eloc },
+    '#y': 1+this.Y0(arg), '#c': cb
+  };
+
+  if (this.suspys === null)
+    this.suspys = n;
+
+  return n;
 };
 
 },

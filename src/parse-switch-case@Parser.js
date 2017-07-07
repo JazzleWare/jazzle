@@ -1,23 +1,28 @@
 this.parseSwitchCase = function () {
-  var c0, loc0;
+  var c0 = -1, cb = {}, loc0 = null;
+
   var nbody = null, cond = null;
 
   if (this.lttype === TK_ID) 
   switch (this.ltval) {
+  case 'default':
+    this.resvchk();
+    this.suc(cb, 'bef');
+    c0 = this.c0;
+    loc0 = this.loc0();
+    this.next();
+    this.suc(cb, 'default.aft');
+    break ;
+
   case 'case':
     this.resvchk();
+    this.suc(cb, 'bef');
     c0 = this.c0;
     loc0 = this.loc0();
     this.next(); // 'case'
     cond = core(this.parseExpr(CTX_TOP)) ;
+    this.spc(cond, 'aft');
     break;
-
-  case 'default':
-    this.resvchk();
-    c0 = this.c0;
-    loc0 = this.loc0();
-    this.next();
-    break ;
 
   default: return null;
   } else return null;
@@ -38,6 +43,7 @@ this.parseSwitchCase = function () {
     eloc = { line: li, column: col };
   }
 
+  this.suc(cb, 'inner');
   return {
     type: 'SwitchCase',
     test: cond,
@@ -45,6 +51,6 @@ this.parseSwitchCase = function () {
     end: ec,
     loc: { start: loc0, end: eloc },
     consequent: nbody,
-    '#y': this.Y0(cond)+this.yc
+    '#y': this.Y0(cond)+this.yc, '#c': cb
   };
 };

@@ -3,6 +3,8 @@ function(startChar) {
   var c = this.c, s = this.src, l = s.length, v = "";
   var luo = c, surrogateTail = -1, ch = -1;
 
+  var cb = {}; this.suc(cb, 'bef');
+
   LOOP:
   while (c<l) {
     ch = s.charCodeAt(c);
@@ -44,12 +46,12 @@ function(startChar) {
     loc: {
       start: { line: this.li0, column: this.col0 },
       end: { line: this.li, column: this.col }
-    }
+    }, '#c': cb
   };
 
   // not the most elegant solution, but for what it does (catching legacy numbers),
   // it is fitting; a better solution which won't require re-parsing the number
-  // will eventually come instead of the block below
+  // will eventually come instead of the block below (NUM_START token, much like the way the strings are handled)
   if (this.chkDirective) {
     this.chkDirective = false;
     if (c<l) {

@@ -1,6 +1,9 @@
 this. parseCatchClause = function () {
-   var c0 = this.c0, loc0 = this.loc0();
+   var c0 = this.c0, cb = {}, loc0 = this.loc0();
+
+   this.suc(cb, 'bef');
    this.next(); // 'catch'
+   this.suc(cb, 'catch.aft');
 
    this.enterScope(this.scope.spawnCatch());
    if (!this.expectT(CH_LPAREN))
@@ -15,6 +18,7 @@ this. parseCatchClause = function () {
    if (catParam === null)
      this.err('catch.has.no.param',{c0:startc,loc0:startLoc});
 
+   this.spc(catParam, 'aft');
    if (!this.expectT(CH_RPAREN))
      this.err('catch.has.no.end.paren',{c0:startc,loc0:startLoc,extra:catParam});
 

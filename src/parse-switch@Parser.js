@@ -6,15 +6,19 @@ this.parseSwitch = function () {
   var c0 = this.c0, loc0 = this.loc0(),
       cases = [], hasDefault = false , elem = null;
 
+  var cb = {}; this.suc(cb, 'bef');
   this.next(); // 'switch'
+  this.suc(cb, 'switch.aft');
   if (!this.expectT(CH_LPAREN))
     this.err('switch.has.no.opening.paren');
 
   var switchExpr = core(this.parseExpr(CTX_TOP));
+  this.spc(switchExpr, 'aft');
 
   if (!this.expectT(CH_RPAREN))
     this.err('switch.has.no.closing.paren');
 
+  this.suc(cb, 'cases.bef');
   if (!this.expectT(CH_LCURLY))
     this.err('switch.has.no.opening.curly');
 
@@ -46,9 +50,10 @@ this.parseSwitch = function () {
       start: loc0,
       end: this.loc() }, 
     '#scope': scope,
-    '#y': this.Y(switchExpr)+(y)
+    '#y': this.Y(switchExpr)+(y), '#c': cb
   };
 
+  this.suc(cb, 'inner');
   if (!this.expectT(CH_RCURLY))
     this.err('switch.unfinished');
 

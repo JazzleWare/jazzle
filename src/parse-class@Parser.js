@@ -5,7 +5,9 @@ function(ctx) {
   if (this.unsatisfiedLabel)
     this.err('class.label.not.allowed');
 
-  var c0 = this.c0, loc0 = this.loc0();
+  var c0 = this.c0, cb = {}, loc0 = this.loc0();
+
+  this.suc(cb, 'bef');
 
   var isStmt = false, name = null;
   if (this.canBeStatement) {
@@ -45,6 +47,7 @@ function(ctx) {
 
   var superClass = null;
   if (this.lttype === TK_ID && this.ltval === 'extends') {
+    name ? this.spc(name, 'aft') : this.suc(cb, 'class.aft');
     this.next();
     superClass = this.parseExprHead(CTX_NONE);
   }
@@ -57,6 +60,8 @@ function(ctx) {
   var list = [];
   var c0b = this.c0, loc0b  = this.loc0();
 
+  var cbb = {}; this.suc(cbb, 'bef');
+  cbb['semis'] = [];
   if (!this.expectT(CH_LCURLY))
     this.err('class.no.curly',{c0:startc,loc0:startLoc,extra:{n:name,s:superClass,c:ctx}});
 
@@ -65,6 +70,7 @@ function(ctx) {
   var y = 0;
   while (true) {
     if (this.lttype === CH_SEMI) {
+      cbb.semis.push([list.length, this.cc()]);
       this.next();
       continue;
     }
@@ -92,12 +98,13 @@ function(ctx) {
       start: c0b,
       end: this.c,
       body: list,
-      '#y': y
+      '#y': y, '#c': cbb
     },
     '#y': (superClass ? this.Y(superClass) : 0)+y,
-    '#scope': scope
+    '#scope': scope, '#c': cb
   };
 
+  this.suc(cbb, 'inner');
   if (!this.expectT(CH_RCURLY))
     this.err('class.unfinished',{tn:n, extra:{delim:'}'}});
 
@@ -112,11 +119,13 @@ function(ctx) {
 this.parseSuper = function() {
   if (this.v <=5 ) this.err('ver.super');
 
+  var cb = {}; this.suc(cb, 'bef');
   var n = {
     type: 'Super',
     loc: { start: this.loc0(), end: this.loc() },
     start: this.c0,
-    end: this.c
+    end: this.c ,
+   '#c': cb
   };
  
   this.next();
