@@ -7,12 +7,12 @@ function(ctx, st) {
 
   var lpm = ""; // latest pending modifier, that is.
 
-  var cb = {}; this.suc(cb, 'bef');
+  var cb = {};
 
   MM:
   while (this.lttype === TK_ID) {
     if (latestMod) {
-      this.suc(cb, latestMod.name+'.aft');
+      cb[latestMod.name+'.bef'] = latestMod['#c'].bef;
       latestMod = this.id();
     }
     else {
@@ -26,7 +26,7 @@ function(ctx, st) {
       if (st & ST_STATICMEM) { nonMod = latestMod; break MM; }
       if (st & ST_ASYNC) { nonMod = latestMod; break MM; }
       mpending = ST_STATICMEM;
-      lpm = latestMod.name;
+
       break;
 
     case 'get':
@@ -37,7 +37,6 @@ function(ctx, st) {
       if (st & ST_ASYNC) break MM;
       mpending = latestMod.name === 'get' ? ST_GETTER : ST_SETTER;
 
-      lpm = latestMod.name;
       break;
 
     case 'async':
@@ -50,14 +49,14 @@ function(ctx, st) {
       if (st & ST_ACCESSOR) { nonMod = latestMod; break MM }
       if (st & ST_ASYNC) { nonMod = latestMod; break MM; }
       mpending = ST_ASYNC;
-      lpm = latestMod.name;
+
       break;
 
     default:
       st |= mpending;
       nonMod = latestMod;
       mpending = ST_NONE;
-      lpm = "";
+
       break MM;
     }
   }
@@ -65,16 +64,17 @@ function(ctx, st) {
   if (this.peekMul()) {
     this.v<=5 && this.err('ver.mem.gen');
     if (nonMod) this.err('gen.has.non.modifier');
-    lpm.length && this.suc(cb, lpm+'.aft');
     st |= mpending;
     if (st & ST_ASYNC)
       this.ga();
     st |= ST_GEN
-    if (latestMod)
+    if (latestMod) {
+      cb[latestMod.name+'.bef'] = latestMod['#c'].bef;
       latestMod = null;
+    }
     else { c0 = this.c0, loc0 = this.loc0(); }
     mpending = ST_NONE;
-    lpm = '*';
+    cb['*.bef'] = this.cc();
     this.next();
   }
 
@@ -92,27 +92,29 @@ function(ctx, st) {
       if (latestMod !== null)
         this.err('pending.id');
 
-      lpm.length && this.suc(cb, lpm+'.aft');
       st |= mpending;
       nameVal = this.ltval;
       memName = this.mem_id();
       break;
 
     case CH_LSQBRACKET:
-      lpm.length && this.suc(cb, lpm+'.aft');
+      if (latestMod)
+        cb[latestMod.name+'.bef'] = latestMod['#c'].bef;
       st |= mpending;
       memName = this.mem_expr();
       break;
 
     case TK_NUM:
-      lpm.length && this.suc(cb, lpm+'.aft');
+      if (latestMod)
+        cb[latestMod.name+'.bef'] = latestMod['#c'].bef;
       st |= mpending;
       memName = this.getLit_num();
       break;
 
     case CH_MULTI_QUOTE:
     case CH_SINGLE_QUOTE:
-      lpm.length && this.suc(cb, lpm+'.aft');
+      if (latestMod)
+        cb[latestMod.name+'.bef'] = latestMod['#c'].bef;
       st |= mpending;
       memName = this.parseString(this.lttype);
       nameVal = memName.value;
@@ -130,8 +132,6 @@ function(ctx, st) {
   if (memName === null) {
     if (st & ST_GEN)
       this.err('mem.gen.has.no.name');
-    ASSERT.call(this, this.commentBuf === null, 'comments occupied');
-    this.commentBuf = cb['bef']; // restore the comment buffer
     return null;
   }
 
