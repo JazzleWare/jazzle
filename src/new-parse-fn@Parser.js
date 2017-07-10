@@ -14,7 +14,8 @@ function(ctx, st) {
   var fnName = null;
   var declScope = null;
 
-  var c0 = this.c0, loc0 = this.loc0();
+  var c0 = this.c0, cb = {}, loc0 = this.loc0();
+  this.suc(cb, 'bef');
 
   if (!isMeth) {
     if (isStmt && isAsync) {
@@ -36,6 +37,8 @@ function(ctx, st) {
         this.scope.isBare() &&
         this.err('gen.decl.not.allowed');
       }
+
+      this.suc(cb, 'fun.aft');
       this.next(); // '*'
       st |= ST_GEN;
     }
@@ -85,6 +88,8 @@ function(ctx, st) {
         ARGLEN_SET;
 
   this.declMode = DT_FNARG;
+
+  this.suc(cb, 'list.bef' );
   var argList = this.parseParams(argLen);
 
   this.scope.activateBody();
@@ -105,7 +110,7 @@ function(ctx, st) {
     params: argList,
     expression: false,
     async: (st & ST_ASYNC) !== 0,
-    '#scope': scope, '#y': 0
+    '#scope': scope, '#y': 0, '#c': cb
   };
 
   this.declMode = declMode_;

@@ -22,6 +22,8 @@ this.parseParen = function(ctx) {
     elctx = CTX_TOP;
 
   var lastElem = null, hasTailElem = false;
+
+  var bef = this.cc();
   this.next();
 
   var elem = null, y = 0;
@@ -116,13 +118,15 @@ this.parseParen = function(ctx) {
           start: list[0].loc.start,
           end: list[list.length-1].loc.end
         },
-        '#y': y 
+        '#y': y, '#c': {} 
       } : elem && core(elem),
       start: c0,
       end: this.c,
-      loc: { start: loc0, end: this.loc() }
+      loc: { start: loc0, end: this.loc() }, '#c': {}
   };
 
+  this.augmentCB(n.expr || n, 'bef', bef);
+  this.suc(n['#c'], 'inner');
   if (!this.expectT(CH_RPAREN))
     this.err('unfinished.paren',{tn:n});
 

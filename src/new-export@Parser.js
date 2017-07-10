@@ -1,6 +1,6 @@
 this.parseExport_elemOther =
 function(c0,loc0) {
-  var elem = null, stmt = false;
+  var elem = null, cb = this.cb, stmt = false;
   if (this.lttype === TK_ID) {
     this.canBeStatement = true;
     switch (this.ltval) {
@@ -45,7 +45,7 @@ function(c0,loc0) {
     this.err('export.named.no.exports');
 
   if (!stmt)
-    this.semi() || this.err('no.semi');
+    this.semi(elem['#c'], 'aft') || this.err('no.semi');
 
   return {
     type: 'ExportNamedDeclaration',
@@ -55,12 +55,13 @@ function(c0,loc0) {
     declaration: elem,
     specifiers: [],
     source: null,
-    '#y': 0 
+    '#y': 0, '#c': cb 
   };
 };
 
 this.parseExport_elemList = 
 function(c0,loc0) {
+  var cb = this.cb; this.suc(cb, 'list.bef');
   this.next();
   var firstResv = null;
   var list = [];
@@ -69,6 +70,7 @@ function(c0,loc0) {
     var eName = lName;
     if (this.lttype === TK_ID) {
       this.ltval === 'as' || this.err('export.specifier.not.as');
+      this.spc(lName, 'aft');
       this.next();
       if (this.lttype !== TK_ID)
         this.err('export.specifier.after.as.id');
@@ -91,22 +93,28 @@ function(c0,loc0) {
       '#entry': entry 
     });
 
-    if (this.lttype === CH_COMMA)
+    if (this.lttype === CH_COMMA) {
+      this.spc(eName, 'aft');
       this.next();
+    }
     else
       break;
   }
 
   var ec = this.c, eli = this.li, ecol = this.col;
+
+  this.suc(cb, 'inner');
   this.expectT(CH_RCURLY) || this.err('export.named.list.not.finished');
 
   var src = null;
-  if (this.peekID('from'))
+  if (this.peekID('from')) {
+    this.cb = cb;
     src = this.parseExport_from();
+  }
   else
     firstResv && this.err('export.named.has.reserved',{tn: firstResv});
 
-  this.semi() || this.err('no.semi');
+  this.semi(src ? src['#c'] : cb, src ? 'aft' : 'list.aft') || this.err('no.semi');
   
   ec = this.semiC || (src && src.end) || ec;
   var eloc = this.semiLoc || (src && src.loc.end) || { line: li, column: col };
@@ -122,16 +130,17 @@ function(c0,loc0) {
     declaration: null,
     specifiers: list,
     source: src,
-    '#y': 0 
+    '#y': 0, '#c': cb 
   };
 };
 
 this.parseExport_elemAll =
 function(c0,loc0) {
+  var cb = this.cb; this.suc(cb, '*.bef');
   this.next();
   var src = null;
   src = this.parseExport_from();
-  this.semi() || this.err('no.semi');
+  this.semi(src['#c'], 'aft') || this.err('no.semi');
   
   this.foundStatement = true;
   this.scope.attachFWNamespace(src.value);
@@ -141,12 +150,13 @@ function(c0,loc0) {
     loc: { start: loc0, end: this.semiLoc || src.loc.end },
     end: this.semiC || src.end,
     source: src,
-    '#y': 0
+    '#y': 0, '#c': cb
   };
 };
 
 this.parseExport_elemDefault =
 function(c0,loc0) {
+  var cb = this.cb; this.suc(cb, 'default.bef' );
   this.next();
   var elem = null, stmt = false;
 
@@ -188,7 +198,7 @@ function(c0,loc0) {
   }
 
   if (!stmt)
-    this.semi() || this.err('no.semi');
+    this.semi(core(elem)['#c'], 'aft') || this.err('no.semi');
 
   this.foundStatement = true;
   return {
@@ -197,13 +207,15 @@ function(c0,loc0) {
     loc: { start: loc0, end: this.semiLoc || elem.loc.end },
     end: this.semiC || elem.end,
     declaration: core(elem),
-    '#y': 0
+    '#y': 0, '#c': cb
   };
 };
 
 this.parseExport_from =
 function() {
+  var cb = this.cb;
   this.peekID('from') || this.err('export.from');
+  this.suc(cb, 'from.bef');
   this.next();
   this.peekStr() || this.err('export.src');
 
@@ -216,10 +228,12 @@ function() {
   this.testStmt() || this.err('not.stmt');
   this.isScript && this.err('export.not.in.module');
 
-  var c0 = this.c0, loc0 = this.loc0();
+  var c0 = this.c0, cb = {}, loc0 = this.loc0();
 
+  this.suc(cb, 'bef');
   this.next();
 
+  this.cb = cb;
   return (
     this.peekMul() ?
       this.parseExport_elemAll(c0,loc0) :

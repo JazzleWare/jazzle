@@ -11,7 +11,8 @@ function(asyncID, ctx) {
     type: INTERMEDIATE_ASYNC,
     id: id,
     start: asyncID.start,
-    loc: asyncID.loc
+    loc: asyncID.loc,
+    asyncID: asyncID
   };
 
   this.st = ERR_INTERMEDIATE_ASYNC;
@@ -37,7 +38,13 @@ function(asyncID, ctx) {
 
   var nl = this.nl;
   this.cutEx();
+
+  this.spc(asyncID, 'aft');
   var list = this.parseParen(CTX_PAT), n = null;
+
+  var cb = {};
+  if (list['#c'].inner)
+    cb.inner = list['#c'].inner;
 
   n = {
     type: 'CallExpression',
@@ -53,7 +60,7 @@ function(asyncID, ctx) {
       start: asyncID.loc.start,
       end: list.loc.end
     },
-    '#y': this.Y(list)
+    '#y': this.Y(list), '#c': cb
   };
 
   if (nl) {
@@ -76,6 +83,7 @@ function(asyncID, ctx) {
   asyncFn.start = asyncID.start;
   asyncFn.loc.start = asyncID.loc.start;
 
+  asyncFn['#c']['async.bef'] = asyncID['#c'].bef;
   return asyncFn;
 };
 

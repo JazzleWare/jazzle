@@ -7,14 +7,17 @@ this.parseReturn = function () {
     this.err('return.not.in.a.function');
 
   var c0 = this.c0, loc0 = this.loc0();
-  var c = this.c, li = this.li, col = this.col, r = null;
+  var c = this.c, li = this.li, col = this.col;
 
+  var b = {}, r = null;
+
+  this.suc(b, 'bef' );
   this.next(); // 'return'
 
   if (!this.nl)
     r = this.parseExpr(CTX_NULLABLE|CTX_TOP);
 
-  !this.semi() && this.err('no.semi');
+  this.semi(r ? r['#c'] : b, r ? 'aft' : 'ret.aft') || this.err('no.semi');
   var ec = this.semiC || (r && r.end) || c;
   var eloc = this.semiLoc ||
     (r && r.loc.end) ||
@@ -27,6 +30,7 @@ this.parseReturn = function () {
     start: c0,
     end: ec,
     loc: { start: loc0, end: eloc },
+    '#c': b,
     '#y': this.Y0(r)
   };
 };

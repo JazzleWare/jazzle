@@ -9,22 +9,28 @@ function () {
 
   this.allow(SA_BREAK|SA_CONTINUE);
 
-  var c0 = this.c0, loc0 = this.loc0() ;
+  var c0 = this.c0, cb = {}, loc0 = this.loc0() ;
+
+  this.suc(cb, 'bef');
   this.next(); // 'do...while'
 
   var nbody = this.parseStatement(true) ;
   if (this.lttype === TK_ID && this.ltval === 'while') {
     this.resvchk();
+    this.spc(nbody, 'aft');
     this.next();
   }
   else
     this.err('do.has.no.while',{extra:[startc,startLoc,nbody]});
 
+  this.suc(cb, 'while.aft');
   if (!this.expectT(CH_LPAREN))
     this.err('do.has.no.opening.paren',{extra:[startc,startLoc,nbody]});
 
   var cond = core(this.parseExpr(CTX_TOP));
   var c = this.c, li = this.li, col = this.col;
+
+  this.spc(cond, 'aft');
   if (!this.expectT(CH_RPAREN))
     this.err('do.has.no.closing.paren',{extra:[startc,startLoc,nbody,cond]});
 
@@ -32,6 +38,7 @@ function () {
      c = this.c;
      li = this.li ;
      col = this.col;
+     this.suc(cb, 'cond.aft');
      this.next();
   }
 
@@ -48,6 +55,6 @@ function () {
       start: loc0,
       end: { line: li, column: col } },
     '#scope': scope,
-    '#y': this.Y(cond)+this.Y(nbody)
+    '#y': this.Y(cond)+this.Y(nbody), '#c': cb
   };
 };

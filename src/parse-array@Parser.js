@@ -1,7 +1,8 @@
 this.parseArray = 
 function(ctx) {
-  var c0 = this.c0, loc0 = this.loc0();
+  var c0 = this.c0, cb = {}, loc0 = this.loc0();
 
+  this.suc(cb, 'bef');
   this.next(); // '['
 
   var elem = null, list = [];
@@ -28,6 +29,7 @@ function(ctx) {
 
   var y = 0, si = -1;
 
+  cb.holes = [];
   while (hasMore) {
     elem = this.parseNonSeq(PREC_NONE, elctx);
     if (elem === null && this.lttype === TK_ELLIPSIS) {
@@ -40,6 +42,7 @@ function(ctx) {
         hasNonTailRest = true; 
       if (elem === null) {
         if (this.v <= 5) this.err('ver.elision');
+        this.commentBuf && cb.holes.push([list.length, this.cc()]);
         list.push(null);
       }
       else list.push(core(elem));
@@ -53,7 +56,10 @@ function(ctx) {
       else break;
     }
  
-    if (elem) y += this.Y(elem);
+    if (elem) {
+       y += this.Y(elem);
+       this.spc(core(elem), 'aft');
+    }
 
     if (elem && errt_track(elctx)) {
       var elemCore = elem;
@@ -113,7 +119,7 @@ function(ctx) {
     start: c0,
     end: this.c,
     elements : list,
-    '#y': -1, '#si': si
+    '#y': -1, '#si': si, '#c': cb
   };
 
   if (errt_perr(ctx,pt)) {
@@ -129,6 +135,7 @@ function(ctx) {
     errt_pin(st) && this.pin_st(sc0,sli0,scol0);
   }
 
+  this.suc(cb, 'inner');
   if (!this.expectT(CH_RSQBRACKET))
     this.err('array.unfinished');
   

@@ -12,7 +12,7 @@ function() {
   if (this.v <= 5)
     this.err('ver.mem.comp');
 
-  var c0 = this.c0, loc0 = this.loc0();
+  var c0 = this.c0, b = this.cc(), loc0 = this.loc0();
   this.next() ;
   
   // none of the modifications memberExpr may make to this.pt, this.at, and this.st
@@ -28,14 +28,16 @@ function() {
   var e = this.parseNonSeq(PREC_NONE, CTX_NULLABLE|CTX_TOP);
   e || this.err('prop.dyna.no.expr');
 
+  this.augmentCB(core(e), 'bef', b);
   var n = {
     type: PAREN,
-    expr: e, 
+    expr: core(e), 
     start: c0,
     end: this.c,
     loc: { start: loc0, end: this.loc() }
   };
 
+  this.spc(core(e), 'aft');
   if (!this.expectT(CH_RSQBRACKET))
     this.err('prop.dyna.is.unfinished');
 

@@ -9,6 +9,7 @@ function(ctx) {
   else
     op = this.ltraw;
 
+  var cb = {}; this.suc(cb, 'bef');
   this.next();
   var arg = this.parseNonSeq(PREC_UNARY, ctx & CTX_FOR);
 
@@ -24,6 +25,7 @@ function(ctx) {
       start: c0,
       end: arg.end,
       loc: { start: loc0, end: arg.loc.end },
+      '#c': cb,
       '#y': this.Y(arg)
     };
     this.suspys = n;
@@ -36,8 +38,9 @@ function(ctx) {
     start: c0,
     end: arg.end,
     loc: { start: loc0, end: arg.loc.end },
-    argument: core(arg),
     prefix: true,
+    '#c': cb,
+    argument: core(arg),
     '#y': this.Y(arg)
   };
 };

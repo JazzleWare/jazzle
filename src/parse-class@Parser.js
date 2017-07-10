@@ -70,7 +70,7 @@ function(ctx) {
   var y = 0;
   while (true) {
     if (this.lttype === CH_SEMI) {
-      cbb.semis.push([list.length, this.cc()]);
+      this.commentBuf && cbb.semis.push([list.length, this.cc()]);
       this.next();
       continue;
     }

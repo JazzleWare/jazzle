@@ -55,6 +55,7 @@ function verifyRegex_soft (regex, flags) {
 }
 
 this.parseRegExpLiteral = function() {
+  var cb = {}; this.suc(cb, 'bef');
   if (this.v < 2)
     this.err('ver.regex');
      var startc = this.c0, startLoc = this.loc0(),
@@ -178,7 +179,7 @@ this.parseRegExpLiteral = function() {
      var regex = { type: 'Literal', regex: { pattern: patternString, flags: flagsString },
                    start: startc, end: c,
                    value: val, loc: { start: startLoc, end: this.loc() }, 
-                   raw: this.src.substring(startc, c) };
+                   raw: this.src.substring(startc, c), '#c': cb };
 
      this.next () ;
      return regex ;

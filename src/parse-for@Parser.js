@@ -3,9 +3,12 @@ this.parseFor = function() {
   this.testStmt() || this.err('not.stmt');
   this.fixupLabels(true) ;
 
-  var c0 = this.c0, loc0 = this.loc0();
+  var c0 = this.c0, cb = {}, loc0 = this.loc0();
+
+  this.suc(cb, 'bef' );
   this.next () ;
 
+  this.suc(cb, 'for.aft');
   if (!this.expectT(CH_LPAREN))
     this.err('for.with.no.opening.paren',{extra:[c0,loc0]});
 
@@ -51,6 +54,7 @@ this.parseFor = function() {
   var nbody = null;
   var afterHead = null;
 
+  // TODO: core(head)
   if (head !== null && this.lttype === TK_ID) {
     var kind = 'ForInStatement', iterkw = this.ltval;
     if (iterkw === 'of') {
@@ -79,11 +83,13 @@ this.parseFor = function() {
         this.err('for.in.has.decl.init',{tn:head,extra:[startc,startLoc,kind]});
     }
 
+    this.spc(core(head), 'aft');
     this.next();
     afterHead = kind === 'ForOfStatement' ? 
       this.parseNonSeq(PREC_NONE, CTX_TOP) :
       this.parseExpr(CTX_TOP);
 
+    this.spc(core(afterHead), 'aft');
     if (!this.expectT(CH_RPAREN))
       this.err('for.iter.no.end.paren',{extra:[head,startc,startLoc,afterHead,kind]});
 
@@ -101,11 +107,12 @@ this.parseFor = function() {
       loc: { start: loc0, end: nbody.loc.end },
       start: c0,
       end: nbody.end,
-      right: core(afterHead),
-      left: head,
       body: nbody, 
+      left: head,
+      right: core(afterHead),
       '#y': this.Y(head,afterHead,nbody),
-      '#scope': scope
+      '#scope': scope,
+      '#c': cb
     };
   }
 
@@ -114,14 +121,17 @@ this.parseFor = function() {
   else if (head && this.missingInit)
     this.err('for.decl.no.init',{extra:[startc,startLoc,head]});
 
+  head ? this.spc(core(head), 'aft') : this.suc(cb, 'head');
   if (!this.expectT(CH_SEMI))
     this.err('for.simple.no.init.semi',{extra:[startc,startLoc,head]});
 
   afterHead = this.parseExpr(CTX_NULLABLE|CTX_TOP);
+  afterHead ? this.spc(core(afterHead), 'aft') : this.suc(cb, 'test');
   if (!this.expectT(CH_SEMI))
     this.err('for.simple.no.test.semi',{extra:[startc,startLoc,head,afterHead]});
 
   var tail = this.parseExpr(CTX_NULLABLE|CTX_TOP);
+  tail ? this.spc(core(tail), 'aft') : this.suc(cb, 'tail');
   if (!this.expectT(CH_RPAREN))
     this.err('for.simple.no.end.paren',{extra:[startc,startLoc,head,afterHead,tail]});
 
@@ -141,9 +151,10 @@ this.parseFor = function() {
     end: nbody.end,
     test: afterHead && core(afterHead),
     loc: { start: loc0, end: nbody.loc.end },
-    update: tail && core(tail),
     body: nbody,
+    update: tail && core(tail),
     '#scope': scope,
+    '#c': cb,
     '#y': this.Y0(head,afterHead,tail)+this.Y(nbody)
   };
 };

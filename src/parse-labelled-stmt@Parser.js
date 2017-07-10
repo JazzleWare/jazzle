@@ -1,4 +1,5 @@
 this.parseLabel = function(label, allowNull) {
+  this.spc(label, 'aft');
   this.next();
   var mname = _m(label.name);
   var ex = this.findLabel_m(mname); // existing label
@@ -19,6 +20,6 @@ this.parseLabel = function(label, allowNull) {
     end: stmt.end,
     loc: { start: label.loc.start, end: stmt.loc.end },
     body: stmt,
-    '#y': this.Y0(stmt)
+    '#y': this.Y0(stmt), '#c': {}
   };
 };

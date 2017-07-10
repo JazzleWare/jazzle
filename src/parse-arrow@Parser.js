@@ -3,6 +3,7 @@ this.parseArrow = function(arg, ctx)   {
     this.err('ver.arrow');
   var async = false;
 
+  var cb = {};
   if (this.pt === ERR_ASYNC_NEWLINE_BEFORE_PAREN) {
     ASSERT.call(this, arg === this.pe,
       'how can an error core not be equal to the erroneous argument?!');
@@ -16,6 +17,7 @@ this.parseArrow = function(arg, ctx)   {
     this.enterScope(this.scope.spawnFn(sc));
     this.scope.refDirect_m(_m(arg.name), null);
     this.asArrowFuncArg(arg);
+    this.spc(arg, 'aft');
     break;
 
   case PAREN_NODE:
@@ -28,6 +30,9 @@ this.parseArrow = function(arg, ctx)   {
       else
         this.asArrowFuncArg(arg.expr);
     }
+    cb.bef = arg['#c'].bef;
+    cb.inner = arg['#c'].inner;
+    this.suc(cb, 'list.bef' );
     break;
 
   case 'CallExpression':
@@ -45,6 +50,10 @@ this.parseArrow = function(arg, ctx)   {
     this.parenScope.makeParams(this.scope);
     this.parenScope = null;
     this.asArrowFuncArgList(arg.arguments);
+    cb.bef = arg.callee['#c'].bef;
+    cb['async.aft'] = arg.callee['#c'].aft;
+    cb.inner = arg['#c'].inner ;
+    this.suc(cb, 'list.bef' );
     break;
 
   case INTERMEDIATE_ASYNC:
@@ -53,6 +62,8 @@ this.parseArrow = function(arg, ctx)   {
     this.enterScope(this.scope.spawnFn(sc));
     this.scope.refDirect_m(_m(arg.id.name), null);
     this.asArrowFuncArg(arg.id);
+    cb.bef = arg.asyncID['#c'].bef;
+    this.spc(arg.id, 'aft');
     break;
 
   default: this.err('not.a.valid.arg.list');
@@ -108,6 +119,6 @@ this.parseArrow = function(arg, ctx)   {
     generator: false, expression: isExpr,
     body: core(nbody), id : null,
     async: async,
-    '#scope': scope, '#y': 0
+    '#scope': scope, '#y': 0, '#c': cb
   }; 
 };

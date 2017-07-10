@@ -7,6 +7,7 @@ function () {
   var ex = null, c0 = this.c0, loc0 = this.loc0();
   var li = this.li, c = this.c, col = this.col;
 
+  var b = {}; this.suc(b, 'bef');
   this.next(); // 'throw'
 
   if (this.nl)
@@ -16,7 +17,7 @@ function () {
   if (ex === null)
     this.err('throw.has.no.argument');
 
-  this.semi() || this.err('no.semi');
+  this.semi(core(ex)['#c'], 'aft') || this.err('no.semi');
 
   this.foundStatement = true;
   return {
@@ -28,6 +29,7 @@ function () {
       start: loc0,
       end: this.semiLoc || ex.loc.end
     },
+    '#c': b,
     '#y': this.Y(ex)
   };
 };

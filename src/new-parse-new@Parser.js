@@ -7,6 +7,8 @@ function() {
   var cb = {}; this.suc(cb, 'bef');
   this.next(); // 'new'
   if (this.lttype === CH_SINGLEDOT) {
+    this.suc(cb, 'new.aft');
+    this.cb = cb;
     this.next();
     return this.parseMeta(c0,loc0,c,li,col);
   }

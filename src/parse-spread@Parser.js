@@ -2,7 +2,9 @@ this.parseSpread =
 function(ctx) {
   this.v <= 5 && this.err('ver.spread.rest');
 
-  var c0 = this.c0, loc0 = this.loc0();
+  var c0 = this.c0, cb = {}, loc0 = this.loc0();
+
+  this.suc(cb, 'bef' );
   this.next();
 
   var arg = this.parseNonSeq(PREC_NONE, ctx);
@@ -26,6 +28,7 @@ function(ctx) {
     start: c0,
     end: arg.end,
     argument: core(arg),
+    '#c': cb,
     '#y': this.Y(arg)
   };
 };

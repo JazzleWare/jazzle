@@ -1,5 +1,6 @@
 this.parseMeta =
 function(c0,loc0,c,li,col) {
+  var cb = this.cb;
   this.v<=5 && this.err('ver.ntarget');
   this.lttype !== TK_ID && this.err('ntarget.id');
   if (this.ltval !== 'target')
@@ -26,6 +27,6 @@ function(c0,loc0,c,li,col) {
     property: prop,
     end: prop.end,
     loc : { start: loc0, end: prop.loc.end },
-    '#y': 0
+    '#y': 0, '#c': cb
   };
 };
