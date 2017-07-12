@@ -17,4 +17,9 @@ function() {
 };
 
 this.invW =
-function(rawStr) { return this.onWrite_fun(); };
+function(rawStr) {
+  var w = this.onWrite_fun;
+  this.clearOnW(); // because onWrite_fun may entail even further onW
+  w.call(this, rawStr);
+  return this;
+};

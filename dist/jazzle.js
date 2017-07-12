@@ -1919,10 +1919,8 @@ this.write = function(rawStr) {
   ASSERT.call(this, rawStr !== "",
     'not allowed to write empty strings to output');
 
-  if (this.hasOnW()) {
+  if (this.hasOnW())
     this.invW(rawStr);
-    this.clearOnW();
-  }
 
   if (this.hasLine) {
     this.hasLine = false;
@@ -3161,7 +3159,12 @@ function() {
 };
 
 this.invW =
-function(rawStr) { return this.onWrite_fun(); };
+function(rawStr) {
+  var w = this.onWrite_fun;
+  this.clearOnW(); // because onWrite_fun may entail even further onW
+  w.call(this, rawStr);
+  return this;
+};
 
 }]  ],
 [ErrorString.prototype, [function(){

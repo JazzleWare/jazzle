@@ -46,10 +46,8 @@ this.write = function(rawStr) {
   ASSERT.call(this, rawStr !== "",
     'not allowed to write empty strings to output');
 
-  if (this.hasOnW()) {
+  if (this.hasOnW())
     this.invW(rawStr);
-    this.clearOnW();
-  }
 
   if (this.hasLine) {
     this.hasLine = false;
