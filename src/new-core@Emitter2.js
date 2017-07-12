@@ -19,6 +19,7 @@ function() {
 this.write =
 function(rawStr) {
   ASSERT.call(this, arguments.length === 1, 'write must have only one single argument');
+  ASSERT.call(this, this.curLineIndent === this.indentLevel, 'in' );
   this.wcb && this.call_onw(rawStr);
   this.hasPendingSpace() && this.effectPendingSpace(rawStr.length);
   this.curLine += rawStr;
@@ -65,13 +66,14 @@ function() {
   var line = this.curLine;
   var len = line.length;
   ASSERT.call(this, len, 'len');
-  var optimalIndent = this.indentLevel;
-  if (optimalIndent + len > this.wrapLimit)
+  var optimalIndent = this.curLineIndent;
+  if (this.wrapLimit > 0 && optimalIndent + len > this.wrapLimit)
     optimalIndent = len < this.wrapLimit ? this.wrapLimit - len : 0;
   this.out.length && this.insertLineBreak();
   this.out += this.geti(optimalIndent) + line;
 
   this.curLine = "";
+  this.curLineIndent = this.indentLevel;
 };
 
 this.indent =
@@ -93,14 +95,14 @@ function() {
 };
 
 this.geti =
-function() {
+function(e) {
   var inc = this.indentCache;
   while (e < inc.length)
     return inc[e];
   if (inc.length === 0)
     inc[0] = "";
   while (e >= inc.length)
-    inc[inc.length] = inc[inc.length-1] + this.indentStr;
+    inc[inc.length] = inc[inc.length-1] + this.indentString;
   return inc[e];
 };
 
@@ -130,12 +132,15 @@ function() { return this.pendingSpace !== EST_NONE; };
 
 this.effectPendingSpace =
 function(len) {
-  switch (this.pendingSpace) {
+  ASSERT.call(this, this.curLine.length, 'leading');
+  var s = this.pendingSpace;
+  this.pendingSpace = EST_NONE;
+  switch (s) {
   case EST_OMITTABLE:
     this.ol(len+1) <= 0 && this.insertSpace();
     break;
   case EST_BREAKABLE:
-    this.ol(len+1) <= 0 ? this.insertSpace() : this.insertLineBreak();
+    this.ol(len+1) <= 0 ? this.insertSpace() : this.startNewLine();
     break;
   default:
     ASSERT.call(this, false, 'invalid type for pending space');
@@ -171,8 +176,15 @@ function() {
   return this;
 };
 
+this.insertSpace =
+function() { this.curLine += ' '; };
+
+this.insertLineBreak =
+function() { this.out += '\n'; };
+
 this. p =
 function() {
-  this.t(ETK_PAREN).w('(').rtt();
+  ASSERT.call(this, this.curtt === ETK_NONE, 't' );
+  this.w('(').rtt();
   return this;
 };

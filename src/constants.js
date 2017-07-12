@@ -142,6 +142,18 @@ var EC_NONE = 0,
     EC_NON_SEQ = EC_CALL_HEAD << 1,
     EC_IN = EC_NON_SEQ << 1;
 
+var EST_BREAKABLE = 1,
+    EST_OMITTABLE = EST_BREAKABLE << 1,
+    EST_NONE = 0;
+
+var ETK_NONE = 0,
+    ETK_ID = 1,
+    ETK_MIN = ETK_ID << 1,
+    ETK_DIV = ETK_MIN << 1,
+    ETK_ADD = ETK_DIV << 1,
+    ETK_NUM = ETK_ADD << 1,
+    ETK_STR = ETK_NUM << 1;
+
 var PE_NO_NONVAR = 1,
     PE_NO_LABEL = PE_NO_NONVAR << 1,
     PE_LEXICAL = PE_NO_NONVAR,
