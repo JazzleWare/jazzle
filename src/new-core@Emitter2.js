@@ -16,13 +16,17 @@ function() {
   return this;
 };
 
+// write -- raw
+this.rwr =
+function(rawStr) { this.out += rawStr; };
+
 this.write =
 function(rawStr) {
   ASSERT.call(this, arguments.length === 1, 'write must have only one single argument');
 //ASSERT.call(this, this.curLineIndent === this.indentLevel, 'in' );
   this.wcb && this.call_onw(rawStr);
   this.hasPendingSpace() && this.effectPendingSpace(rawStr.length);
-  this.curLine += rawStr;
+  this.rwr(rawStr);
 };
 
 this.w =
