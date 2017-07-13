@@ -77,7 +77,7 @@ function(memName, asStr) {
     return this.eA(memName, EC_NONE, false);
   case 'Identifier':
     return asStr ?
-      this.t(ETK_STR).writeString(memName.name,"'").rtt();
+      this.t(ETK_STR).writeString(memName.name,"'").rtt() :
       this.writeIDName(memName.name);
   }
   ASSERT.call(this, false, 'unknown name');
