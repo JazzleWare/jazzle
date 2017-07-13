@@ -94,6 +94,11 @@ function(list, flags) {
   return this;
 };
 
+this.emitStmt =
+function(stmt) {
+  return this.eA(stmt, EC_START_STMT, true);
+};
+
 this.emitBody =
 function(stmt) {
   switch (stmt.type) {
