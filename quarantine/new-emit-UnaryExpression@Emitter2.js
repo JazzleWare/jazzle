@@ -1,15 +1,23 @@
 Emitters['UnaryExpression'] = 
 function(n, flags, isStmt) {
+  this.rtt();
   var o = n.operator;
   var hasParen = flags & EC_EXPR_HEAD;
   if (hasParen) { this.w('('); flags = EC_NONE; }
-  var lastChar = this.code.charAt(this.code.length-1) ;
-  lastChar === o && this.s();
-  this.w(o);
 
   switch (o) {
   case 'void': case 'delete': case 'typeof':
-    this.s();
+    this.wt(o, ETK_ID).onw(wcb_afterVDT);
+    break;
+  case '+':
+    this.wt(o, ETK_ADD).onw(wcb_ADD);
+    break;
+  case '-':
+    this.wt(o, ETK_MIN).onw(wcb_MIN);
+    break;
+  default:
+    ASSERT.call(this, false, 'unary [:'+o+':]');
+    break;
   }
 
   this.emitUA(n.argument);

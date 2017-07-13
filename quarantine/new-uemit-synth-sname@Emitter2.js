@@ -1,5 +1,5 @@
 UntransformedEmitters['synth-name'] =
 function(n, flags, isStmt) {
-  this.w(n.liq.synthName);
+  this.wt(n.liq.synthName, ETK_ID );
   return true;
 };

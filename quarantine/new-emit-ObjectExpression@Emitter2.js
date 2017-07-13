@@ -1,5 +1,6 @@
 Emitters['ObjectExpression'] =
 function(n, flags, isStmt) {
+  this.rtt();
   var list = n.properties, ci = n['#ci'], e = 0;
   var hasParen = false;
   if (ci >= 0) {
@@ -16,7 +17,7 @@ function(n, flags, isStmt) {
   while (e < last) {
     item = list[e];
     if (e) this.w(',').s();
-    this.writeMemName(item.key, false).w(':').s().eN(item.value, EC_NONE, false);
+    this.writeMemName(item.key, false).w(':').os().eN(item.value, EC_NONE, false);
     e++;
   }
 
@@ -24,14 +25,13 @@ function(n, flags, isStmt) {
 
   if (ci >= 0) {
     while (e < list.length) {
-      this.w(',').s();
+      this.w(',').os();
       item = list[e];
       if (item.computed)
         this.eN(item.key, EC_NONE, false);
       else
-        this.w("'")
-            .writeMemName(item.key, true).w("'");
-      this.w(',').s().eN(item.value, EC_NONE, false);
+        this.writeMemName(item.key, true);
+      this.w(',').os().eN(item.value, EC_NONE, false);
       e++;
     }
     this.w(')');

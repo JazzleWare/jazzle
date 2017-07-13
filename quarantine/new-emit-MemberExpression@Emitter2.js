@@ -1,5 +1,6 @@
 Emitters['MemberExpression'] =
 function(n, flags, isStmt) {
+  this.rtt();
   this.eH(n.object, flags, false);
   if (n.computed)
     this.w('[').eA(n.property, EC_NONE, false).w(']');

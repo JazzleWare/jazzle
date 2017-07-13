@@ -1,8 +1,9 @@
 Emitters['IfStatement'] =
 function(n, flags, isStmt) {
+  this.rtt();
   ASSERT_EQ.call(this, isStmt, true);
-  this.wm('if',' ','(').eA(n.test, EC_NONE, false).w(')').emitIfBody(n.consequent);
-  n.alternate && this.l().w('else').emitElseBody(n.alternate);
+  this.wt('if', ETK_ID).wm('','(').eA(n.test, EC_NONE, false).w(')').emitIfBody(n.consequent);
+  n.alternate && this.l().wt('else', ETK_ID).onw(wcb_afterElse).emitElseBody(n.alternate);
   return true;
 };
 
@@ -10,25 +11,27 @@ this.emitIfBody =
 function(stmt) {
   switch (stmt.type) {
   case 'BlockStatement':
-    this.s();
+    this.os();
   case 'EmptyStatement':
-    return this.emitAny(stmt, EC_START_STMT, true);
+    return this.emitStmt(stmt);
   }
   if (stmt.type === 'ExpressionStatement') {
     this.i();
-    var em = this.l().emitAny(stmt, EC_START_STMT, true);
+    var em = this.l().emitStmt(stmt);
     this.u();
     return em;
   }
-  this.s().w('{').i().wsl();
-  this.emitAny(stmt, EC_START_STMT, true) ? this.wsl() : this.csl();
+  this.os().w('{').i().onw(wcb_afterStmt);
+  this.emitStmt(stmt);
+  this.wcb ? this.clear_onw() : this.onw(wcb_afterStmt);
   this.u().w('}');
+
   return true;
 };
 
 this.emitElseBody =
 function(stmt) {
   if (stmt.type === 'IfStatement')
-    return this.s().emitAny(stmt, EC_START_STMT, true);
+    return this.bs().emitStmt(stmt);
   return this.emitBody(stmt);
 };

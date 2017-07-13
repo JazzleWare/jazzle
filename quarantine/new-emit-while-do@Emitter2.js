@@ -1,9 +1,11 @@
 Emitters['DoWhileStatement'] =
 function(n, flags, isStmt) {
+  this.rtt();
   ASSERT_EQ.call(this, isStmt, true);
-  this.wm('do',' ','{').i().wsl();
-  this.emitAny(n.body, EC_START_STMT, true ) ?
-    this.wsl() : this.csl();
-  this.u().wm('}',' ','while',' ','(').eA(n.test, EC_NONE, false).wm(')',';');
+  this.wt('do',ETK_ID).wm('','{').i().onw(wcb_afterStmt);
+  this.emitStmt(n.body);
+  this.u();
+  this.wcb ? this.clear_onw() : this.l();
+  this.wm('}','','while','','(').eA(n.test, EC_NONE, false).wm(')',';');
   return true;
 };

@@ -1,5 +1,6 @@
 UntransformedEmitters['assig-list'] =
 function(n, flags, isStmt) {
+  this.rtt();
   if (isStmt)
     return this.emitStmtList(n.list);
 

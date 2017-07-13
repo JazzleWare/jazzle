@@ -2,8 +2,8 @@ this.emitHead_temps =
 function(scope, isScript) {
   var temps = scope.getLG('<t>'), e = 0, len = temps.length();
   while (e < len) {
-    this.w(e ? ',' : 'var').s();
-    this.w(temps.at(e++).synthName);
+    e ? this.wm(',','') : this.w('var').onw(wcb_afterVar);
+    this.wt(temps.at(e++).synthName, ETK_ID);
   }
   e && this.w(';');
   return this;
@@ -15,8 +15,9 @@ function(scope, isScript) {
   var em = 0, v = null;
   while (e < len) {
     v = vars.at(e++);
-    if (v.isVar() && v.isFn()) {
-      this.w(em ? ',' : 'var').s().w(v.synthName);
+    if (v.isVar() && !v.isFn()) {
+      em ? this.wm(',','') : this.w('var').onw(wcb_afterVar);
+      this.wt(v.synthName, ETK_ID);
       em++;
     }
   }
@@ -26,16 +27,17 @@ function(scope, isScript) {
 this.emitHead_fns =
 function(scope, isScript) {
   var list = scope.funLists, e = 0, len = list.length();
-  var onw = this.hasOnW(), em = 0;
+  var onw = this.wcb, em = 0;
   while (e < len) {
     this.emitFunList(list.at(e++));
-    if (onw && !this.hasOnW()) {
+    if (onw && !this.wcb) {
       ++em;
-      this.onW(onW_line);
-      onw = this.hasOnW();
+      this.onW(wcb_afterVar);
+      onw = this.wcb;
     }
   }
-  em && this.hasOnW() && this.clearOnW();
+
+  em && this.wcb && this.clear_onw();
 };
 
 this.emitHead_llinosa =
@@ -45,12 +47,11 @@ function(scope, isScript) {
   while (e < len) {
     item = list.at(e++ );
     if (item.isLLINOSA()) {
-      this
-        .w(em ? ',' : 'var').s().w(item.synthName)
-        .s().w('=').s()
+      em ? this.wm(',','') : this.w('var').onw(wcb_afterVar);
+      this.wt(item.synthName, ETK_ID).os().w('=').os()
         .wm('{','v',':','void',' ','0','}');
       ++em
     }
   }
-  if (e > 0) this.w(';');
+  if (em > 0) this.w(';');
 };

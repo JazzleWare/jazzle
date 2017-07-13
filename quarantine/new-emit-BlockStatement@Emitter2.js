@@ -1,11 +1,12 @@
 Emitters['BlockStatement'] =
 function(n, flags, isStmt) {
   ASSERT_EQ.call(this, isStmt, true);
+  this.rtt();
   this.w('{');
-  this.i().onW(onW_line);
+  this.i().onW(cb_STMT);
   this.emitStmtList(n.body);
   this.u();
-  this.hasOnW() ? this.clearOnW() : this.l();
+  this.wcb ? this.clear_onw() : this.l();
   this.w('}');
   return true;
 };

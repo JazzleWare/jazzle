@@ -56,7 +56,7 @@ function(ch) {
 
 this.writeIDName =
 function(nameStr) {
-  return this.rwr(nameStr);
+  return this.w(nameStr);
 };
 
 this.wsndl =
@@ -77,7 +77,7 @@ function(memName, asStr) {
     return this.eA(memName, EC_NONE, false);
   case 'Identifier':
     return asStr ?
-      this.w("'").writeStringValue(memName.name,1).rwr("'") : // TODO: rwr is not the best choice -- handle the case where the string itself needs wrapping
+      this.t(ETK_STR).writeString(memName.name,"'").rtt();
       this.writeIDName(memName.name);
   }
   ASSERT.call(this, false, 'unknown name');
@@ -113,7 +113,7 @@ function(stmt) {
   case 'BlockStatement':
     this.os();
   case 'EmptyStatement':
-    this.eA(stmt, EC_START_STMT, true);
+    this.emitStmt(stmt);
     return true;
   }
   this.l().i();
@@ -212,12 +212,12 @@ function(nd) {
   var scope = nd.ref.scope;
   ASSERT.call(this, scope.hasTZCheckPoint, 'could not find any tz');
   var tz = scope.scs.getLG('tz').getL(0);
-  this.wm(tz.synthName,'<',nd.idx,'&&').jz('tz').wm('(','\'').writeStringValue(nd.name).wm('\'',')');
+  this.wm(tz.synthName,'<',nd.idx,'&&').jz('tz').w('(').writeString(nd.name, "'").w(')');
   return true;
 };
 
 this.emitAccessChk_invalidSAT =
 function(nd) {
-  this.jz('cc').wm('(','\'').writeStringValue(nd.name).wm('\'',')');
+  this.jz('cc').w('(').writeString(nd.name,"'").w(')');
   return true;
 };

@@ -14,19 +14,19 @@ function(n, flags, isStmt) {
 
   if (hasParen) { this.w('('); flags = EC_NONE; }
   if (hasWrapper) {
-    this.wm('function','(');
+    this.wt('function', ETK_ID).w('(');
     lonll && this.wsndl(lonll);
     this.w(')').s().w('{').i().l();
     if (isRenamed)
-      this.wm('var',' ',scopeName.synthName,' ','=',' ');
+      this.w('var').onw(wcb_afterVar).wt(scopeName.synthName, ETK_ID).wm('','=','');
     else
-      this.wm('return').noWrap().s();
+      this.wm('return').onw(wcb_afterRet);
   }
   this.emitTransformedFn(n);
   if (hasWrapper) {
     this.w(';');
     if (isRenamed)
-      this.l().w('return').noWrap().s().w(scopeName.synthName).w(';');
+      this.l().w('return').onw(wcb_afterRet).wt(scopeName.synthName, ETK_ID).w(';');
     this.u().l().wm('}','(');
     lonll && this.wsndl(lonll);
     this.w(')');

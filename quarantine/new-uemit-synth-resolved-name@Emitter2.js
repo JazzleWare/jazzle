@@ -25,7 +25,7 @@ function(n, flags, isStmt) {
     hasZero = hasParen = flags & EC_CALL_HEAD;
   if (hasParen) { this.w('('); flags = EC_NONE; }
   hasZero && this.wm('0',',');
-  this.w(n.target.synthName);
+  this.wt(n.target.synthName, ETK_ID );
   tv && this.v();
   hasParen && this.w(')');
   isStmt && this.w(';');
@@ -35,5 +35,5 @@ function(n, flags, isStmt) {
 bes['binding'] = this.emitRName_binding =
 function(n, flags, isStmt) {
   ASSERT.call(this, isResolvedName(n), 'rn');
-  return this.w(n.target.synthName), true;
+  return this.wt(n.target.synthName, ETK_ID ), true;
 };

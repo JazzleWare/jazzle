@@ -15,21 +15,22 @@ function(n, flags, isStmt) {
   }
   if (hasParen) { this.w('('); flags = EC_NONE; }
 
-  tz && (this.emitAccessChk_tz(target), this.w(',').s());
-  cc && (this.emitAccessChk_invalidSAT(target), this.w(',').s());
+  tz && (this.emitAccessChk_tz(target), this.w(',').os());
+  cc && (this.emitAccessChk_invalidSAT(target), this.w(',').os());
 
   this.emitSAT(left, flags);
 
-  this.s();
+  this.os();
   if (n.operator === '**=') {
     ASSERT.call(this, isResolvedName(n.left), 'not rn');
-    this.w('=').s().jz('ex')
+    this.w('=').os().jz('ex')
         .w('(').eN(n.left, EC_NONE, false)
-        .w(',').s().eN(n.right, flags & EC_IN, false)
+        .w(',').os().eN(n.right, flags & EC_IN, false)
         .w(')');
   }
   else {
-    this.w(n.operator).s().eN(n.right, flags & EC_IN, false);
+    this.w(n.operator).os();
+    this.eN(n.right, flags & EC_IN, false);
   }
 
   hasParen && this.w(')');
@@ -37,7 +38,11 @@ function(n, flags, isStmt) {
   return true;
 };
 
-Emitters['AssignmentExpression'] = this.emitAssignment_ex;
+Emitters['AssignmentExpression'] =
+function(n, flags, isStmt) {
+  this.rtt();
+  return this.emitAssignment_ex();
+};
 
 Emitters['#SynthAssig'] =
 function(n, flags, isStmt) {
@@ -48,8 +53,8 @@ function(n, flags, isStmt) {
 
 this.emitAssignment_binding =
 function(n, flags, isStmt) {
-  this.w('var').s().emitRName_binding(n.left);
-  this.s().w('=').s();
+  this.w('var').onw(wcb_afterVar).emitRName_binding(n.left);
+  this.os().w('=').os();
   if (n.left.target.isLLINOSA())
     this.emitWrappedInV(n.right);
   else
