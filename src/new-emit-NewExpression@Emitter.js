@@ -1,9 +1,9 @@
 Emitters['NewExpression'] =
 function(n, flags, isStmt) {
-  this.rtt();
+  ;
   var si = findElem(n.arguments, 'SpreadElement');
   if (si === -1) {
-    this.wt('new', ETK_ID).onw(wcb_afterNew).emitNewHead(n.callee);
+    this.wt('new', ETK_ID).onw(wcb_afterNew).os().emitNewHead(n.callee);
     this.w('(').emitCommaList(n.arguments).w(')');
   } else {
     var hasParen = flags & EC_NEW_HEAD;

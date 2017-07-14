@@ -18,14 +18,16 @@ function() {
 
 // write -- raw
 this.rwr =
-function(rawStr) { this.out += rawStr; };
+function(rawStr) { this.curLine += rawStr; };
 
 this.write =
 function(rawStr) {
   ASSERT.call(this, arguments.length === 1, 'write must have only one single argument');
 //ASSERT.call(this, this.curLineIndent === this.indentLevel, 'in' );
+  this.hasPendingSpace() && this.effectPendingSpace(rawStr.length);
   this.wcb && this.call_onw(rawStr);
   this.hasPendingSpace() && this.effectPendingSpace(rawStr.length);
+
   this.rwr(rawStr);
 };
 
@@ -39,7 +41,7 @@ this.wm =
 function() {
   ASSERT.call(this, arguments.length > 1, 'writeMul must have more than one single argument');
   var e = 0;
-  while (e < argumnts.length) {
+  while (e < arguments.length) {
     var rawStr = arguments[e++ ];
     switch (rawStr) {
     case ' ': this.bs(); break;
@@ -69,7 +71,9 @@ function() {
   ASSERT.call(this, this.pendingSpace === EST_NONE, 'pending space');
   var line = this.curLine;
   var len = line.length;
-  ASSERT.call(this, len, 'len');
+  if (len === 0)
+    return;
+
   var optimalIndent = this.curLineIndent;
   if (this.wrapLimit > 0 && optimalIndent + len > this.wrapLimit)
     optimalIndent = len < this.wrapLimit ? this.wrapLimit - len : 0;
@@ -117,6 +121,14 @@ function(tk) {
   return this;
 };
 
+this.wt =
+function(rawStr, tk) {
+  this.t(tk);
+  this.write(rawStr);
+  this.curtt = ETK_NONE;
+  return this;
+};
+
 this.rtt =
 function() {
   ASSERT.call(this, this.curtt !== ETK_NONE, 'none');
@@ -160,6 +172,7 @@ function(est) {
 
 this.onw =
 function(wcb, wcbp) {
+  ASSERT.call(this, !this.hasPendingSpace(), 'pending space');
   ASSERT.call(this, this.wcb === null, 'wcb');
   this.wcbp = wcbp;
   this.wcb = wcb;
@@ -173,6 +186,13 @@ function(rawStr) {
   w.call(this, rawStr);
 };
 
+this.insertSpace =
+function() {
+  this.curtt === ETK_NONE || this.rtt();
+  this.wcb && this.call_onw(' ');
+  this.curLine += ' '; 
+};
+
 this.clear_onw =
 function() {
   ASSERT.call(this, this.wcb, 'wcb null');
@@ -180,15 +200,14 @@ function() {
   return this;
 };
 
-this.insertSpace =
-function() { this.curLine += ' '; };
+this.jz =
+function(name) {
+  return this.wt('jz', ETK_ID).wm('.',name);
+};
 
 this.insertLineBreak =
-function() { this.out += '\n'; };
-
-this. p =
 function() {
-  ASSERT.call(this, this.curtt === ETK_NONE, 't' );
-  this.w('(').rtt();
-  return this;
+  this.curtt === ETK_NONE || this.rtt();
+  this.wcb && this.call_onw('\n');
+  this.out += '\n';
 };

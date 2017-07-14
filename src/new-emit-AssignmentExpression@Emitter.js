@@ -40,7 +40,7 @@ function(n, flags, isStmt) {
 
 Emitters['AssignmentExpression'] =
 function(n, flags, isStmt) {
-  this.rtt();
+  ;
   return this.emitAssignment_ex();
 };
 

@@ -1,6 +1,6 @@
 Emitters['IfStatement'] =
 function(n, flags, isStmt) {
-  this.rtt();
+  ;
   ASSERT_EQ.call(this, isStmt, true);
   this.wt('if', ETK_ID).wm('','(').eA(n.test, EC_NONE, false).w(')').emitIfBody(n.consequent);
   n.alternate && this.l().wt('else', ETK_ID).onw(wcb_afterElse).emitElseBody(n.alternate);
@@ -32,6 +32,6 @@ function(stmt) {
 this.emitElseBody =
 function(stmt) {
   if (stmt.type === 'IfStatement')
-    return this.bs().emitStmt(stmt);
+    return this.emitStmt(stmt);
   return this.emitBody(stmt);
 };

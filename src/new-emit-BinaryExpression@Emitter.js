@@ -2,7 +2,6 @@ this.emitBLE =
 Emitters['LogicalExpression'] =
 Emitters['BinaryExpression'] =
 function(n, flags, isStmt) {
-  this.rtt();
   var hasParen = flags & EC_EXPR_HEAD;
   if (hasParen) { this.w('('); flags = EC_NONE; }
   var o = n.operator;
@@ -15,13 +14,21 @@ function(n, flags, isStmt) {
   else
     this.emitBLEP(left, flags);
 
+  this.wm('',o);
+
   switch (n.operator) {
-  case '/': this.onw(wcb_DIV); break;
-  case '+': this.onw(wcb_ADD); break;
-  case '-': this.onw(wcb_MIN); break;
-  default: this.os(); break;
+  case '/':
+    this.onw(wcb_DIV);
+    break;
+  case '+':
+    this.onw(wcb_ADD);
+    break;
+  case '-':
+    this.onw(wcb_MIN);
+    break;
   }
-  this.wm(o,'');
+
+  this.os();
 
   if (isBLE(right))
     this.emitRight(right, o, EC_NONE);

@@ -48,6 +48,7 @@ mex.TYPES = {
 };
 
 mex.dump = function dump(obj, level, name, isTail, sp ) {
+  return "";
   try {
   var space = "", i = 0;
   while (i++ < level-1)

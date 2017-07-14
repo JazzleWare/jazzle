@@ -1,6 +1,6 @@
 Emitters['ObjectExpression'] =
 function(n, flags, isStmt) {
-  this.rtt();
+  ;
   var list = n.properties, ci = n['#ci'], e = 0;
   var hasParen = false;
   if (ci >= 0) {

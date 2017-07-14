@@ -1,6 +1,6 @@
 Emitters['ConditionalExpression'] =
 function(n, flags, isStmt) {
-  this.rtt();
+  ;
   var hasParen = flags & EC_EXPR_HEAD;
   if (hasParen) { this.w('('); flags = EC_NONE; }
   this.emitCondTest(n.test, flags);

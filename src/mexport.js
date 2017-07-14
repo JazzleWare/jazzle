@@ -26,8 +26,6 @@ this.CatchScope = CatchScope;
 this.GlobalScope = GlobalScope; 
 this.ConcreteScope = ConcreteScope; 
 
-this.Emitter2 = Emitter2;
-
 this.ST_GLOBAL = 1,
 this.ST_MODULE = ST_GLOBAL << 1,
 this.ST_SCRIPT = ST_MODULE << 1,

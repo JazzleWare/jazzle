@@ -1,6 +1,6 @@
 UntransformedEmitters['call'] = 
 function(n, flags, isStmt) {
-  this.rtt();
+  ;
   var hasParen = flags & EC_NEW_HEAD;
   if (hasParen) { this.w('('); } 
   if (n.mem !== null)

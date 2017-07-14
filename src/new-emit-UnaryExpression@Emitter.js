@@ -1,6 +1,6 @@
 Emitters['UnaryExpression'] = 
 function(n, flags, isStmt) {
-  this.rtt();
+  ;
   var o = n.operator;
   var hasParen = flags & EC_EXPR_HEAD;
   if (hasParen) { this.w('('); flags = EC_NONE; }

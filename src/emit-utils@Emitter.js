@@ -6,7 +6,7 @@ function(sv,ql) {
     v = sv.charAt(o);
     ch = sv.charCodeAt(o);
     if (!this.isStringCh(ch))
-      v = stringEscapeFor(ch);
+      v = this.stringEscapeFor(ch);
     var l = v.length;
     if (o === len-1)
       l  += ql;
@@ -16,6 +16,7 @@ function(sv,ql) {
       this.curLineIndent = 0;
     }
     this.rwr(v);
+    o++;
   }
 
   return this;
@@ -77,14 +78,14 @@ function(memName, asStr) {
     return this.eA(memName, EC_NONE, false);
   case 'Identifier':
     return asStr ?
-      this.t(ETK_STR).writeString(memName.name,"'").rtt() :
+      this.t(ETK_STR).writeString(memName.name,"'") :
       this.writeIDName(memName.name);
   }
   ASSERT.call(this, false, 'unknown name');
 };
 
 this.writeString =
-function(quotation,sv) {
+function(sv,quotation) {
   this.w(quotation); // rwr is not used, because it might invove wrapping
   this.writeStringValue(sv,1);
   this.rwr(quotation); // rwr because the wrapping-thing is taken care of when calling writeStringValue
@@ -116,7 +117,7 @@ function(stmt) {
     this.emitStmt(stmt);
     return true;
   }
-  this.l().i();
+  this.i().l();
   var em = this.emitAny(stmt, EC_START_STMT, true);
   this.u();
   if (em)

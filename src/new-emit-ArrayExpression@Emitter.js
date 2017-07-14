@@ -1,6 +1,6 @@
 Emitters['ArrayExpression'] =
 function(n, flags, isStmt) {
-  this.rtt();
+  ;
   var si = n['#si'];
   var hasParen = false;
   if (si >= 0) {

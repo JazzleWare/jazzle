@@ -115,6 +115,8 @@ function isTemp(n) {
     n.kind === 'temp';
 }
 
+function isInteger(n) { return (n|0) === n; }
+
 function isResolvedName(n) {
   return n.type === '#Untransformed' &&
     n.kind === 'resolved-name';

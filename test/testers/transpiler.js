@@ -4,6 +4,7 @@ var HAS = util.HAS;
 var lib = require('../lib.js');
 
 function createTranspilerTester(Parser, Transformer, Emitter) {
+  console.error('transpiler');
   var ts = new lib.TestSuite('Transpiler-Suite');
   ts.tester.make =
   function(test) {
@@ -29,7 +30,7 @@ function createTranspilerTester(Parser, Transformer, Emitter) {
   function(tester, test) {
     var n = tester.n, e = tester.e, t = tester.t;
     e.emitAny(t.tr(n, !test.get('stmt')), test.get('stmt') ? 2 : 0, test.get('stmt') || false);
-    return e.code ;
+    return e.flush(), e.out;
   };
 
   ts.comp.fail =
@@ -46,7 +47,10 @@ function createTranspilerTester(Parser, Transformer, Emitter) {
   ts.listener = createTranspilerListener();
   ts.listener.owner = ts;
 
+  console.error('loading');
   loadTranspilerTests(ts);
+
+  console.error('finished');
 
   return ts;
 };
@@ -121,6 +125,7 @@ function loadTranspilerTests(ts) {
 
 function buildTestBuilder(ts) {
   return function makeTest(name, src, e, objPath, isStmt) {
+    console.error('TEST', name);
     var test = new lib.Test();
     test.expectVT(e, 'pass');
     test.set('objPath', objPath);
