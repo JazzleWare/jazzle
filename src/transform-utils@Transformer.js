@@ -1,7 +1,8 @@
 this.trListChunk =
 function(list, isVal, s, e) {
   while (s<=e) {
-    list[s] = this.tr(list[s], isVal);
+    if (list[s] !== null)
+      list[s] = this.tr(list[s], isVal);
     s++ ; 
   }
 };
