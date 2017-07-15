@@ -22,12 +22,12 @@ function(rawStr) { this.curLine += rawStr; };
 
 this.write =
 function(rawStr) {
-  ASSERT.call(this, arguments.length === 1, 'write must have only one single argument');
-//ASSERT.call(this, this.curLineIndent === this.indentLevel, 'in' );
   this.hasPendingSpace() && this.effectPendingSpace(rawStr.length);
   this.wcb && this.call_onw(rawStr);
   this.hasPendingSpace() && this.effectPendingSpace(rawStr.length);
 
+  ASSERT.call(this, arguments.length === 1, 'write must have only one single argument');
+  ASSERT.call(this, this.curLineIndent === this.indentLevel, 'in' );
   this.rwr(rawStr);
 };
 
