@@ -134,7 +134,7 @@ function(list) {
     this.emitStmt(list[e++]);
     if (hasOnW && !this.wcb) {
       ++em;
-      this.onw(onW_line);
+      this.onw(wcb_afterStmt);
       hasOnW = this.wcb;
     }
   }

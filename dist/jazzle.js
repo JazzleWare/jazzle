@@ -891,9 +891,6 @@ function bp(o) {
 }
 function isRA(nPrec) { return nPrec&1; }
 ;
-
-function onW_line(rawStr) { this.l(); } 
-;
 function ref_arguments_m(mname) {
   return mname === RS_ARGUMENTS;
 }
@@ -2056,7 +2053,7 @@ function(list) {
     this.emitStmt(list[e++]);
     if (hasOnW && !this.wcb) {
       ++em;
-      this.onw(onW_line);
+      this.onw(wcb_afterStmt);
       hasOnW = this.wcb;
     }
   }
@@ -13608,7 +13605,6 @@ function(base, sub, src) {
 };
 
 }]  ],
-null,
 null,
 null,
 null,
