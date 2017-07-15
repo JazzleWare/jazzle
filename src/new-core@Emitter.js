@@ -23,7 +23,11 @@ function(rawStr) { this.curLine += rawStr; };
 this.write =
 function(rawStr) {
   this.hasPendingSpace() && this.effectPendingSpace(rawStr.length);
-  this.wcb && this.call_onw(rawStr);
+  if (this.wcb) {
+    var tt = this.curtt;
+    tt === ETK_NONE || this.rtt();
+    this.call_onw(rawStr, tt);
+  }
   this.hasPendingSpace() && this.effectPendingSpace(rawStr.length);
 
   ASSERT.call(this, arguments.length === 1, 'write must have only one single argument');
@@ -180,16 +184,15 @@ function(wcb, wcbp) {
 };
 
 this.call_onw =
-function(rawStr) {
+function(rawStr, tt) {
   var w = this.wcb;
   this.clear_onw();
-  w.call(this, rawStr);
+  w.call(this, rawStr, tt);
 };
 
 this.insertSpace =
 function() {
-  this.curtt === ETK_NONE || this.rtt();
-  this.wcb && this.call_onw(' ');
+  this.wcb && this.call_onw(' ', ETK_NONE);
   this.curLine += ' '; 
 };
 
@@ -208,6 +211,6 @@ function(name) {
 this.insertLineBreak =
 function() {
   this.curtt === ETK_NONE || this.rtt();
-  this.wcb && this.call_onw('\n');
+  this.wcb && this.call_onw('\n', ETK_NONE);
   this.out += '\n';
 };

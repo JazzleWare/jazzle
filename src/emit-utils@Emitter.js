@@ -170,19 +170,21 @@ function(n) { this.jz('sp').w('(').eN(n.argument, EC_NONE, false).w(')'); };
 // a, b, e, ...l -> [a,b,e],sp(l)
 // a, b, e, l -> a,b,e,l
 this.emitElems =
-function(list, selem /* i.e., it contains a spread element */) {
+function(list, selem /* i.e., it contains a spread element */, cb) {
   var e = 0, em = 0;
   while (e < list.length) {
     em && this.w(',').os();
     var elem = list[e];
     if (elem && elem.type === 'SpreadElement') {
       this.emitSpread(elem);
+      e >= list.length && this.emc(cb, 'inner');
       e++;
     }
     else {
       var br = selem || em;
       br && this.w('[');
-      e = this.emitElems_toRest(list, e);
+      e = this.emitElems_toRest(list, e, cb);
+      e >= list.length && this.emc(cb, 'inner');
       br && this.w(']');
     }
     ++em;
@@ -191,7 +193,7 @@ function(list, selem /* i.e., it contains a spread element */) {
 };
 
 this.emitElems_toRest =
-function(list, s) {
+function(list, s, cb) {
   var e = s;
   while (e < list.length) {
     var elem = list[e];
@@ -200,8 +202,16 @@ function(list, s) {
     e > s && this.w(',').os();
     if (elem)
       this.eN(elem, EC_NONE, false);
-    else
+    else {
+      if (cb.h < cb.holes.length) {
+        var holeComments = cb.holes[cb.h];
+        if (holeComments[0] === e)
+          this.emc_raw(holeComments[1]);
+        cb.h++;
+      }
+          
       this.w('void').bs().w('0');
+    }
     ++e; 
   }
   return e;

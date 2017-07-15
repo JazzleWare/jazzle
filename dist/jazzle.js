@@ -1311,36 +1311,36 @@ function isDirective(n) {
 }
 ;
 
-function wcb_ADD(rawStr) {
-  if (this.hastt(ETK_ADD)) this.bs();
+function wcb_ADD(rawStr, tt) {
+  if (tt & ETK_ADD) this.bs();
 }
 
-function wcb_DIV(rawStr) {
-  if (this.hastt(ETK_DIV)) this.bs();
+function wcb_DIV(rawStr, tt) {
+  if (tt & ETK_DIV) this.bs();
 }
 
-function wcb_MIN(rawStr) {
-  if (this.hastt(ETK_MIN)) this.bs();
+function wcb_MIN(rawStr, tt) {
+  if (tt & ETK_MIN) this.bs();
 }
 
-function wcb_intDotGuard(rawStr) {
+function wcb_intDotGuard(rawStr, tt) {
   rawStr === '.' && this.bs();
 }
 
-function wcb_idNumGuard(rawStr) {
-  if (this.hastt(ETK_NUM|ETK_ID)) this.bs();
+function wcb_idNumGuard(rawStr, tt) {
+  if (tt & (ETK_NUM|ETK_ID)) this.bs();
 }
 
-function wcb_afterStmt(rawStr) {
+function wcb_afterStmt(rawStr, tt) {
   this.l();
 }
 
-function wcb_afterElse(rawStr) {
-  wcb_idNumGuard.call(this, rawStr);
+function wcb_afterElse(rawStr, tt) {
+  wcb_idNumGuard.call(this, rawStr, tt);
 }
 
-function wcb_afterNew(rawStr) {
-  wcb_idNumGuard.call(this, rawStr);
+function wcb_afterNew(rawStr, tt) {
+  wcb_idNumGuard.call(this, rawStr, tt);
 }
 
 ;
@@ -1917,6 +1917,43 @@ function() {
 
 }]  ],
 [Emitter.prototype, [function(){
+this.emc =
+function(cb, i) {
+  HAS.call(cb, i) && this.emcim(cb[i]);
+};
+
+this.emcim =
+function(comments) {
+  var list = comments.c, nl = comments.n, e = 0, l = null;
+  if (nl && this.wcb)
+    this.call_onw('\n', ETK_DIV);
+
+  while (e < list.length) {
+    var elem = list[e];
+    if (l) {
+      if (l.type === 'Line' || l.loc.end.line < elem.loc.start.line)
+        this.l();
+    }
+    else
+      l = elem;
+
+    if (elem.type === 'Line') {
+      this.rwr('//');
+      this.rwr(elem.value);
+    }
+    else {
+      this.rwr('/*');
+      this.rwr(elem.value);
+      this.rwr('*/');
+    }
+    e++;
+  }
+
+  l && l.type === 'Line' && this.onw(wcb_afterLineComment);
+};
+
+},
+function(){
 // write a string value as an ECMAScript string, but without quotes
 this.writeStringValue =
 function(sv,ql) {
@@ -2089,19 +2126,21 @@ function(n) { this.jz('sp').w('(').eN(n.argument, EC_NONE, false).w(')'); };
 // a, b, e, ...l -> [a,b,e],sp(l)
 // a, b, e, l -> a,b,e,l
 this.emitElems =
-function(list, selem /* i.e., it contains a spread element */) {
+function(list, selem /* i.e., it contains a spread element */, cb) {
   var e = 0, em = 0;
   while (e < list.length) {
     em && this.w(',').os();
     var elem = list[e];
     if (elem && elem.type === 'SpreadElement') {
       this.emitSpread(elem);
+      e >= list.length && this.emc(cb, 'inner');
       e++;
     }
     else {
       var br = selem || em;
       br && this.w('[');
-      e = this.emitElems_toRest(list, e);
+      e = this.emitElems_toRest(list, e, cb);
+      e >= list.length && this.emc(cb, 'inner');
       br && this.w(']');
     }
     ++em;
@@ -2110,7 +2149,7 @@ function(list, selem /* i.e., it contains a spread element */) {
 };
 
 this.emitElems_toRest =
-function(list, s) {
+function(list, s, cb) {
   var e = s;
   while (e < list.length) {
     var elem = list[e];
@@ -2119,8 +2158,16 @@ function(list, s) {
     e > s && this.w(',').os();
     if (elem)
       this.eN(elem, EC_NONE, false);
-    else
+    else {
+      if (cb.h < cb.holes.length) {
+        var holeComments = cb.holes[cb.h];
+        if (holeComments[0] === e)
+          this.emc_raw(holeComments[1]);
+        cb.h++;
+      }
+          
       this.w('void').bs().w('0');
+    }
     ++e; 
   }
   return e;
@@ -2229,7 +2276,11 @@ function(rawStr) { this.curLine += rawStr; };
 this.write =
 function(rawStr) {
   this.hasPendingSpace() && this.effectPendingSpace(rawStr.length);
-  this.wcb && this.call_onw(rawStr);
+  if (this.wcb) {
+    var tt = this.curtt;
+    tt === ETK_NONE || this.rtt();
+    this.call_onw(rawStr, tt);
+  }
   this.hasPendingSpace() && this.effectPendingSpace(rawStr.length);
 
   ASSERT.call(this, arguments.length === 1, 'write must have only one single argument');
@@ -2386,16 +2437,15 @@ function(wcb, wcbp) {
 };
 
 this.call_onw =
-function(rawStr) {
+function(rawStr, tt) {
   var w = this.wcb;
   this.clear_onw();
-  w.call(this, rawStr);
+  w.call(this, rawStr, tt);
 };
 
 this.insertSpace =
 function() {
-  this.curtt === ETK_NONE || this.rtt();
-  this.wcb && this.call_onw(' ');
+  this.wcb && this.call_onw(' ', ETK_NONE);
   this.curLine += ' '; 
 };
 
@@ -2414,7 +2464,7 @@ function(name) {
 this.insertLineBreak =
 function() {
   this.curtt === ETK_NONE || this.rtt();
-  this.wcb && this.call_onw('\n');
+  this.wcb && this.call_onw('\n', ETK_NONE);
   this.out += '\n';
 };
 
@@ -2422,18 +2472,22 @@ function() {
 function(){
 Emitters['ArrayExpression'] =
 function(n, flags, isStmt) {
-  ;
+  var cb = n['#c'];
   var si = n['#si'];
   var hasParen = false;
   if (si >= 0) {
     hasParen = flags & EC_NEW_HEAD;
     hasParen && this.w('(');
+    this.emc(cb, 'bef');
     this.jz('arr').w('(');
-  }
+  } else
+    this.writeComments(cb, 'bef');
 
-  this.emitElems(n.elements, true);
+  this.emitElems(n.elements, true, cb.holes);
 
   si >= 0 && this.w(')');
+
+  this.emc(cb, 'aft');
   hasParen && this.w(')');
 
   isStmt && this.w(';');
@@ -7545,6 +7599,7 @@ function(ctx) {
   var y = 0, si = -1;
 
   cb.holes = [];
+  cb.h = 0;
   while (hasMore) {
     elem = this.parseNonSeq(PREC_NONE, elctx);
     if (elem === null && this.lttype === TK_ELLIPSIS) {

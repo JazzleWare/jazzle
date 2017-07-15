@@ -30,6 +30,7 @@ function(ctx) {
   var y = 0, si = -1;
 
   cb.holes = [];
+  cb.h = 0;
   while (hasMore) {
     elem = this.parseNonSeq(PREC_NONE, elctx);
     if (elem === null && this.lttype === TK_ELLIPSIS) {
