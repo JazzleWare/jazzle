@@ -9,9 +9,9 @@ function(n, flags, isStmt) {
     this.emc(cb, 'bef');
     this.jz('arr').w('(');
   } else
-    this.writeComments(cb, 'bef');
+    this.emc(cb, 'bef');
 
-  this.emitElems(n.elements, true, cb.holes);
+  this.emitElems(n.elements, true, cb);
 
   si >= 0 && this.w(')');
 

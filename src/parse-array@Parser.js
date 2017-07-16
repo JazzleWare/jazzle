@@ -46,7 +46,10 @@ function(ctx) {
         this.commentBuf && cb.holes.push([list.length, this.cc()]);
         list.push(null);
       }
-      else list.push(core(elem));
+      else {
+        list.push(core(elem));
+        this.spc(core(elem), 'aft');
+      }
       this.next();
     }
     else {
@@ -57,10 +60,8 @@ function(ctx) {
       else break;
     }
  
-    if (elem) {
+    if (elem)
        y += this.Y(elem);
-       this.spc(core(elem), 'aft');
-    }
 
     if (elem && errt_track(elctx)) {
       var elemCore = elem;
@@ -136,7 +137,7 @@ function(ctx) {
     errt_pin(st) && this.pin_st(sc0,sli0,scol0);
   }
 
-  this.suc(cb, 'inner');
+  elem ? this.spc(core(elem), 'aft') : this.suc(cb, 'inner');
   if (!this.expectT(CH_RSQBRACKET))
     this.err('array.unfinished');
   

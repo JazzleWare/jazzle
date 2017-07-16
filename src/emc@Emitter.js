@@ -4,7 +4,10 @@ function(cb, i) {
 };
 
 this.emcim =
-function(comments) {
+function(comments) { // emc -- immediate
+  if (comments === null)
+    return;
+
   var list = comments.c, nl = comments.n, e = 0, l = null;
   if (nl && this.wcb)
     this.call_onw('\n', ETK_DIV);
@@ -19,11 +22,10 @@ function(comments) {
       l = elem;
 
     if (elem.type === 'Line') {
-      this.rwr('//');
-      this.rwr(elem.value);
+      this.w('//').rwr(elem.value);
     }
     else {
-      this.rwr('/*');
+      this.w('/*');
       this.rwr(elem.value);
       this.rwr('*/');
     }

@@ -10,10 +10,10 @@ function(n, flags, isStmt) {
     this.wt(o, ETK_ID).onw(wcb_afterVDT);
     break;
   case '+':
-    this.wt(o, ETK_ADD).onw(wcb_ADD);
+    this.wt(o, ETK_ADD).onw(wcb_ADD_u);
     break;
   case '-':
-    this.wt(o, ETK_MIN).onw(wcb_MIN);
+    this.wt(o, ETK_MIN).onw(wcb_MIN_u);
     break;
   default:
     ASSERT.call(this, false, 'unary [:'+o+':]');

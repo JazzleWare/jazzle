@@ -10,10 +10,10 @@ function(sv,ql) {
     var l = v.length;
     if (o === len-1)
       l  += ql;
-    if (this.ol(l) > 0) {
+    if (this.ol(this.curLine.length+l) > 0) {
       this.rwr('\\');
       this.l();
-      this.curLineIndent = 0;
+      this.curLineIndent = -1; // deactivate indentation
     }
     this.rwr(v);
     o++;
@@ -206,7 +206,7 @@ function(list, s, cb) {
       if (cb.h < cb.holes.length) {
         var holeComments = cb.holes[cb.h];
         if (holeComments[0] === e)
-          this.emc_raw(holeComments[1]);
+          this.emcim(holeComments[1]);
         cb.h++;
       }
           

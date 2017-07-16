@@ -1311,20 +1311,31 @@ function isDirective(n) {
 }
 ;
 
-function wcb_ADD(rawStr, tt) {
+function wcb_ADD_b(rawStr, tt) {
   if (tt & ETK_ADD) this.bs();
+  else this.os();
 }
 
-function wcb_DIV(rawStr, tt) {
+function wcb_DIV_b(rawStr, tt) {
   if (tt & ETK_DIV) this.bs();
+  else this.os();
 }
 
-function wcb_MIN(rawStr, tt) {
+function wcb_MIN_b(rawStr, tt) {
+  if (tt & ETK_MIN) this.bs();
+  else this.os();
+}
+
+function wcb_ADD_u(rawStr, tt) {
   if (tt & ETK_MIN) this.bs();
 }
 
 function wcb_intDotGuard(rawStr, tt) {
   rawStr === '.' && this.bs();
+}
+
+function wcb_MIN_u(rawStr, tt) {
+  if (tt & ETK_MIN) this.bs();
 }
 
 function wcb_idNumGuard(rawStr, tt) {
@@ -1335,14 +1346,17 @@ function wcb_afterStmt(rawStr, tt) {
   this.l();
 }
 
-function wcb_afterElse(rawStr, tt) {
-  wcb_idNumGuard.call(this, rawStr, tt);
+function wcb_afterLineComment(rawStr, tt) {
+  this.l();
 }
 
 function wcb_afterNew(rawStr, tt) {
   wcb_idNumGuard.call(this, rawStr, tt);
 }
 
+function wcb_afterElse(rawStr, tt) {
+  wcb_idNumGuard.call(this, rawStr, tt);
+}
 ;
  (function(){
        var i = 0;
@@ -1923,7 +1937,10 @@ function(cb, i) {
 };
 
 this.emcim =
-function(comments) {
+function(comments) { // emc -- immediate
+  if (comments === null)
+    return;
+
   var list = comments.c, nl = comments.n, e = 0, l = null;
   if (nl && this.wcb)
     this.call_onw('\n', ETK_DIV);
@@ -1938,11 +1955,10 @@ function(comments) {
       l = elem;
 
     if (elem.type === 'Line') {
-      this.rwr('//');
-      this.rwr(elem.value);
+      this.w('//').rwr(elem.value);
     }
     else {
-      this.rwr('/*');
+      this.w('/*');
       this.rwr(elem.value);
       this.rwr('*/');
     }
@@ -1966,10 +1982,10 @@ function(sv,ql) {
     var l = v.length;
     if (o === len-1)
       l  += ql;
-    if (this.ol(l) > 0) {
+    if (this.ol(this.curLine.length+l) > 0) {
       this.rwr('\\');
       this.l();
-      this.curLineIndent = 0;
+      this.curLineIndent = -1; // deactivate indentation
     }
     this.rwr(v);
     o++;
@@ -2162,7 +2178,7 @@ function(list, s, cb) {
       if (cb.h < cb.holes.length) {
         var holeComments = cb.holes[cb.h];
         if (holeComments[0] === e)
-          this.emc_raw(holeComments[1]);
+          this.emcim(holeComments[1]);
         cb.h++;
       }
           
@@ -2284,7 +2300,11 @@ function(rawStr) {
   this.hasPendingSpace() && this.effectPendingSpace(rawStr.length);
 
   ASSERT.call(this, arguments.length === 1, 'write must have only one single argument');
-  ASSERT.call(this, this.curLineIndent === this.indentLevel, 'in' );
+  ASSERT.call(this, this.curLineIndent < 0 || this.curLineIndent === this.indentLevel, 'in' );
+
+  var cll = this.curLine.length;
+  cll && this.ol(cll+rawStr.length) > 0 && this.l();
+
   this.rwr(rawStr);
 };
 
@@ -2332,7 +2352,7 @@ function() {
     return;
 
   var optimalIndent = this.curLineIndent;
-  if (this.wrapLimit > 0 && optimalIndent + len > this.wrapLimit)
+  if (optimalIndent >= 0 && this.wrapLimit > 0 && optimalIndent + len > this.wrapLimit)
     optimalIndent = len < this.wrapLimit ? this.wrapLimit - len : 0;
   this.out.length && this.insertLineBreak();
   this.out += this.geti(optimalIndent) + line;
@@ -2361,6 +2381,8 @@ function() {
 
 this.geti =
 function(e) {
+  if (e < 0)
+    return "";
   var inc = this.indentCache;
   while (e < inc.length)
     return inc[e];
@@ -2406,6 +2428,7 @@ function() { return this.pendingSpace !== EST_NONE; };
 this.effectPendingSpace =
 function(len) {
   ASSERT.call(this, this.curLine.length, 'leading');
+  len += this.curLine.length;
   var s = this.pendingSpace;
   this.pendingSpace = EST_NONE;
   switch (s) {
@@ -2481,9 +2504,9 @@ function(n, flags, isStmt) {
     this.emc(cb, 'bef');
     this.jz('arr').w('(');
   } else
-    this.writeComments(cb, 'bef');
+    this.emc(cb, 'bef');
 
-  this.emitElems(n.elements, true, cb.holes);
+  this.emitElems(n.elements, true, cb);
 
   si >= 0 && this.w(')');
 
@@ -2583,17 +2606,18 @@ function(n, flags, isStmt) {
 
   switch (n.operator) {
   case '/':
-    this.onw(wcb_DIV);
+    this.onw(wcb_DIV_b);
     break;
   case '+':
-    this.onw(wcb_ADD);
+    this.onw(wcb_ADD_b);
     break;
   case '-':
-    this.onw(wcb_MIN);
+    this.onw(wcb_MIN_b);
+    break;
+  default:
+    this.os();
     break;
   }
-
-  this.os();
 
   if (isBLE(right))
     this.emitRight(right, o, EC_NONE);
@@ -2941,10 +2965,10 @@ function(n, flags, isStmt) {
     this.wt(o, ETK_ID).onw(wcb_afterVDT);
     break;
   case '+':
-    this.wt(o, ETK_ADD).onw(wcb_ADD);
+    this.wt(o, ETK_ADD).onw(wcb_ADD_u);
     break;
   case '-':
-    this.wt(o, ETK_MIN).onw(wcb_MIN);
+    this.wt(o, ETK_MIN).onw(wcb_MIN_u);
     break;
   default:
     ASSERT.call(this, false, 'unary [:'+o+':]');
@@ -7615,7 +7639,10 @@ function(ctx) {
         this.commentBuf && cb.holes.push([list.length, this.cc()]);
         list.push(null);
       }
-      else list.push(core(elem));
+      else {
+        list.push(core(elem));
+        this.spc(core(elem), 'aft');
+      }
       this.next();
     }
     else {
@@ -7626,10 +7653,8 @@ function(ctx) {
       else break;
     }
  
-    if (elem) {
+    if (elem)
        y += this.Y(elem);
-       this.spc(core(elem), 'aft');
-    }
 
     if (elem && errt_track(elctx)) {
       var elemCore = elem;
@@ -7705,7 +7730,7 @@ function(ctx) {
     errt_pin(st) && this.pin_st(sc0,sli0,scol0);
   }
 
-  this.suc(cb, 'inner');
+  elem ? this.spc(core(elem), 'aft') : this.suc(cb, 'inner');
   if (!this.expectT(CH_RSQBRACKET))
     this.err('array.unfinished');
   

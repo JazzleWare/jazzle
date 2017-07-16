@@ -31,7 +31,11 @@ function(rawStr) {
   this.hasPendingSpace() && this.effectPendingSpace(rawStr.length);
 
   ASSERT.call(this, arguments.length === 1, 'write must have only one single argument');
-  ASSERT.call(this, this.curLineIndent === this.indentLevel, 'in' );
+  ASSERT.call(this, this.curLineIndent < 0 || this.curLineIndent === this.indentLevel, 'in' );
+
+  var cll = this.curLine.length;
+  cll && this.ol(cll+rawStr.length) > 0 && this.l();
+
   this.rwr(rawStr);
 };
 
@@ -79,7 +83,7 @@ function() {
     return;
 
   var optimalIndent = this.curLineIndent;
-  if (this.wrapLimit > 0 && optimalIndent + len > this.wrapLimit)
+  if (optimalIndent >= 0 && this.wrapLimit > 0 && optimalIndent + len > this.wrapLimit)
     optimalIndent = len < this.wrapLimit ? this.wrapLimit - len : 0;
   this.out.length && this.insertLineBreak();
   this.out += this.geti(optimalIndent) + line;
@@ -108,6 +112,8 @@ function() {
 
 this.geti =
 function(e) {
+  if (e < 0)
+    return "";
   var inc = this.indentCache;
   while (e < inc.length)
     return inc[e];
@@ -153,6 +159,7 @@ function() { return this.pendingSpace !== EST_NONE; };
 this.effectPendingSpace =
 function(len) {
   ASSERT.call(this, this.curLine.length, 'leading');
+  len += this.curLine.length;
   var s = this.pendingSpace;
   this.pendingSpace = EST_NONE;
   switch (s) {

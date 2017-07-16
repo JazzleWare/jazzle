@@ -18,17 +18,18 @@ function(n, flags, isStmt) {
 
   switch (n.operator) {
   case '/':
-    this.onw(wcb_DIV);
+    this.onw(wcb_DIV_b);
     break;
   case '+':
-    this.onw(wcb_ADD);
+    this.onw(wcb_ADD_b);
     break;
   case '-':
-    this.onw(wcb_MIN);
+    this.onw(wcb_MIN_b);
+    break;
+  default:
+    this.os();
     break;
   }
-
-  this.os();
 
   if (isBLE(right))
     this.emitRight(right, o, EC_NONE);
