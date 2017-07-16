@@ -152,7 +152,8 @@ var ETK_NONE = 0,
     ETK_DIV = ETK_MIN << 1,
     ETK_ADD = ETK_DIV << 1,
     ETK_NUM = ETK_ADD << 1,
-    ETK_STR = ETK_NUM << 1;
+    ETK_STR = ETK_NUM << 1,
+    ETK_NL = ETK_STR << 1;
 
 var PE_NO_NONVAR = 1,
     PE_NO_LABEL = PE_NO_NONVAR << 1,

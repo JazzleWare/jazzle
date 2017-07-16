@@ -9,8 +9,6 @@ function(comments) { // emc -- immediate
     return;
 
   var list = comments.c, nl = comments.n, e = 0, l = null;
-  if (nl && this.wcb)
-    this.call_onw('\n', ETK_DIV);
 
   while (e < list.length) {
     var elem = list[e];
@@ -21,11 +19,15 @@ function(comments) { // emc -- immediate
     else
       l = elem;
 
+    var wflag = ETK_DIV;
+    if (e === 0 && nl)
+      wflag |= ETK_NL;
+
     if (elem.type === 'Line') {
-      this.w('//').rwr(elem.value);
+      this.wt('//', wflag).rwr(elem.value);
     }
     else {
-      this.w('/*');
+      this.wt('/*', wflag);
       this.rwr(elem.value);
       this.rwr('*/');
     }
