@@ -45,3 +45,5 @@ function wcb_afterNew(rawStr, tt) {
 function wcb_afterElse(rawStr, tt) {
   wcb_idNumGuard.call(this, rawStr, tt);
 }
+
+function wcb_startStmtList(rawStr, tt) {}

@@ -1357,6 +1357,8 @@ function wcb_afterNew(rawStr, tt) {
 function wcb_afterElse(rawStr, tt) {
   wcb_idNumGuard.call(this, rawStr, tt);
 }
+
+function wcb_startStmtList(rawStr, tt) {}
 ;
  (function(){
        var i = 0;
@@ -2562,7 +2564,7 @@ function(n, flags, isStmt) {
 Emitters['AssignmentExpression'] =
 function(n, flags, isStmt) {
   ;
-  return this.emitAssignment_ex();
+  return this.emitAssignment_ex(n, flags, isStmt);
 };
 
 Emitters['#SynthAssig'] =
@@ -3129,7 +3131,7 @@ function(n, flags, isStmt) {
 function(){
 Emitters['Program'] =
 function(n, flags, isStmt) {
-  ;
+  this.wcb || this.onw(wcb_startStmtList);
   this.emitStmtList(n.body);
   return true;
 };
@@ -3210,8 +3212,10 @@ function(){
 UntransformedEmitters['assig-list'] =
 function(n, flags, isStmt) {
   ;
-  if (isStmt)
+  if (isStmt) {
+    this.wcb || this.onw(wcb_startStmtList);
     return this.emitStmtList(n.list);
+  }
 
   var hasParen = flags & (EC_EXPR_HEAD|EC_NON_SEQ);
   if (hasParen) { this.w('('); flags &= EC_IN; }

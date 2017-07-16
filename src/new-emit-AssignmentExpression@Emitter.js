@@ -41,7 +41,7 @@ function(n, flags, isStmt) {
 Emitters['AssignmentExpression'] =
 function(n, flags, isStmt) {
   ;
-  return this.emitAssignment_ex();
+  return this.emitAssignment_ex(n, flags, isStmt);
 };
 
 Emitters['#SynthAssig'] =
