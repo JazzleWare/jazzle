@@ -4,7 +4,7 @@ function(n, flags, isStmt) {
   var cc = false;
   var left = n.left;
   var tz = false;
-  var target = null;
+  var target = null, cb = n['#c'];
 
   if (isResolvedName(left)) {
     target = left.target;
@@ -15,6 +15,7 @@ function(n, flags, isStmt) {
   }
   if (hasParen) { this.w('('); flags = EC_NONE; }
 
+  this.emc(cb, 'bef');
   tz && (this.emitAccessChk_tz(target), this.w(',').os());
   cc && (this.emitAccessChk_invalidSAT(target), this.w(',').os());
 
@@ -33,6 +34,7 @@ function(n, flags, isStmt) {
     this.eN(n.right, flags & EC_IN, false);
   }
 
+  this.emc(cb, 'aft');
   hasParen && this.w(')');
   isStmt && this.w(';');
   return true;
@@ -40,7 +42,6 @@ function(n, flags, isStmt) {
 
 Emitters['AssignmentExpression'] =
 function(n, flags, isStmt) {
-  ;
   return this.emitAssignment_ex(n, flags, isStmt);
 };
 
@@ -53,7 +54,8 @@ function(n, flags, isStmt) {
 
 this.emitAssignment_binding =
 function(n, flags, isStmt) {
-  this.w('var').onw(wcb_afterVar).emitRName_binding(n.left);
+  var cb = n['#c']; this.emc(cb, 'bef');
+  this.w('var').onw(wcb_afterVar).os().emitRName_binding(n.left);
   this.os().w('=').os();
   if (n.left.target.isLLINOSA())
     this.emitWrappedInV(n.right);
@@ -61,4 +63,5 @@ function(n, flags, isStmt) {
     this.eN(n.right, flags, false);
 
   this.w(';');
+  this.emc('aft');
 };

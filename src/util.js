@@ -110,6 +110,11 @@ function isIDName(str) {
   return true;
 }
 
+function CB(n) {
+  ASSERT.call(this, HAS.call(n, '#c'), '#c');
+  return n['#c'];
+}
+
 function isTemp(n) {
   return n.type === '#Untransformed' &&
     n.kind === 'temp';

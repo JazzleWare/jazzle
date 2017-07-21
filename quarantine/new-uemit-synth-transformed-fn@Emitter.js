@@ -7,13 +7,16 @@ function(n, flags, isStmt) {
 
 this.emitTransformedFn =
 function(n, flags, isStmt) {
+  var raw = n.fun, cb = CB(raw);
+  this.emc(cb, 'bef');
   this.wt('function', ETK_ID );
-  var raw = n.fun;
+  this.emc(cb, 'fun.aft');
   var scopeName = raw['#scope'].scopeName;
   if (scopeName) {
     this.bs();
     this.writeIDName(scopeName.name);
   }
+  this.emc(cb, 'list.bef' );
   this.w('(');
 
   if (raw.params)
@@ -35,4 +38,5 @@ function(n, flags, isStmt) {
   em && this.l();
 
   this.w('}');
+  this.emc(cb, 'aft');
 };

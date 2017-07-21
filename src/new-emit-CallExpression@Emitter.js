@@ -1,6 +1,7 @@
 Emitters['CallExpression'] =
 function(n, flags, isStmt) {
-  ;
+  var cb = CB(n);
+  this.emc(cb, 'bef');
   var hasParen = flags & EC_NEW_HEAD;
   if (hasParen) { this.w('('); flags = EC_NONE; }
   this.emitCallHead(n.callee, flags);
@@ -8,5 +9,6 @@ function(n, flags, isStmt) {
   this.w(')');
 
   hasParen && this.w(')');
+  this.emc(cb, 'aft');
   isStmt && this.w(';');
 };

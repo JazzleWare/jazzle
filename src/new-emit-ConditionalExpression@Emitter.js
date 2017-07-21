@@ -1,12 +1,14 @@
 Emitters['ConditionalExpression'] =
 function(n, flags, isStmt) {
-  ;
+  var cb = CB(n);
+  this.emc(cb, 'bef' );
   var hasParen = flags & EC_EXPR_HEAD;
   if (hasParen) { this.w('('); flags = EC_NONE; }
   this.emitCondTest(n.test, flags);
   this.wm('','?','').eN(n.consequent, EC_NONE, false);
   this.wm('',':','').eN(n.alternate, EC_NONE, false);
   hasParen && this.w(')');
+  this.emc(cb, 'aft');
   isStmt && this.w(';');
 };
 

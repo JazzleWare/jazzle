@@ -2,6 +2,10 @@ this.emitBLE =
 Emitters['LogicalExpression'] =
 Emitters['BinaryExpression'] =
 function(n, flags, isStmt) {
+
+  var cb = CB(n);
+  this.emc(cb, 'bef' );
+
   var hasParen = flags & EC_EXPR_HEAD;
   if (hasParen) { this.w('('); flags = EC_NONE; }
   var o = n.operator;
@@ -37,6 +41,9 @@ function(n, flags, isStmt) {
     this.emitBLEP(right, EC_NONE);
 
   hasParen && this.w(')');
+
+  this.emc(cb, 'aft');
+
   isStmt && this.w(';');
   return true; // something was actually emitted
 };
@@ -87,6 +94,8 @@ function(n, flags, isStmt) {
   if (hasParen) { this.w('('); flags = EC_NONE; }
   this.jz('ex').w('(').eN(n.left).w(',').s().eN(n.right).w(')');
   hasParen && this.w(')');
+
+  this.emc(CB(n), 'aft');
   isStmt && this.w(';');
   return true;
 };
