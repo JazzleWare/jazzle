@@ -1,5 +1,6 @@
 Emitters['Literal'] =
 function(n, flags, isStmt) {
+  var cb = CB(n); this.emc(cb, 'bef' );
   switch (typeof n.value) {
   case STRING_TYPE: 
     this.t(ETK_STR).writeString(n.value,"'");
@@ -17,7 +18,8 @@ function(n, flags, isStmt) {
     ASSERT.call(this, false, 'unknown value');
     break;
   }
-  ;
+  this.emc(cb, 'aft');
   isStmt && this.w(';');
+
   return true;
 };

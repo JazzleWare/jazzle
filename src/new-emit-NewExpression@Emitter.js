@@ -1,6 +1,6 @@
 Emitters['NewExpression'] =
 function(n, flags, isStmt) {
-  ;
+  var cb = CB(n); this.emc(cb, 'bef' );
   var si = findElem(n.arguments, 'SpreadElement');
   if (si === -1) {
     this.wt('new', ETK_ID).onw(wcb_afterNew).os().emitNewHead(n.callee);
@@ -15,6 +15,7 @@ function(n, flags, isStmt) {
     hasParen && this.w(')');
   }
 
+  this.emc(cb, 'aft');
   isStmt && this.w(';');
   return true;
 };

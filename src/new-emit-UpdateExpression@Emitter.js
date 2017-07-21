@@ -4,7 +4,7 @@
 //
 Emitters['UpdateExpression'] =
 function(n, flags, isStmt) {
-  ;
+  var cb = CB(n); this.emc(cb, 'bef' );
   var hasParen = flags & EC_EXPR_HEAD;
   if (hasParen) { this.w('('); flags = EC_NONE; }
   var o = n.operator;
@@ -18,6 +18,8 @@ function(n, flags, isStmt) {
     this.rwr(o); // hard-write because the wrapping affairs have been take care of when calling emitSAT
   }
   hasParen && this.w(')');
+  this.emc(cb, 'aft');
+
   isStmt && this.w(';');
   return true;
 };

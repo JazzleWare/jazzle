@@ -1,6 +1,6 @@
 Emitters['ObjectExpression'] =
 function(n, flags, isStmt) {
-  ;
+  var cb = CB(n); this.emc(cb, 'bef' );
   var list = n.properties, ci = n['#ci'], e = 0;
   var hasParen = false;
   if (ci >= 0) {
@@ -21,6 +21,7 @@ function(n, flags, isStmt) {
     e++;
   }
 
+  list.length || this.emc(cb, 'inner');
   this.w('}');
 
   if (ci >= 0) {
@@ -34,10 +35,12 @@ function(n, flags, isStmt) {
       this.w(',').os().eN(item.value, EC_NONE, false);
       e++;
     }
+    this.emc(cb, 'inner');
     this.w(')');
   }
 
   hasParen && this.w(')');
+  this.emc(cb, 'aft');
 
   isStmt && this.w(';');
   return true;

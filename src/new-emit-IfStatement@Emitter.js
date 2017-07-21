@@ -1,9 +1,12 @@
 Emitters['IfStatement'] =
 function(n, flags, isStmt) {
-  ;
   ASSERT_EQ.call(this, isStmt, true);
-  this.wt('if', ETK_ID).wm('','(').eA(n.test, EC_NONE, false).w(')').emitIfBody(n.consequent);
+  var cb = CB(n); this.emc(cb, 'bef' );
+  this.wt('if', ETK_ID).emc(cb, 'aft.if');
+  this.wm('','(').eA(n.test, EC_NONE, false).w(')').emitIfBody(n.consequent);
   n.alternate && this.l().wt('else', ETK_ID).onw(wcb_afterElse).emitElseBody(n.alternate);
+  this.emc(cb, 'aft');
+
   return true;
 };
 

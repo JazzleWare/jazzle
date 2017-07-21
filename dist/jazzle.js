@@ -1266,6 +1266,11 @@ function isIDName(str) {
   return true;
 }
 
+function CB(n) {
+  ASSERT.call(this, HAS.call(n, '#c'), '#c');
+  return n['#c'];
+}
+
 function isTemp(n) {
   return n.type === '#Untransformed' &&
     n.kind === 'temp';
@@ -2212,66 +2217,6 @@ function(nd) {
 
 },
 function(){
-this.emitHead_temps =
-function(scope, isScript) {
-  var temps = scope.getLG('<t>'), e = 0, len = temps.length();
-  while (e < len) {
-    e ? this.wm(',','') : this.w('var').onw(wcb_afterVar);
-    this.wt(temps.at(e++).synthName, ETK_ID);
-  }
-  e && this.w(';');
-  return this;
-};
-
-this.emitHead_vars =
-function(scope, isScript) {
-  var vars = scope.defs, e = 0, len = vars.length(); 
-  var em = 0, v = null;
-  while (e < len) {
-    v = vars.at(e++);
-    if (v.isVar() && !v.isFn()) {
-      em ? this.wm(',','') : this.w('var').onw(wcb_afterVar);
-      this.wt(v.synthName, ETK_ID);
-      em++;
-    }
-  }
-  em && this.w(';');
-};
-
-this.emitHead_fns =
-function(scope, isScript) {
-  var list = scope.funLists, e = 0, len = list.length();
-  var onw = this.wcb, em = 0;
-  while (e < len) {
-    this.emitFunList(list.at(e++));
-    if (onw && !this.wcb) {
-      ++em;
-      this.onW(wcb_afterVar);
-      onw = this.wcb;
-    }
-  }
-
-  em && this.wcb && this.clear_onw();
-};
-
-this.emitHead_llinosa =
-function(scope, isScript) {
-  var list = scope.defs, e = 0, len = list.length();
-  var em = 0, item = null;
-  while (e < len) {
-    item = list.at(e++ );
-    if (item.isLLINOSA()) {
-      em ? this.wm(',','') : this.w('var').onw(wcb_afterVar);
-      this.wt(item.synthName, ETK_ID).os().w('=').os()
-        .wm('{','v',':','void',' ','0','}');
-      ++em
-    }
-  }
-  if (em > 0) this.w(';');
-};
-
-},
-function(){
 this.bs =
 function() {
   this.setPendingSpace(EST_BREAKABLE);
@@ -2530,7 +2475,7 @@ function(n, flags, isStmt) {
   var cc = false;
   var left = n.left;
   var tz = false;
-  var target = null;
+  var target = null, cb = n['#c'];
 
   if (isResolvedName(left)) {
     target = left.target;
@@ -2541,6 +2486,7 @@ function(n, flags, isStmt) {
   }
   if (hasParen) { this.w('('); flags = EC_NONE; }
 
+  this.emc(cb, 'bef');
   tz && (this.emitAccessChk_tz(target), this.w(',').os());
   cc && (this.emitAccessChk_invalidSAT(target), this.w(',').os());
 
@@ -2559,6 +2505,7 @@ function(n, flags, isStmt) {
     this.eN(n.right, flags & EC_IN, false);
   }
 
+  this.emc(cb, 'aft');
   hasParen && this.w(')');
   isStmt && this.w(';');
   return true;
@@ -2566,7 +2513,6 @@ function(n, flags, isStmt) {
 
 Emitters['AssignmentExpression'] =
 function(n, flags, isStmt) {
-  ;
   return this.emitAssignment_ex(n, flags, isStmt);
 };
 
@@ -2579,7 +2525,8 @@ function(n, flags, isStmt) {
 
 this.emitAssignment_binding =
 function(n, flags, isStmt) {
-  this.w('var').onw(wcb_afterVar).emitRName_binding(n.left);
+  var cb = n['#c']; this.emc(cb, 'bef');
+  this.w('var').onw(wcb_afterVar).os().emitRName_binding(n.left);
   this.os().w('=').os();
   if (n.left.target.isLLINOSA())
     this.emitWrappedInV(n.right);
@@ -2587,6 +2534,7 @@ function(n, flags, isStmt) {
     this.eN(n.right, flags, false);
 
   this.w(';');
+  this.emc('aft');
 };
 
 },
@@ -2595,6 +2543,10 @@ this.emitBLE =
 Emitters['LogicalExpression'] =
 Emitters['BinaryExpression'] =
 function(n, flags, isStmt) {
+
+  var cb = CB(n);
+  this.emc(cb, 'bef' );
+
   var hasParen = flags & EC_EXPR_HEAD;
   if (hasParen) { this.w('('); flags = EC_NONE; }
   var o = n.operator;
@@ -2630,6 +2582,9 @@ function(n, flags, isStmt) {
     this.emitBLEP(right, EC_NONE);
 
   hasParen && this.w(')');
+
+  this.emc(cb, 'aft');
+
   isStmt && this.w(';');
   return true; // something was actually emitted
 };
@@ -2680,6 +2635,8 @@ function(n, flags, isStmt) {
   if (hasParen) { this.w('('); flags = EC_NONE; }
   this.jz('ex').w('(').eN(n.left).w(',').s().eN(n.right).w(')');
   hasParen && this.w(')');
+
+  this.emc(CB(n), 'aft');
   isStmt && this.w(';');
   return true;
 };
@@ -2699,12 +2656,17 @@ function(){
 Emitters['BlockStatement'] =
 function(n, flags, isStmt) {
   ASSERT_EQ.call(this, isStmt, true);
+  var cb = CB(n);
+  this.emc(cb, 'bef');
   this.w('{');
   this.i().onw(wcb_afterStmt);
   this.emitStmtList(n.body);
   this.u();
   this.wcb ? this.clear_onw() : this.l();
+  this.emc(cb, 'inner');
   this.w('}');
+  this.emc(cb, 'aft');
+
   return true;
 };
 
@@ -2712,14 +2674,17 @@ function(n, flags, isStmt) {
 function(){
 Emitters['CallExpression'] =
 function(n, flags, isStmt) {
-  ;
+  var cb = CB(n);
+  this.emc(cb, 'bef');
   var hasParen = flags & EC_NEW_HEAD;
   if (hasParen) { this.w('('); flags = EC_NONE; }
   this.emitCallHead(n.callee, flags);
   this.w('(').emitCommaList(n.arguments);
+  this.emc(cb, 'inner');
   this.w(')');
 
   hasParen && this.w(')');
+  this.emc(cb, 'aft');
   isStmt && this.w(';');
 };
 
@@ -2727,13 +2692,15 @@ function(n, flags, isStmt) {
 function(){
 Emitters['ConditionalExpression'] =
 function(n, flags, isStmt) {
-  ;
+  var cb = CB(n);
+  this.emc(cb, 'bef' );
   var hasParen = flags & EC_EXPR_HEAD;
   if (hasParen) { this.w('('); flags = EC_NONE; }
   this.emitCondTest(n.test, flags);
   this.wm('','?','').eN(n.consequent, EC_NONE, false);
   this.wm('',':','').eN(n.alternate, EC_NONE, false);
   hasParen && this.w(')');
+  this.emc(cb, 'aft');
   isStmt && this.w(';');
 };
 
@@ -2754,9 +2721,11 @@ this.emitCondTest = function(n, prec, flags) {
 function(){
 Emitters['EmptyStatement'] =
 function(n, flags, isStmt) {
-  ;
+  var cb = CB(n);
+  this.emc(cb, 'bef' );
   ASSERT_EQ.call(this, isStmt, true);
   this.w(';');
+  this.emc(cb, 'aft');
   return true;
 };
 
@@ -2764,20 +2733,26 @@ function(n, flags, isStmt) {
 function(){
 Emitters['ExpressionStatement'] =
 function(n, flags, isStmt) {
-  ;
+  var cb = CB(n);
+  this.emc(cb, 'bef' );
   ASSERT_EQ.call(this, isStmt, true);
   ASSERT.call(this, flags & EC_START_STMT, 'must be in stmt context');
-  return this.emitAny(n.expression, flags, true);
+  this.emitAny(n.expression, flags, true );
+  this.emc(cb, 'aft');
+  return true;
 };
 
 },
 function(){
 Emitters['IfStatement'] =
 function(n, flags, isStmt) {
-  ;
   ASSERT_EQ.call(this, isStmt, true);
-  this.wt('if', ETK_ID).wm('','(').eA(n.test, EC_NONE, false).w(')').emitIfBody(n.consequent);
+  var cb = CB(n); this.emc(cb, 'bef' );
+  this.wt('if', ETK_ID).emc(cb, 'aft.if');
+  this.wm('','(').eA(n.test, EC_NONE, false).w(')').emitIfBody(n.consequent);
   n.alternate && this.l().wt('else', ETK_ID).onw(wcb_afterElse).emitElseBody(n.alternate);
+  this.emc(cb, 'aft');
+
   return true;
 };
 
@@ -2814,6 +2789,7 @@ function(stmt) {
 function(){
 Emitters['Literal'] =
 function(n, flags, isStmt) {
+  var cb = CB(n); this.emc(cb, 'bef' );
   switch (typeof n.value) {
   case STRING_TYPE: 
     this.t(ETK_STR).writeString(n.value,"'");
@@ -2831,8 +2807,9 @@ function(n, flags, isStmt) {
     ASSERT.call(this, false, 'unknown value');
     break;
   }
-  ;
+  this.emc(cb, 'aft');
   isStmt && this.w(';');
+
   return true;
 };
 
@@ -2840,12 +2817,13 @@ function(n, flags, isStmt) {
 function(){
 Emitters['MemberExpression'] =
 function(n, flags, isStmt) {
-  ;
+  var cb = CB(n); this.emc(cb, 'bef' );
   this.eH(n.object, flags, false);
   if (n.computed)
     this.w('[').eA(n.property, EC_NONE, false).w(']');
   else
     this.dot().writeIdName(n.property);
+  this.emc(cb, 'aft');
   return true;
 };
 
@@ -2855,7 +2833,7 @@ this.emitSAT_mem = Emitters['MemberExpression'];
 function(){
 Emitters['NewExpression'] =
 function(n, flags, isStmt) {
-  ;
+  var cb = CB(n); this.emc(cb, 'bef' );
   var si = findElem(n.arguments, 'SpreadElement');
   if (si === -1) {
     this.wt('new', ETK_ID).onw(wcb_afterNew).os().emitNewHead(n.callee);
@@ -2870,6 +2848,7 @@ function(n, flags, isStmt) {
     hasParen && this.w(')');
   }
 
+  this.emc(cb, 'aft');
   isStmt && this.w(';');
   return true;
 };
@@ -2878,7 +2857,7 @@ function(n, flags, isStmt) {
 function(){
 Emitters['ObjectExpression'] =
 function(n, flags, isStmt) {
-  ;
+  var cb = CB(n); this.emc(cb, 'bef' );
   var list = n.properties, ci = n['#ci'], e = 0;
   var hasParen = false;
   if (ci >= 0) {
@@ -2899,6 +2878,7 @@ function(n, flags, isStmt) {
     e++;
   }
 
+  list.length || this.emc(cb, 'inner');
   this.w('}');
 
   if (ci >= 0) {
@@ -2912,10 +2892,12 @@ function(n, flags, isStmt) {
       this.w(',').os().eN(item.value, EC_NONE, false);
       e++;
     }
+    this.emc(cb, 'inner');
     this.w(')');
   }
 
   hasParen && this.w(')');
+  this.emc(cb, 'aft');
 
   isStmt && this.w(';');
   return true;
@@ -2925,11 +2907,12 @@ function(n, flags, isStmt) {
 function(){
 Emitters['SequenceExpression'] =
 function(n, flags, isStmt) {
-  ;
+  var cb = CB(n); this.emc(cb, 'bef' );
   var hasParen = flags & (EC_EXPR_HEAD|EC_NON_SEQ);
   if (hasParen) { this.w('('); flags = EC_NONE; }
   this.emitCommaList(n.expressions, flags);
   hasParen && this.w(')');
+  this.emc(cb, 'aft');
   isStmt && this.w(';');
   return true;
 };
@@ -2938,21 +2921,32 @@ function(n, flags, isStmt) {
 function(){
 Emitters['SwitchStatement'] =
 function(n, flags, isStmt) {
-  this.wt('switch', ETK_ID).wm('','(').eA(n.discriminant, EC_NONE, false).wm(')','','{');
+  var cb = CB(n); this.emc(cb, 'bef' );
+  this.wt('switch', ETK_ID).emc(cb, 'switch.aft');
+  this.wm('','(').eA(n.discriminant, EC_NONE, false).wm(')');
+  this.emc(cb, 'cases.bef') || this.os();
+  this.w('{');
   this.onw(wcb_afterStmt);
   this.emitStmtList(n.cases);
   this.wcb ? this.clear_onw() : this.l();
+  this.emc(cb, 'inner');
   this.w('}');
   return true;
 };
 
 Emitters['SwitchCase'] =
 function(n, flags, isStmt) {
-  n.test === null ? this.wt('default', ETK_ID) : this.wt('case', ETK_ID).onw(wcb_afterCase).eA(n.test, EC_NONE, false);
+  var cb = CB(n); this.emc(cb, 'bef' );
+  n.test === null ?
+    this.wt('default', ETK_ID).emc(cb, 'default.aft') :
+    this.wt('case', ETK_ID).onw(wcb_afterCase).eA(n.test, EC_NONE, false);
+
   this.w(':').i().onw(wcb_afterStmt);
   this.emitStmtList(n.consequent);
   this.u();
   this.wcb && this.clear_onw();
+  this.emc(cb, 'aft');
+  this.emc(cb, 'inner');
   return true;
 };
 
@@ -2960,7 +2954,7 @@ function(n, flags, isStmt) {
 function(){
 Emitters['UnaryExpression'] = 
 function(n, flags, isStmt) {
-  ;
+  var cb = CB(n); this.emc(cb, 'bef' );
   var o = n.operator;
   var hasParen = flags & EC_EXPR_HEAD;
   if (hasParen) { this.w('('); flags = EC_NONE; }
@@ -2982,6 +2976,8 @@ function(n, flags, isStmt) {
 
   this.emitUA(n.argument);
   hasParen && this.w(')');
+  this.emc(cb, 'aft');
+
   isStmt && this.w(';');
   return true;
 };
@@ -3010,7 +3006,7 @@ function(){
 //
 Emitters['UpdateExpression'] =
 function(n, flags, isStmt) {
-  ;
+  var cb = CB(n); this.emc(cb, 'bef' );
   var hasParen = flags & EC_EXPR_HEAD;
   if (hasParen) { this.w('('); flags = EC_NONE; }
   var o = n.operator;
@@ -3024,6 +3020,8 @@ function(n, flags, isStmt) {
     this.rwr(o); // hard-write because the wrapping affairs have been take care of when calling emitSAT
   }
   hasParen && this.w(')');
+  this.emc(cb, 'aft');
+
   isStmt && this.w(';');
   return true;
 };
@@ -3032,8 +3030,11 @@ function(n, flags, isStmt) {
 function(){
 Emitters['WhileStatement'] =
 function(n, flags, isStmt) {
-  ;
-  this.wt('while', ETK_ID).wm('','(').eA(n.test, EC_NONE, false).w(')').emitBody(n.body);
+  var cb = CB(n); this.emc(cb, 'bef' );
+  this.wt('while', ETK_ID);
+  this.emc(cb, 'while.aft') || this.os(); 
+  this.w('(').eA(n.test, EC_NONE, false).w(')').emitBody(n.body);
+  this.emc(cb, 'aft');
   return true;
 };
 
@@ -3120,13 +3121,16 @@ this.emitCallHead = function(n, flags) {
 function(){
 Emitters['DoWhileStatement'] =
 function(n, flags, isStmt) {
-  ;
+  var cb = CB(n); this.emc(cb, 'bef' );
   ASSERT_EQ.call(this, isStmt, true);
   this.wt('do',ETK_ID).wm('','{').i().onw(wcb_afterStmt);
   this.emitStmt(n.body);
   this.u();
   this.wcb ? this.clear_onw() : this.l();
-  this.wm('}','','while','','(').eA(n.test, EC_NONE, false).wm(')',';');
+  this.wm('}','','while');
+  this.emc(cb, 'while.aft') || this.os();
+  this.w('(').eA(n.test, EC_NONE, false).w(')').emc(cb, 'cond.aft');
+  this.w(';').emc(cb, 'aft');
   return true;
 };
 
@@ -3136,234 +3140,7 @@ Emitters['Program'] =
 function(n, flags, isStmt) {
   this.wcb || this.onw(wcb_startStmtList);
   this.emitStmtList(n.body);
-  return true;
-};
-
-},
-function(){
-UntransformedEmitters['arg-at'] =
-function(n, flags, isStmt) {
-  ASSERT_EQ.call(this, isStmt, false);
-  ;
-  this.wt('arguments', ETK_ID).w('[');
-  this.wm(n.idx+"",']');
-
-  return true;
-};
-
-UntransformedEmitters['arg-rest'] =
-function(n, flags, isStmt) {
-  ASSERT_EQ.call(this, isStmt, true);
-  ;
-  var l = n.left;
-  ASSERT.call(this, isResolvedName(l) || isTemp(l), 'neither id nor temp');
-  this.eA(l, EC_NONE, false)
-    .wm('','=','','[',']',';').l()
-    .wm('while','','(').eA(l, EC_NONE, false)
-    .wm('.','length')
-    .wm('+',n.idx+"",'','<','','arguments','.','length',')').i().l()
-    .eA(l, EC_NONE, false).w('[').eA(l, EC_NONE, false).wm('.','length')
-    .w(']')
-    .wm('','=',' ','arguments','[').
-    eA(l, EC_NONE, false).wm('.','length','+',n.idx,']',';').u();
-  return true;
-};
-
-},
-function(){
-
-
-},
-function(){
-
-
-},
-function(){
-UntransformedEmitters['arr-iter-get'] =
-function(n, flags, isStmt) {
-  ;
-  this.eA(n.iter, EC_NONE, false).wm('.','get');
-  this.wm('(',')');
-  isStmt && this.w(';');
-  return true;
-};
-
-UntransformedEmitters['arr-iter-end'] =
-function(n, flags, isStmt) {
-  ;
-  this.eA(n.iter).wm('.','end');
-  this.wm('(',')');
-  isStmt && this.w(';');
-  return true;
-};
-
-UntransformedEmitters['arr-iter'] =
-function(n, flags, isStmt) {
-  ;
-  this.jz('arrIter').w('(').eN(n.iter).w(')');
-  return true;
-};
-
-UntransformedEmitters['arr-iter-get-rest'] =
-function(n, flags, isStmt) {
-  ;
-  return this.eA(n.iter).wm('.','rest').wm('(',')'), true;
-};
-
-},
-function(){
-UntransformedEmitters['assig-list'] =
-function(n, flags, isStmt) {
-  ;
-  if (isStmt) {
-    this.wcb || this.onw(wcb_startStmtList);
-    return this.emitStmtList(n.list);
-  }
-
-  var hasParen = flags & (EC_EXPR_HEAD|EC_NON_SEQ);
-  if (hasParen) { this.w('('); flags &= EC_IN; }
-  this.emitCommaList(n.list, flags);
-  hasParen && this.w(')');
-  return true;
-};
-
-},
-function(){
-UntransformedEmitters['call'] = 
-function(n, flags, isStmt) {
-  ;
-  var hasParen = flags & EC_NEW_HEAD;
-  if (hasParen) { this.w('('); } 
-  if (n.mem !== null)
-    this.jz('cm').w('(').eN(n.head, EC_NONE, false)
-      .w(',').os().eN(n.mem, EC_NONE, false);
-  else
-    this.jz('c').w('(').eN(n.head, EC_NONE, false);
-
-  this.w(',').os();
-  this.jz('arr').w('(').emitElems(n.list, true);
-  this.w(')').w(')');
-  
-  hasParen && this.w(')');
-  isStmt && this.w(';');
-
-  return true;
-};
-
-},
-function(){
-UntransformedEmitters['global-update'] =
-function(n, flags, isStmt) {
-  ;
-  var hasParen = flags & EC_NEW_HEAD;
-  var td = (n.isU ? n.assig.argument : n.assig.left).target;
-  hasParen && this.w('(');
-  this.wt(td.synthName+'u', ETK_ID).w('(').eN(n.assig, EC_NONE, false).w(')');
-  hasParen && this.w(')');
-  isStmt && this.w(';');
-  return true;
-};
-
-},
-function(){
-UntransformedEmitters['obj-iter'] =
-function(n, flags, isStmt) {
-  ;
-  this.jz('objIter').w('(').eN(n.iter).w(')');
-  return true;
-};
-
-UntransformedEmitters['obj-iter-end'] =
-function(n, flags, isStmt) {
-  ASSERT_EQ.call(this, isStmt, false);
-  ;
-  this.eH(n.iter);
-  this.wm('.','val');
-  return true;
-};
-
-UntransformedEmitters['obj-iter-get'] =
-function(n, flags, isStmt) {
-  ;
-  this.eH(n.iter).wm('.','get','(');
-  if (n.computed)
-    this.eN(n.idx);
-  else
-    this.t(ETK_STR).writeMemName(n.idx, true);
-  this.w(')');
-  return true;
-
-};
-
-},
-function(){
-if (false)
-UntransformedEmitters['resolved-name'] =
-function(n, flags, isStmt) {
-  var str = n.target.ref.scope.scopeID+':'+n.target.name;
-  str += '#['+n.target.synthName+']';
-  if (n.tz) str += '::tz';
-  this.w(str);
-  isStmt && this.w(';');
-  return true;
-};
-
-var bes = {};
-UntransformedEmitters['resolved-name'] =
-function(n, flags, isStmt) {
-  return bes[n.bes].call(this, n, flags, isStmt);
-};
-
-bes['ex'] = this.emitRName_ex =
-bes['sat'] = this.emitRName_SAT =
-function(n, flags, isStmt) {
-  var hasParen = false;
-  var hasZero = false;
-  var tv = n.target.isLLINOSA(); // tail v
-  if (tv)
-    hasZero = hasParen = flags & EC_CALL_HEAD;
-  if (hasParen) { this.w('('); flags = EC_NONE; }
-  hasZero && this.wm('0',',');
-  this.wt(n.target.synthName, ETK_ID );
-  tv && this.v();
-  hasParen && this.w(')');
-  isStmt && this.w(';');
-  return true;
-};
-
-bes['binding'] = this.emitRName_binding =
-function(n, flags, isStmt) {
-  ASSERT.call(this, isResolvedName(n), 'rn');
-  return this.wt(n.target.synthName, ETK_ID ), true;
-};
-
-},
-function(){
-UntransformedEmitters['synth-name'] =
-function(n, flags, isStmt) {
-  this.wt(n.liq.synthName, ETK_ID );
-  return true;
-};
-
-},
-function(){
-
-
-},
-function(){
-UntransformedEmitters['temp'] =
-function(n, flags, isStmt) {
-  this.wt(n.liq.name+n.liq.idx, ETK_ID );
-  return true;
-};
-
-UntransformedEmitters['temp-save'] =
-function(n, flags, isStmt) {
-  var hasParen = flags & EC_EXPR_HEAD;
-  if (hasParen) { this.w('('); flags &= EC_IN; }
-  this.eA(n.left, flags, false).os().w('=').os().eN(n.right, flags & EC_IN, false);
-  hasParen && this.w(')');
-  isStmt && this.w(';');
+  this.emc(CB(n), 'inner');
   return true;
 };
 
@@ -3378,13 +3155,16 @@ function(n, flags, isStmt) {
 
 this.emitTransformedFn =
 function(n, flags, isStmt) {
+  var raw = n.fun, cb = CB(raw);
+  this.emc(cb, 'bef');
   this.wt('function', ETK_ID );
-  var raw = n.fun;
+  this.emc(cb, 'fun.aft');
   var scopeName = raw['#scope'].scopeName;
   if (scopeName) {
     this.bs();
     this.writeIDName(scopeName.name);
   }
+  this.emc(cb, 'list.bef' );
   this.w('(');
 
   if (raw.params)
@@ -3406,25 +3186,8 @@ function(n, flags, isStmt) {
   em && this.l();
 
   this.w('}');
+  this.emc(cb, 'aft');
 };
-
-},
-function(){
-UntransformedEmitters['u'] =
-function(n, flags, isStmt) {
-  this.jz('u').w('(').eN(n.value).w(')');
-  return true;
-};
-
-},
-function(){
-UntransformedEmitters['ucond'] =
-function(n, flags, isStmt) {
-  return Emitters['ConditionalExpression'].call(this, n, flags, isStmt);
-};
-
-},
-function(){
 
 }]  ],
 [ErrorString.prototype, [function(){
@@ -8596,6 +8359,7 @@ this.parseIf = function () {
   var alt = null, elseScope = null;
   if (this.lttype === TK_ID && this.ltval === 'else') {
     this.resvchk();
+    this.spc(nbody, 'aft');
     this.next(); // 'else'
     this.enterScope(this.scope.spawnBare());
     elseScope = this.scope; 

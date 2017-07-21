@@ -1,7 +1,6 @@
 UntransformedEmitters['arg-at'] =
 function(n, flags, isStmt) {
   ASSERT_EQ.call(this, isStmt, false);
-  ;
   this.wt('arguments', ETK_ID).w('[');
   this.wm(n.idx+"",']');
 

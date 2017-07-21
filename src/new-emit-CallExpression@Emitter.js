@@ -6,6 +6,7 @@ function(n, flags, isStmt) {
   if (hasParen) { this.w('('); flags = EC_NONE; }
   this.emitCallHead(n.callee, flags);
   this.w('(').emitCommaList(n.arguments);
+  this.emc(cb, 'inner');
   this.w(')');
 
   hasParen && this.w(')');

@@ -28,6 +28,7 @@ this.parseIf = function () {
   var alt = null, elseScope = null;
   if (this.lttype === TK_ID && this.ltval === 'else') {
     this.resvchk();
+    this.spc(nbody, 'aft');
     this.next(); // 'else'
     this.enterScope(this.scope.spawnBare());
     elseScope = this.scope; 

@@ -1,6 +1,6 @@
 Emitters['UnaryExpression'] = 
 function(n, flags, isStmt) {
-  ;
+  var cb = CB(n); this.emc(cb, 'bef' );
   var o = n.operator;
   var hasParen = flags & EC_EXPR_HEAD;
   if (hasParen) { this.w('('); flags = EC_NONE; }
@@ -22,6 +22,8 @@ function(n, flags, isStmt) {
 
   this.emitUA(n.argument);
   hasParen && this.w(')');
+  this.emc(cb, 'aft');
+
   isStmt && this.w(';');
   return true;
 };
