@@ -92,7 +92,7 @@ this.emitPow =
 function(n, flags, isStmt) {
   var hasParen = flags & EC_NEW_HEAD;
   if (hasParen) { this.w('('); flags = EC_NONE; }
-  this.jz('ex').w('(').eN(n.left).w(',').s().eN(n.right).w(')');
+  this.jz('ex').w('(').eN(n.left).w(',').os().eN(n.right).w(')');
   hasParen && this.w(')');
 
   this.emc(CB(n), 'aft');

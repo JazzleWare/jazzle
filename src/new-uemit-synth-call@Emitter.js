@@ -1,6 +1,7 @@
 UntransformedEmitters['call'] = 
 function(n, flags, isStmt) {
   var hasParen = flags & EC_NEW_HEAD;
+  var cb = CB(n); this.emc(cb, 'bef');
   if (hasParen) { this.w('('); } 
   if (n.mem !== null)
     this.jz('cm').w('(').eN(n.head, EC_NONE, false)

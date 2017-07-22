@@ -16,7 +16,7 @@ function(n, flags, isStmt) {
   var item = null, last = ci >= 0 ? ci : list.length;
   while (e < last) {
     item = list[e];
-    if (e) this.w(',').s();
+    if (e) this.w(',').os();
     this.writeMemName(item.key, false).w(':').os().eN(item.value, EC_NONE, false);
     e++;
   }

@@ -155,7 +155,7 @@ function(n, flags) {
 
 this.emitWrappedInV =
 function(n) {
-  this.wm('{','v',':').s().eN(n, EC_NONE, false).w('}');
+  this.wm('{','v',':').os().eN(n, EC_NONE, false).w('}');
   return true;
 };
 

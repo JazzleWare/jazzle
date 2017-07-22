@@ -16,7 +16,7 @@ function(n, flags, isStmt) {
   if (hasWrapper) {
     this.wt('function', ETK_ID).w('(');
     lonll && this.wsndl(lonll);
-    this.w(')').s().w('{').i().l();
+    this.w(')').os().w('{').i().l();
     if (isRenamed)
       this.w('var').onw(wcb_afterVar).wt(scopeName.synthName, ETK_ID).wm('','=','');
     else

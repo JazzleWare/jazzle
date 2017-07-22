@@ -8,8 +8,10 @@ function(n, isVal, isB) {
       idx = 0,
       tElem = null;
 
+  var cbn = CB(n);
   while (idx < list.length) {
-    tElem = this.trArrayElem(list[idx], t, idx, isB);
+    var elem = list[idx];
+    tElem = this.trArrayElem(elem, t, idx, isB, cbn);
     tElem && s.push(tElem);
     idx++;
   }
@@ -18,7 +20,16 @@ function(n, isVal, isB) {
   tElem && s.push(tElem);
 
   this.releaseTemp(t);
-  return this.synth_AssigList(s);
+
+  var res = this.synth_AssigList(s); // result
+  var cb = CB(res), cbl = CB(n.left);
+
+  this.ac(cb, 'bef', this.gec0(cbl, 'bef'));
+  this.ac(cb, 'inner', this.gec0(cbl, 'inner'));
+  this.ac(cb, 'left.aft', this.gec0(cbl, 'aft'));
+  this.ac(cb, 'aft', this.gec0(CB(n), 'aft'));
+
+  return res;
 };
 
 TransformByLeft['ObjectPattern'] =
@@ -39,7 +50,16 @@ function(n, isVal, isB) {
   isVal && s.push(this.synth_ObjIterEnd(t));
 
   this.releaseTemp(t);
-  return this.synth_AssigList(s);
+
+  var res = this.synth_AssigList(s);
+  var cb = CB(r), cbl = CB(n.left);
+
+  this.ac(cb, 'bef', this.gec0(cbl, 'bef'));
+  this.ac(cb, 'inner', this.gec0(cbl, 'inner'));
+  this.ac(cb, 'left.aft', this.gec0(cbl, 'aft'));
+  this.ac(cb, 'aft', this.gec0(CB(n), 'aft'));
+
+  return res;
 };
 
 TransformByLeft['AssignmentPattern'] =
@@ -63,7 +83,11 @@ function(n, isVal, isB) {
     isB
   );
 
-  return this.tr(assig, isVal);
+  var res = this.tr(assig, isVal);
+  var cb = CB(r);
+
+  this.ac(cb, 'aft', this.gec0(CB(n), 'aft'));
+  return r;
 };
 
 TransformByLeft['MemberExpression'] =
@@ -121,20 +145,35 @@ function(n, isVal) {
 };
 
 this.trArrayElem =
-function(left, iter, at, isB) {
-  var right = null;
+function(left, iter, at, isB, cbn) {
+  var right = null, rest_cb = null;
   if (left && left.type === 'RestElement') {
     right = this.synth_ArrIterGetRest(iter, at);
+    rest_cb = CB(left);
     left = left.argument;
   }
   else
     right = this.synth_ArrIterGet(iter, at);
 
-  if (left === null)
+  if (left === null) {
+    if (cbn.h < cbn.holes.length) {
+      var h = cbn.holes[cbn.h];
+      if (h[0] <= at) {
+        this.ac(CB(right), 'bef', h[1]);
+        cbn.h++;
+      }
+    }
     return right;
+  }
 
   var assig = this.synth_SynthAssig(left, right, isB);
-  return this.tr(assig, false);
+
+  var res = this.tr(assig, false), cb = CB(res);
+  if (rest_cb) {
+    this.ac(cb, 'bef', this.gec0(rest_cb, 'bef'));
+    this.ac(cb, 'aft', this.gec0(rest_cb, 'aft'));
+  }
+  return res;
 };
 
 this.trObjElem =

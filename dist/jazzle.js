@@ -2137,7 +2137,7 @@ function(n, flags) {
 
 this.emitWrappedInV =
 function(n) {
-  this.wm('{','v',':').s().eN(n, EC_NONE, false).w('}');
+  this.wm('{','v',':').os().eN(n, EC_NONE, false).w('}');
   return true;
 };
 
@@ -2213,6 +2213,66 @@ this.emitAccessChk_invalidSAT =
 function(nd) {
   this.jz('cc').w('(').writeString(nd.name,"'").w(')');
   return true;
+};
+
+},
+function(){
+this.emitHead_temps =
+function(scope, isScript) {
+  var temps = scope.getLG('<t>'), e = 0, len = temps.length();
+  while (e < len) {
+    e ? this.wm(',','') : this.w('var').onw(wcb_afterVar);
+    this.wt(temps.at(e++).synthName, ETK_ID);
+  }
+  e && this.w(';');
+  return this;
+};
+
+this.emitHead_vars =
+function(scope, isScript) {
+  var vars = scope.defs, e = 0, len = vars.length(); 
+  var em = 0, v = null;
+  while (e < len) {
+    v = vars.at(e++);
+    if (v.isVar() && !v.isFn()) {
+      em ? this.wm(',','') : this.w('var').onw(wcb_afterVar);
+      this.wt(v.synthName, ETK_ID);
+      em++;
+    }
+  }
+  em && this.w(';');
+};
+
+this.emitHead_fns =
+function(scope, isScript) {
+  var list = scope.funLists, e = 0, len = list.length();
+  var onw = this.wcb, em = 0;
+  while (e < len) {
+    this.emitFunList(list.at(e++));
+    if (onw && !this.wcb) {
+      ++em;
+      this.onW(wcb_afterVar);
+      onw = this.wcb;
+    }
+  }
+
+  em && this.wcb && this.clear_onw();
+};
+
+this.emitHead_llinosa =
+function(scope, isScript) {
+  var list = scope.defs, e = 0, len = list.length();
+  var em = 0, item = null;
+  while (e < len) {
+    item = list.at(e++ );
+    if (item.isLLINOSA()) {
+      em ? this.wm(',','') : this.w('var').onw(wcb_afterVar);
+      this.wt(item.synthName, ETK_ID).os().w('=').os()
+        .wm('{','v',':','void',' ','0','}');
+      ++em
+    }
+  }
+  if (em > 0) this.w(';');
 };
 
 },
@@ -2633,7 +2693,7 @@ this.emitPow =
 function(n, flags, isStmt) {
   var hasParen = flags & EC_NEW_HEAD;
   if (hasParen) { this.w('('); flags = EC_NONE; }
-  this.jz('ex').w('(').eN(n.left).w(',').s().eN(n.right).w(')');
+  this.jz('ex').w('(').eN(n.left).w(',').os().eN(n.right).w(')');
   hasParen && this.w(')');
 
   this.emc(CB(n), 'aft');
@@ -2873,7 +2933,7 @@ function(n, flags, isStmt) {
   var item = null, last = ci >= 0 ? ci : list.length;
   while (e < last) {
     item = list[e];
-    if (e) this.w(',').s();
+    if (e) this.w(',').os();
     this.writeMemName(item.key, false).w(':').os().eN(item.value, EC_NONE, false);
     e++;
   }
@@ -3058,7 +3118,7 @@ function(n, flags, isStmt) {
   if (hasWrapper) {
     this.wt('function', ETK_ID).w('(');
     lonll && this.wsndl(lonll);
-    this.w(')').s().w('{').i().l();
+    this.w(')').os().w('{').i().l();
     if (isRenamed)
       this.w('var').onw(wcb_afterVar).wt(scopeName.synthName, ETK_ID).wm('','=','');
     else
@@ -3146,6 +3206,241 @@ function(n, flags, isStmt) {
 
 },
 function(){
+UntransformedEmitters['arg-at'] =
+function(n, flags, isStmt) {
+  ASSERT_EQ.call(this, isStmt, false);
+  this.wt('arguments', ETK_ID).w('[');
+  this.wm(n.idx+"",']');
+
+  return true;
+};
+
+UntransformedEmitters['arg-rest'] =
+function(n, flags, isStmt) {
+  ASSERT_EQ.call(this, isStmt, true);
+  var cb = CB(n); this.emc(cb, 'bef' );
+  var l = n.left;
+  ASSERT.call(this, isResolvedName(l) || isTemp(l), 'neither id nor temp');
+  this.eA(l, EC_NONE, false)
+    .wm('','=','','[',']',';').l()
+    .wm('while','','(').eA(l, EC_NONE, false)
+    .wm('.','length')
+    .wm('+',n.idx+"",'','<','','arguments','.','length',')').i().l()
+    .eA(l, EC_NONE, false).w('[').eA(l, EC_NONE, false).wm('.','length')
+    .w(']')
+    .wm('','=',' ','arguments','[').
+    eA(l, EC_NONE, false).wm('.','length','+',n.idx,']',';').u();
+  this.emc(cb, 'aft');
+  return true;
+};
+
+},
+function(){
+UntransformedEmitters['arr-iter-get'] =
+function(n, flags, isStmt) {
+  var cb = CB(n); this.emc(cb, 'bef' );
+  this.eA(n.iter, EC_NONE, false).wm('.','get');
+  this.wm('(',')');
+  this.emc(cb, 'aft'); // TODO: unnecessary
+  isStmt && this.w(';');
+  return true;
+};
+
+UntransformedEmitters['arr-iter-end'] =
+function(n, flags, isStmt) {
+  var cb = CB(n);
+  this.eA(n.iter).wm('.','end');
+  this.wm('(',')');
+  this.emc(cb, 'aft');
+  isStmt && this.w(';');
+  return true;
+};
+
+UntransformedEmitters['arr-iter'] =
+function(n, flags, isStmt) {
+  this.jz('arrIter').w('(').eN(n.iter).w(')');
+  return true;
+};
+
+UntransformedEmitters['arr-iter-get-rest'] =
+function(n, flags, isStmt) {
+  var cb = CB(n);
+  this.emc(cb, 'bef' );
+  this.eA(n.iter).wm('.','rest').wm('(',')').emc(cb, 'aft');
+
+  return true;
+};
+
+},
+function(){
+UntransformedEmitters['assig-list'] =
+function(n, flags, isStmt) {
+  var cb = CB(n);
+  if (isStmt) {
+    this.emc(cb, 'bef');
+    this.wcb || this.onw(wcb_startStmtList);
+    this.emitStmtList(n.list);
+    this.emc(cb, 'left.aft');
+    this.emc(cb, 'inner');
+    this.emc(cb, 'aft');
+  }
+  else {
+    var hasParen = flags & (EC_EXPR_HEAD|EC_NON_SEQ);
+    if (hasParen) { this.w('('); flags &= EC_IN; }
+    this.emc(cb, 'bef');
+    this.emitCommaList(n.list, flags);
+    this.emc(cb, 'left.aft');
+    this.emc(cb, 'inner');
+    this.emc(cb, 'aft');
+    hasParen && this.w(')');
+  }
+};
+
+},
+function(){
+UntransformedEmitters['call'] = 
+function(n, flags, isStmt) {
+  var hasParen = flags & EC_NEW_HEAD;
+  var cb = CB(n); this.emc(cb, 'bef');
+  if (hasParen) { this.w('('); } 
+  if (n.mem !== null)
+    this.jz('cm').w('(').eN(n.head, EC_NONE, false)
+      .w(',').os().eN(n.mem, EC_NONE, false);
+  else
+    this.jz('c').w('(').eN(n.head, EC_NONE, false);
+
+  this.w(',').os();
+  this.jz('arr').w('(').emitElems(n.list, true);
+  this.w(')').w(')');
+  
+  hasParen && this.w(')');
+  isStmt && this.w(';');
+
+  return true;
+};
+
+},
+function(){
+UntransformedEmitters['global-update'] =
+function(n, flags, isStmt) {
+  ;
+  var hasParen = flags & EC_NEW_HEAD;
+  var td = (n.isU ? n.assig.argument : n.assig.left).target;
+  hasParen && this.w('(');
+  this.wt(td.synthName+'u', ETK_ID).w('(').eN(n.assig, EC_NONE, false).w(')');
+  hasParen && this.w(')');
+  isStmt && this.w(';');
+  return true;
+};
+
+},
+function(){
+UntransformedEmitters['obj-iter'] =
+function(n, flags, isStmt) {
+  ;
+  this.jz('objIter').w('(').eN(n.iter).w(')');
+  return true;
+};
+
+UntransformedEmitters['obj-iter-end'] =
+function(n, flags, isStmt) {
+  ASSERT_EQ.call(this, isStmt, false);
+  ;
+  this.eH(n.iter);
+  this.wm('.','val');
+  return true;
+};
+
+UntransformedEmitters['obj-iter-get'] =
+function(n, flags, isStmt) {
+  ;
+  this.eH(n.iter).wm('.','get','(');
+  if (n.computed)
+    this.eN(n.idx);
+  else
+    this.t(ETK_STR).writeMemName(n.idx, true);
+  this.w(')');
+  return true;
+
+};
+
+},
+function(){
+if (false)
+UntransformedEmitters['resolved-name'] =
+function(n, flags, isStmt) {
+  var str = n.target.ref.scope.scopeID+':'+n.target.name;
+  str += '#['+n.target.synthName+']';
+  if (n.tz) str += '::tz';
+  this.w(str);
+  isStmt && this.w(';');
+  return true;
+};
+
+var bes = {};
+UntransformedEmitters['resolved-name'] =
+function(n, flags, isStmt) {
+  return bes[n.bes].call(this, n, flags, isStmt);
+};
+
+bes['ex'] = this.emitRName_ex =
+bes['sat'] = this.emitRName_SAT =
+function(n, flags, isStmt) {
+  var hasParen = false;
+  var hasZero = false;
+  var tv = n.target.isLLINOSA(); // tail v
+  if (tv)
+    hasZero = hasParen = flags & EC_CALL_HEAD;
+  if (hasParen) { this.w('('); flags = EC_NONE; }
+  var cb = CB(n.id); this.emc(cb, 'bef');
+  hasZero && this.wm('0',',');
+  this.wt(n.target.synthName, ETK_ID );
+  tv && this.v();
+  this.emc(cb, 'aft');
+  hasParen && this.w(')');
+  isStmt && this.w(';');
+  return true;
+};
+
+bes['binding'] = this.emitRName_binding =
+function(n, flags, isStmt) {
+  ASSERT.call(this, isResolvedName(n), 'rn');
+  var cb = CB(n.id); this.emc(cb, 'bef' );
+  this.wt(n.target.synthName, ETK_ID );
+  this.emc(cb, 'aft');
+  return true;
+};
+
+},
+function(){
+UntransformedEmitters['synth-name'] =
+function(n, flags, isStmt) {
+  this.wt(n.liq.synthName, ETK_ID );
+  return true;
+};
+
+},
+function(){
+UntransformedEmitters['temp'] =
+function(n, flags, isStmt) {
+  this.wt(n.liq.name+n.liq.idx, ETK_ID );
+  return true;
+};
+
+UntransformedEmitters['temp-save'] =
+function(n, flags, isStmt) {
+  var hasParen = flags & EC_EXPR_HEAD;
+  var cb = CB(n); this.emc(cb, 'bef');
+  if (hasParen) { this.w('('); flags &= EC_IN; }
+  this.eA(n.left, flags, false).os().w('=').os().eN(n.right, flags & EC_IN, false);
+  hasParen && this.w(')');
+  this.emc(cb, 'aft');
+  isStmt && this.w(';');
+  return true;
+};
+
+},
+function(){
 UntransformedEmitters['transformed-fn'] =
 function(n, flags, isStmt) {
   return n.target ?
@@ -3186,6 +3481,24 @@ function(n, flags, isStmt) {
   em && this.l();
 
   this.w('}');
+  this.emc(cb, 'aft');
+};
+
+},
+function(){
+UntransformedEmitters['u'] =
+function(n, flags, isStmt) {
+  this.jz('u').w('(').eN(n.value).w(')');
+  return true;
+};
+
+},
+function(){
+UntransformedEmitters['ucond'] =
+function(n, flags, isStmt) {
+  var cb = CB(n);
+  this.emc(cb, 'bef');
+  Emitters['ConditionalExpression'].call(this, n, flags, isStmt);
   this.emc(cb, 'aft');
 };
 
@@ -12427,6 +12740,24 @@ this.applyTo = function(obj, noErrIfUndefNull) {
 
 }]  ],
 [Transformer.prototype, [function(){
+this.ac =
+function(to, name, from) {
+  if (from === null)
+    return;
+  ASSERT.call(this, from, 'from');
+  if (!HAS.call(to, name))
+    to[name] = from;
+  else
+    to[name].mergeWith(from );
+};
+
+this.gec0 =
+function(cb, n) {
+  return HAS.call(cb, n) ? cb[n] : null;
+};
+
+},
+function(){
 this.setTS =
 function(ts) {
   var ts0 = this.tempStack;
@@ -12546,8 +12877,10 @@ function(n, isVal, isB) {
       idx = 0,
       tElem = null;
 
+  var cbn = CB(n);
   while (idx < list.length) {
-    tElem = this.trArrayElem(list[idx], t, idx, isB);
+    var elem = list[idx];
+    tElem = this.trArrayElem(elem, t, idx, isB, cbn);
     tElem && s.push(tElem);
     idx++;
   }
@@ -12556,7 +12889,16 @@ function(n, isVal, isB) {
   tElem && s.push(tElem);
 
   this.releaseTemp(t);
-  return this.synth_AssigList(s);
+
+  var res = this.synth_AssigList(s); // result
+  var cb = CB(res), cbl = CB(n.left);
+
+  this.ac(cb, 'bef', this.gec0(cbl, 'bef'));
+  this.ac(cb, 'inner', this.gec0(cbl, 'inner'));
+  this.ac(cb, 'left.aft', this.gec0(cbl, 'aft'));
+  this.ac(cb, 'aft', this.gec0(CB(n), 'aft'));
+
+  return res;
 };
 
 TransformByLeft['ObjectPattern'] =
@@ -12577,7 +12919,16 @@ function(n, isVal, isB) {
   isVal && s.push(this.synth_ObjIterEnd(t));
 
   this.releaseTemp(t);
-  return this.synth_AssigList(s);
+
+  var res = this.synth_AssigList(s);
+  var cb = CB(r), cbl = CB(n.left);
+
+  this.ac(cb, 'bef', this.gec0(cbl, 'bef'));
+  this.ac(cb, 'inner', this.gec0(cbl, 'inner'));
+  this.ac(cb, 'left.aft', this.gec0(cbl, 'aft'));
+  this.ac(cb, 'aft', this.gec0(CB(n), 'aft'));
+
+  return res;
 };
 
 TransformByLeft['AssignmentPattern'] =
@@ -12601,7 +12952,11 @@ function(n, isVal, isB) {
     isB
   );
 
-  return this.tr(assig, isVal);
+  var res = this.tr(assig, isVal);
+  var cb = CB(r);
+
+  this.ac(cb, 'aft', this.gec0(CB(n), 'aft'));
+  return r;
 };
 
 TransformByLeft['MemberExpression'] =
@@ -12659,20 +13014,35 @@ function(n, isVal) {
 };
 
 this.trArrayElem =
-function(left, iter, at, isB) {
-  var right = null;
+function(left, iter, at, isB, cbn) {
+  var right = null, rest_cb = null;
   if (left && left.type === 'RestElement') {
     right = this.synth_ArrIterGetRest(iter, at);
+    rest_cb = CB(left);
     left = left.argument;
   }
   else
     right = this.synth_ArrIterGet(iter, at);
 
-  if (left === null)
+  if (left === null) {
+    if (cbn.h < cbn.holes.length) {
+      var h = cbn.holes[cbn.h];
+      if (h[0] <= at) {
+        this.ac(CB(right), 'bef', h[1]);
+        cbn.h++;
+      }
+    }
     return right;
+  }
 
   var assig = this.synth_SynthAssig(left, right, isB);
-  return this.tr(assig, false);
+
+  var res = this.tr(assig, false), cb = CB(res);
+  if (rest_cb) {
+    this.ac(cb, 'bef', this.gec0(rest_cb, 'bef'));
+    this.ac(cb, 'aft', this.gec0(rest_cb, 'aft'));
+  }
+  return res;
 };
 
 this.trObjElem =
@@ -13116,7 +13486,8 @@ function(liq) {
     kind: 'temp',
     occupied: 0,
     liq: liq,
-    type: '#Untransformed'
+    type: '#Untransformed',
+    '#c': {}
   };
 };
 
@@ -13129,7 +13500,8 @@ function(t, expr) {
     kind: 'temp-save',
     right: expr,
     left: t,
-    type: '#Untransformed'
+    type: '#Untransformed',
+    '#c': {}
   };
 };
 
@@ -13138,7 +13510,8 @@ function(list) {
   return {
     kind: 'assig-list',
     type: '#Untransformed' ,
-    list: list
+    list: list,
+    '#c': {}
   };
 };
 
@@ -13149,7 +13522,8 @@ function(t,c,a) {
     test: t,
     consequent: c,
     type: '#Untransformed' ,
-    alternate: a
+    alternate: a,
+    '#c': {}
   };
 };
 
@@ -13158,7 +13532,8 @@ function(iterVal) {
   return {
     kind: 'arr-iter-end' ,
     type: '#Untransformed' ,
-    iter: iterVal
+    iter: iterVal,
+    '#c': {}
   };
 };
 
@@ -13168,7 +13543,8 @@ function(iterVal) {
   return {
     kind: 'arr-iter',
     type: '#Untransformed' ,
-    iter: iterVal
+    iter: iterVal,
+    '#c': {}
   };
 };
 
@@ -13178,7 +13554,8 @@ function(iterVal, at) {
     kind: 'arr-iter-get',
     type: '#Untransformed',
     iter: iterVal,
-    idx: at
+    idx: at,
+    '#c': {}
   };
 };
 
@@ -13189,7 +13566,8 @@ function(left, right, isB) {
     right: right,
     left: left,
     type: '#SynthAssig',
-    operator: '='
+    operator: '=',
+    '#c': {}
   };
 };
 
@@ -13200,7 +13578,8 @@ function(head, mem, list) {
     mem: mem,
     list: list,
     type: '#Untransformed' ,
-    kind: 'call'
+    kind: 'call',
+    '#c': {}
   };
 };
 
@@ -13210,7 +13589,8 @@ function(expr) {
   return {
     kind: 'u',
     type: '#Untransformed' ,
-    value: expr
+    value: expr,
+    '#c': {}
   };
 };
 
@@ -13220,7 +13600,8 @@ function(iter, at) {
     kind: 'arr-iter-get-rest',
     type: '#Untransformed' ,
     iter: iter,
-    idx: at
+    idx: at,
+    '#c': {}
   };
 };
 
@@ -13229,7 +13610,8 @@ function(iterVal) {
   return {
     kind: 'obj-iter',
     type: '#Untransformed' ,
-    iter: iterVal
+    iter: iterVal,
+    '#c': {}
   };
 };
 
@@ -13238,7 +13620,8 @@ function(iterVal) {
   return {
     kind: 'obj-iter-end' ,
     type: '#Untransformed' ,
-    iter: iterVal
+    iter: iterVal,
+    '#c': {}
   };
 };
 
@@ -13249,7 +13632,8 @@ function(iter, at, isC) {
     type: '#Untransformed' ,
     iter: iter,
     idx: at,
-    computed: isC
+    computed: isC,
+    '#c': {}
   };
 };
 
@@ -13258,7 +13642,8 @@ function(at) {
   return {
     type: '#Untransformed' ,
     idx: at,
-    kind: 'arg-at'
+    kind: 'arg-at',
+    '#c': {}
   };
 };
 
@@ -13268,7 +13653,8 @@ function(ex, at) {
     idx: at,
     left: ex,
     kind: 'arg-rest',
-    type: '#Untransformed'
+    type: '#Untransformed',
+    '#c': {}
   };
 };
 
@@ -13290,7 +13676,8 @@ function(left,o,right,y) {
     operator: o,
     right: right,
     type: 'BinaryExpression',
-    '#y': y || 0
+    '#y': y || 0,
+    '#c': {}
   };
 };
 
@@ -13301,7 +13688,8 @@ function(liq) {
   return {
     type: '#Untransformed' ,
     kind: 'synth-name',
-    liq: liq
+    liq: liq,
+    '#c': {}
   };
 };
 
@@ -13312,7 +13700,8 @@ function(n,v) {
     computed: true,
     object: n,
     property: v,
-    '#y': 0
+    '#y': 0,
+    '#c': {}
   };
 };
 
@@ -13323,7 +13712,8 @@ function(n, a) {
     kind: 'transformed-fn' ,
     fun: n,
     argsPrologue: a,
-    target: null
+    target: null,
+    '#c': {}
   };
 };
 
@@ -13333,7 +13723,8 @@ function(assig, isU) {
     isU: isU,
     kind: 'global-update',
     assig: assig,
-    type: '#Untransformed'
+    type: '#Untransformed',
+    '#c': {}
   };
 };
 

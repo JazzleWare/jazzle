@@ -10,7 +10,7 @@ function(n, flags, isStmt) {
 UntransformedEmitters['arg-rest'] =
 function(n, flags, isStmt) {
   ASSERT_EQ.call(this, isStmt, true);
-  ;
+  var cb = CB(n); this.emc(cb, 'bef' );
   var l = n.left;
   ASSERT.call(this, isResolvedName(l) || isTemp(l), 'neither id nor temp');
   this.eA(l, EC_NONE, false)
@@ -22,5 +22,6 @@ function(n, flags, isStmt) {
     .w(']')
     .wm('','=',' ','arguments','[').
     eA(l, EC_NONE, false).wm('.','length','+',n.idx,']',';').u();
+  this.emc(cb, 'aft');
   return true;
 };

@@ -4,7 +4,8 @@ function(liq) {
     kind: 'temp',
     occupied: 0,
     liq: liq,
-    type: '#Untransformed'
+    type: '#Untransformed',
+    '#c': {}
   };
 };
 
@@ -17,7 +18,8 @@ function(t, expr) {
     kind: 'temp-save',
     right: expr,
     left: t,
-    type: '#Untransformed'
+    type: '#Untransformed',
+    '#c': {}
   };
 };
 
@@ -26,7 +28,8 @@ function(list) {
   return {
     kind: 'assig-list',
     type: '#Untransformed' ,
-    list: list
+    list: list,
+    '#c': {}
   };
 };
 
@@ -37,7 +40,8 @@ function(t,c,a) {
     test: t,
     consequent: c,
     type: '#Untransformed' ,
-    alternate: a
+    alternate: a,
+    '#c': {}
   };
 };
 
@@ -46,7 +50,8 @@ function(iterVal) {
   return {
     kind: 'arr-iter-end' ,
     type: '#Untransformed' ,
-    iter: iterVal
+    iter: iterVal,
+    '#c': {}
   };
 };
 
@@ -56,7 +61,8 @@ function(iterVal) {
   return {
     kind: 'arr-iter',
     type: '#Untransformed' ,
-    iter: iterVal
+    iter: iterVal,
+    '#c': {}
   };
 };
 
@@ -66,7 +72,8 @@ function(iterVal, at) {
     kind: 'arr-iter-get',
     type: '#Untransformed',
     iter: iterVal,
-    idx: at
+    idx: at,
+    '#c': {}
   };
 };
 
@@ -77,7 +84,8 @@ function(left, right, isB) {
     right: right,
     left: left,
     type: '#SynthAssig',
-    operator: '='
+    operator: '=',
+    '#c': {}
   };
 };
 
@@ -88,7 +96,8 @@ function(head, mem, list) {
     mem: mem,
     list: list,
     type: '#Untransformed' ,
-    kind: 'call'
+    kind: 'call',
+    '#c': {}
   };
 };
 
@@ -98,7 +107,8 @@ function(expr) {
   return {
     kind: 'u',
     type: '#Untransformed' ,
-    value: expr
+    value: expr,
+    '#c': {}
   };
 };
 
@@ -108,7 +118,8 @@ function(iter, at) {
     kind: 'arr-iter-get-rest',
     type: '#Untransformed' ,
     iter: iter,
-    idx: at
+    idx: at,
+    '#c': {}
   };
 };
 
@@ -117,7 +128,8 @@ function(iterVal) {
   return {
     kind: 'obj-iter',
     type: '#Untransformed' ,
-    iter: iterVal
+    iter: iterVal,
+    '#c': {}
   };
 };
 
@@ -126,7 +138,8 @@ function(iterVal) {
   return {
     kind: 'obj-iter-end' ,
     type: '#Untransformed' ,
-    iter: iterVal
+    iter: iterVal,
+    '#c': {}
   };
 };
 
@@ -137,7 +150,8 @@ function(iter, at, isC) {
     type: '#Untransformed' ,
     iter: iter,
     idx: at,
-    computed: isC
+    computed: isC,
+    '#c': {}
   };
 };
 
@@ -146,7 +160,8 @@ function(at) {
   return {
     type: '#Untransformed' ,
     idx: at,
-    kind: 'arg-at'
+    kind: 'arg-at',
+    '#c': {}
   };
 };
 
@@ -156,7 +171,8 @@ function(ex, at) {
     idx: at,
     left: ex,
     kind: 'arg-rest',
-    type: '#Untransformed'
+    type: '#Untransformed',
+    '#c': {}
   };
 };
 
@@ -178,7 +194,8 @@ function(left,o,right,y) {
     operator: o,
     right: right,
     type: 'BinaryExpression',
-    '#y': y || 0
+    '#y': y || 0,
+    '#c': {}
   };
 };
 
@@ -189,7 +206,8 @@ function(liq) {
   return {
     type: '#Untransformed' ,
     kind: 'synth-name',
-    liq: liq
+    liq: liq,
+    '#c': {}
   };
 };
 
@@ -200,7 +218,8 @@ function(n,v) {
     computed: true,
     object: n,
     property: v,
-    '#y': 0
+    '#y': 0,
+    '#c': {}
   };
 };
 
@@ -211,7 +230,8 @@ function(n, a) {
     kind: 'transformed-fn' ,
     fun: n,
     argsPrologue: a,
-    target: null
+    target: null,
+    '#c': {}
   };
 };
 
@@ -221,7 +241,8 @@ function(assig, isU) {
     isU: isU,
     kind: 'global-update',
     assig: assig,
-    type: '#Untransformed'
+    type: '#Untransformed',
+    '#c': {}
   };
 };
 
