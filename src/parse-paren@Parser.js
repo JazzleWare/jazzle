@@ -126,7 +126,8 @@ this.parseParen = function(ctx) {
   };
 
   this.augmentCB(n.expr || n, 'bef', bef);
-  this.suc(n['#c'], 'inner');
+  n.expr && cmn_ac(CB(n.expr), 'aft', this.cc())
+  this.suc(CB(n), 'inner');
   if (!this.expectT(CH_RPAREN))
     this.err('unfinished.paren',{tn:n});
 

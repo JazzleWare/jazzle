@@ -115,6 +115,15 @@ function CB(n) {
   return n['#c'];
 }
 
+function cmn_ac(cb, name, list) {
+  if (list === null)
+    return;
+  if (!HAS.call(cb, name) || cb[name] === null)
+    cb[name] = list;
+  else
+    cb[name].mergeWith(list);
+}
+
 function isTemp(n) {
   return n.type === '#Untransformed' &&
     n.kind === 'temp';

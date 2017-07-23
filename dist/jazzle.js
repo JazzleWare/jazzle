@@ -1271,6 +1271,15 @@ function CB(n) {
   return n['#c'];
 }
 
+function cmn_ac(cb, name, list) {
+  if (list === null)
+    return;
+  if (!HAS.call(cb, name) || cb[name] === null)
+    cb[name] = list;
+  else
+    cb[name].mergeWith(list);
+}
+
 function isTemp(n) {
   return n.type === '#Untransformed' &&
     n.kind === 'temp';
@@ -9088,7 +9097,8 @@ this.parseParen = function(ctx) {
   };
 
   this.augmentCB(n.expr || n, 'bef', bef);
-  this.suc(n['#c'], 'inner');
+  n.expr && cmn_ac(CB(n.expr), 'aft', this.cc())
+  this.suc(CB(n), 'inner');
   if (!this.expectT(CH_RPAREN))
     this.err('unfinished.paren',{tn:n});
 
