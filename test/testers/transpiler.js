@@ -75,29 +75,28 @@ function createTranspilerListener() {
 function loadTranspilerTests(ts) {
   var mt = buildTestBuilder(ts), o = ['body',0,'expression'], e = ['body', 0];
 
-  mt('literal-string-single', "'a'", "'a'", o);
-  mt('literal-string-multi',"\"a\"", "'a'", o);
-  mt('literal-num', "120", "120", o);
-  mt('literal-double', "5.5", "5.5", o);
-  mt('literal-0', "0", "0", o);
-  mt('literal-float0', "0.5", "0.5", o);
-  mt('literal-sign-num', ".12", (.12)+"", o);
-  mt('binary-expression', "5 * 5", "5 * 5", o);
-  mt('binary-expression', "(5 * 5) * 5", "5 * 5 * 5", o);
-  mt('binary-expression', "5 * (5 * 5)", "5 * (5 * 5)", o);
-  mt('binary-expression', "5 * (5 - 5)", "5 * (5 - 5)", o);
-  mt('binary-expression', "5 * 5 - 5", "5 * 5 - 5", o);
-  mt('string-esc', "'\\\"'", "'\\\"'", o);
-  mt('string-esc', "'\\b\\v\\f\\t\\r\\n\\\\\\\"\\\''", "'\\b\\v\\f\\t\\r\\n\\\\\\\"\\\''", o);
-  mt('new', "new 5()", "new 5()", o);
-  mt('new', "new (new 5)", "new new 5()()", o);
-  mt('new', "new new 5", "new new 5()()", o);
-  mt('new', "new (-5)", "new (-5)()", o);
-  mt('new', "new (new (-5))", "new new (-5)()()", o);
-  mt('new', "new (5 * 12)", "new (5 * 12)()", o);
-  mt('new', "(new 5) * 12", "new 5() * 12", o);
-  mt('new', "new 5(new 5, 5)", "new 5(new 5(), 5)", o);
-  
+  mt('literal-string-single', "'a'", "'a';", e, true);
+  mt('literal-string-multi',"\"a\"", "'a';", e, true);
+  mt('literal-num', "120", "120;", e, true);
+  mt('literal-double', "5.5", "5.5;", e, true);
+  mt('literal-0', "0", "0;", e, true);
+  mt('literal-float0', "0.5", "0.5;", e, true);
+  mt('literal-sign-num', ".12", (.12)+";", e, true);
+  mt('binary-expression', "5 * 5", "5 * 5;", e, true);
+  mt('binary-expression', "(5 * 5) * 5", "5 * 5 * 5;", e, true);
+  mt('binary-expression', "5 * (5 * 5)", "5 * (5 * 5);", e, true);
+  mt('binary-expression', "5 * (5 - 5)", "5 * (5 - 5);", e, true);
+  mt('binary-expression', "5 * 5 - 5", "5 * 5 - 5;", e, true);
+  mt('string-esc', "'\\\"'", "'\\\"';", e, true);
+  mt('string-esc', "'\\b\\v\\f\\t\\r\\n\\\\\\\"\\\''", "'\\b\\v\\f\\t\\r\\n\\\\\\\"\\\'';", e, true);
+  mt('new', "new 5()", "new 5();", e, true);
+  mt('new', "new (new 5)", "new new 5()();", e, true);
+  mt('new', "new new 5", "new new 5()();", e, true);
+  mt('new', "new (-5)", "new (-5)();", e, true);
+  mt('new', "new (new (-5))", "new new (-5)()();", e, true);
+  mt('new', "new (5 * 12)", "new (5 * 12)();", e, true);
+  mt('new', "(new 5) * 12", "new 5() * 12;", e, true);
+  mt('new', "new 5(new 5, 5)", "new 5(new 5(), 5);", e, true);
   mt('block', "{}", "{}", e, true );
   mt('block', "{{}}", "{\n  {}\n}", e, true );
   mt('block', "{{}{}}", "{\n  {}\n  {}\n}", e, true );
@@ -112,20 +111,46 @@ function loadTranspilerTests(ts) {
   mt('stmtexpr', "{{}5}", "{\n  {}\n  5;\n}", e, true );
   mt('stmtexpr', "if (5) new 12; else 5", "if (5)\n  new 12();\nelse\n  5;", e, true );
   mt('stmtexpr', "{if(5) new 12; else 5; if (5) 12; else new 5()}", "{\n  if (5)\n    new 12();\n  else\n    5;\n  if (5)\n    12;\n  else\n    new 5();\n}", e, true );
-  mt('call-5(5)', "5(5)", "5(5)", o);
-  mt('call-5(5,5)', "5(5,5)", "5(5, 5)", o);
-  mt('call-5[5](5)', "5[5](5)", "5[5](5)", o);
-  mt('call-5(...5)', "5(...5)", "jz.c(5, jz.arr(jz.sp(5)))", o);
-  mt('call-5(5,...5)', "5(5,...5)", "jz.c(5, jz.arr([5], jz.sp(5)))", o);
-//mt('call-5[5](...5)', "5[5](...5)", "jz.cm(t1 = 5, t[5], jz.arr(null, 5))", o);
-  mt('new-5(5)', "new 5(5)", "new 5(5)", o);
-  mt('new-5(...5)', "new 5(...5)","jz.n(5, jz.arr(jz.sp(5)))", o);
-
+  mt('call-5(5)', "5(5)", "5(5);", e, true);
+  mt('call-5(5,5)', "5(5,5)", "5(5, 5);", e, true);
+  mt('call-5[5](5)', "5[5](5)", "5[5](5);", e, true);
+  mt('call-5(...5)', "5(...5)", "jz.c(5, jz.arr(jz.sp(5)));", e, true);
+  mt('call-5(5,...5)', "5(5,...5)", "jz.c(5, jz.arr([5], jz.sp(5)));", e, true);
+  mt('call-5[5](...5)', "5[5](...5)", "jz.cm(t0 = 5, t0[5], jz.arr(jz.sp(5)));", null, true);
+  mt('new-5(5)', "new 5(5)", "new 5(5);", e, true);
+  mt('new-5(...5)', "new 5(...5)","jz.n(5, jz.arr(jz.sp(5)));", e, true);
+  mt('[a]', '[a]', '[a];', null, true);
+  mt('[a,b]', '[a,b]', '[a, b];', null, true);
+  mt('[a,b,e]', '[a,b,e]', '[a, b, e];', null, true);
+  mt('[a,]', '[a,]', '[a];', null, true);
+  mt('[,a]', '[,a]', '[void 0, a];', null, true);
+  mt('[,5,]', '[,5,]', '[void 0, 5];', null, true);
+  mt('[,]', '[,]', '[void 0];', null, true);
+  mt('[...5]', '[...5]', 'jz.arr(jz.sp(5));', null, true);
+  mt('[...5,]', '[...5,]', 'jz.arr(jz.sp(5));', null, true);
+  mt('[...5,,]', '[...5,,]', 'jz.arr(jz.sp(5), [void 0]);', null, true);
+  mt('[,...5]', '[,...5]','jz.arr([void 0], jz.sp(5));', null, true);
+  mt('[,...5,]]', '[,...5,]','jz.arr([void 0], jz.sp(5));', null, true);
+  mt('[...5, ...12]', '[...5, ...12]','jz.arr(jz.sp(5), jz.sp(12));', null, true);
+  mt('[5,...12,12,...5]', '[5,...12,12,...5]','jz.arr([5], jz.sp(12), [12], jz.sp(5));', null, true);
+  mt('[5,...12,12,...5,40]', '[5,...12,12,...5,40]','jz.arr([5], jz.sp(12), [12], jz.sp(5), [40]);', null, true);
+  mt('5(5,)', '5(5,)', '5(5);', null, true);
+  mt('({a:b})', '({a:b})', '({a: b});', null, true);
+  mt('({a:b,e})', '({a:b,e})', '({a: b, e: e});', null, true);
+  mt('{{a,b:e})', '({a,b:e})', '({a: a, b: e});', null, true);
+  mt('({a,b})', '({a,b})', '({a: a, b: b});', null, true);
+  mt('({a,b,})', '({a,b,})', '({a: a, b: b});', null, true);
+  mt('({})', '({})', '({});', null, true);
+  mt('({[5]:12})', '({[5]:12})', 'jz.obj({}, 5, 12);', null, true);
+  mt('({5:40,[12*5]:12})', '','jz.obj({5: 40}, 12 * 5, 12);', null, true);
+  mt('({[5]: 12, 12: 5})', '','jz.obj({}, 5, 12, 12, 5);', null, true); 
+  mt('({[a]: b, l: [w]})', '' ,'jz.obj({}, a, b, \'l\', [w]);', null, true);
 }
 
 function buildTestBuilder(ts) {
   return function makeTest(name, src, e, objPath, isStmt) {
-    console.error('TEST', name);
+    if (src === "") src = name;
+    false && console.error('TEST', name);
     var test = new lib.Test();
     test.expectVT(e, 'pass');
     test.set('objPath', objPath);
