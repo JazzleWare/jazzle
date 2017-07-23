@@ -75,9 +75,9 @@ function(ctx, st) {
       this.scope.setName(
         fnName.name,
         declScope.findDeclOwn_m(_m(fnName.name))
-      ).t(DT_FNNAME);
+      ).t(DT_FNNAME).s(fnName);
     else
-      this.scope.setName(fnName.name, null).t(DT_FNNAME);
+      this.scope.setName(fnName.name, null).t(DT_FNNAME).s(fnName);
   }
 
   var argLen =
@@ -91,6 +91,7 @@ function(ctx, st) {
 
   this.suc(cb, 'list.bef' );
   var argList = this.parseParams(argLen);
+  cb.inner = this.cb;
 
   this.scope.activateBody();
 

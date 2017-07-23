@@ -3,7 +3,7 @@ function(n, flags, isStmt) {
   var cb = CB(n); this.emc(cb, 'bef' );
   switch (typeof n.value) {
   case STRING_TYPE: 
-    this.t(ETK_STR).writeString(n.value,"'");
+    this.writeString(n.value,"'");
     this.curtt = ETK_NONE;
     break;
   case BOOL_TYPE: 

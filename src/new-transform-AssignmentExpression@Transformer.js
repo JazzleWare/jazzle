@@ -8,10 +8,10 @@ function(n, isVal, isB) {
       idx = 0,
       tElem = null;
 
-  var cbn = CB(n);
+  var cbl = CB(n.left);
   while (idx < list.length) {
     var elem = list[idx];
-    tElem = this.trArrayElem(elem, t, idx, isB, cbn);
+    tElem = this.trArrayElem(elem, t, idx, isB, cbl);
     tElem && s.push(tElem);
     idx++;
   }
@@ -22,7 +22,7 @@ function(n, isVal, isB) {
   this.releaseTemp(t);
 
   var res = this.synth_AssigList(s); // result
-  var cb = CB(res), cbl = CB(n.left);
+  var cb = CB(res);
 
   this.ac(cb, 'bef', this.gec0(cbl, 'bef'));
   this.ac(cb, 'inner', this.gec0(cbl, 'inner'));
@@ -52,7 +52,7 @@ function(n, isVal, isB) {
   this.releaseTemp(t);
 
   var res = this.synth_AssigList(s);
-  var cb = CB(r), cbl = CB(n.left);
+  var cb = CB(res), cbl = CB(n.left);
 
   this.ac(cb, 'bef', this.gec0(cbl, 'bef'));
   this.ac(cb, 'inner', this.gec0(cbl, 'inner'));
@@ -84,10 +84,10 @@ function(n, isVal, isB) {
   );
 
   var res = this.tr(assig, isVal);
-  var cb = CB(r);
+  var cb = CB(res);
 
-  this.ac(cb, 'aft', this.gec0(CB(n), 'aft'));
-  return r;
+  this.ac(cb, 'aft', this.gec0(CB(n.left), 'aft'));
+  return res;
 };
 
 TransformByLeft['MemberExpression'] =

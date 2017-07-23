@@ -55,7 +55,12 @@ function(argLen) {
   else if (list.length !== argLen)
     this.err('fun.args.not.enough');
 
-  elem && this.spc(elem, 'aft');
+  if (elem) {
+    this.spc(elem, 'aft');
+    this.cb = null;
+  } else
+    this.cb = this.cc();
+  
   if (!this.expectT(CH_RPAREN))
     this.err('fun.args.no.end.paren');
 

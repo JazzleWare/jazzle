@@ -71,7 +71,8 @@ this.parseObj = function(ctx) {
     }
   } while (this.lttype === CH_COMMA);
 
-  this.suc(cb, 'inner');
+  elem ? this.spc(core(elem), 'aft') : this.suc(cb, 'inner');
+
   n = {
     properties: list,
     type: 'ObjectExpression',

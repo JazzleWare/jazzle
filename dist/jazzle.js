@@ -1448,6 +1448,13 @@ function(comment) {
       (comment.loc.start.line !== comment.loc.end.line);
 };
 
+this.mergeWith =
+function(another) {
+  if (!this.n)
+    this.n = another.n;
+  this.c = this.c.concat(another.c);
+};
+
 }]  ],
 [ConcreteScope.prototype, [function(){
 this.gocLG =
@@ -2057,18 +2064,22 @@ this.writeMemName =
 function(memName, asStr) {
   switch (memName.type) {
   case 'Literal':
-    return this.eA(memName, EC_NONE, false);
+    this.eA(memName, EC_NONE, false);
+    return this;
   case 'Identifier':
-    return asStr ?
-      this.t(ETK_STR).writeString(memName.name,"'") :
+    var cb = CB(memName); this.emc(cb, 'bef' );
+    asStr ?
+      this.writeString(memName.name,"'") :
       this.writeIDName(memName.name);
+    this.emc(cb, 'aft');
+    return this;
   }
   ASSERT.call(this, false, 'unknown name');
 };
 
 this.writeString =
 function(sv,quotation) {
-  this.w(quotation); // rwr is not used, because it might invove wrapping
+  this.wt(quotation, ETK_STR); // rwr is not used, because it might involve wrapping
   this.writeStringValue(sv,1);
   this.rwr(quotation); // rwr because the wrapping-thing is taken care of when calling writeStringValue
 };
@@ -2147,7 +2158,10 @@ function() {
 };
 
 this.emitSpread =
-function(n) { this.jz('sp').w('(').eN(n.argument, EC_NONE, false).w(')'); };
+function(n) {
+  var cb = CB(n); this.emc(cb, 'bef' );
+  this.jz('sp').w('(').eN(n.argument, EC_NONE, false).w(')').emc(cb, 'aft');
+};
 
 // a, b, e, ...l -> [a,b,e],sp(l)
 // a, b, e, l -> a,b,e,l
@@ -2159,7 +2173,7 @@ function(list, selem /* i.e., it contains a spread element */, cb) {
     var elem = list[e];
     if (elem && elem.type === 'SpreadElement') {
       this.emitSpread(elem);
-      e >= list.length && this.emc(cb, 'inner');
+      e >= list.length - 1 && this.emc(cb, 'inner');
       e++;
     }
     else {
@@ -2852,7 +2866,7 @@ function(n, flags, isStmt) {
   var cb = CB(n); this.emc(cb, 'bef' );
   switch (typeof n.value) {
   case STRING_TYPE: 
-    this.t(ETK_STR).writeString(n.value,"'");
+    this.writeString(n.value,"'");
     this.curtt = ETK_NONE;
     break;
   case BOOL_TYPE: 
@@ -2902,7 +2916,7 @@ function(n, flags, isStmt) {
     var hasParen = flags & EC_NEW_HEAD;
     if (hasParen) { this.w('('); flags = EC_NONE; }
     this.jz('n').w('(').eN(n.callee, EC_NONE, false).wm(',','')
-      .jz('arr').w('(').emitElems(n.arguments, si >= 0);
+      .jz('arr').w('(').emitElems(n.arguments, si >= 0, cb);
 
     this.w(')').w(')');
     hasParen && this.w(')');
@@ -2930,26 +2944,31 @@ function(n, flags, isStmt) {
   }
   this.w('{');
 
+  var cbe = null;
+
   var item = null, last = ci >= 0 ? ci : list.length;
+
   while (e < last) {
     item = list[e];
     if (e) this.w(',').os();
-    this.writeMemName(item.key, false).w(':').os().eN(item.value, EC_NONE, false);
+    cbe = CB(item); this.emc(cbe, 'bef' );
+    this.writeMemName(item.key, false).w(':').os().eN(item.value, EC_NONE, false).emc(cbe, 'aft');
     e++;
   }
 
-  list.length || this.emc(cb, 'inner');
+  this.emc(cb, 'inner');
   this.w('}');
 
   if (ci >= 0) {
     while (e < list.length) {
       this.w(',').os();
       item = list[e];
+      cbe = CB(item); this.emc(cbe, 'bef' );
       if (item.computed)
         this.eN(item.key, EC_NONE, false);
       else
         this.writeMemName(item.key, true);
-      this.w(',').os().eN(item.value, EC_NONE, false);
+      this.w(',').os().eN(item.value, EC_NONE, false).emc(cbe, 'aft');
       e++;
     }
     this.emc(cb, 'inner');
@@ -3310,7 +3329,7 @@ function(n, flags, isStmt) {
     this.jz('c').w('(').eN(n.head, EC_NONE, false);
 
   this.w(',').os();
-  this.jz('arr').w('(').emitElems(n.list, true);
+  this.jz('arr').w('(').emitElems(n.list, true, cb);
   this.w(')').w(')');
   
   hasParen && this.w(')');
@@ -3358,7 +3377,7 @@ function(n, flags, isStmt) {
   if (n.computed)
     this.eN(n.idx);
   else
-    this.t(ETK_STR).writeMemName(n.idx, true);
+    this.writeMemName(n.idx, true);
   this.w(')');
   return true;
 
@@ -3457,17 +3476,24 @@ function(n, flags, isStmt) {
   var scopeName = raw['#scope'].scopeName;
   if (scopeName) {
     this.bs();
+    var name_cb = scopeName.site && CB(scopeName.site);
+    name_cb && this.emc(name_cb, 'bef' );
     this.writeIDName(scopeName.name);
+    name_cb && this.emc(name_cb, 'aft');
   }
   this.emc(cb, 'list.bef' );
   this.w('(');
 
-  if (raw.params)
+  if (raw.params) {
     this.emitCommaList(raw.params);
+    this.emc(cb, 'inner');
+  }
   this.wm(')','','{').i().onw(wcb_afterStmt);
 
-  if (n.argsPrologue)
+  if (n.argsPrologue) {
     this.emitStmt(n.argsPrologue);
+    this.emc(cb, 'inner');
+  }
 
   var em = 0;
   this.wcb ? this.clear_onw() : em++;
@@ -3982,6 +4008,8 @@ function() { // cuts comments
 
 this.augmentCB =
 function(n, i, c) {
+  if (c === null)
+    return;
   var cb = n['#c'];
   if (!cb[i])
     cb[i] = c;
@@ -5954,9 +5982,9 @@ function(ctx, st) {
       this.scope.setName(
         fnName.name,
         declScope.findDeclOwn_m(_m(fnName.name))
-      ).t(DT_FNNAME);
+      ).t(DT_FNNAME).s(fnName);
     else
-      this.scope.setName(fnName.name, null).t(DT_FNNAME);
+      this.scope.setName(fnName.name, null).t(DT_FNNAME).s(fnName);
   }
 
   var argLen =
@@ -5970,6 +5998,7 @@ function(ctx, st) {
 
   this.suc(cb, 'list.bef' );
   var argList = this.parseParams(argLen);
+  cb.inner = this.cb;
 
   this.scope.activateBody();
 
@@ -6288,7 +6317,12 @@ function(argLen) {
   else if (list.length !== argLen)
     this.err('fun.args.not.enough');
 
-  elem && this.spc(elem, 'aft');
+  if (elem) {
+    this.spc(elem, 'aft');
+    this.cb = null;
+  } else
+    this.cb = this.cc();
+  
   if (!this.expectT(CH_RPAREN))
     this.err('fun.args.no.end.paren');
 
@@ -6595,6 +6629,13 @@ function(memName, ctx) {
     this.validate(memName.name);
     this.scope.refDirect_m(_m(memName.name), null);
     val = memName;
+    if (!HAS.call(cb, 'bef') || cb.bef === null)
+      cb.bef = new Comments();
+    var cbn = CB(memName);
+    if (HAS.call(cbn, 'bef') && cbn.bef) {
+      cb.bef.mergeWith(cbn.bef);
+      cbn.bef = null;
+    }
     break;
   }
 
@@ -8884,7 +8925,8 @@ this.parseObj = function(ctx) {
     }
   } while (this.lttype === CH_COMMA);
 
-  this.suc(cb, 'inner');
+  elem ? this.spc(core(elem), 'aft') : this.suc(cb, 'inner');
+
   n = {
     properties: list,
     type: 'ObjectExpression',
@@ -12877,10 +12919,10 @@ function(n, isVal, isB) {
       idx = 0,
       tElem = null;
 
-  var cbn = CB(n);
+  var cbl = CB(n.left);
   while (idx < list.length) {
     var elem = list[idx];
-    tElem = this.trArrayElem(elem, t, idx, isB, cbn);
+    tElem = this.trArrayElem(elem, t, idx, isB, cbl);
     tElem && s.push(tElem);
     idx++;
   }
@@ -12891,7 +12933,7 @@ function(n, isVal, isB) {
   this.releaseTemp(t);
 
   var res = this.synth_AssigList(s); // result
-  var cb = CB(res), cbl = CB(n.left);
+  var cb = CB(res);
 
   this.ac(cb, 'bef', this.gec0(cbl, 'bef'));
   this.ac(cb, 'inner', this.gec0(cbl, 'inner'));
@@ -12921,7 +12963,7 @@ function(n, isVal, isB) {
   this.releaseTemp(t);
 
   var res = this.synth_AssigList(s);
-  var cb = CB(r), cbl = CB(n.left);
+  var cb = CB(res), cbl = CB(n.left);
 
   this.ac(cb, 'bef', this.gec0(cbl, 'bef'));
   this.ac(cb, 'inner', this.gec0(cbl, 'inner'));
@@ -12953,10 +12995,10 @@ function(n, isVal, isB) {
   );
 
   var res = this.tr(assig, isVal);
-  var cb = CB(r);
+  var cb = CB(res);
 
-  this.ac(cb, 'aft', this.gec0(CB(n), 'aft'));
-  return r;
+  this.ac(cb, 'aft', this.gec0(CB(n.left), 'aft'));
+  return res;
 };
 
 TransformByLeft['MemberExpression'] =

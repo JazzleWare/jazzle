@@ -243,6 +243,13 @@ function(memName, ctx) {
     this.validate(memName.name);
     this.scope.refDirect_m(_m(memName.name), null);
     val = memName;
+    if (!HAS.call(cb, 'bef') || cb.bef === null)
+      cb.bef = new Comments();
+    var cbn = CB(memName);
+    if (HAS.call(cbn, 'bef') && cbn.bef) {
+      cb.bef.mergeWith(cbn.bef);
+      cbn.bef = null;
+    }
     break;
   }
 

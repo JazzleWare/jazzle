@@ -13,26 +13,31 @@ function(n, flags, isStmt) {
   }
   this.w('{');
 
+  var cbe = null;
+
   var item = null, last = ci >= 0 ? ci : list.length;
+
   while (e < last) {
     item = list[e];
     if (e) this.w(',').os();
-    this.writeMemName(item.key, false).w(':').os().eN(item.value, EC_NONE, false);
+    cbe = CB(item); this.emc(cbe, 'bef' );
+    this.writeMemName(item.key, false).w(':').os().eN(item.value, EC_NONE, false).emc(cbe, 'aft');
     e++;
   }
 
-  list.length || this.emc(cb, 'inner');
+  this.emc(cb, 'inner');
   this.w('}');
 
   if (ci >= 0) {
     while (e < list.length) {
       this.w(',').os();
       item = list[e];
+      cbe = CB(item); this.emc(cbe, 'bef' );
       if (item.computed)
         this.eN(item.key, EC_NONE, false);
       else
         this.writeMemName(item.key, true);
-      this.w(',').os().eN(item.value, EC_NONE, false);
+      this.w(',').os().eN(item.value, EC_NONE, false).emc(cbe, 'aft');
       e++;
     }
     this.emc(cb, 'inner');

@@ -9,7 +9,7 @@ function(n, flags, isStmt) {
     var hasParen = flags & EC_NEW_HEAD;
     if (hasParen) { this.w('('); flags = EC_NONE; }
     this.jz('n').w('(').eN(n.callee, EC_NONE, false).wm(',','')
-      .jz('arr').w('(').emitElems(n.arguments, si >= 0);
+      .jz('arr').w('(').emitElems(n.arguments, si >= 0, cb);
 
     this.w(')').w(')');
     hasParen && this.w(')');

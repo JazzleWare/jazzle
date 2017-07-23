@@ -75,18 +75,22 @@ this.writeMemName =
 function(memName, asStr) {
   switch (memName.type) {
   case 'Literal':
-    return this.eA(memName, EC_NONE, false);
+    this.eA(memName, EC_NONE, false);
+    return this;
   case 'Identifier':
-    return asStr ?
-      this.t(ETK_STR).writeString(memName.name,"'") :
+    var cb = CB(memName); this.emc(cb, 'bef' );
+    asStr ?
+      this.writeString(memName.name,"'") :
       this.writeIDName(memName.name);
+    this.emc(cb, 'aft');
+    return this;
   }
   ASSERT.call(this, false, 'unknown name');
 };
 
 this.writeString =
 function(sv,quotation) {
-  this.w(quotation); // rwr is not used, because it might invove wrapping
+  this.wt(quotation, ETK_STR); // rwr is not used, because it might involve wrapping
   this.writeStringValue(sv,1);
   this.rwr(quotation); // rwr because the wrapping-thing is taken care of when calling writeStringValue
 };
@@ -165,7 +169,10 @@ function() {
 };
 
 this.emitSpread =
-function(n) { this.jz('sp').w('(').eN(n.argument, EC_NONE, false).w(')'); };
+function(n) {
+  var cb = CB(n); this.emc(cb, 'bef' );
+  this.jz('sp').w('(').eN(n.argument, EC_NONE, false).w(')').emc(cb, 'aft');
+};
 
 // a, b, e, ...l -> [a,b,e],sp(l)
 // a, b, e, l -> a,b,e,l
@@ -177,7 +184,7 @@ function(list, selem /* i.e., it contains a spread element */, cb) {
     var elem = list[e];
     if (elem && elem.type === 'SpreadElement') {
       this.emitSpread(elem);
-      e >= list.length && this.emc(cb, 'inner');
+      e >= list.length - 1 && this.emc(cb, 'inner');
       e++;
     }
     else {

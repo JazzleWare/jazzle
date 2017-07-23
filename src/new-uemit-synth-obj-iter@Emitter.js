@@ -21,7 +21,7 @@ function(n, flags, isStmt) {
   if (n.computed)
     this.eN(n.idx);
   else
-    this.t(ETK_STR).writeMemName(n.idx, true);
+    this.writeMemName(n.idx, true);
   this.w(')');
   return true;
 

@@ -7,6 +7,8 @@ function() { // cuts comments
 
 this.augmentCB =
 function(n, i, c) {
+  if (c === null)
+    return;
   var cb = n['#c'];
   if (!cb[i])
     cb[i] = c;

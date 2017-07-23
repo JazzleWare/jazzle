@@ -14,17 +14,24 @@ function(n, flags, isStmt) {
   var scopeName = raw['#scope'].scopeName;
   if (scopeName) {
     this.bs();
+    var name_cb = scopeName.site && CB(scopeName.site);
+    name_cb && this.emc(name_cb, 'bef' );
     this.writeIDName(scopeName.name);
+    name_cb && this.emc(name_cb, 'aft');
   }
   this.emc(cb, 'list.bef' );
   this.w('(');
 
-  if (raw.params)
+  if (raw.params) {
     this.emitCommaList(raw.params);
+    this.emc(cb, 'inner');
+  }
   this.wm(')','','{').i().onw(wcb_afterStmt);
 
-  if (n.argsPrologue)
+  if (n.argsPrologue) {
     this.emitStmt(n.argsPrologue);
+    this.emc(cb, 'inner');
+  }
 
   var em = 0;
   this.wcb ? this.clear_onw() : em++;
