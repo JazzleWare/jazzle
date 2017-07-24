@@ -2,7 +2,7 @@ Emitters['SwitchStatement'] =
 function(n, flags, isStmt) {
   var cb = CB(n); this.emc(cb, 'bef' );
   this.wt('switch', ETK_ID).emc(cb, 'switch.aft');
-  this.wm('','(').eA(n.discriminant, EC_NONE, false).wm(')');
+  this.wm('','(').eA(n.discriminant, EC_NONE, false).w(')');
   this.emc(cb, 'cases.bef') || this.os();
   this.w('{');
   this.onw(wcb_afterStmt);

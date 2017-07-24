@@ -246,3 +246,20 @@ function(assig, isU) {
   };
 };
 
+this.synth_SynthLiteral =
+function(l) {
+  switch (l.type) {
+  case 'Literal':
+    return l;
+  case 'Identifier':
+    return {
+      kind: 'synth-literal',
+      raw: l.raw,
+      loc: l.loc,
+      type: '#Untransformed',
+      value: l.name,
+      '#c': CB(l)
+    };
+  }
+  ASSERT.call(this, false, 'Unknown ['+l.type+']');
+};

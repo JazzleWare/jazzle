@@ -5,8 +5,9 @@ function(n, flags, isStmt) {
   if (n.computed)
     this.w('[').eA(n.property, EC_NONE, false).w(']');
   else
-    this.dot().writeIdName(n.property);
+    this.dot().writeIDName(n.property.name); // TODO: node itself rather than its name's string value
   this.emc(cb, 'aft');
+  isStmt && this.w(';');
   return true;
 };
 

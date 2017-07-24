@@ -1357,9 +1357,7 @@ function wcb_idNumGuard(rawStr, tt) {
   if (tt & (ETK_NUM|ETK_ID)) this.bs();
 }
 
-function wcb_afterStmt(rawStr, tt) {
-  this.l();
-}
+function wcb_afterStmt(rawStr, tt) { this.l(); }
 
 function wcb_afterLineComment(rawStr, tt) {
   this.l();
@@ -1374,6 +1372,10 @@ function wcb_afterElse(rawStr, tt) {
 }
 
 function wcb_startStmtList(rawStr, tt) {}
+
+function wcb_afterCase(rawStr, tt) {
+  wcb_idNumGuard.call(this, rawStr, tt);
+}
 ;
  (function(){
        var i = 0;
@@ -2052,6 +2054,9 @@ function(ch) {
     return '\\u'+hex(ch);
   }
 };
+
+this. dot =
+function() { return this.w('.'); };
 
 this.writeIDName =
 function(nameStr) {
@@ -2905,8 +2910,9 @@ function(n, flags, isStmt) {
   if (n.computed)
     this.w('[').eA(n.property, EC_NONE, false).w(']');
   else
-    this.dot().writeIdName(n.property);
+    this.dot().writeIDName(n.property.name); // TODO: node itself rather than its name's string value
   this.emc(cb, 'aft');
+  isStmt && this.w(';');
   return true;
 };
 
@@ -3011,7 +3017,7 @@ Emitters['SwitchStatement'] =
 function(n, flags, isStmt) {
   var cb = CB(n); this.emc(cb, 'bef' );
   this.wt('switch', ETK_ID).emc(cb, 'switch.aft');
-  this.wm('','(').eA(n.discriminant, EC_NONE, false).wm(')');
+  this.wm('','(').eA(n.discriminant, EC_NONE, false).w(')');
   this.emc(cb, 'cases.bef') || this.os();
   this.w('{');
   this.onw(wcb_afterStmt);
@@ -3211,11 +3217,16 @@ Emitters['DoWhileStatement'] =
 function(n, flags, isStmt) {
   var cb = CB(n); this.emc(cb, 'bef' );
   ASSERT_EQ.call(this, isStmt, true);
-  this.wt('do',ETK_ID).wm('','{').i().onw(wcb_afterStmt);
+  this.wt('do',ETK_ID).os();
+  if (n.body.type !== 'BlockStatement')
+    this.w('{').i().onw(wcb_afterStmt);
   this.emitStmt(n.body);
-  this.u();
-  this.wcb ? this.clear_onw() : this.l();
-  this.wm('}','','while');
+  if (n.body.type !== 'BlockStatement') {
+    this.u();
+    this.wcb ? this.clear_onw() : this.l();
+    this.w('}');
+  }
+  this.os().w('while');
   this.emc(cb, 'while.aft') || this.os();
   this.w('(').eA(n.test, EC_NONE, false).w(')').emc(cb, 'cond.aft');
   this.w(';').emc(cb, 'aft');
@@ -3360,6 +3371,11 @@ function(n, flags, isStmt) {
   isStmt && this.w(';');
   return true;
 };
+
+},
+function(){
+UntransformedEmitters['synth-literal'] =
+Emitters['Literal'];
 
 },
 function(){
@@ -13019,17 +13035,25 @@ function(n, isVal, isB) {
     mem.object = this.tr(mem.object, true );
     var t1 = this.allocTemp();
     mem.object = this.synth_TempSave(t1, mem.object);
-    mem.property = this.tr(mem.property, true);
-    var t2 = this.allocTemp();
-    mem.property = this.synth_TempSave(t2, mem.property);
-    this.releaseTemp(t2);
+    var t2 = null;
+    if (mem.computed) {
+      mem.property = this.tr(mem.property, true);
+      t2 = this.allocTemp();
+      mem.property = this.synth_TempSave(t2, mem.property);
+      this.releaseTemp(t2);
+    } else
+      t2 = mem.property;
+
     this.releaseTemp(t1);
     var r = this.tr(n.right, true );
 
     n.left = mem;
     n.operator = '=';
-    n.right = this.synth_node_BinaryExpression(
-      this.synth_node_MemberExpression(t1,t2), '**', r);
+
+    var sm = this.synth_node_MemberExpression(t1,t2);
+    sm.computed = mem.computed;
+
+    n.right = this.synth_node_BinaryExpression(sm, '**', r);
   } else {
     n.left = this.trSAT(n.left);
     n.right = this.tr(n.right, true);
@@ -13780,6 +13804,23 @@ function(assig, isU) {
   };
 };
 
+this.synth_SynthLiteral =
+function(l) {
+  switch (l.type) {
+  case 'Literal':
+    return l;
+  case 'Identifier':
+    return {
+      kind: 'synth-literal',
+      raw: l.raw,
+      loc: l.loc,
+      type: '#Untransformed',
+      value: l.name,
+      '#c': CB(l)
+    };
+  }
+  ASSERT.call(this, false, 'Unknown ['+l.type+']');
+};
 
 },
 function(){

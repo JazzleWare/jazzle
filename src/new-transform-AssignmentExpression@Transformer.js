@@ -98,17 +98,25 @@ function(n, isVal, isB) {
     mem.object = this.tr(mem.object, true );
     var t1 = this.allocTemp();
     mem.object = this.synth_TempSave(t1, mem.object);
-    mem.property = this.tr(mem.property, true);
-    var t2 = this.allocTemp();
-    mem.property = this.synth_TempSave(t2, mem.property);
-    this.releaseTemp(t2);
+    var t2 = null;
+    if (mem.computed) {
+      mem.property = this.tr(mem.property, true);
+      t2 = this.allocTemp();
+      mem.property = this.synth_TempSave(t2, mem.property);
+      this.releaseTemp(t2);
+    } else
+      t2 = mem.property;
+
     this.releaseTemp(t1);
     var r = this.tr(n.right, true );
 
     n.left = mem;
     n.operator = '=';
-    n.right = this.synth_node_BinaryExpression(
-      this.synth_node_MemberExpression(t1,t2), '**', r);
+
+    var sm = this.synth_node_MemberExpression(t1,t2);
+    sm.computed = mem.computed;
+
+    n.right = this.synth_node_BinaryExpression(sm, '**', r);
   } else {
     n.left = this.trSAT(n.left);
     n.right = this.tr(n.right, true);

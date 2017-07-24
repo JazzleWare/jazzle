@@ -55,6 +55,9 @@ function(ch) {
   }
 };
 
+this. dot =
+function() { return this.w('.'); };
+
 this.writeIDName =
 function(nameStr) {
   return this.w(nameStr);

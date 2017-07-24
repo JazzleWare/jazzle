@@ -30,9 +30,7 @@ function wcb_idNumGuard(rawStr, tt) {
   if (tt & (ETK_NUM|ETK_ID)) this.bs();
 }
 
-function wcb_afterStmt(rawStr, tt) {
-  this.l();
-}
+function wcb_afterStmt(rawStr, tt) { this.l(); }
 
 function wcb_afterLineComment(rawStr, tt) {
   this.l();
@@ -47,3 +45,7 @@ function wcb_afterElse(rawStr, tt) {
 }
 
 function wcb_startStmtList(rawStr, tt) {}
+
+function wcb_afterCase(rawStr, tt) {
+  wcb_idNumGuard.call(this, rawStr, tt);
+}
