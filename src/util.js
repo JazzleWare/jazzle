@@ -124,6 +124,15 @@ function cmn_ac(cb, name, list) {
     cb[name].mergeWith(list);
 }
 
+function cmn_erase(cb, name) {
+  if (HAS.call(cb, name)) {
+    var list = cb[name];
+    cb[name] = null;
+    return list;
+  }
+  return null;
+}
+
 function isTemp(n) {
   return n.type === '#Untransformed' &&
     n.kind === 'temp';

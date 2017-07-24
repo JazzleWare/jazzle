@@ -183,8 +183,10 @@ var SYNTH_VOID0 = {
     type: 'Literal',
     value: 0,
     raw: '0',
+    '#c': {}
   },
-  '#y': 0
+  '#y': 0,
+  '#c': {}
 };
 
 this.synth_node_BinaryExpression =

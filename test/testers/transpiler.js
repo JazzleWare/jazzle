@@ -10,6 +10,7 @@ function createTranspilerTester(Parser, Transformer, Emitter) {
   function(test) {
     var objPath = test.get('objPath'),
         n = new Parser(test.get('src'), test.get('options')).parseProgram();
+    var prog = n;
     if (objPath !== null) {
       var e = 0;
       while (e < objPath.length) {
@@ -22,14 +23,16 @@ function createTranspilerTester(Parser, Transformer, Emitter) {
     return {
       n: n,
       e: new Emitter(),
-      t: new Transformer()
+      t: new Transformer(),
+      prog: prog
     };
   };
 
   ts.tester.run =
   function(tester, test) {
     var n = tester.n, e = tester.e, t = tester.t;
-    e.emitAny(t.tr(n, !test.get('stmt')), test.get('stmt') ? 2 : 0, test.get('stmt') || false);
+    t.tr(tester.prog, false);
+    e.emitAny(n, test.get('stmt') ? 2 : 0, test.get('stmt') || false);
     return e.flush(), e.out;
   };
 
@@ -76,15 +79,42 @@ function loadTranspilerTests(ts) {
   var mt = buildTestBuilder(ts), o = ['body',0,'expression'], e = ['body', 0];
 
   mt('literal-string-single', "'a'", "'a';", e, true);
+  mt('/* bef */\'a\'/* aft */;', '', "/* bef */'a'/* aft */;", e, true);
+
   mt('literal-string-multi',"\"a\"", "'a';", e, true);
+  mt('/* bef */"a"/* aft */;// stmt','',"/* bef */'a'/* aft */;// stmt", e, true );
+
   mt('literal-num', "120", "120;", e, true);
+  mt('/* bef */120/* aft */;// stmt', '', '/* bef */120/* aft */;// stmt', e, true);
+
   mt('literal-double', "5.5", "5.5;", e, true);
+  mt('/* bef */5.5; // stmt','','/* bef */5.5;// stmt',e, true);
+
   mt('literal-0', "0", "0;", e, true);
+  mt('mcmt-lnc-0-mcmt-lnc','/* bef-mul */ // bef-l\n0 // aft-l\n/* aft-mul */;','/* bef-mul */// bef-l\n0// aft-l\n/* aft-mul */;',e,true);
+
   mt('literal-float0', "0.5", "0.5;", e, true);
+  mt('lcn-0.5-mcmt','// bef\n0.5/* aft */;','// bef\n0.5/* aft */;', e, true);
+
   mt('literal-sign-num', ".12", (.12)+";", e, true);
+  mt('literal-sign-num-w-cmn', "/* bef */.12// aft\n;", "/* bef */"+(.12)+"// aft\n;", e, true);
+
   mt('binary-expression', "5 * 5", "5 * 5;", e, true);
+  mt('binary-expression-cmn', "/* bl */ 5 /* al */*/* br */ 5 /* ae */;// stmt", "/* bl */5/* al */ * /* br */5/* ae */;// stmt", e, true);
+
   mt('binary-expression', "(5 * 5) * 5", "5 * 5 * 5;", e, true);
+  mt(
+    'binary-expression-cmn',
+    "/* bpl */(/* b5l */5/* a5l */ * /* b5r */5/* ae */)/* apl */ * /* br */ 5 /* ae2 */;",
+    "/* bpl *//* b5l */5/* a5l */ * /* b5r */5/* ae *//* apl */ * /* br */5/* ae2 */;",
+    e, true);
+
   mt('binary-expression', "5 * (5 * 5)", "5 * (5 * 5);", e, true);
+  mt('binary-expression-cmn', 
+    "/* a */5/* b */ * /* e */(/* l */5/* u */ * /* n */5/* r */); /* L */", 
+    "/* a */5/* b */ * /* e */(/* l */5/* u */ * /* n */5)/* r */;/* L */",
+    e, true);
+
   mt('binary-expression', "5 * (5 - 5)", "5 * (5 - 5);", e, true);
   mt('binary-expression', "5 * 5 - 5", "5 * 5 - 5;", e, true);
   mt('string-esc', "'\\\"'", "'\\\"';", e, true);
@@ -116,10 +146,10 @@ function loadTranspilerTests(ts) {
   mt('call-5[5](5)', "5[5](5)", "5[5](5);", e, true);
   mt('call-5(...5)', "5(...5)", "jz.c(5, jz.arr(jz.sp(5)));", e, true);
   mt('call-5(5,...5)', "5(5,...5)", "jz.c(5, jz.arr([5], jz.sp(5)));", e, true);
-  mt('call-5[5](...5)', "5[5](...5)", "jz.cm(t0 = 5, t0[5], jz.arr(jz.sp(5)));", null, true);
+  mt('call-5[5](...5)', "5[5](...5)", "jz.cm(t0 = 5, t0[5], jz.arr(jz.sp(5)));", e, true);
   mt('new-5(5)', "new 5(5)", "new 5(5);", e, true);
   mt('new-5(...5)', "new 5(...5)","jz.n(5, jz.arr(jz.sp(5)));", e, true);
-  mt('[a]', '[a]', '[a];', null, true);
+  mt('[a]', '[a]', '[a];', e, true);
   mt('[a,b]', '[a,b]', '[a, b];', null, true);
   mt('[a,b,e]', '[a,b,e]', '[a, b, e];', null, true);
   mt('[a,]', '[a,]', '[a];', null, true);
@@ -202,12 +232,14 @@ function loadTranspilerTests(ts) {
   mt('[a=5]=12','','t0 = jz.arrIter(12);\na = jz.u(t1 = t0.get()) ? 5 : t1;\nt0.end();',null,true);
   mt('[a=[b]=5]=12','','t0 = jz.arrIter(12);\na = jz.u(t1 = t0.get()) ? (t1 = jz.arrIter(5), b = t1.get(), t1.end()) : t1;\nt0.end();',null, true);
   mt('[a,...b] = 12','','t0 = jz.arrIter(12);\na = t0.get();\nb = t0.rest();\nt0.end();',null,true);
+  mt('{let a;} var a;','','{\n  var a1 = void 0;\n}',e,true);
 }
 
 function buildTestBuilder(ts) {
   return function makeTest(name, src, e, objPath, isStmt) {
     if (src === "") src = name;
     false && console.error('TEST', name);
+    console.error('SRC', src);
     var test = new lib.Test();
     test.expectVT(e, 'pass');
     test.set('objPath', objPath);

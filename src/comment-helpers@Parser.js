@@ -21,5 +21,7 @@ function(cb, i) {
 };
 
 this.spc =
-function(n, i) { n['#c'][i] = this.cc(); };
-
+function(n, i) {
+  var cb = CB(n);
+  cmn_ac(cb, i, this.cc());
+};

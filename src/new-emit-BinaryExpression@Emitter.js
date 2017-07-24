@@ -58,9 +58,13 @@ function(n, o, flags) {
   else if (lp === rp)
     hasParen = isLA(rp);
 
+  var cb = CB(n);
+  this.emcim(cmn_erase(cb, 'bef'));
+  var aft = cmn_erase(cb, 'aft');
   if (hasParen) { this.w('('); flags = EC_NONE; }
   this.emitBLE(n, flags, false);
   hasParen && this.w(')');
+  this.emcim(aft );
 };
 
 this.emitLeft =
@@ -73,9 +77,13 @@ function(n, o, flags) {
   else if (lp === rp)
     hasParen = isRA(lp) ;
 
+  var cb = CB(n);
+  this.emcim(cmn_erase(cb, 'bef'));
+  var aft = cmn_erase(cb, 'aft');
   if (hasParen) { this.w('('); flags = EC_NONE; }
   this.emitBLE(n, flags, false);
   hasParen && this.w(')');
+  this.emcim(aft );
 };
 
 this.emitBLEP =

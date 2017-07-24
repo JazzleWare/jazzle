@@ -49,3 +49,11 @@ function wcb_startStmtList(rawStr, tt) {}
 function wcb_afterCase(rawStr, tt) {
   wcb_idNumGuard.call(this, rawStr, tt);
 }
+
+function wcb_afterVar(rawStr, tt) {
+  wcb_idNumGuard.call(this, rawStr, tt);
+}
+
+function wcb_afterVDT(rawStr, tt) {
+  wcb_idNumGuard.call(this, rawStr, tt);
+}

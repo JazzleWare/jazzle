@@ -1,12 +1,21 @@
 this.emc =
 function(cb, i) {
-  HAS.call(cb, i) && this.emcim(cb[i]);
+  return HAS.call(cb, i) && this.emcim(cb[i]);
+};
+
+this.emce = // emc erase
+function(cb, i) {
+  if (this.emc(cb, i)) {
+    cb[i] = null;
+    return true;
+  }
+  return false;
 };
 
 this.emcim =
 function(comments) { // emc -- immediate
   if (comments === null)
-    return;
+    return false;
 
   var list = comments.c, nl = comments.n, e = 0, l = null;
 
@@ -16,8 +25,7 @@ function(comments) { // emc -- immediate
       if (l.type === 'Line' || l.loc.end.line < elem.loc.start.line)
         this.l();
     }
-    else
-      l = elem;
+    l = elem;
 
     var wflag = ETK_DIV;
     if (e === 0 && nl)
@@ -35,4 +43,5 @@ function(comments) { // emc -- immediate
   }
 
   l && l.type === 'Line' && this.onw(wcb_afterLineComment);
+  return true;
 };

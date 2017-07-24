@@ -1280,6 +1280,15 @@ function cmn_ac(cb, name, list) {
     cb[name].mergeWith(list);
 }
 
+function cmn_erase(cb, name) {
+  if (HAS.call(cb, name)) {
+    var list = cb[name];
+    cb[name] = null;
+    return list;
+  }
+  return null;
+}
+
 function isTemp(n) {
   return n.type === '#Untransformed' &&
     n.kind === 'temp';
@@ -1374,6 +1383,14 @@ function wcb_afterElse(rawStr, tt) {
 function wcb_startStmtList(rawStr, tt) {}
 
 function wcb_afterCase(rawStr, tt) {
+  wcb_idNumGuard.call(this, rawStr, tt);
+}
+
+function wcb_afterVar(rawStr, tt) {
+  wcb_idNumGuard.call(this, rawStr, tt);
+}
+
+function wcb_afterVDT(rawStr, tt) {
   wcb_idNumGuard.call(this, rawStr, tt);
 }
 ;
@@ -1959,13 +1976,22 @@ function() {
 [Emitter.prototype, [function(){
 this.emc =
 function(cb, i) {
-  HAS.call(cb, i) && this.emcim(cb[i]);
+  return HAS.call(cb, i) && this.emcim(cb[i]);
+};
+
+this.emce = // emc erase
+function(cb, i) {
+  if (this.emc(cb, i)) {
+    cb[i] = null;
+    return true;
+  }
+  return false;
 };
 
 this.emcim =
 function(comments) { // emc -- immediate
   if (comments === null)
-    return;
+    return false;
 
   var list = comments.c, nl = comments.n, e = 0, l = null;
 
@@ -1975,8 +2001,7 @@ function(comments) { // emc -- immediate
       if (l.type === 'Line' || l.loc.end.line < elem.loc.start.line)
         this.l();
     }
-    else
-      l = elem;
+    l = elem;
 
     var wflag = ETK_DIV;
     if (e === 0 && nl)
@@ -1994,6 +2019,7 @@ function(comments) { // emc -- immediate
   }
 
   l && l.type === 'Line' && this.onw(wcb_afterLineComment);
+  return true;
 };
 
 },
@@ -2687,9 +2713,13 @@ function(n, o, flags) {
   else if (lp === rp)
     hasParen = isLA(rp);
 
+  var cb = CB(n);
+  this.emcim(cmn_erase(cb, 'bef'));
+  var aft = cmn_erase(cb, 'aft');
   if (hasParen) { this.w('('); flags = EC_NONE; }
   this.emitBLE(n, flags, false);
   hasParen && this.w(')');
+  this.emcim(aft );
 };
 
 this.emitLeft =
@@ -2702,9 +2732,13 @@ function(n, o, flags) {
   else if (lp === rp)
     hasParen = isRA(lp) ;
 
+  var cb = CB(n);
+  this.emcim(cmn_erase(cb, 'bef'));
+  var aft = cmn_erase(cb, 'aft');
   if (hasParen) { this.w('('); flags = EC_NONE; }
   this.emitBLE(n, flags, false);
   hasParen && this.w(')');
+  this.emcim(aft );
 };
 
 this.emitBLEP =
@@ -4047,8 +4081,10 @@ function(cb, i) {
 };
 
 this.spc =
-function(n, i) { n['#c'][i] = this.cc(); };
-
+function(n, i) {
+  var cb = CB(n);
+  cmn_ac(cb, i, this.cc());
+};
 
 },
 function(){
@@ -9113,7 +9149,7 @@ this.parseParen = function(ctx) {
   };
 
   this.augmentCB(n.expr || n, 'bef', bef);
-  n.expr && cmn_ac(CB(n.expr), 'aft', this.cc())
+  n.expr && this.spc(core(n.expr), 'aft');
   this.suc(CB(n), 'inner');
   if (!this.expectT(CH_RPAREN))
     this.err('unfinished.paren',{tn:n});
@@ -13741,8 +13777,10 @@ var SYNTH_VOID0 = {
     type: 'Literal',
     value: 0,
     raw: '0',
+    '#c': {}
   },
-  '#y': 0
+  '#y': 0,
+  '#c': {}
 };
 
 this.synth_node_BinaryExpression =
