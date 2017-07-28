@@ -282,6 +282,10 @@ var Parser = function (src, o) {
   this.commentBuf = null;
   this.errorListener = this; // any object with an `onErr(errType "string", errParams {*})` will do
   this.parenScope = null;  
+
+  this.regPBQ = null;
+  this.regPCQ = false;
+  this.regLastElem = null;
 };
 ;
 function Ref(scope) {
@@ -1292,6 +1296,10 @@ function cmn_erase(cb, name) {
 function isTemp(n) {
   return n.type === '#Untransformed' &&
     n.kind === 'temp';
+}
+
+function rec(n) {
+  return n.type === '#Regex.CharSeq';
 }
 
 function isInteger(n) { return (n|0) === n; }
@@ -11371,6 +11379,7 @@ function() {
 
 },
 function(){
+// GENERAL RULE: if error occurs while parsing an elem, the parse routine sets the `regexErr and returns null
 this. parseRegex_regUnitAssertion =
 function() {
   var c0 = this.c, loc0 = this.loc();
@@ -11389,19 +11398,35 @@ function() {
 this. parseRegex_regPattern =
 function() {
   this.errorRegexElem = null;
+  var l = this.resetLastRegexElem();
   var elements = [], elem = null;
-  while (elem = this.parseRegex_regElem()) {
+  while (true) {
+    this.regQuantifiable = false;
+    elem = this.parseRegex_regElem();
     if (this.errorRegexElem)
-      break;
-    elements.push(elem);
-    if (this.scat(this.c) === CH_OR)
-      this.setsimpoff(this.c+1);
+      return null;
+    if (elem === null) {
+      if (this.scat(this.c) === CH_OR) {
+        this.setsimpoff(this.c+1);
+        this.resetLastRegexElem();
+        continue
+      }
+      else break;
+    }
+    if (elem !== this.lastRegexElem) {
+      if (this.regQuantifiable) {
+        this.regQuantifiable = false;
+        if (this.regPBQ || this.regPCQ || (!rec(elem) && this.parseRegex_tryPrepareQuantifier()))
+          elem = this.regQuantified(elem);
+      }
+      elements.push(elem);
+      this.lastRegexElem = elem; // reuse CharSeq
+    }
     else break;
   }
-  if (this.errorRegexElem)
-    return this.resetErrorRegex();
 
   var lastElem = elements[elements.length-1 ];
+  this.lastRegexElem = l;
   return {
     type: '#Regex',
     elements: elements,
@@ -11437,7 +11462,8 @@ function() {
     return this.setErrorRegex(this.parseRegex_errQuantifier());
   case CH_RPAREN:
     return null;
-  default: return this.parseRegex_regString();
+  default:
+    return this.parseRegex_regChar(true);
   }
 };
 
@@ -11446,7 +11472,7 @@ function() {
   var c0 = this.c;
   var s = this.src;
   var l = s.length;
-  if (c0+ 1 >= l)
+  if (c0+1 >= l)
     return this.setErrorRegex(this.parseRegex_errParen());
   if (s.charCodeAt(c0+1) === CH_QUESTION)
     return this.parseRegex_regPeekOrGroup();
@@ -11454,6 +11480,10 @@ function() {
   this.setsimpoff(c0+1);
 
   var elem = this.parseRegex_regPattern();
+  if (this.errorRegexElem)
+    return this.regexErrorElem;
+
+  this.regQuantifiable = true;
   var n = {
     type: '#Regex.Paren',
     capturing: true,
@@ -11481,31 +11511,361 @@ function() {
     return this. parseRegex_regGroup();
   default:
     var n = this. parseRegex_errPQ(); // (?
-    return this.setErrRegex(n);
+    return this.setErrorRegex(n);
   }
 };
 
 this. parseRegex =
 function(rc, rli, rcol, rsrc) {
-  var c0 = this.c0, c = this.c;
-  var li0 = this.li0, li = this.li;
-  var col0 = this.col0, col = this.col;
+  var c = this.c;
+  var li = this.li;
+  var col = this.col;
   var src0 = this.src;
 
   this.src = rsrc;
 
-  this.c0 = this.c = rc;
-  this.li0 = this.li = rli;
-  this.col0 = this.col = rcol;
+  this.c = rc;
+  this.li = rli;
+  this.col = rcol;
 
   var n = this.parseRegex_regPattern();
+
+  this.c = c;
+  this.li = li;
+  this.col = col;
+
   // must never actually happen or else an error-regex-elem would have existed for it
   if (n.elements.length <= 0)
     this.err('regex.with.no.elements');
+  if (this.errorRegexElem)
+    return this.resetErrorRegex();
+
   return n;
 };
 
+this. parseRegex_regCurly =
+function() {
+  var c = this.c, li = this.li, col = this.col;
+  var n = this.parseRegex_regCurlyQuantifier(true);
+  if (n)
+    return this.setErrorRegex(this.regErr_curlyQuantifier(n));
 
+  this.c = c;
+  this.li = li;
+  this.col = col;
+  return this.parseRegex_regChar();
+};
+
+this. parseRegex_regClass =
+function() {
+  var c0 = this.c, loc0 = this.loc(), list = [];
+  var e = null, latest = null;
+  var n = null;
+
+  var inverse = false;
+  if (this.scat(c0+1) === CH_XOR)
+    inverse = true;
+
+  this.setsimpoff(inverse ? c0 + 2 : c0 + 1);
+  var untouchedAtoms = 0;
+
+  while (e = this.parseRegex_regClassElem()) {
+    if (untouchedAtoms >= 2 && recDash(latest) && list.length >= 2) { //         regular expression class dash
+      var complete = this.parseRegex_tryMakeRange(list, e);
+      if (!complete)
+        return null;
+      latest = null;
+      untouchedAtoms = 0;
+    }
+    else {
+      list.push(e);
+      latest = e;
+      untouchedAtoms < 2 && untouchedAtoms++;
+    }
+  }
+
+  n = {
+    type: '#Regex.Class',
+    elements: list,
+    start: c0,
+    end: this.c,
+    inverse: inverse,
+    loc: { start: loc0, end: this.loc() }
+  };
+  if (!this.expectChar(CH_RSQBRACKET))
+    return this.setErrorRegex(this.parseRegex_errBracketUnfinished(n));
+
+  this.regQuantifiable = true;
+  return n;
+};
+
+this. parseRegex_regClassElem =
+function() {
+  var c = this.c, s = this.src, l = s.length;
+  if (c >= l)
+    return null;
+  switch (s.charCodeAt(c)) {
+  case CH_BACK_SLASH:
+    return this.parseRegex_regClassEscape();
+  case CH_RSQBRACKET:
+    return null;
+  default: return this.parseRegex_regClassChar();
+  }
+};
+
+this. parseRegex_regClassEscape =
+function() {
+  var c = this.c, s = this.src, l = s.length;
+  if (c+1 >= l)
+    return null;
+  var w = l.charCodeAt(c+1 );
+  switch (w) {
+  case CH_v:
+    return this.parseRegex_regClassEscape_simple('\v');
+  case CH_b:
+    return this.parseRegex_regClassEscape_simple('\b');
+  case CH_f:
+    return this.parseRegex_regClassEscape_simple('\f');
+  case CH_t:
+    return this.parseRegex_regClassEscape_simple('\t');
+  case CH_r:
+    return this.parseRegex_regClassEscape_simple('\r');
+  case CH_n:
+    return this.parseRegex_regClassEscape_simple('\n');
+  case CH_x:
+    return this.parseRegex_regClassEscape_hex();
+  case CH_c:
+    return this.parseRegex_regClassEscape_control();
+  case CH_u:
+    return this.parseRegex_regClassEscape_u();
+  default:
+    if (w >= CH_0 && w <= CH_7)
+      return this.parseRegex_regClassEscape_num();
+    return this.parseRegex_regClassEscape_itself();
+  }
+};
+
+this. parseRegex_regClassChar =
+function() {
+  return this.parseRegex_regChar(false);
+};
+
+this. parseRegex_regChar =
+function(isBare) {
+  var c0 = this.c, s = this.src;
+  return this.parseRegex_regChar_attachOrMakeVLCPR(
+    s.charAt(c0), 1, s.charCodeAt(c0),
+    isBare ? this.regLEIAC() : null, c0, c0 + 1);
+};
+
+this. parseRegex_regClassEscape_simple =
+function(v) {
+  var c0 = this.c;
+  return this.parseRegex_regChar_attachOrMakeVLCPR(
+    v, 1, v.charCodeAt(0), null, c0, c0 + 2);
+};
+
+this. parseRegex_regClassEscape_hex =
+function() {
+  return this.parseRegex_regChar_hex(false);
+};
+
+this. parseRegex_regChar_hex =
+function(isBare) { // thas is, not in []s
+  var s = this.src, l = s.length, c = this.c;
+  c += 2; // \x
+  if (c>=l)
+    return this.regerr_hexEOF();
+
+  var c0 = this.c;
+  var ch1 = hex2num(s.charCodeAt(c));
+  if (ch1 === -1) {
+    this.setsimpoff(c);
+    return this.regerr_hexEscNotHex();
+  }
+  c++;
+  if (c>=l)
+    return this.regerr_hexEOF();
+  var ch2 = hex2num(s.charCodeAt(c));
+  if (ch2 === -1) {
+    this.setsimpoff(c);
+    return this.regerr_hexEOF();
+  }
+
+  c++;
+
+  var v = (ch1<<4)|ch2;
+  // Last Elem If A CharSeq
+  return this.parseRegex_regChar_attachOrMakeVLCPR(
+    String.fromCharCode(v), 1, v, isBare ? this.regLEIAC() : null, c0, c
+  );
+};
+
+this. parseRegex_regChar_attachOrMakeVLCPR =
+function(val, len, ch, parent, rs, re) {
+  var s = this.src, raw = s.substring(rs, re);
+  var loc0 = this.loc();
+  this.setsimpoff(re);
+  var li = this.li, col = this.col;
+  if (this.parseRegex_tryPrepareQuantifier())
+    parent = null;
+
+  if (parent) {
+    parent.raw += raw;
+    parent.charLength += len;
+    parent.value += val;
+    parent.end += raw.length;
+    parent.loc.end += raw.length;
+    if (parent.cp !== -1)
+      parent.cp = -1;
+    return parent;
+  }
+
+  this.regQuantifiable = true;
+  return {
+    type: '#Regex.CharSeq',
+    raw: s.substring(rs,re),
+    start: rs,
+    end: re,
+    cp: ch,
+    charLength: len,
+    loc: { start: loc0, end: { line: li, column: col } },
+    value: val,
+  };
+};
+
+this.resetLastRegexElem =
+function() {
+  var lastRegexElem = this.lastRegexElem;
+  if (lastRegexElem !== null)
+    this.lastRegexElem = null;
+  return lastRegexElem;
+};
+
+this.regLEIAC =
+function() {
+  return (this.lastRegexElem && rec(this.lastRegexElem)) ?
+    this.lastRegexElem : null;
+};
+
+this.expectChar =
+function(ch) {
+  var c = this.c, s = this.src, l = s.length;
+  if (c >= l)
+    return false;
+  if (s.charCodeAt(c) === ch) {
+    this.setsimpoff(c+1);
+    return true;
+  }
+  return false;
+};
+
+this. parseRegex_tryPrepareQuantifier =
+function() {
+  var c = this.c, s = this.src, l = s.length;
+  if (c >= l)
+    return false;
+  switch (s.charCodeAt(c)) {
+  case CH_ADD:
+  case CH_QUESTION:
+  case CH_MUL:
+    this.regPCQ = true; // peek charQuantifier
+    return true;
+  case CH_LCURLY:
+    this.regPBQ = this.parseRegex_regCurlyQuantifier();
+    return this.regPBQ !== null;
+  }
+  return false;
+};
+
+this. parseRegex_regCurlyQuantifier =
+function() {
+  var c0 = this.c, c = c0, s = this.src, l = s.length, li0 = this.li, col0 = this.col;
+  c++; // '{'
+  this.setsimpoff(c);
+  VALID: {
+    var minRaw = this.parseRegex_tryParseNum();
+    if (minRaw === '-')
+      break VALID;
+    c = this.c;
+    if (c >= l)
+      break VALID;
+    var maxRaw = "";
+    if (s.charCodeAt(c) === CH_COMMA) {
+      c++; // ','
+      this.setsimpoff(c);
+      maxRaw = this.parseRegex_tryParseNum();
+      if (maxRaw !== '-')
+        c = this.c;
+      else
+        maxRaw = 'inf';
+    }
+    if (c >= l)
+      break VALID;
+    if (s.charCodeAt(c) !== CH_RCURLY)
+      break VALID;
+    this.setsimpoff(c+1);
+    return {
+      type: '#Regex.CurlyQuantifier',
+      min: { raw: minRaw, value: val10(minRaw) },
+      max: { raw: maxRaw, value: maxRaw === 'inf' ? -1 : maxRaw.length ? val10(maxRaw) : -1 },
+      end: this.c,
+      start: c0,
+      loc: { start: { line: li0, column: col0 }, end: this.col() }
+    };
+  }
+
+  this.c = c0;
+  this.li = li0;
+  this.col = col0;
+  return null;
+};
+
+this.regQuantified =
+function(elem) {
+  var c = this.c, li = this.li, col = this.col;
+  var loc = null, s = this.src;
+  var t = '', bq = null;
+
+  if (this.regPCQ) {
+    ASSERT.call(this, this.regPBQ === null, 'hasPBQnt');
+    this.regPCQ = false;
+    t = s.charAt(c);
+    c++;
+    this.setsimpoff(c);
+    loc = this.loc();
+  } 
+  else if (this.regPBQ) {
+    ASSERT.call(this, !this.regPCQ, 'hasPCQnt');
+    t = '{}';
+    bq = this.PBQ;
+    this.PBQ = null;
+    loc = bq.loc.end;
+  }
+  else 
+    ASSERT.call(this, false, 'neither PCQnt nor PBQnt');
+
+  var greedy = false;
+  if (this.scat(this.c) === CH_QUESTION) {
+    if (bq)
+      loc = { start: loc.start, end: loc.end };
+    c++;
+    this.setsimpoff(c);
+    loc.end++;
+    greedy = true;
+  }
+
+  return {
+    type: '#Regex.Quantified' ,
+    rangeQuantifier: bq,
+    quantifier: t,
+    pattern: elem,
+    start: elem.start,
+    loc: { start: elem.loc.start, end: loc },
+    end: this.c,
+    greedy: greedy
+  };
+};
 
 },
 function(){

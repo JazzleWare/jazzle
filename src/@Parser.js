@@ -71,4 +71,8 @@ var Parser = function (src, o) {
   this.commentBuf = null;
   this.errorListener = this; // any object with an `onErr(errType "string", errParams {*})` will do
   this.parenScope = null;  
+
+  this.regPBQ = null;
+  this.regPCQ = false;
+  this.regLastElem = null;
 };

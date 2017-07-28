@@ -138,6 +138,10 @@ function isTemp(n) {
     n.kind === 'temp';
 }
 
+function rec(n) {
+  return n.type === '#Regex.CharSeq';
+}
+
 function isInteger(n) { return (n|0) === n; }
 
 function isResolvedName(n) {
