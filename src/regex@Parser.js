@@ -200,6 +200,9 @@ function() {
     if (n)
       return this.setErrorRegex(this.regErr_curlyQuantifier(n));
   }
+
+  ASSERT.call(this, this.regCurlyChar, 'reg{}');
+
   this.regCurlyChar = false;
   return this.parseRegex_regChar(true);
 };
@@ -218,9 +221,9 @@ function() {
   var untouchedAtoms = 0;
 
   while (e = this.parseRegex_regClassElem()) {
-    if (untouchedAtoms >= 2 && recDash(latest) && list.length >= 2) { //         regular expression class dash
-      var complete = this.parseRegex_tryMakeRange(list, e);
-      if (!complete)
+    if (untouchedAtoms >= 2 && recDash(latest)) { //         regular expression class dash
+      this.parseRegex_tryMakeRange(list, e);
+      if (this.errorRegexElem)
         return null;
       latest = null;
       untouchedAtoms = 0;
@@ -245,6 +248,31 @@ function() {
 
   this.regQuantifiable = true;
   return n;
+};
+
+this. parseRegex_tryMakeRange =
+function(list, max) {
+  var num = list.length;
+  ASSERT.call(this, num >= 2, 'len');
+  ASSERT.call(this, recDash(list[num-1]), 'dash');
+
+  if (!rec(max)) { list.push(max); return; }
+  var min = list[num-2 ];
+  if (!rec(min)) { list.push(max); return; }
+  ASSERT.call(this, min.charLength === 1 && min.cp >= 0, 'charMin' );
+  ASSERT.call(this, max.charLength === 1 && max.cp >= 0, 'charMax' );
+  if (min.cp > max.cp)
+    return this.regerr_minBiggerThanMax(min, max);
+  list.pop(); // '-'
+  list.pop(); // min
+  list.push({
+    type: '#Regex.Range',
+    min: min,
+    start: min.start,
+    end: max.end,
+    max: max,
+    loc: { start: min.loc.start, end: max.loc.end }
+  });
 };
 
 this. parseRegex_regClassElem =
@@ -530,7 +558,8 @@ function() {
   var mul = 1;
 
   do {
-    v += (ch - CH_0) * mul;
+    v *= mul;
+    v += (ch - CH_0);
     mul *= 10;
     c++;
     if (c >= l)

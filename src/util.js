@@ -133,13 +133,17 @@ function cmn_erase(cb, name) {
   return null;
 }
 
+function rec(n) {
+  return n.type === '#Regex.CharSeq';
+}
+
+function recDash(n) {
+  return rec(n) && n.cp === CH_MIN;
+}
+
 function isTemp(n) {
   return n.type === '#Untransformed' &&
     n.kind === 'temp';
-}
-
-function rec(n) {
-  return n.type === '#Regex.CharSeq';
 }
 
 function isInteger(n) { return (n|0) === n; }
