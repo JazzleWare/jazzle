@@ -167,6 +167,8 @@ function cpReg(n) {
   }
 }
 
+function rec(n) { return n.type === '#Regex.CharSeq'; }
+
 function isTemp(n) {
   return n.type === '#Untransformed' &&
     n.kind === 'temp';

@@ -492,6 +492,7 @@ var CH_1 = char2int('1'),
     CH_a = char2int('a'), CH_A = char2int('A'),
     CH_b = char2int('b'), CH_B = char2int('B'),
     CH_e = char2int('e'), CH_E = char2int('E'),
+    CH_d = char2int('d'), CH_D = char2int('D'),
     CH_g = char2int('g'),
     CH_f = char2int('f'), CH_F = char2int('F'),
     CH_c = char2int('c'),
@@ -500,10 +501,12 @@ var CH_1 = char2int('1'),
     CH_n = char2int('n'),
     CH_o = char2int('o'), CH_O = char2int('O'),
     CH_r = char2int('r'),
+    CH_s = char2int('s'), CH_S = char2int('S'),
     CH_t = char2int('t'),
     CH_u = char2int('u'), CH_U = char2int('U'),
-    CH_v = char2int('v'), CH_X = char2int('X'),
-    CH_x = char2int('x'),
+    CH_v = char2int('v'),
+    CH_w = char2int('w'), CH_W = char2int('W'),
+    CH_x = char2int('x'), CH_X = char2int('X'),
     CH_y = char2int('y'),
     CH_z = char2int('z'), CH_Z = char2int('Z'),
 
@@ -1329,6 +1332,8 @@ function cpReg(n) {
     return -1;
   }
 }
+
+function rec(n) { return n.type === '#Regex.CharSeq'; }
 
 function isTemp(n) {
   return n.type === '#Untransformed' &&
@@ -11438,12 +11443,13 @@ function() {
   var elements = [];
   do {
     if (elem !== this.lastRegexElem) {
+      elem = this.regAdaptTo(elements, elem);
       if (this.regQuantifiable) {
         this.regQuantifiable = false;
         if (this.regPBQ || this.regPCQ || (!rec(elem) && this.parseRegex_tryPrepareQuantifier()))
           elem = this.regQuantified(elem);
       }
-      this.regPushBareElem(elements, elem);
+      elements.push(elem);
       this.lastRegexElem = elem; // reuse CharSeq
     }
     this.regQuantifiable = false;
@@ -11462,23 +11468,21 @@ function() {
   };
 };
 
-this.regPushBareElem =
+this.regAdaptTo =
 function(list, elem) {
-  if (list.length === 0) {
-    list.push(elem);
-    return;
-  }
+  if (list.length === 0) 
+    return elem;
   var last = list[list.length-1];
   if (last.type === '#Regex.SurrogateComponent' && last.kind === 'lead' &&
     elem.type === '#Regex.SurrogateComponent' && elem.kind === 'trail') {
     last.next = elem;
-    if (last.escape === elem.escape ) {
+    if (this.regexFlags.u && last.escape === elem.escape ) {
       list.pop();
-      list.push(this.regMakeSurrogate(last, elem));
-      return
+      this.regQuantifiable = true;
+      return this.regMakeSurrogate(last, elem);
     }
   }
-  list.push(elem);
+  return elem;
 };
 
 this. parseRegex_regPattern =
@@ -11663,10 +11667,12 @@ function() {
     if (this.regexErrorElem)
       return null;
   }
+  if (this.regexErrorElem)
+    return null;
   if (list.length) {
     var last = list[list.length-1 ];
     if (last.type === '#Regex.SemiRange' && !this.regValidateSemi(last))
-      return nul;
+      return null;
   }
   if (!this.expectChar(CH_RSQBRACKET))
     return this.setErrorRegex(this.parseRegex_errBracketUnfinished(n));
@@ -11700,13 +11706,14 @@ function(list, elem) {
   }
   else if (tail.type === '#Regex.SurrogateComponent' &&
     tail.kind === 'lead' &&
-    tail.escape !== '{}' &&
     elem.type === '#Regex.SurrogateComponent' &&
     elem.kind === 'trail') {
-    if (elem.escape === tail.escape) {
+    if (this.regexFlags.u && tail.escape !== '{}' && elem.escape === tail.escape) {
       list.pop();
       list.push(this.regMakeSurrogate(tail, elem));
     }
+    else
+      list.push(elem);
     tail.next = elem;
     return;
   }
@@ -11842,6 +11849,13 @@ function(isBare) {
     return this.parseRegex_regEscape_control(isBare);
   case CH_u:
     return this.parseRegex_regEscape_u(isBare);
+  case CH_D:
+  case CH_W:
+  case CH_S:
+  case CH_d:
+  case CH_w:
+  case CH_s:
+    return this.regClassifier();
   default:
     if (w >= CH_0 && w <= CH_7)
       return this.parseRegex_regEscape_num(isBare);
@@ -11852,6 +11866,19 @@ function(isBare) {
 this. parseRegex_regClassChar =
 function() {
   return this.parseRegex_regChar(false);
+};
+
+this.regClassifier =
+function() {
+  var c0 = this.c, loc0 = this.loc(), t = this.src.charAt(c0+1 );
+  this.setsimpoff(c0+2);
+  return {
+    type: '#Regex.Classifier',
+    start: c0,
+    loc: { start: loc0, end: this.loc() },
+    end: this.c,
+    kind: t
+  };
 };
 
 this. parseRegex_regChar =
@@ -12205,6 +12232,7 @@ function(isBare) {
 
   var c0 = this.c, loc0 = this.loc();
   this.setsimpoff(c);
+  this.regQuantifiable = true;
   return {
     type: '#Regex.Ho', // Higher-order, i.e., > 0xFFFF
     cp: v,
@@ -12220,6 +12248,7 @@ this.regSurrogateComponentVOKE =
 function(cp, offset, kind, escape) {
   var c0 = this.c, loc0 = this.loc();
   this.setsimpoff(offset);
+  this.regQuantifiable = true;
   return {
     type: '#Regex.SurrogateComponent',
     kind: kind,
@@ -12227,8 +12256,9 @@ function(cp, offset, kind, escape) {
     end: offset,
     cp: cp,
     loc: { start: loc0, end: this.loc() },
+    next: null, // if it turns out to be the lead of a surrogate pair
     escape : escape ,
-    next: null // if it turns out to be the lead of a surrogate pair
+    raw: this.src.substring(c0, offset)
   };
 };
 
