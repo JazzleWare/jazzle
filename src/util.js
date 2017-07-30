@@ -40,6 +40,28 @@ function fromRunLenCodes(runLenArray, bitm) {
   return (bitm);
 }
 
+function asBitmap(str) {
+  var bm = [], e = 0;
+  while (e < str.length) {
+    var ch = str.charCodeAt(e);
+    var byteIndex = ch >> D_INTBITLEN;
+    while (bm.length <= byteIndex) bm.push(0);
+    bm[byteIndex] |= (1 << (ch & M_INTBITLEN));
+    e++;
+  }
+  return bm;
+}
+
+function makeAcceptor(str) {
+  var bm = asBitmap(str);
+  return function(ch) {
+    var byteIndex = ch >> D_INTBITLEN;
+    if (byteIndex >= bm.length)
+      return 0;
+    return bm[byteIndex] & (1 << (ch & M_INTBITLEN));
+  };
+}
+
 function arorev(l) {
   switch ( l ) {
      case 'arguments':

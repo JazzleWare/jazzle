@@ -53,6 +53,7 @@ this.ST_NONE = 0;
 
 this. VirtualSourceLoader = VirtualSourceLoader;
 this. Bundler = Bundler;
+this. makeAcceptor = makeAcceptor;
 
 this.cd = cd;
 this.pathFor = pathFor;

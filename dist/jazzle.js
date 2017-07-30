@@ -492,6 +492,7 @@ var CH_1 = char2int('1'),
     CH_e = char2int('e'), CH_E = char2int('E'),
     CH_g = char2int('g'),
     CH_f = char2int('f'), CH_F = char2int('F'),
+    CH_c = char2int('c'),
     CH_i = char2int('i'),
     CH_m = char2int('m'),
     CH_n = char2int('n'),
@@ -1198,6 +1199,28 @@ function fromRunLenCodes(runLenArray, bitm) {
     bit ^= 1;
   }
   return (bitm);
+}
+
+function asBitmap(str) {
+  var bm = [], e = 0;
+  while (e < str.length) {
+    var ch = str.charCodeAt(e);
+    var byteIndex = ch >> D_INTBITLEN;
+    while (bm.length <= byteIndex) bm.push(0);
+    bm[byteIndex] |= (1 << (ch & M_INTBITLEN));
+    e++;
+  }
+  return bm;
+}
+
+function makeAcceptor(str) {
+  var bm = asBitmap(str);
+  return function(ch) {
+    var byteIndex = ch >> D_INTBITLEN;
+    if (byteIndex >= bm.length)
+      return 0;
+    return bm[byteIndex] & (1 << (ch & M_INTBITLEN));
+  };
 }
 
 function arorev(l) {
@@ -11485,7 +11508,7 @@ function() {
   case CH_LCURLY:
     return this.parseRegex_regCurly();
   case CH_BACK_SLASH:
-    return this.parseRegex_regEscape();
+    return this.parseRegex_regEscape(true);
   case CH_$:
   case CH_XOR:
     return this.parseRegex_regUnitAssertion();
@@ -11620,6 +11643,9 @@ function() {
     }
   }
 
+  if (!this.expectChar(CH_RSQBRACKET))
+    return this.setErrorRegex(this.parseRegex_errBracketUnfinished(n));
+
   n = {
     type: '#Regex.Class',
     elements: list,
@@ -11628,8 +11654,6 @@ function() {
     inverse: inverse,
     loc: { start: loc0, end: this.loc() }
   };
-  if (!this.expectChar(CH_RSQBRACKET))
-    return this.setErrorRegex(this.parseRegex_errBracketUnfinished(n));
 
   this.regQuantifiable = true;
   return n;
@@ -11676,33 +11700,40 @@ function() {
 
 this. parseRegex_regClassEscape =
 function() {
+  return this.parseRegex_regEscape(false);
+};
+
+this. parseRegex_regEscape =
+function(isBare) {
   var c = this.c, s = this.src, l = s.length;
   if (c+1 >= l)
     return null;
-  var w = l.charCodeAt(c+1 );
+  var w = s.charCodeAt(c+1 );
   switch (w) {
   case CH_v:
     return this.parseRegex_regClassEscape_simple('\v');
   case CH_b:
-    return this.parseRegex_regClassEscape_simple('\b');
-  case CH_f:
-    return this.parseRegex_regClassEscape_simple('\f');
-  case CH_t:
-    return this.parseRegex_regClassEscape_simple('\t');
-  case CH_r:
-    return this.parseRegex_regClassEscape_simple('\r');
-  case CH_n:
-    return this.parseRegex_regClassEscape_simple('\n');
+    return isBare ?
+      this.parseRegex_regBbAssertion() :
+      this.parseRegex_regEscape_simple('\b', isBare);
+  case CH_f:                                             
+    return this.parseRegex_regEscape_simple('\f', isBare);
+  case CH_t:                                             
+    return this.parseRegex_regEscape_simple('\t', isBare);
+  case CH_r:                                             
+    return this.parseRegex_regEscape_simple('\r', isBare);
+  case CH_n:                                             
+    return this.parseRegex_regEscape_simple('\n', isBare);
   case CH_x:
-    return this.parseRegex_regClassEscape_hex();
+    return this.parseRegex_regEscape_hex(isBare);
   case CH_c:
-    return this.parseRegex_regClassEscape_control();
+    return this.parseRegex_regEscape_control(isBare);
   case CH_u:
-    return this.parseRegex_regClassEscape_u();
+    return this.parseRegex_regEscape_u(isBare);
   default:
     if (w >= CH_0 && w <= CH_7)
-      return this.parseRegex_regClassEscape_num();
-    return this.parseRegex_regClassEscape_itself();
+      return this.parseRegex_regEscape_num(isBare);
+    return this.parseRegex_regEscape_itself(isBare);
   }
 };
 
@@ -11713,25 +11744,28 @@ function() {
 
 this. parseRegex_regChar =
 function(isBare) {
-  var c0 = this.c, s = this.src;
+  var c0 = this.c; 
+  var s = this.src;
+  var ch = s.charCodeAt(c0);
+
+  if (ch >= 0x0d800 && ch <= 0x0dbff)
+    return this.regSurrogateComponentVOKE(ch, c0 + 1, 'lead', 'none');
+  if (ch >= 0x0dc00 && ch <= 0x0dfff)
+    return this.regSurrogateComponentVOKE(ch, c0 + 1, 'trail', 'none');
+
   return this.parseRegex_regChar_attachOrMakeVLCPR(
-    s.charAt(c0), 1, s.charCodeAt(c0),
+    s.charAt(c0), 1, ch,
     isBare ? this.regLEIAC() : null, c0, c0 + 1);
 };
 
-this. parseRegex_regClassEscape_simple =
-function(v) {
+this. parseRegex_regEscape_simple =
+function(v, isBare) {
   var c0 = this.c;
   return this.parseRegex_regChar_attachOrMakeVLCPR(
-    v, 1, v.charCodeAt(0), null, c0, c0 + 2);
+    v, 1, v.charCodeAt(0), isBare ? this.regLEIAC() : null, c0, c0 + 2);
 };
 
-this. parseRegex_regClassEscape_hex =
-function() {
-  return this.parseRegex_regChar_hex(false);
-};
-
-this. parseRegex_regChar_hex =
+this. parseRegex_regEscape_hex =
 function(isBare) { // thas is, not in []s
   var s = this.src, l = s.length, c = this.c;
   c += 2; // \x
@@ -11945,7 +11979,7 @@ function() {
   do {
     v *= mul;
     v += (ch - CH_0);
-    mul *= 10;
+    if (v) mul *= 10; // leading zeros not significant
     c++;
     if (c >= l)
       break;
@@ -11954,6 +11988,133 @@ function() {
 
   this.setsimpoff(c);
   return v;
+};
+
+this. parseRegex_regEscape_control =
+function(isBare) {
+  var c0 = this.c, c = c0;
+  var s = this.src, l = s.length;
+  c += 2; // \c
+  if (c>=l) {
+    this.setsimpoff(c);
+    return this.regerr_controlEOF();
+  }
+  var ch = s.charCodeAt(c);
+  if ((ch > CH_Z || ch < CH_A) && (ch < CH_a || ch > CH_z)) {
+    this.setsimpoff(c);
+    return this.regerr_controlAZaz();
+  }
+  c++;
+  ch &= 31;
+  return this. parseRegex_regChar_attachOrMakeVLCPR(String.fromCharCode(ch), 1, ch, isBare ? this.regLEIAC() : null, c0, c);
+};
+
+this. parseRegex_regEscape_u =
+function(isBare) {
+  var c = this.c, s = this.src, l = s.length;
+  c += 2; // \u
+  if (c >= l)
+    return this.regerr_insuffucientNumsAfterU();
+  var ch = s.charCodeAt(c);
+  if (ch === CH_LCURLY)
+    return this.parseRegex_regEscape_uCurly();
+  var v = 0, n = 0;
+  while (true) {
+    ch = hex2num(ch);
+    if (ch === -1) {
+      this.setsimpoff(c);
+      return this.regerr_insufficientNumsAfterU();
+    }
+    v = (v<<4)|ch;
+    c++;
+    n++;
+    if (n >= 4)
+      break;
+    if (c >= l)
+      return this.regerr_insufficientNumsAfterU();
+    ch = s.charCodeAt(c);
+  }
+
+  if (v >= 0x0d800 && v <= 0x0dbff)
+    return this.regSurrogateComponentVOKE(v, c, 'lead', 'hex4');
+  if (v >= 0x0dc00 && v <= 0x0dfff)
+    return this.regSurrogateComponentVOKE(v, c, 'trail', 'hex4');
+
+  return this.parseRegex_regChar_attachOrMakeVLCPR(
+    String.fromCharCode(v), 1, ch, isBare ? this.regLEIAC() : null, this.c, c);
+};
+
+this. parseRegex_regEscape_uCurly =
+function(isBare) {
+  var c = this.c, s = this.src, l = s.length;
+  c += 3; // \u{
+  if (c >= l)
+    return this.regerr_insufficientNumsAfterU();
+  var r = s.charCodeAt(c);
+  var v = hex2num(r);
+  if (v === -1) {
+    this.setsimpoff(c);
+    return this.regerr_nonNumInU();
+  }
+  c++;
+  while (true) {
+    if (c >= l)
+      return this.regerr_uBraceNotReached();
+    r = s.charCodeAt(c);
+    if (r === CH_RCURLY) {
+      c++;
+      break;
+    }
+    r = hex2num(r);
+    if (r === -1) {
+      this.setsimpoff(c);
+      return this.regerr_nonNumInU();
+    }
+    v = (v<<4)|r;
+    if (v > 1114111) {
+      this.setsimpoff(c);
+      return this.regerr_1114111U();
+    }
+    c++;
+  }
+
+  if (v >= 0x0d800 && v <= 0x0dbff)
+    return this.regSurrogateComponentVOKE(v, c, 'lead', '{}');
+
+  if (v >= 0x0dc00 && v <= 0x0dfff)
+    return this.regSurrogateComponentVOKE(v, c, 'trail', '{}');
+
+  if (v <= 0xffff)
+    return this.parseRegex_regChar_attachOrMakeVLCPR(
+      String.fromCharCode(v), 1, v, isBare ? this.regLEIAC() : null, this.c, c);
+
+  var c0 = this.c, loc0 = this.loc();
+  this.setsimpoff(c);
+  return {
+    type: '#Regex.Ho', // Higher-order, i.e., > 0xFFFF
+    cp: v,
+    start: c0,
+    end: c,
+    raw: s.substring(c0, c),
+    loc: { start: loc0, end: this.loc() },
+    c1: null, c2: null
+  };
+};
+
+this.regSurrogateComponentVOKE =
+function(cp, offset, kind, escape) {
+  var c0 = this.c, loc0 = this.loc();
+  this.setsimpoff(offset);
+  return {
+    type: '#Regex.SurrogateComponent',
+    kind: kind,
+    start: c0,
+    end: offset,
+    cp: cp,
+    loc: { start: loc0, end: this.loc() },
+    escape : escape ,
+    next: null // if it turns out to be the lead of a surrogate pair
+  };
 };
 
 },
@@ -14635,6 +14796,7 @@ this.ST_NONE = 0;
 
 this. VirtualSourceLoader = VirtualSourceLoader;
 this. Bundler = Bundler;
+this. makeAcceptor = makeAcceptor;
 
 this.cd = cd;
 this.pathFor = pathFor;
