@@ -73,6 +73,8 @@ var Parser = function (src, o) {
   this.parenScope = null;  
 
   this.regPBQ = null;
-  this.regPCQ = false;
   this.regLastElem = null;
+  this.regErrorElem = null;
+  this.regPCQ = false;
+  this.regexFlags = {};
 };

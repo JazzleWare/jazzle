@@ -155,12 +155,16 @@ function cmn_erase(cb, name) {
   return null;
 }
 
-function rec(n) {
-  return n.type === '#Regex.CharSeq';
-}
-
-function recDash(n) {
-  return rec(n) && n.cp === CH_MIN;
+function cpReg(n) {
+  switch (n.type) {
+  case '#Regex.Hy':
+  case '#Regex.SurrogateComponent':
+  case '#Regex.CharSeq':
+  case '#Regex.Ho':
+    return n.cp;
+  default:
+    return -1;
+  }
 }
 
 function isTemp(n) {

@@ -284,8 +284,10 @@ var Parser = function (src, o) {
   this.parenScope = null;  
 
   this.regPBQ = null;
-  this.regPCQ = false;
   this.regLastElem = null;
+  this.regErrorElem = null;
+  this.regPCQ = false;
+  this.regexFlags = {};
 };
 ;
 function Ref(scope) {
@@ -1316,12 +1318,16 @@ function cmn_erase(cb, name) {
   return null;
 }
 
-function rec(n) {
-  return n.type === '#Regex.CharSeq';
-}
-
-function recDash(n) {
-  return rec(n) && n.cp === CH_MIN;
+function cpReg(n) {
+  switch (n.type) {
+  case '#Regex.Hy':
+  case '#Regex.SurrogateComponent':
+  case '#Regex.CharSeq':
+  case '#Regex.Ho':
+    return n.cp;
+  default:
+    return -1;
+  }
 }
 
 function isTemp(n) {
@@ -11437,7 +11443,7 @@ function() {
         if (this.regPBQ || this.regPCQ || (!rec(elem) && this.parseRegex_tryPrepareQuantifier()))
           elem = this.regQuantified(elem);
       }
-      elements.push(elem);
+      this.regPushBareElem(elements, elem);
       this.lastRegexElem = elem; // reuse CharSeq
     }
     this.regQuantifiable = false;
@@ -11454,6 +11460,25 @@ function() {
     end: lastElem.end,
     loc: { start: elements[0].loc.start, end: lastElem.loc.end }
   };
+};
+
+this.regPushBareElem =
+function(list, elem) {
+  if (list.length === 0) {
+    list.push(elem);
+    return;
+  }
+  var last = list[list.length-1];
+  if (last.type === '#Regex.SurrogateComponent' && last.kind === 'lead' &&
+    elem.type === '#Regex.SurrogateComponent' && elem.kind === 'trail') {
+    last.next = elem;
+    if (last.escape === elem.escape ) {
+      list.pop();
+      list.push(this.regMakeSurrogate(last, elem));
+      return
+    }
+  }
+  list.push(elem);
 };
 
 this. parseRegex_regPattern =
@@ -11573,7 +11598,7 @@ function() {
 };
 
 this. parseRegex =
-function(rc, rli, rcol, rsrc) {
+function(rc, rli, rcol, rsrc, flags) {
   var c = this.c;
   var li = this.li;
   var col = this.col;
@@ -11584,6 +11609,12 @@ function(rc, rli, rcol, rsrc) {
   this.c = rc;
   this.li = rli;
   this.col = rcol;
+
+  var e = 0, str = 'guymi';
+  while (e < str.length) {
+    this.regexFlags[str[e]] = flags.indexOf(str[e]) >= 0;
+    e++;
+  }
 
   var n = this.parseRegex_regPattern();
 
@@ -11626,23 +11657,17 @@ function() {
     inverse = true;
 
   this.setsimpoff(inverse ? c0 + 2 : c0 + 1);
-  var untouchedAtoms = 0;
 
   while (e = this.parseRegex_regClassElem()) {
-    if (untouchedAtoms >= 2 && recDash(latest)) { //         regular expression class dash
-      this.parseRegex_tryMakeRange(list, e);
-      if (this.errorRegexElem)
-        return null;
-      latest = null;
-      untouchedAtoms = 0;
-    }
-    else {
-      list.push(e);
-      latest = e;
-      untouchedAtoms < 2 && untouchedAtoms++;
-    }
+    this.regPushClassElem(list, e);
+    if (this.regexErrorElem)
+      return null;
   }
-
+  if (list.length) {
+    var last = list[list.length-1 ];
+    if (last.type === '#Regex.SemiRange' && !this.regValidateSemi(last))
+      return nul;
+  }
   if (!this.expectChar(CH_RSQBRACKET))
     return this.setErrorRegex(this.parseRegex_errBracketUnfinished(n));
 
@@ -11659,29 +11684,116 @@ function() {
   return n;
 };
 
-this. parseRegex_tryMakeRange =
-function(list, max) {
+this.regPushClassElem =
+function(list, elem) {
+  if (list.length === 0) {
+    list.push(elem);
+    return;
+  }
   var num = list.length;
-  ASSERT.call(this, num >= 2, 'len');
-  ASSERT.call(this, recDash(list[num-1]), 'dash');
+  var tail = list[num-1];
+  if (tail.type === '#Regex.SemiRange') {
+    if (this.parseRegex_tryAttachTrailSurrogateToSemi(tail, elem))
+      return;
+    if (this.errorRegexElem)
+      return;
+  }
+  else if (tail.type === '#Regex.SurrogateComponent' &&
+    tail.kind === 'lead' &&
+    tail.escape !== '{}' &&
+    elem.type === '#Regex.SurrogateComponent' &&
+    elem.kind === 'trail') {
+    if (elem.escape === tail.escape) {
+      list.pop();
+      list.push(this.regMakeSurrogate(tail, elem));
+    }
+    tail.next = elem;
+    return;
+  }
+  if (tail.type !== '#Regex.Hy') {
+    list.push(elem);
+    return;
+  }
+  var maxv = cpReg(elem);
+  if (maxv === -1) {
+    list.push(elem);
+    return;
+  }
+  if (num < 2) {
+    list.push(elem);
+    return;
+  }
+  var head = list[num-2 ];
+  var minv = cpReg(head);
+  if (minv === -1) {
+    list.push(elem);
+    return;
+  }
 
-  if (!rec(max)) { list.push(max); return; }
-  var min = list[num-2 ];
-  if (!rec(min)) { list.push(max); return; }
-  ASSERT.call(this, min.charLength === 1 && min.cp >= 0, 'charMin' );
-  ASSERT.call(this, max.charLength === 1 && max.cp >= 0, 'charMax' );
-  if (min.cp > max.cp)
-    return this.regerr_minBiggerThanMax(min, max);
+  var semi = false;
+  if (this.regexFlags.u && elem.type === '#Regex.SurrogateComponent' &&
+    elem.kind === 'lead' && elem.escape !== '{}')
+    semi = true;
+  else if (minv > maxv)
+    return this.regerr_minBiggerThanMax(head, elem);
+
   list.pop(); // '-'
-  list.pop(); // min
+  list.pop(); // head
+
+  var min = head, max = elem;
+
   list.push({
-    type: '#Regex.Range',
+    type: semi ? '#Regex.SemiRange' : '#Regex.Range',
     min: min,
     start: min.start,
     end: max.end,
     max: max,
-    loc: { start: min.loc.start, end: max.loc.end }
+    loc: semi ? null : { start: min.loc.start, end: max.loc.end }
   });
+};
+
+this. parseRegex_tryAttachTrailSurrogateToSemi =
+function(semi, elem) {
+  var createdSurrogate = false;
+  if (elem.type === '#Regex.SurrogateComponent' &&
+    elem.kind === 'trail') {
+    semi.max.next = elem;
+    if (elem.escape === semi.max.escape) {
+      semi.max = this.regMakeSurrogate(semi.max, elem);
+      createdSurrogate = true;
+    }
+  }
+  if (this.regValidateSemi(semi))
+    return createdSurrogate;
+
+  return false;
+};
+
+this.regMakeSurrogate =
+function(c1, c2) {
+  return {
+    type: '#Regex.Ho',
+    cp: surrogate(c1.cp, c2.cp ),
+    start: c1.start,
+    end: c2.end,
+    raw: c1.raw + c2.raw,
+    loc: { start: c1.loc.start, end: c2.loc.end },
+    c1: c1,
+    c2: c2
+  };
+};
+
+this.regValidateSemi =
+function(semi) {
+  ASSERT.call(this, semi.type === '#Regex.SemiRange', 'semi' );
+  ASSERT.call(this, semi.max.cp >= 0, 'max');
+  ASSERT.call(this, semi.min.cp >= 0, 'min');
+  if (semi.min.cp > semi.max.cp)
+    return this.regerr_minBiggerThanMax(semi.min, semi.max );
+
+  semi.type = '#Regex.Range';
+  semi.loc = { start: semi.min.loc.start, end: semi.max.loc.end };
+  return semi;
 };
 
 this. parseRegex_regClassElem =
@@ -11753,9 +11865,12 @@ function(isBare) {
   if (ch >= 0x0dc00 && ch <= 0x0dfff)
     return this.regSurrogateComponentVOKE(ch, c0 + 1, 'trail', 'none');
 
-  return this.parseRegex_regChar_attachOrMakeVLCPR(
+  var l = this.parseRegex_regChar_attachOrMakeVLCPR(
     s.charAt(c0), 1, ch,
     isBare ? this.regLEIAC() : null, c0, c0 + 1);
+  if (!isBare && ch === CH_MIN)
+    l.type = '#Regex.Hy'; // '-'
+  return l;
 };
 
 this. parseRegex_regEscape_simple =
