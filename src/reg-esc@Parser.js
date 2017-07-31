@@ -3,7 +3,16 @@ function(ce) {
   var c = this.c, s = this.src, l = s.length;
   if (c+1 >= l)
     return null;
+
+  // fail early for pending SRs
   var w = s.charCodeAt(c+1);
+  if (w !== CH_u) {
+    if (ce && this.testSRerr())
+      return null;
+  }
+  else
+    return this.regEsc_u(ce);
+
   switch (w) {
   case CH_v:
     return this.regEsc_simple('\v', ce);
@@ -21,8 +30,6 @@ function(ce) {
     return this.regEsc_hex(ce);
   case CH_c:
     return this.regEsc_control(ce);
-  case CH_u:
-    return this.regEsc_u(ce);
   case CH_D: case CH_W: case CH_S:
   case CH_d: case CH_w: case CH_s:
     return this.regClassifier();

@@ -1,3 +1,5 @@
+// characters do not test for early semi-ranges, because that makes things needlessly complicated -- after all, we are only a single character away
+// from telling whether the semi range is deterministically erroneous, which is not much of a calculation
 this.regChar =
 function(ce) { // class elem
   var c0 = this.c; 

@@ -11541,6 +11541,8 @@ function() {
 
 },
 function(){
+// characters do not test for early semi-ranges, because that makes things needlessly complicated -- after all, we are only a single character away
+// from telling whether the semi range is deterministically erroneous, which is not much of a calculation
 this.regChar =
 function(ce) { // class elem
   var c0 = this.c; 
@@ -11717,6 +11719,12 @@ function() {
   return sr;
 };
 
+// true if completeing the semi-range results in a `regErr
+this.testSRerr =
+function() {
+  return this.regSemiRange && !this.regTryCompleteSemiRange();
+};
+
 this.regClassElem =
 function() {
   var c = this.c, s = this.src, l = s.length;
@@ -11799,8 +11807,13 @@ function() {
 
 },
 function(){
+// errors pertaining to u escapes first will check for pending semi ranges at the start of their corresponding routines
 this.regEsc_u =
 function(ce) {
+  if (ce && this.regSemiRange &&
+    this.regSemiRange.max.escape !== 'hex4' && !this.regTryCompleteSemiRange())
+    return null;
+
   var c = this.c, s = this.src, l = s.length;
   c += 2; // \u
   if (c >= l)
@@ -11819,6 +11832,14 @@ function(ce) {
     }
     ch = (ch<<4)|r;
     c++; n++;
+
+    // fail early if there is a pending semi-range and this is not a surrogate trail
+    if (ce) {
+      if ((n === 1 && r !== 0x0d) ||
+        (n === 2 && r < 0x0c))
+        if (this.testSRerr())
+          return null;
+    }
     if (n >= 4)
       break;
     if (c >= l)
@@ -11836,6 +11857,9 @@ function(ce) {
 
 this.regEsc_uCurly =
 function(ce) {
+  if (ce && this.testSRerr())
+    return null;
+
   var c = this.c, s = this.src, l = s.length;
   c += 3; // \u{
   if (c >= l)
@@ -11901,7 +11925,16 @@ function(ce) {
   var c = this.c, s = this.src, l = s.length;
   if (c+1 >= l)
     return null;
+
+  // fail early for pending SRs
   var w = s.charCodeAt(c+1);
+  if (w !== CH_u) {
+    if (ce && this.testSRerr())
+      return null;
+  }
+  else
+    return this.regEsc_u(ce);
+
   switch (w) {
   case CH_v:
     return this.regEsc_simple('\v', ce);
@@ -11919,8 +11952,6 @@ function(ce) {
     return this.regEsc_hex(ce);
   case CH_c:
     return this.regEsc_control(ce);
-  case CH_u:
-    return this.regEsc_u(ce);
   case CH_D: case CH_W: case CH_S:
   case CH_d: case CH_w: case CH_s:
     return this.regClassifier();

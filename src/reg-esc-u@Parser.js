@@ -1,5 +1,10 @@
+// errors pertaining to u escapes first will check for pending semi ranges at the start of their corresponding routines
 this.regEsc_u =
 function(ce) {
+  if (ce && this.regSemiRange &&
+    this.regSemiRange.max.escape !== 'hex4' && !this.regTryCompleteSemiRange())
+    return null;
+
   var c = this.c, s = this.src, l = s.length;
   c += 2; // \u
   if (c >= l)
@@ -18,6 +23,14 @@ function(ce) {
     }
     ch = (ch<<4)|r;
     c++; n++;
+
+    // fail early if there is a pending semi-range and this is not a surrogate trail
+    if (ce) {
+      if ((n === 1 && r !== 0x0d) ||
+        (n === 2 && r < 0x0c))
+        if (this.testSRerr())
+          return null;
+    }
     if (n >= 4)
       break;
     if (c >= l)
@@ -35,6 +48,9 @@ function(ce) {
 
 this.regEsc_uCurly =
 function(ce) {
+  if (ce && this.testSRerr())
+    return null;
+
   var c = this.c, s = this.src, l = s.length;
   c += 3; // \u{
   if (c >= l)

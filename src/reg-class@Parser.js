@@ -120,6 +120,12 @@ function() {
   return sr;
 };
 
+// true if completeing the semi-range results in a `regErr
+this.testSRerr =
+function() {
+  return this.regSemiRange && !this.regTryCompleteSemiRange();
+};
+
 this.regClassElem =
 function() {
   var c = this.c, s = this.src, l = s.length;
