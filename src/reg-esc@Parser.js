@@ -75,12 +75,12 @@ function(ce) {
   c++;
   var ch = (ch1<<4)|ch2;
   // Last Elem If A CharSeq
-  return this.regChar_VECP(String.fromCharCode(ch), c, ch, ce ? null : this.regLEIAC());
+  return this.regChar_VECI(String.fromCharCode(ch), c, ch, ce);
 };
 
 this.regEsc_simple =
 function(v, ce) {
-  return this.regChar_VECP(v, this.c+2, v.charCodeAt(0), ce ? null : this.regLEIAC());
+  return this.regChar_VECI(v, this.c+2, v.charCodeAt(0), ce);
 };
 
 this.regEsc_control =
@@ -101,5 +101,5 @@ function(ce) {
   c++;
   ch &= 31;
 
-  return this.regChar_VECP(String.fromCharCode(ch), c, ch, ce ? null : this.regLEIAC());
+  return this.regChar_VECI(String.fromCharCode(ch), c, ch, ce);
 };

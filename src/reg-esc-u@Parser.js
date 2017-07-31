@@ -43,7 +43,7 @@ function(ce) {
   if (ch >= 0x0dc00 && ch <= 0x0dfff)
     return this.regSurrogateComponent_VOKE(ch, c, 'trail', 'hex4');
 
-  return this.regChar_VECP(String.fromCharCode(v), c, ch, ce ? null : this.regLEIAC());
+  return this.regChar_VECI(String.fromCharCode(v), c, ch, ce);
 };
 
 this.regEsc_uCurly =
@@ -90,7 +90,7 @@ function(ce) {
     return this.regSurrogateComponent_VOKE(ch, c, 'trail', '{}');
 
   if (ch <= 0xffff)
-    return this.regChar_VECP(String.fromCharCode(ch), c, ch, ce ? null : this.regLEIAC());
+    return this.regChar_VECI(String.fromCharCode(ch), c, ch, ce);
 
   var c0 = this.c, loc0 = this.loc();
   this.setsimpoff(c);

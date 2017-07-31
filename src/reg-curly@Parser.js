@@ -29,7 +29,7 @@ function() {
     if (s.charCodeAt(c) === CH_COMMA) {
       c++; // ','
       this.setsimpoff(c);
-      maxVal = this.regTryToParserNum();
+      maxVal = this.regTryToParseNum();
       if (maxVal !== -1) {
         maxRaw = s.substring(c,this.c);
         c = this.c;

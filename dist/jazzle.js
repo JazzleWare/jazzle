@@ -11437,7 +11437,7 @@ function() {
 
 },
 function(){
-this.reg_unit_assertion =
+this.regUnitAssertion =
 function() {
   var c0 = this.c, loc0 = this.loc();
   var kind = this.src.charAt(this.c);
@@ -11447,7 +11447,20 @@ function() {
     kind: kind,
     start: c0,
     end: this.c,
-    pattern: null,
+    loc: { start: loc0, end: this.loc() }
+  };
+};
+
+this.regBbAssertion =
+function() {
+  var c0 = this.c, loc0 = this.loc();
+  var kind = this.src.charAt(c0+1);
+  this.setsimpoff(c0+2);
+  return {
+    type: '#Regex.Assertion',
+    kind: kind,
+    start: c0,
+    end: this.c,
     loc: { start: loc0, end: this.loc() }
   };
 };
@@ -11554,19 +11567,20 @@ function(ce) { // class elem
   if (ch >= 0x0dc00 && ch <= 0x0dfff)
     return this.regSurrogateComponent_VOKE(ch, c0 + 1, 'trail', 'none');
 
-  var l = this.regChar_VECP(s.charAt(c0), c0 + 1, ch, ce ? null : this.regLEIAC());
+  var l = this.regChar_VECI(s.charAt(c0), c0 + 1, ch, ce);
   if (ce && ch === CH_MIN)
     l.type = '#Regex.Hy'; // '-'
   return l;
 };
 
-this.regChar_VECP =
-function(value, offset, ch, parent) {
+this.regChar_VECI =
+function(value, offset, ch, ce) {
   var s = this.src, c0 = this.c;
   var loc0 = this.loc(), raw = s.substring(c0, offset);
   this.setsimpoff(offset);
   var li = this.li, col = this.col;
-  if (parent && this.regPrepareQ()) // `parent &&` is necessary because we might be parsing a class element
+  var parent = ce ? null : this.regLEIAC();
+  if (!ce && this.regPrepareQ()) // `parent &&` is necessary because we might be parsing a class element
     parent = null;
 
   if (parent) {
@@ -11773,7 +11787,7 @@ function() {
     if (s.charCodeAt(c) === CH_COMMA) {
       c++; // ','
       this.setsimpoff(c);
-      maxVal = this.regTryToParserNum();
+      maxVal = this.regTryToParseNum();
       if (maxVal !== -1) {
         maxRaw = s.substring(c,this.c);
         c = this.c;
@@ -11852,7 +11866,7 @@ function(ce) {
   if (ch >= 0x0dc00 && ch <= 0x0dfff)
     return this.regSurrogateComponent_VOKE(ch, c, 'trail', 'hex4');
 
-  return this.regChar_VECP(String.fromCharCode(v), c, ch, ce ? null : this.regLEIAC());
+  return this.regChar_VECI(String.fromCharCode(v), c, ch, ce);
 };
 
 this.regEsc_uCurly =
@@ -11899,7 +11913,7 @@ function(ce) {
     return this.regSurrogateComponent_VOKE(ch, c, 'trail', '{}');
 
   if (ch <= 0xffff)
-    return this.regChar_VECP(String.fromCharCode(ch), c, ch, ce ? null : this.regLEIAC());
+    return this.regChar_VECI(String.fromCharCode(ch), c, ch, ce);
 
   var c0 = this.c, loc0 = this.loc();
   this.setsimpoff(c);
@@ -11997,12 +12011,12 @@ function(ce) {
   c++;
   var ch = (ch1<<4)|ch2;
   // Last Elem If A CharSeq
-  return this.regChar_VECP(String.fromCharCode(ch), c, ch, ce ? null : this.regLEIAC());
+  return this.regChar_VECI(String.fromCharCode(ch), c, ch, ce);
 };
 
 this.regEsc_simple =
 function(v, ce) {
-  return this.regChar_VECP(v, this.c+2, v.charCodeAt(0), ce ? null : this.regLEIAC());
+  return this.regChar_VECI(v, this.c+2, v.charCodeAt(0), ce);
 };
 
 this.regEsc_control =
@@ -12023,7 +12037,7 @@ function(ce) {
   c++;
   ch &= 31;
 
-  return this.regChar_VECP(String.fromCharCode(ch), c, ch, ce ? null : this.regLEIAC());
+  return this.regChar_VECI(String.fromCharCode(ch), c, ch, ce);
 };
 
 },
@@ -12101,6 +12115,7 @@ function() {
     return null;
 
   this.regIsQuantifiable = true;
+  var finished = this.expectChar(CH_RPAREN);
   var n = {
     type: '#Regex.Paren',
     capturing: true,
@@ -12110,10 +12125,10 @@ function() {
     loc: { start: loc0, end: this.loc() }
   };
 
-  if (!this.expectChar(CH_RPAREN))
-    return this.regErr_unfinishedParen(n);
+  if (finished)
+    return n;
 
-  return n;
+  return this.regErr_unfinishedParen(n);
 };
 
 this.regPeekOrGroup =
@@ -12129,6 +12144,44 @@ function() {
   default:
     return this.regErr_invalidCharAfterQuestionParen(); // (?
   }
+};
+
+this.regPeek =
+function(notInverse) {
+  var c0 = this.c, loc0 = this.loc(), n = null, elem = null, finished = false;
+  this.setsimpoff(c0+3);
+  elem = this.regPattern();
+  finished = this.expectChar(CH_RPAREN);
+  n = {
+    type: '#Regex.Peek',
+    inverse: !notInverse,
+    start: c0,
+    pattern: elem,
+    end: this.c,
+    loc: { start: loc0, end: this.loc() }
+  };
+
+  if (finished) return n;
+  return this.regErr_unfinishedParen(n);
+};
+
+this.regGroup = 
+function() {
+  var c0 = this.c, loc0 = this.loc(), n = null, elem = null, finished = false;
+  this.setsimpoff(c0+3);
+  elem = this.regPattern();
+  finished = this.expectChar(CH_RPAREN);
+  n = {
+    type: '#Regex.Paren',
+    capturing: false,
+    start: c0,
+    end: this.c,
+    pattern: elem,
+    loc: { start: loc0, end: this.loc() }
+  };
+
+  if (finished) return n;
+  return this.regErr_unfinishedParen(n);
 };
 
 },
@@ -12155,7 +12208,7 @@ function() {
   else if (elem)
     branches.push(elem);
   
-  var startLoc = branches.length ? branches[0].loc.start : { line: li0, column: col0 };
+  var startLoc = branches.length && branches[0] ? branches[0].loc.start : { line: li0, column: col0 };
   var lastElem = branches.length ? branches[branches.length-1] : null;
   var endLoc = lastElem ? lastElem.end.loc : this.loc();
 

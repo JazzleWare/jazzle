@@ -18,7 +18,7 @@ function() {
     return null;
 
   this.regIsQuantifiable = true;
-  var finished = this.expectChar(CH_RPAREN);
+  var unfinished = this.expectChar(CH_RPAREN);
   var n = {
     type: '#Regex.Paren',
     capturing: true,
@@ -28,10 +28,10 @@ function() {
     loc: { start: loc0, end: this.loc() }
   };
 
-  if (finished)
-    return n;
+  if (unfinished)
+    return this.regErr_unfinishedParen(n);
 
-  return this.regErr_unfinishedParen(n);
+  return n;
 };
 
 this.regPeekOrGroup =
@@ -51,10 +51,10 @@ function() {
 
 this.regPeek =
 function(notInverse) {
-  var c0 = this.c, loc0 = this.loc(), n = null, elem = null, finished = false;
+  var c0 = this.c, loc0 = this.loc(), n = null, unfinished = false, elem = null;
   this.setsimpoff(c0+3);
   elem = this.regPattern();
-  finished = this.expectChar(CH_RPAREN);
+  unfinished = this.expectChar(CH_RPAREN);
   n = {
     type: '#Regex.Peek',
     inverse: !notInverse,
@@ -64,25 +64,5 @@ function(notInverse) {
     loc: { start: loc0, end: this.loc() }
   };
 
-  if (finished) return n;
-  return this.regErr_unfinishedParen(n);
-};
-
-this.regGroup = 
-function() {
-  var c0 = this.c, loc0 = this.loc(), n = null, elem = null, finished = false;
-  this.setsimpoff(c0+3);
-  elem = this.regPattern();
-  finished = this.expectChar(CH_RPAREN);
-  n = {
-    type: '#Regex.Paren',
-    capturing: false,
-    start: c0,
-    end: this.c,
-    pattern: elem,
-    loc: { start: loc0, end: this.loc() }
-  };
-
-  if (finished) return n;
-  return this.regErr_unfinishedParen(n);
+  return unfinished ? this.regErr_unfinishedParen(n) : n;
 };

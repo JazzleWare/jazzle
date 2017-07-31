@@ -11,19 +11,20 @@ function(ce) { // class elem
   if (ch >= 0x0dc00 && ch <= 0x0dfff)
     return this.regSurrogateComponent_VOKE(ch, c0 + 1, 'trail', 'none');
 
-  var l = this.regChar_VECP(s.charAt(c0), c0 + 1, ch, ce ? null : this.regLEIAC());
+  var l = this.regChar_VECI(s.charAt(c0), c0 + 1, ch, ce);
   if (ce && ch === CH_MIN)
     l.type = '#Regex.Hy'; // '-'
   return l;
 };
 
-this.regChar_VECP =
-function(value, offset, ch, parent) {
+this.regChar_VECI =
+function(value, offset, ch, ce) {
   var s = this.src, c0 = this.c;
   var loc0 = this.loc(), raw = s.substring(c0, offset);
   this.setsimpoff(offset);
   var li = this.li, col = this.col;
-  if (parent && this.regPrepareQ()) // `parent &&` is necessary because we might be parsing a class element
+  var parent = ce ? null : this.regLEIAC();
+  if (!ce && this.regPrepareQ()) // `parent &&` is necessary because we might be parsing a class element
     parent = null;
 
   if (parent) {
