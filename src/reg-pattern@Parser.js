@@ -1,0 +1,35 @@
+this. parseRegex_regPattern =
+function() {
+  var c0 = this.c, li0 = this.li, col0 = this.col;
+  var l = this.resetLastRegexElem();
+  var branches = null, elem = this.parseRegex_regBranch();
+  if (this.errorRegexElem)
+    return null;
+  branches = [];
+  if (this.expectChar(CH_OR)) {
+    branches.push(elem)
+    do {
+      elem = this.parseRegex_regBranch();
+      if (this.errorRegexElem)
+        return null;
+      branches.push(elem);
+      this.resetLastRegexElem();
+    } while (this.expectChar(CH_OR));
+  }
+  else if (elem)
+    branches.push(elem);
+  
+  var startLoc = branches.length ? branches[0].loc.start : { line: li0, column: col0 };
+  var lastElem = branches.length ? branches[branches.length-1] : null;
+  var endLoc = lastElem ? lastElem.end.loc : this.loc();
+
+  this.lastRegexElem = l;
+
+  return {
+    type: '#Regex.Main',
+    branches: branches,
+    start: c0,
+    end: lastElem ? lastElem.end : this.c, // equal either way, actually
+    loc: { start: startLoc, end: endLoc }
+  };
+};
