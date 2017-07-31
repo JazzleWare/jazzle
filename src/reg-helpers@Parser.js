@@ -1,15 +1,16 @@
 this.resetLastRegexElem =
 function() {
-  var lastRegexElem = this.lastRegexElem;
-  if (lastRegexElem !== null)
-    this.lastRegexElem = null;
-  return lastRegexElem;
+  var lbe = this.regLastBareElem;
+  if (lbe !== null)
+    this.regLastBareElem = null;
+
+  return lbe;
 };
 
 this.regLEIAC =
 function() {
-  return (this.lastRegexElem && rec(this.lastRegexElem)) ?
-    this.lastRegexElem : null;
+  return (this.regLastBareElem && isCharSeq(this.regLastBareElem)) ?
+    this.regLastBareElem : null;
 };
 
 this.expectChar =
@@ -24,7 +25,7 @@ function(ch) {
   return false;
 };
 
-this. parseRegex_tryParseNum =
+this.regTryToParseNum =
 function() {
   var c = this.c, s = this.src, l = s.length;
   if (c >= l)
@@ -47,5 +48,3 @@ function() {
   this.setsimpoff(c);
   return v;
 };
-
-

@@ -72,9 +72,12 @@ var Parser = function (src, o) {
   this.errorListener = this; // any object with an `onErr(errType "string", errParams {*})` will do
   this.parenScope = null;  
 
-  this.regPBQ = null;
-  this.regLastElem = null;
-  this.regErrorElem = null;
-  this.regPCQ = false;
+  this.regPendingBQ = null;
+  this.regPendingCQ = false;
+  this.regLastBareElem = null;
+  this.regErr = null;
+  this.regIsQuantifiable = false;
+  this.regSemiRange = null;
+  this.regCurlyChar = false;
   this.regexFlags = {};
 };

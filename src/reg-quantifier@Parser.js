@@ -1,4 +1,4 @@
-this. parseRegex_tryPrepareQuantifier =
+this.regPrepareQ =
 function() {
   var c = this.c, s = this.src, l = s.length;
   if (c >= l)
@@ -7,34 +7,34 @@ function() {
   case CH_ADD:
   case CH_QUESTION:
   case CH_MUL:
-    this.regPCQ = true; // peek charQuantifier
+    this.regPendingCQ = true; // peek charQuantifier
     return true;
   case CH_LCURLY:
-    this.regPBQ = this.parseRegex_regCurlyQuantifier();
-    return this.regPBQ !== null;
+    this.regPendingBQ = this.regCurlyQuantifier();
+    return this.regPendingBQ !== null;
   }
   return false;
 };
 
-this.regQuantified =
+this.regQuantify =
 function(elem) {
   var c = this.c, li = this.li, col = this.col;
   var loc = null, s = this.src;
   var t = '', bq = null;
 
-  if (this.regPCQ) {
-    ASSERT.call(this, this.regPBQ === null, 'hasPBQnt');
-    this.regPCQ = false;
+  if (this.regPendingCQ) {
+    ASSERT.call(this, this.regPendingBQ === null, 'hasPBQnt');
+    this.regPendingCQ = false;
     t = s.charAt(c);
     c++;
     this.setsimpoff(c);
     loc = this.loc();
   } 
-  else if (this.regPBQ) {
-    ASSERT.call(this, !this.regPCQ, 'hasPCQnt');
+  else if (this.regPendingBQ) {
+    ASSERT.call(this, !this.regPendingCQ, 'hasPCQnt');
     t = '{}';
-    bq = this.regPBQ;
-    this.regPBQ = null;
+    bq = this.regPendingBQ;
+    this.regPendingBQ = null;
     loc = bq.loc.end;
   }
   else 

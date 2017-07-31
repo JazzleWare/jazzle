@@ -1,16 +1,17 @@
-this. parseRegex_regPattern =
+this.regPattern =
 function() {
   var c0 = this.c, li0 = this.li, col0 = this.col;
   var l = this.resetLastRegexElem();
-  var branches = null, elem = this.parseRegex_regBranch();
-  if (this.errorRegexElem)
+  var branches = null, elem = this.regBranch();
+  if (this.regErr)
     return null;
+
   branches = [];
   if (this.expectChar(CH_OR)) {
     branches.push(elem)
     do {
-      elem = this.parseRegex_regBranch();
-      if (this.errorRegexElem)
+      elem = this.regBranch();
+      if (this.regErr)
         return null;
       branches.push(elem);
       this.resetLastRegexElem();

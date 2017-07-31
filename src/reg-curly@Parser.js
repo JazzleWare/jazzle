@@ -1,25 +1,24 @@
-this. parseRegex_regCurly =
+this.regCurly =
 function() {
   if (!this.regCurlyChar) {
     var c = this.c, li = this.li, col = this.col;
-    var n = this.parseRegex_regCurlyQuantifier(true);
+    var n = this.regCurlyQuantifier(true);
     if (n)
-      return this.setErrorRegex(this.regErr_curlyQuantifier(n));
+      return this.regErr_curlyQuantifier(n);
   }
 
   ASSERT.call(this, this.regCurlyChar, 'reg{}');
-
   this.regCurlyChar = false;
-  return this.parseRegex_regChar(true);
+  return this.regChar(false);
 };
 
-this. parseRegex_regCurlyQuantifier =
+this.regCurlyQuantifier =
 function() {
-  var c0 = this.c, c = c0, s = this.src, l = s.length, li0 = this.li, col0 = this.col;
+  var c0 = this.c, c = c0, s = this.src, l = s.length, li0 = this.li, col0 = this.col, luo0 = this.luo;
   c++; // '{'
   this.setsimpoff(c);
   VALID: {
-    var minVal = this.parseRegex_tryParseNum();
+    var minVal = this.regTryToParseNum();
     if (minVal === -1)
       break VALID;
     var minRaw = s.substring(c, this.c);
@@ -30,7 +29,7 @@ function() {
     if (s.charCodeAt(c) === CH_COMMA) {
       c++; // ','
       this.setsimpoff(c);
-      maxVal = this.parseRegex_tryParseNum();
+      maxVal = this.regTryToParserNum();
       if (maxVal !== -1) {
         maxRaw = s.substring(c,this.c);
         c = this.c;
@@ -56,8 +55,8 @@ function() {
   this.c = c0;
   this.li = li0;
   this.col = col0;
+  this.luo = luo0;
   this.regCurlyChar = true;
+
   return null;
 };
-
-

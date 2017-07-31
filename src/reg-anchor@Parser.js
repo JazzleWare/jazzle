@@ -1,4 +1,4 @@
-this. parseRegex_regUnitAssertion =
+this.reg_unit_assertion =
 function() {
   var c0 = this.c, loc0 = this.loc();
   var kind = this.src.charAt(this.c);

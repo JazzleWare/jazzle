@@ -1,4 +1,4 @@
-this. parseRegex_regClass =
+this.regClass =
 function() {
   var c0 = this.c, loc0 = this.loc(), list = [];
   var e = null, latest = null;
@@ -10,20 +10,20 @@ function() {
 
   this.setsimpoff(inverse ? c0 + 2 : c0 + 1);
 
-  while (e = this.parseRegex_regClassElem()) {
+  while (true) {
+    e = this.regClassElem(); 
+    if (this.regErr)
+      return null;
+    if (e === null)
+      break;
     this.regPushClassElem(list, e);
-    if (this.regexErrorElem)
-      return null;
   }
-  if (this.regexErrorElem)
-    return null;
-  if (list.length) {
-    var last = list[list.length-1 ];
-    if (last.type === '#Regex.SemiRange' && !this.regValidateSemi(last))
-      return null;
-  }
+
+  if (this.regSemiRange && !this.regTryCompleteSemiRange())
+    return null; // an error has got set
+
   if (!this.expectChar(CH_RSQBRACKET))
-    return this.setErrorRegex(this.parseRegex_errBracketUnfinished(n));
+    return this.regErr_bracketUnfinished(n);
 
   n = {
     type: '#Regex.Class',
@@ -34,131 +34,103 @@ function() {
     loc: { start: loc0, end: this.loc() }
   };
 
-  this.regQuantifiable = true;
+  this.regIsQuantifiable = true;
   return n;
 };
 
 this.regPushClassElem =
-function(list, elem) {
-  if (list.length === 0) {
-    list.push(elem);
-    return;
-  }
-  var num = list.length;
-  var tail = list[num-1];
-  if (tail.type === '#Regex.SemiRange') {
-    if (this.parseRegex_tryAttachTrailSurrogateToSemi(tail, elem))
-      return;
-    if (this.errorRegexElem)
-      return;
-  }
-  else if (tail.type === '#Regex.SurrogateComponent' &&
-    tail.kind === 'lead' &&
-    elem.type === '#Regex.SurrogateComponent' &&
-    elem.kind === 'trail') {
-    if (this.regexFlags.u && tail.escape !== '{}' && elem.escape === tail.escape) {
-      list.pop();
-      list.push(this.regMakeSurrogate(tail, elem));
-    }
+function(list, tail) {
+  if (list.length === 0) { list.push(tail); return; }
+
+  var len = list.length;
+  var ltop = list[len-1];
+  var sr = this.regSemiRange;
+
+  if (sr) {
+    ASSERT.call(this, sr === ltop, 'semiRange must not have existed if it were not the last elem');
+    ASSERT.call(this, isTrail(tail), 'semiRange should not have existed if the next class elem is a non-unicode escape');
+    ASSERT.call(this, this.regexFlags.u, 'semiRange could not have existed if the u flags was not initially set');
+    sr.max.next = tail;
+    if (uAkin(sr.max, tail))
+      sr.max = this.regMakeSurrogate(sr.max, tail);
     else
-      list.push(elem);
-    tail.next = elem;
-    return;
-  }
-  if (tail.type !== '#Regex.Hy') {
-    list.push(elem);
-    return;
-  }
-  var maxv = cpReg(elem);
-  if (maxv === -1) {
-    list.push(elem);
-    return;
-  }
-  if (num < 2) {
-    list.push(elem);
-    return;
-  }
-  var head = list[num-2 ];
-  var minv = cpReg(head);
-  if (minv === -1) {
-    list.push(elem);
+      list.push(tail);
+    this.regTryCompleteSemiRange();
     return;
   }
 
+  if (isLead(ltop) && isTrail(tail)) {
+    if (this.regexFlags.u && ltop.escape !== '{}' && uAkin(ltop, tail)) {
+      list.pop();
+      list.push(this.regMakeSurrogate(ltop, tail));
+    }
+    else
+      list.push(tail);
+    ltop.next = tail;
+    return;
+  }
+
+  if (len < 2 || ltop.type !== '#Regex.Hy') { list.push(tail); return; }
+
+  var max = tail;
+  var maxv = cpReg(max);
+  if (maxv === -1) { list.push(tail); return; }
+
+  var min = list[len-2];
+  var minv = cpReg(min);
+  if (minv === -1) { list.push(tail); return; }
+
   var semi = false;
-  if (this.regexFlags.u && elem.type === '#Regex.SurrogateComponent' &&
-    elem.kind === 'lead' && elem.escape !== '{}')
+  if (this.regexFlags.u && isLead(tail) && tail.escape !== '{}')
     semi = true;
   else if (minv > maxv)
-    return this.regerr_minBiggerThanMax(head, elem);
+    return this.regerr_minBiggerThanMax(min, tail);
 
   list.pop(); // '-'
   list.pop(); // head
 
-  var min = head, max = elem;
-
-  list.push({
+  var elem = {
     type: semi ? '#Regex.SemiRange' : '#Regex.Range',
     min: min,
     start: min.start,
     end: max.end,
     max: max,
-    loc: semi ? null : { start: min.loc.start, end: max.loc.end }
-  });
+    loc: { start: min.loc.start, end: max.loc.end }
+  };
+  if (semi) {
+    ASSERT.call(this, this.regSemiRange === null, 'semi' );
+    this.regSemiRange = elem;
+  }
+  list.push(elem);
 };
 
-this.regValidateSemi =
-function(semi) {
-  ASSERT.call(this, semi.type === '#Regex.SemiRange', 'semi' );
-  ASSERT.call(this, semi.max.cp >= 0, 'max');
-  ASSERT.call(this, semi.min.cp >= 0, 'min');
-  if (semi.min.cp > semi.max.cp)
-    return this.regerr_minBiggerThanMax(semi.min, semi.max );
+this.regTryCompleteSemiRange =
+function() {
+  var sr = this.regSemiRange;
+  ASSERT.call(this, sr.type === '#Regex.SemiRange', 'semi' );
+  ASSERT.call(this, sr.max.cp >= 0, 'max');
+  ASSERT.call(this, sr.min.cp >= 0, 'min');
+  if (sr.min.cp > sr.max.cp)
+    return this.regErr_minBiggerThanMax(sr.min, sr.max);
 
-  semi.type = '#Regex.Range';
-  semi.loc = { start: semi.min.loc.start, end: semi.max.loc.end };
-  return semi;
+  sr.type = '#Regex.Range';
+  sr.loc.end = sr.max.loc.end;
+
+  this.regSemiRange = null;
+  return sr;
 };
 
-this. parseRegex_regClassElem =
+this.regClassElem =
 function() {
   var c = this.c, s = this.src, l = s.length;
   if (c >= l)
     return null;
   switch (s.charCodeAt(c)) {
   case CH_BACK_SLASH:
-    return this.parseRegex_regClassEscape();
+    return this.regEsc(true);
   case CH_RSQBRACKET:
     return null;
-  default: return this.parseRegex_regClassChar();
+  default:
+    return this.regChar(true);
   }
 };
-
-this. parseRegex_regClassEscape =
-function() {
-  return this.parseRegex_regEscape(false);
-};
-
-this. parseRegex_regClassChar =
-function() {
-  return this.parseRegex_regChar(false);
-};
-
-this. parseRegex_tryAttachTrailSurrogateToSemi =
-function(semi, elem) {
-  var createdSurrogate = false;
-  if (elem.type === '#Regex.SurrogateComponent' &&
-    elem.kind === 'trail') {
-    semi.max.next = elem;
-    if (elem.escape === semi.max.escape) {
-      semi.max = this.regMakeSurrogate(semi.max, elem);
-      createdSurrogate = true;
-    }
-  }
-  if (this.regValidateSemi(semi))
-    return createdSurrogate;
-
-  return false;
-};
-
-

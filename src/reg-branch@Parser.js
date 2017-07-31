@@ -1,29 +1,33 @@
-this. parseRegex_regBranch =
+this.regBranch =
 function() {
-  this.errorRegexElem = null;
-  this.regQuantifiable = false;
-  var elem = this.parseRegex_regElem();
+  this.regErr = null;
+  this.regIsQuantifiable = false;
+
+  var elem = this.regBareElem();
   if (elem === null)
     return null;
+
   var elements = [];
   do {
-    if (elem !== this.lastRegexElem) {
-      elem = this.regAdaptTo(elements, elem);
-      if (this.regQuantifiable) {
-        this.regQuantifiable = false;
-        if (this.regPBQ || this.regPCQ || (!rec(elem) && this.parseRegex_tryPrepareQuantifier()))
-          elem = this.regQuantified(elem);
+    if (elem !== this.regLastBareElem) {
+      elem = this.regTryMix(elements, elem);
+      if (this.regIsQuantifiable) {
+        this.regIsQuantifiable = false;
+        if (this.regPendingBQ || this.regPendingCQ || 
+          (!isCharSeq(elem) && this.regPrepareQ()))
+          elem = this.regQuantify(elem);
       }
       elements.push(elem);
-      this.lastRegexElem = elem; // reuse CharSeq
+      this.regLastBareElem = elem; // reuse CharSeq
     }
-    this.regQuantifiable = false;
-    elem = this.parseRegex_regElem();
-    if (this.errorRegexElem)
+
+    this.regIsQuantifiable = false;
+    elem = this.regBareElem();
+    if (this.regErr)
       return null;
   } while (elem);
 
-  var lastElem = elements[elements.length-1 ];
+  var lastElem = elements[elements.length-1];
   return {
     type: '#Regex.Branch',
     elements: elements,
@@ -33,51 +37,48 @@ function() {
   };
 };
 
-this.regAdaptTo =
+this.regTryMix =
 function(list, elem) {
   if (list.length === 0) 
     return elem;
   var last = list[list.length-1];
-  if (last.type === '#Regex.SurrogateComponent' && last.kind === 'lead' &&
-    elem.type === '#Regex.SurrogateComponent' && elem.kind === 'trail') {
+  if (isLead(last) && isTrail(elem)) {
     last.next = elem;
-    if (this.regexFlags.u && last.escape === elem.escape ) {
+    if (this.regexFlags.u && uAkin(last, elem)) {
       list.pop();
-      this.regQuantifiable = true;
+      this.regIsQuantifiable = true;
       return this.regMakeSurrogate(last, elem);
     }
   }
   return elem;
 };
 
-this. parseRegex_regElem =
+this.regBareElem =
 function() {
-  if (this.pendingRegexElem)
-    return this.resetRegexElem();
   var c = this.c, s = this.src, l = s.length;
   if (c >= l)
     return null;
 
   switch (s.charCodeAt(c)) {
   case CH_LSQBRACKET:
-    return this.parseRegex_regClass();
+    return this.regClass();
   case CH_LPAREN:
-    return this.parseRegex_regParen();
+    return this.regParen();
   case CH_LCURLY:
-    return this.parseRegex_regCurly();
+    return this.regCurly();
   case CH_BACK_SLASH:
-    return this.parseRegex_regEscape(true);
+    return this.regEsc(false);
   case CH_$:
   case CH_XOR:
-    return this.parseRegex_regUnitAssertion();
+    return this.regUnitAssertion();
   case CH_QUESTION:
   case CH_ADD:
   case CH_MUL:
-    return this.setErrorRegex(this.parseRegex_errQuantifier());
+    return this.regErr_looseQuantifier();
   case CH_OR:
   case CH_RPAREN:
     return null;
   default:
-    return this.parseRegex_regChar(true);
+    return this.regChar(false);
   }
 };

@@ -1,20 +1,23 @@
-this. parseRegex_regParen =
+this.regParen =
 function() {
   var c0 = this.c;
   var s = this.src;
   var l = s.length;
+
   if (c0+1 >= l)
-    return this.setErrorRegex(this.parseRegex_errParen());
+    return this.regErr_EOFParen();
+
   if (s.charCodeAt(c0+1) === CH_QUESTION)
-    return this.parseRegex_regPeekOrGroup();
+    return this.regPeekOrGroup();
+
   var loc0 = this.loc();
   this.setsimpoff(c0+1);
 
-  var elem = this.parseRegex_regPattern();
-  if (this.errorRegexElem)
-    return this.regexErrorElem;
+  var elem = this.regPattern();
+  if (this.regErr)
+    return null;
 
-  this.regQuantifiable = true;
+  this.regIsQuantifiable = true;
   var n = {
     type: '#Regex.Paren',
     capturing: true,
@@ -25,23 +28,22 @@ function() {
   };
 
   if (!this.expectChar(CH_RPAREN))
-    return this.parseRegex_errParenUnfinished(n);
+    return this.regErr_unfinishedParen(n);
 
   return n;
 };
 
-this. parseRegex_regPeekOrGroup =
+this.regPeekOrGroup =
 function() {
   var c0 = this.c, s = this.src, l = s.length;
   switch (this.scat(c0+2)) {
   case CH_EQUALITY_SIGN:
-    return this. parseRegex_regPeek(true);
+    return this.regPeek(true);
   case CH_EXCLAMATION:
-    return this. parseRegex_regPeek(false);
+    return this.regPeek(false);
   case CH_COLON:
-    return this. parseRegex_regGroup();
+    return this.regGroup();
   default:
-    var n = this. parseRegex_errPQ(); // (?
-    return this.setErrorRegex(n);
+    return this.regErr_invalidCharAfterQuestionParen(); // (?
   }
 };

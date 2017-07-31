@@ -12,7 +12,7 @@ function(c1, c2) {
   };
 };
 
-this.regSurrogateComponentVOKE =
+this.regSurrogateComponent_VOKE =
 function(cp, offset, kind, escape) {
   var c0 = this.c, loc0 = this.loc();
   this.setsimpoff(offset);
