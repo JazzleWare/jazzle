@@ -34,3 +34,15 @@ function() {
     loc: { start: startLoc, end: endLoc }
   };
 };
+
+this.regDot =
+function() {
+  var c0 = this.c, loc0 = this.loc();
+  this.setsimpoff(c0+1);
+  return {
+    type: '#Regex.Dot',
+    start: c0,
+    loc: { start: loc0, end: this.loc() },
+    end: this.c
+  };
+};

@@ -1,4 +1,4 @@
-// errors pertaining to u escapes first will check for pending semi ranges at the start of their corresponding routines
+// errors pertaining to u escapes will first check for pending semi ranges at the start of their corresponding routines
 this.regEsc_u =
 function(ce) {
   if (ce && this.regSemiRange &&
@@ -11,7 +11,7 @@ function(ce) {
     return this.rf.u ? this.regErr_insuffucientNumsAfterU() : null;
 
   var r = s.charCodeAt(c);
-  if (r === CH_LCURLY)
+  if (this.rf.u && r === CH_LCURLY)
     return this.regEsc_uCurly(ce);
 
   var ch = 0, n = 0;

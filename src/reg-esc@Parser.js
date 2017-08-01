@@ -2,7 +2,7 @@ this.regEsc =
 function(ce) {
   var c = this.c, s = this.src, l = s.length;
   if (c+1 >= l)
-    return null;
+    return this.regErr_trailSlash();
 
   var elem = null;
   var c0 = this.c, li0 = this.li, col0 = this.col, luo0 = this.luo;
@@ -115,3 +115,24 @@ function(ce) {
 
   return this.regChar_VECI(String.fromCharCode(ch), c, ch, ce);
 };
+
+var isUIEsc = makeAcceptor('^$\\.*+?()[]{}|/');
+this.regEsc_itself =
+function(ce) {
+  var c = this.c, s = this.src;
+  c++; // \
+  var ch = s.charCodeAt(c);
+  if (this.rf.u) {
+    if (!isUIEsc(ch) && (!ce || ch !== CH_MIN)) {
+      this.setsimpoff(c);
+      return this.regErr_invalidUEsc();
+    }
+  } else 
+    ASSERT.call(this, ch !== CH_c, 'c' );
+
+  c++;
+  return this.regChar_VECI(String.fromCharCode(ch), c, ch, ce);
+};
+
+this.regEsc_num =
+function(ce) {};

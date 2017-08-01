@@ -11550,7 +11550,7 @@ function() {
     }
     ASSERT.call(this, this.regCurlyChar, 'rcc' );
     this.regCurlyChar = false;
-    this.rw(c0,li0,col0,lu0);
+    // regCurlyQuantifier does the rw itself
     elem = this.regChar(false); // '{'
     return elem;
   case CH_BACK_SLASH:
@@ -11567,6 +11567,8 @@ function() {
     return null;
   case CH_RCURLY:
     return this.regErr_looseRCurly();
+  case CH_SINGLEDOT:
+    return this.regDot();
   default:
     return this.regChar(false);
   }
@@ -11779,7 +11781,7 @@ function(){
 this.regCurlyQuantifier =
 function() {
   ASSERT_EQ.call(this, this.regCurlyChar, false);
-  var c0 = this.c, c = c0, s = this.src, l = s.length;
+  var c0 = this.c, c = c0, s = this.src, l = s.length, li0 = this.li, col0 = this.col, luo0 = this.luo;
   c++; // '{'
   this.setsimpoff(c);
   VALID: {
@@ -11817,13 +11819,15 @@ function() {
     };
   }
 
+  this.rw(c0,li0,col0,luo0);
   this.regCurlyChar = true;
+
   return null;
 };
 
 },
 function(){
-// errors pertaining to u escapes first will check for pending semi ranges at the start of their corresponding routines
+// errors pertaining to u escapes will first check for pending semi ranges at the start of their corresponding routines
 this.regEsc_u =
 function(ce) {
   if (ce && this.regSemiRange &&
@@ -11836,7 +11840,7 @@ function(ce) {
     return this.rf.u ? this.regErr_insuffucientNumsAfterU() : null;
 
   var r = s.charCodeAt(c);
-  if (r === CH_LCURLY)
+  if (this.rf.u && r === CH_LCURLY)
     return this.regEsc_uCurly(ce);
 
   var ch = 0, n = 0;
@@ -11940,7 +11944,7 @@ this.regEsc =
 function(ce) {
   var c = this.c, s = this.src, l = s.length;
   if (c+1 >= l)
-    return null;
+    return this.regErr_trailSlash();
 
   var elem = null;
   var c0 = this.c, li0 = this.li, col0 = this.col, luo0 = this.luo;
@@ -12053,6 +12057,27 @@ function(ce) {
 
   return this.regChar_VECI(String.fromCharCode(ch), c, ch, ce);
 };
+
+var isUIEsc = makeAcceptor('^$\\.*+?()[]{}|/');
+this.regEsc_itself =
+function(ce) {
+  var c = this.c, s = this.src;
+  c++; // \
+  var ch = s.charCodeAt(c);
+  if (this.rf.u) {
+    if (!isUIEsc(ch) && (!ce || ch !== CH_MIN)) {
+      this.setsimpoff(c);
+      return this.regErr_invalidUEsc();
+    }
+  } else 
+    ASSERT.call(this, ch !== CH_c, 'c' );
+
+  c++;
+  return this.regChar_VECI(String.fromCharCode(ch), c, ch, ce);
+};
+
+this.regEsc_num =
+function(ce) {};
 
 },
 function(){
@@ -12234,6 +12259,18 @@ function() {
     start: c0,
     end: lastElem ? lastElem.end : this.c, // equal either way, actually
     loc: { start: startLoc, end: endLoc }
+  };
+};
+
+this.regDot =
+function() {
+  var c0 = this.c, loc0 = this.loc();
+  this.setsimpoff(c0+1);
+  return {
+    type: '#Regex.Dot',
+    start: c0,
+    loc: { start: loc0, end: this.loc() },
+    end: this.c
   };
 };
 

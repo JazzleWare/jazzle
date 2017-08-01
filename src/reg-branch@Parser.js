@@ -78,7 +78,7 @@ function() {
     }
     ASSERT.call(this, this.regCurlyChar, 'rcc' );
     this.regCurlyChar = false;
-    this.rw(c0,li0,col0,lu0);
+    // regCurlyQuantifier does the rw itself
     elem = this.regChar(false); // '{'
     return elem;
   case CH_BACK_SLASH:
@@ -95,6 +95,8 @@ function() {
     return null;
   case CH_RCURLY:
     return this.regErr_looseRCurly();
+  case CH_SINGLEDOT:
+    return this.regDot();
   default:
     return this.regChar(false);
   }
