@@ -4,14 +4,20 @@ function(ce) {
   if (c+1 >= l)
     return null;
 
+  var elem = null;
+  var c0 = this.c, li0 = this.li, col0 = this.col, luo0 = this.luo;
   // fail early for pending SRs
   var w = s.charCodeAt(c+1);
   if (w !== CH_u) {
     if (ce && this.testSRerr())
       return null;
   }
-  else
-    return this.regEsc_u(ce);
+  else {
+    elem = this.regEsc_u(ce);
+    if (elem || this.regErr) return elem;
+    this.rw(c0,li0,col0,luo0);
+    return this.regEsc_itself(ce);
+  }
 
   switch (w) {
   case CH_v:
@@ -27,9 +33,15 @@ function(ce) {
   case CH_n:
     return this.regEsc_simple('\n', ce);
   case CH_x:
-    return this.regEsc_hex(ce);
+    elem = this.regEsc_hex(ce);
+    if (elem || this.regErr) return elem;
+    this.rw(c0,li0,col0,luo0);
+    return this.regEsc_itself(ce);
   case CH_c:
-    return this.regEsc_control(ce);
+    elem = this.regEsc_control(ce);
+    if (elem || this.regErr) return elem;
+    this.rw(c0,li0,col0,luo0);
+    return this.regChar(ce); // ... but not c
   case CH_D: case CH_W: case CH_S:
   case CH_d: case CH_w: case CH_s:
     return this.regClassifier();
@@ -56,20 +68,20 @@ function(ce) {
   var s = this.src, l = s.length, c = this.c;
   c += 2; // \x
   if (c>=l)
-    return this.regErr_hexEOF();
+    return this.rf.u ? this.regErr_hexEOF() : null;
 
   var ch1 = hex2num(s.charCodeAt(c));
   if (ch1 === -1) {
     this.setsimpoff(c);
-    return this.regErr_hexEscNotHex();
+    return this.rf.u ? this.regErr_hexEscNotHex() : null;
   }
   c++;
   if (c>=l)
-    return this.regErr_hexEOF();
+    return this.rf.u ? this.regErr_hexEOF() : null;
   var ch2 = hex2num(s.charCodeAt(c));
   if (ch2 === -1) {
     this.setsimpoff(c);
-    return this.regErr_hexEOF();
+    return this.rf.u ? this.regErr_hexEOF() : null;
   }
 
   c++;
@@ -90,12 +102,12 @@ function(ce) {
   c += 2; // \c
   if (c>=l) {
     this.setsimpoff(c);
-    return this.regErr_controlEOF();
+    return this.rf.u ? this.regErr_controlEOF() : null;
   }
   var ch = s.charCodeAt(c);
   if ((ch > CH_Z || ch < CH_A) && (ch < CH_a || ch > CH_z)) {
-    this.setsimpoff(c);
-    return this.regErr_controlAZaz();
+    this.setsimpoff(c); // TODO: unnecessary if there is no 'u' flag
+    return this.rf.u ? this.regErr_controlAZaz() : null;
   }
 
   c++;

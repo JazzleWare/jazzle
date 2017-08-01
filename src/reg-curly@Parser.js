@@ -1,20 +1,7 @@
-this.regCurly =
-function() {
-  if (!this.regCurlyChar) {
-    var c = this.c, li = this.li, col = this.col;
-    var n = this.regCurlyQuantifier(true);
-    if (n)
-      return this.regErr_curlyQuantifier(n);
-  }
-
-  ASSERT.call(this, this.regCurlyChar, 'reg{}');
-  this.regCurlyChar = false;
-  return this.regChar(false);
-};
-
 this.regCurlyQuantifier =
 function() {
-  var c0 = this.c, c = c0, s = this.src, l = s.length, li0 = this.li, col0 = this.col, luo0 = this.luo;
+  ASSERT_EQ.call(this, this.regCurlyChar, false);
+  var c0 = this.c, c = c0, s = this.src, l = s.length;
   c++; // '{'
   this.setsimpoff(c);
   VALID: {
@@ -52,11 +39,6 @@ function() {
     };
   }
 
-  this.c = c0;
-  this.li = li0;
-  this.col = col0;
-  this.luo = luo0;
   this.regCurlyChar = true;
-
   return null;
 };

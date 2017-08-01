@@ -8,7 +8,7 @@ function(ce) {
   var c = this.c, s = this.src, l = s.length;
   c += 2; // \u
   if (c >= l)
-    return this.regErr_insuffucientNumsAfterU();
+    return this.rf.u ? this.regErr_insuffucientNumsAfterU() : null;
 
   var r = s.charCodeAt(c);
   if (r === CH_LCURLY)
@@ -19,7 +19,7 @@ function(ce) {
     r = hex2num(r);
     if (r === -1) {
       this.setsimpoff(c);
-      return this.regErr_insufficientNumsAfterU();
+      return this.rf.u ? this.regErr_insufficientNumsAfterU() : null;
     }
     ch = (ch<<4)|r;
     c++; n++;
@@ -34,7 +34,7 @@ function(ce) {
     if (n >= 4)
       break;
     if (c >= l)
-      return this.regErr_insufficientNumsAfterU();
+      return this.rf.u ? this.regErr_insufficientNumsAfterU() : null;
     r = s.charCodeAt(c);
   }
 

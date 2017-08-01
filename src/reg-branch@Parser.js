@@ -59,13 +59,28 @@ function() {
   if (c >= l)
     return null;
 
+  var elem = null;
+  var c0 = this.c, li0 = this.li, col0 = this.col, luo0 = this.luo;
   switch (s.charCodeAt(c)) {
   case CH_LSQBRACKET:
     return this.regClass();
   case CH_LPAREN:
     return this.regParen();
   case CH_LCURLY:
-    return this.regCurly();
+    if (this.rf.u)
+      return this.regErr_looseLBrace();
+    if (!this.regCurlyChar) {
+      elem = this.regCurlyQuantifier();
+      if (elem)
+        return this.regeErr_looseCurlyQuantifier(elem);
+      if (this.regErr) // shouldn't hold
+        return null;
+    }
+    ASSERT.call(this, this.regCurlyChar, 'rcc' );
+    this.regCurlyChar = false;
+    this.rw(c0,li0,col0,lu0);
+    elem = this.regChar(false); // '{'
+    return elem;
   case CH_BACK_SLASH:
     return this.regEsc(false);
   case CH_$:
@@ -78,6 +93,8 @@ function() {
   case CH_OR:
   case CH_RPAREN:
     return null;
+  case CH_RCURLY:
+    return this.regErr_looseRCurly();
   default:
     return this.regChar(false);
   }

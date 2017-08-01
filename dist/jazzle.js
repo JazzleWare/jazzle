@@ -290,7 +290,7 @@ var Parser = function (src, o) {
   this.regIsQuantifiable = false;
   this.regSemiRange = null;
   this.regCurlyChar = false;
-  this.regexFlags = {};
+  this.regexFlags = this.rf = {};
 };
 ;
 function Ref(scope) {
@@ -5201,6 +5201,9 @@ function(lttype) {
   }
   return false;
 };
+
+this.rw =
+function(c,li,col,luo) { this.c = c; this.li = li; this.col = col; this.luo = luo; };
 
 },
 function(){
@@ -11528,13 +11531,28 @@ function() {
   if (c >= l)
     return null;
 
+  var elem = null;
+  var c0 = this.c, li0 = this.li, col0 = this.col, luo0 = this.luo;
   switch (s.charCodeAt(c)) {
   case CH_LSQBRACKET:
     return this.regClass();
   case CH_LPAREN:
     return this.regParen();
   case CH_LCURLY:
-    return this.regCurly();
+    if (this.rf.u)
+      return this.regErr_looseLBrace();
+    if (!this.regCurlyChar) {
+      elem = this.regCurlyQuantifier();
+      if (elem)
+        return this.regeErr_looseCurlyQuantifier(elem);
+      if (this.regErr) // shouldn't hold
+        return null;
+    }
+    ASSERT.call(this, this.regCurlyChar, 'rcc' );
+    this.regCurlyChar = false;
+    this.rw(c0,li0,col0,lu0);
+    elem = this.regChar(false); // '{'
+    return elem;
   case CH_BACK_SLASH:
     return this.regEsc(false);
   case CH_$:
@@ -11547,6 +11565,8 @@ function() {
   case CH_OR:
   case CH_RPAREN:
     return null;
+  case CH_RCURLY:
+    return this.regErr_looseRCurly();
   default:
     return this.regChar(false);
   }
@@ -11756,23 +11776,10 @@ function() {
 
 },
 function(){
-this.regCurly =
-function() {
-  if (!this.regCurlyChar) {
-    var c = this.c, li = this.li, col = this.col;
-    var n = this.regCurlyQuantifier(true);
-    if (n)
-      return this.regErr_curlyQuantifier(n);
-  }
-
-  ASSERT.call(this, this.regCurlyChar, 'reg{}');
-  this.regCurlyChar = false;
-  return this.regChar(false);
-};
-
 this.regCurlyQuantifier =
 function() {
-  var c0 = this.c, c = c0, s = this.src, l = s.length, li0 = this.li, col0 = this.col, luo0 = this.luo;
+  ASSERT_EQ.call(this, this.regCurlyChar, false);
+  var c0 = this.c, c = c0, s = this.src, l = s.length;
   c++; // '{'
   this.setsimpoff(c);
   VALID: {
@@ -11810,12 +11817,7 @@ function() {
     };
   }
 
-  this.c = c0;
-  this.li = li0;
-  this.col = col0;
-  this.luo = luo0;
   this.regCurlyChar = true;
-
   return null;
 };
 
@@ -11831,7 +11833,7 @@ function(ce) {
   var c = this.c, s = this.src, l = s.length;
   c += 2; // \u
   if (c >= l)
-    return this.regErr_insuffucientNumsAfterU();
+    return this.rf.u ? this.regErr_insuffucientNumsAfterU() : null;
 
   var r = s.charCodeAt(c);
   if (r === CH_LCURLY)
@@ -11842,7 +11844,7 @@ function(ce) {
     r = hex2num(r);
     if (r === -1) {
       this.setsimpoff(c);
-      return this.regErr_insufficientNumsAfterU();
+      return this.rf.u ? this.regErr_insufficientNumsAfterU() : null;
     }
     ch = (ch<<4)|r;
     c++; n++;
@@ -11857,7 +11859,7 @@ function(ce) {
     if (n >= 4)
       break;
     if (c >= l)
-      return this.regErr_insufficientNumsAfterU();
+      return this.rf.u ? this.regErr_insufficientNumsAfterU() : null;
     r = s.charCodeAt(c);
   }
 
@@ -11940,14 +11942,20 @@ function(ce) {
   if (c+1 >= l)
     return null;
 
+  var elem = null;
+  var c0 = this.c, li0 = this.li, col0 = this.col, luo0 = this.luo;
   // fail early for pending SRs
   var w = s.charCodeAt(c+1);
   if (w !== CH_u) {
     if (ce && this.testSRerr())
       return null;
   }
-  else
-    return this.regEsc_u(ce);
+  else {
+    elem = this.regEsc_u(ce);
+    if (elem || this.regErr) return elem;
+    this.rw(c0,li0,col0,luo0);
+    return this.regEsc_itself(ce);
+  }
 
   switch (w) {
   case CH_v:
@@ -11963,9 +11971,15 @@ function(ce) {
   case CH_n:
     return this.regEsc_simple('\n', ce);
   case CH_x:
-    return this.regEsc_hex(ce);
+    elem = this.regEsc_hex(ce);
+    if (elem || this.regErr) return elem;
+    this.rw(c0,li0,col0,luo0);
+    return this.regEsc_itself(ce);
   case CH_c:
-    return this.regEsc_control(ce);
+    elem = this.regEsc_control(ce);
+    if (elem || this.regErr) return elem;
+    this.rw(c0,li0,col0,luo0);
+    return this.regChar(ce); // ... but not c
   case CH_D: case CH_W: case CH_S:
   case CH_d: case CH_w: case CH_s:
     return this.regClassifier();
@@ -11992,20 +12006,20 @@ function(ce) {
   var s = this.src, l = s.length, c = this.c;
   c += 2; // \x
   if (c>=l)
-    return this.regErr_hexEOF();
+    return this.rf.u ? this.regErr_hexEOF() : null;
 
   var ch1 = hex2num(s.charCodeAt(c));
   if (ch1 === -1) {
     this.setsimpoff(c);
-    return this.regErr_hexEscNotHex();
+    return this.rf.u ? this.regErr_hexEscNotHex() : null;
   }
   c++;
   if (c>=l)
-    return this.regErr_hexEOF();
+    return this.rf.u ? this.regErr_hexEOF() : null;
   var ch2 = hex2num(s.charCodeAt(c));
   if (ch2 === -1) {
     this.setsimpoff(c);
-    return this.regErr_hexEOF();
+    return this.rf.u ? this.regErr_hexEOF() : null;
   }
 
   c++;
@@ -12026,12 +12040,12 @@ function(ce) {
   c += 2; // \c
   if (c>=l) {
     this.setsimpoff(c);
-    return this.regErr_controlEOF();
+    return this.rf.u ? this.regErr_controlEOF() : null;
   }
   var ch = s.charCodeAt(c);
   if ((ch > CH_Z || ch < CH_A) && (ch < CH_a || ch > CH_z)) {
-    this.setsimpoff(c);
-    return this.regErr_controlAZaz();
+    this.setsimpoff(c); // TODO: unnecessary if there is no 'u' flag
+    return this.rf.u ? this.regErr_controlAZaz() : null;
   }
 
   c++;
