@@ -290,6 +290,8 @@ var Parser = function (src, o) {
   this.regIsQuantifiable = false;
   this.regSemiRange = null;
   this.regCurlyChar = false;
+  this.regLastOffset = -1;
+
   this.regexFlags = this.rf = {};
 };
 ;
@@ -5982,7 +5984,7 @@ function(ctx) {
     break;
 
   case CH_DIV:
-    head = this.parseRegExpLiteral();
+    head = this.parseRegexLiteral();
     break;
 
   case CH_BACKTICK:
@@ -9562,191 +9564,81 @@ this.parseProgram = function () {
 
 },
 function(){
+// /\1200(*followed by 1200 ()'s)/ becomes /(*backref=\1200)(*1200 ()'s)/; but, /\1200(*followed by 1199 ()'s)/ becomes /(*legacyEsc=\120)(*ch='0')(*1199 ()'s);
+// this means any captureP had better get tracked below, rather than in `parseRegex`
 
-var gRegexFlag =               1 ,
-    uRegexFlag = gRegexFlag << 1 ,
-    yRegexFlag = uRegexFlag << 1 ,
-    mRegexFlag = yRegexFlag << 1 ,
-    iRegexFlag = mRegexFlag << 1 ;
+this.parseRegexLiteral =
+function() {
+  this.v < 2 && this.err('ver.regex');
+  var c = this.c, b = {}, s = this.src, nump = 0, l = s.length;
+  var c0 = this.c0, inClass = false, loc0 = this.loc0();
+  this.suc(b, 'bef');
 
-var regexFlagsSupported = 0;
+  var esc = false;
 
-(function() {
-  var str = "guymi", 
-      val = [gRegexFlag,uRegexFlag,yRegexFlag,mRegexFlag,iRegexFlag], e = 0;
-  while (e < str.length) {
-    try {
-      new RegExp("l",str.charAt(e));
-      regexFlagsSupported |= val[e];
-    } catch (err) {}
-    e++;
+  REGEX:
+  while (c < l) {
+    switch (s.charCodeAt(c)) {
+    case CH_LSQBRACKET:
+      if (esc) { esc = false; break }
+      if (!inClass) inClass = true;
+      break;
+    case CH_BACK_SLASH:
+      if (esc) { esc = false; break; }
+      esc = true;
+      break;
+    case CH_RSQBRACKET:
+      if (esc) { esc = false; break; }
+      if (inClass) inClass = false;
+      break;
+    case CH_DIV:
+      if (esc) { esc = false; break; }
+      if (inClass) break;
+      break REGEX;
+    case CH_LPAREN:
+      if (esc || inClass || c+1 >= l) break;
+      if (s.charCodeAt(c+1) !== CH_QUESTION)  nump++;
+      break;
+    case CH_CARRIAGE_RETURN:
+      c+1 < l && s.charCodeAt(c+1) === CH_LINE_FEED && c++;
+    case CH_LINE_FEED:
+    case 0x2028:
+    case 0x2029:
+      this.err(esc ? 'regex.esc.newline' : 'regex.newline', {c0:c});
+    default:
+      if (esc) { esc = false; }
+    }
+    c++;
   }
-})();
 
-function curlyReplace(matchedString, b, matchIndex, wholeString ) {
-  var c = parseInt( '0x' + b );
-  if ( c <= 0xFFFF ) return '\\u' + hex(c);
-  return '\\uFFFF';
-}
+  if (c >= l || s.charCodeAt(c) !== CH_DIV)
+    this.err('regex.unfinished');
 
-function regexReplace(matchedString, b, noB, matchIndex, wholeString) {
-  var c = parseInt('0x' + ( b || noB ) ) ;
-  if (c > 0x010FFFF )
-    this.err('regex.val.not.in.range');
-  
-  if ( c <= 0xFFFF ) return String.fromCharCode(c) ;
+  var pattern = s.substring(this.c, c);
+  c++; // '/'
 
-  c -= 0x010000;
-  return '\uFFFF';
-} 
+  var flags = "", flagsStart = c;
+  while (c < l && isIDBody(s.charCodeAt(c))) c++;
+  flags = s.substring(flagsStart, c);
 
-function verifyRegex(regex, flags) {
-  var regexVal = null;
+  var n = this.parseRegex(this.c, loc0.column+1, loc0.line, c, nump, flags);
+  this.setsimpoff(c);
+  var regex = {
+    type: 'Literal',
+    regex: {
+      pattern: pattern,
+      flags: flags 
+    },
+    start: c0,
+    end: c,
+    value: null,
+    loc: { start: loc0, end: this.loc() }, 
+    raw: this.src.substring(c0, c),
+    '#c': b, '#n': n
+   };
 
-  try {
-    return new RegExp(regex, flags);
-  } catch ( e ) { throw e; }
-
-}
-
-function verifyRegex_soft (regex, flags) {
-  var regexVal = null;
-
-  try {
-    return new RegExp(regex, flags);
-  } catch ( e ) { return null; }
-
-}
-
-this.parseRegExpLiteral = function() {
-  var cb = {}; this.suc(cb, 'bef');
-  if (this.v < 2)
-    this.err('ver.regex');
-     var startc = this.c0, startLoc = this.loc0(),
-         c = this.c, src = this.src, len = src.length;
-
-     var inSquareBrackets = false ;
-     WHILE:
-     while ( c < len ) {
-       switch ( src.charCodeAt(c) ) {
-         case CH_LSQBRACKET:
-            if ( !inSquareBrackets )
-               inSquareBrackets = true;
-
-            break;
-
-         case CH_BACK_SLASH:
-            ++c;
-            if (c < len) switch(src.charCodeAt(c)) {
-               case CH_CARRIAGE_RETURN: 
-                  if ( l.charCodeAt(c + 1) === CH_LINE_FEED ) c++;
-               case CH_LINE_FEED :
-               case 0x2028 :
-               case 0x2029 :
-                  if ( this.err('regex.newline.esc',{c0:c}) )
-                    return this.errorHandlerOutput ;
-            }
-
-            break;
-
-         case CH_RSQBRACKET:
-            if ( inSquareBrackets )
-               inSquareBrackets = false;
-
-            break;
-
-         case CH_DIV :
-            if ( inSquareBrackets )
-               break;
-
-            break WHILE;
-
-         case CH_CARRIAGE_RETURN: if ( l.charCodeAt(c + 1 ) === CH_LINE_FEED ) c++ ;
-         case CH_LINE_FEED :
-         case 0x2028 :
-         case 0x2029 :
-           if ( this.err('regex.newline',{c0:c}) )
-             return this.errorHandlerOutput ;
-
-//       default:if ( o >= 0x0D800 && o <= 0x0DBFF ) { this.col-- ; }
-       }
-
-       c++ ;
-     }
-
-     if ( src.charCodeAt(c) !== CH_DIV && 
-          this.err('regex.unfinished') )
-       return this.errorHandlerOutput ;
-
-     var flags = 0;
-     var flagCount = 0;
-     WHILE:
-     while ( flagCount <= 5 ) {
-        switch ( src.charCodeAt ( ++c ) ) {
-            case CH_g:
-                if (flags & gRegexFlag)
-                  this.err('regex.flag.is.dup',{c0:c});
-                flags |= gRegexFlag; break;
-            case CH_u:
-                if (flags & uRegexFlag)
-                  this.err('regex.flag.is.dup',{c0:c});
-                flags |= uRegexFlag; break;
-            case CH_y:
-                if (flags & yRegexFlag)
-                  this.err('regex.flag.is.dup',{c0:c});
-                flags |= yRegexFlag; break;
-            case CH_m:
-                if (flags & mRegexFlag)
-                  this.err('regex.flag.is.dup',{c0:c});
-                flags |= mRegexFlag; break;
-            case CH_i:
-                if (flags & iRegexFlag)
-                  this.err('regex.flag.is.dup',{c0:c});
-                flags |= iRegexFlag; break;
-
-            default : break WHILE;
-        }
-
-        flagCount++ ;
-     }
-     var patternString = src.slice(this.c, c-flagCount-1 ), flagsString = src .slice(c-flagCount,c);
-     var val = null;
-
-     var normalizedRegex = patternString;
-
-     // those that contain a 'u' flag need special treatment when RegExp constructor they get sent to
-     // doesn't support the 'u' flag: since they can have surrogate pair sequences (which are not allowed without the 'u' flag),
-     // they must be checked for having such surrogate pairs, and should replace them with a character that is valid even
-     // without being in the context of a 'u' 
-     if ( (flags & uRegexFlag) && !(regexFlagsSupported & uRegexFlag) )
-          normalizedRegex = normalizedRegex.replace( /\\u\{([A-F0-9a-f]+)\}/g, curlyReplace) // normalize curlies
-             .replace( /\\u([A-F0-9a-f][A-F0-9a-f][A-F0-9a-f][A-F0-9a-f])/g, regexReplace ) // convert u
-             .replace( /[\ud800-\udbff][\udc00-\udfff]/g, '\uFFFF' );
-       
-
-     // all of the 1 bits in flags must also be 1 in the same bit index in regexsupportedFlags;
-     // flags ^ rsf returns a bit set in which the 1 bits mean "this flag is either not used in flags, or yt is not supported";
-     // for knowing whether the 1 bit has also been 1 in flags, we '&' the above bit set with flags; the 1 bits in the
-     // given bit set must both be 1 in flags and in flags ^ rsf; that is, they are both "used" and "unsupoorted or unused",
-     // which would be equal to this: [used && (unsupported || !used)] === unsopprted
-     if (flags & (regexFlagsSupported^flags) )
-       val  = verifyRegex_soft (normalizedRegex, "");
-     else
-        val = verifyRegex( patternString, flagsString ) ;
-
-     if ( !val &&
-        this.err('regex.not.valid') )
-       return this.errorHandlerOutput;
-
-
-     this.setsimpoff(c);
-     var regex = { type: 'Literal', regex: { pattern: patternString, flags: flagsString },
-                   start: startc, end: c,
-                   value: val, loc: { start: startLoc, end: this.loc() }, 
-                   raw: this.src.substring(startc, c), '#c': cb };
-
-     this.next () ;
-     return regex ;
+   this.next () ;
+   return regex ;
 };
 
 },
@@ -11527,7 +11419,7 @@ function(list, elem) {
 
 this.regBareElem =
 function() {
-  var c = this.c, s = this.src, l = s.length;
+  var c = this.c, s = this.src, l = this.regLastOffset;
   if (c >= l)
     return null;
 
@@ -11763,7 +11655,7 @@ function() {
 
 this.regClassElem =
 function() {
-  var c = this.c, s = this.src, l = s.length;
+  var c = this.c, s = this.src, l = this.regLastOffset;
   if (c >= l)
     return null;
   switch (s.charCodeAt(c)) {
@@ -11781,7 +11673,7 @@ function(){
 this.regCurlyQuantifier =
 function() {
   ASSERT_EQ.call(this, this.regCurlyChar, false);
-  var c0 = this.c, c = c0, s = this.src, l = s.length, li0 = this.li, col0 = this.col, luo0 = this.luo;
+  var c0 = this.c, c = c0, s = this.src, l = this.regLastOffset, li0 = this.li, col0 = this.col, luo0 = this.luo;
   c++; // '{'
   this.setsimpoff(c);
   VALID: {
@@ -11834,7 +11726,7 @@ function(ce) {
     this.regSemiRange.max.escape !== 'hex4' && !this.regTryCompleteSemiRange())
     return null;
 
-  var c = this.c, s = this.src, l = s.length;
+  var c = this.c, s = this.src, l = this.regLastOffset;
   c += 2; // \u
   if (c >= l)
     return this.rf.u ? this.regErr_insuffucientNumsAfterU() : null;
@@ -11872,7 +11764,7 @@ function(ce) {
   if (ch >= 0x0dc00 && ch <= 0x0dfff)
     return this.regSurrogateComponent_VOKE(ch, c, 'trail', 'hex4');
 
-  return this.regChar_VECI(String.fromCharCode(v), c, ch, ce);
+  return this.regChar_VECI(String.fromCharCode(ch), c, ch, ce);
 };
 
 this.regEsc_uCurly =
@@ -11880,7 +11772,7 @@ function(ce) {
   if (ce && this.testSRerr())
     return null;
 
-  var c = this.c, s = this.src, l = s.length;
+  var c = this.c, s = this.src, l = this.regLastOffset;
   c += 3; // \u{
   if (c >= l)
     return this.regErr_insufficientNumsAfterU();
@@ -11942,7 +11834,7 @@ function(ce) {
 function(){
 this.regEsc =
 function(ce) {
-  var c = this.c, s = this.src, l = s.length;
+  var c = this.c, s = this.src, l = this.regLastOffset;
   if (c+1 >= l)
     return this.regErr_trailSlash();
 
@@ -11988,7 +11880,7 @@ function(ce) {
   case CH_d: case CH_w: case CH_s:
     return this.regClassifier();
   default:
-    return (w >= CH_0 && w <= CH_7) ? this.regEsc_num(ce) : this.regEsc_itself(ce);
+    return (w >= CH_0 && w <= CH_7) ? this.regEsc_num(w, ce) : this.regEsc_itself(w, ce);
   }
 };
 
@@ -12007,7 +11899,7 @@ function() {
 
 this.regEsc_hex =
 function(ce) { 
-  var s = this.src, l = s.length, c = this.c;
+  var s = this.src, l = this.regLastOffset, c = this.c;
   c += 2; // \x
   if (c>=l)
     return this.rf.u ? this.regErr_hexEOF() : null;
@@ -12040,14 +11932,18 @@ function(v, ce) {
 this.regEsc_control =
 function(ce) {
   var c0 = this.c, c = c0;
-  var s = this.src, l = s.length;
+  var s = this.src, l = this.regLastOffset;
   c += 2; // \c
   if (c>=l) {
     this.setsimpoff(c);
     return this.rf.u ? this.regErr_controlEOF() : null;
   }
   var ch = s.charCodeAt(c);
+
+  INV:
   if ((ch > CH_Z || ch < CH_A) && (ch < CH_a || ch > CH_z)) {
+    if (!this.ref.u && ce && ((ch >= CH_0 && ch <= CH_9) || ch === CH_UNDERLINE))
+      break INV;
     this.setsimpoff(c); // TODO: unnecessary if there is no 'u' flag
     return this.rf.u ? this.regErr_controlAZaz() : null;
   }
@@ -12060,10 +11956,9 @@ function(ce) {
 
 var isUIEsc = makeAcceptor('^$\\.*+?()[]{}|/');
 this.regEsc_itself =
-function(ce) {
+function(ch, ce) {
   var c = this.c, s = this.src;
   c++; // \
-  var ch = s.charCodeAt(c);
   if (this.rf.u) {
     if (!isUIEsc(ch) && (!ce || ch !== CH_MIN)) {
       this.setsimpoff(c);
@@ -12077,7 +11972,11 @@ function(ce) {
 };
 
 this.regEsc_num =
-function(ce) {};
+function(ch, ce) {
+  var c = this.c, s = this.src, l = this.regLastOffset;
+  if (ch === 0)
+    return this.regEsc_num0(ce);
+};
 
 },
 function(){
@@ -12098,7 +11997,7 @@ function() {
 
 this.expectChar =
 function(ch) {
-  var c = this.c, s = this.src, l = s.length;
+  var c = this.c, s = this.src, l = this.regLastOffset;
   if (c >= l)
     return false;
   if (s.charCodeAt(c) === ch) {
@@ -12110,7 +12009,7 @@ function(ch) {
 
 this.regTryToParseNum =
 function() {
-  var c = this.c, s = this.src, l = s.length;
+  var c = this.c, s = this.src, l = this.regLastOffset;
   if (c >= l)
     return -1;
   var v = 0, ch = s.charCodeAt(c);
@@ -12138,7 +12037,7 @@ this.regParen =
 function() {
   var c0 = this.c;
   var s = this.src;
-  var l = s.length;
+  var l = this.regLastOffset;
 
   if (c0+1 >= l)
     return this.regErr_EOFParen();
@@ -12172,7 +12071,7 @@ function() {
 
 this.regPeekOrGroup =
 function() {
-  var c0 = this.c, s = this.src, l = s.length;
+  var c0 = this.c, s = this.src, l = this.regLastOffset;
   switch (this.scat(c0+2)) {
   case CH_EQUALITY_SIGN:
     return this.regPeek(true);
@@ -12278,7 +12177,7 @@ function() {
 function(){
 this.regPrepareQ =
 function() {
-  var c = this.c, s = this.src, l = s.length;
+  var c = this.c, s = this.src, l = this.regLastOffset;
   if (c >= l)
     return false;
   switch (s.charCodeAt(c)) {
@@ -12380,18 +12279,17 @@ function(cp, offset, kind, escape) {
 function(){
 // GENERAL RULE: if error occurs while parsing an elem, the parse routine sets the `regexErr and returns null
 this. parseRegex =
-function(rc, rli, rcol, rsrc, flags) {
+function(rc, rli, rcol, regLen, nump, flags) {
   var c = this.c;
   var li = this.li;
   var col = this.col;
   var luo0 = this.luo;
   var src0 = this.src;
 
-  this.src = rsrc;
-
   this.c = rc;
   this.li = rli;
   this.col = rcol;
+  this.regLastOffset = regLen;
   this.setsimpoff(this.c);
 
   var e = 0, str = 'guymi';

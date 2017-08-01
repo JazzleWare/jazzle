@@ -79,5 +79,7 @@ var Parser = function (src, o) {
   this.regIsQuantifiable = false;
   this.regSemiRange = null;
   this.regCurlyChar = false;
+  this.regLastOffset = -1;
+
   this.regexFlags = this.rf = {};
 };

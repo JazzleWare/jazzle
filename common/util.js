@@ -48,7 +48,7 @@ mex.TYPES = {
 };
 
 mex.dump = function dump(obj, level, name, isTail, sp ) {
-  return "";
+//return "";
   try {
   var space = "", i = 0;
   while (i++ < level-1)
@@ -301,6 +301,7 @@ mex.ej_adjust = function(e, j, name) {
   delete j['#finScope'];
   delete j['#tryScope'];
   delete j['#si'];
+  delete j['#n'];
   delete j['#scope'];
   delete j['#ifScope'];
   delete j.tokens;

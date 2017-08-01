@@ -36,7 +36,7 @@ function(ctx) {
     break;
 
   case CH_DIV:
-    head = this.parseRegExpLiteral();
+    head = this.parseRegexLiteral();
     break;
 
   case CH_BACKTICK:

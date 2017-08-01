@@ -1,6 +1,6 @@
 this.regEsc =
 function(ce) {
-  var c = this.c, s = this.src, l = s.length;
+  var c = this.c, s = this.src, l = this.regLastOffset;
   if (c+1 >= l)
     return this.regErr_trailSlash();
 
@@ -46,7 +46,7 @@ function(ce) {
   case CH_d: case CH_w: case CH_s:
     return this.regClassifier();
   default:
-    return (w >= CH_0 && w <= CH_7) ? this.regEsc_num(ce) : this.regEsc_itself(ce);
+    return (w >= CH_0 && w <= CH_7) ? this.regEsc_num(w, ce) : this.regEsc_itself(w, ce);
   }
 };
 
@@ -65,7 +65,7 @@ function() {
 
 this.regEsc_hex =
 function(ce) { 
-  var s = this.src, l = s.length, c = this.c;
+  var s = this.src, l = this.regLastOffset, c = this.c;
   c += 2; // \x
   if (c>=l)
     return this.rf.u ? this.regErr_hexEOF() : null;
@@ -98,14 +98,18 @@ function(v, ce) {
 this.regEsc_control =
 function(ce) {
   var c0 = this.c, c = c0;
-  var s = this.src, l = s.length;
+  var s = this.src, l = this.regLastOffset;
   c += 2; // \c
   if (c>=l) {
     this.setsimpoff(c);
     return this.rf.u ? this.regErr_controlEOF() : null;
   }
   var ch = s.charCodeAt(c);
+
+  INV:
   if ((ch > CH_Z || ch < CH_A) && (ch < CH_a || ch > CH_z)) {
+    if (!this.ref.u && ce && ((ch >= CH_0 && ch <= CH_9) || ch === CH_UNDERLINE))
+      break INV;
     this.setsimpoff(c); // TODO: unnecessary if there is no 'u' flag
     return this.rf.u ? this.regErr_controlAZaz() : null;
   }
@@ -118,10 +122,9 @@ function(ce) {
 
 var isUIEsc = makeAcceptor('^$\\.*+?()[]{}|/');
 this.regEsc_itself =
-function(ce) {
+function(ch, ce) {
   var c = this.c, s = this.src;
   c++; // \
-  var ch = s.charCodeAt(c);
   if (this.rf.u) {
     if (!isUIEsc(ch) && (!ce || ch !== CH_MIN)) {
       this.setsimpoff(c);
@@ -135,4 +138,8 @@ function(ce) {
 };
 
 this.regEsc_num =
-function(ce) {};
+function(ch, ce) {
+  var c = this.c, s = this.src, l = this.regLastOffset;
+  if (ch === 0)
+    return this.regEsc_num0(ce);
+};

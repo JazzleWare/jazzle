@@ -1,17 +1,16 @@
 // GENERAL RULE: if error occurs while parsing an elem, the parse routine sets the `regexErr and returns null
 this. parseRegex =
-function(rc, rli, rcol, rsrc, flags) {
+function(rc, rli, rcol, regLen, nump, flags) {
   var c = this.c;
   var li = this.li;
   var col = this.col;
   var luo0 = this.luo;
   var src0 = this.src;
 
-  this.src = rsrc;
-
   this.c = rc;
   this.li = rli;
   this.col = rcol;
+  this.regLastOffset = regLen;
   this.setsimpoff(this.c);
 
   var e = 0, str = 'guymi';

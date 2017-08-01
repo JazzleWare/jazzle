@@ -1,7 +1,7 @@
 this.regCurlyQuantifier =
 function() {
   ASSERT_EQ.call(this, this.regCurlyChar, false);
-  var c0 = this.c, c = c0, s = this.src, l = s.length, li0 = this.li, col0 = this.col, luo0 = this.luo;
+  var c0 = this.c, c = c0, s = this.src, l = this.regLastOffset, li0 = this.li, col0 = this.col, luo0 = this.luo;
   c++; // '{'
   this.setsimpoff(c);
   VALID: {

@@ -2,7 +2,7 @@ this.regParen =
 function() {
   var c0 = this.c;
   var s = this.src;
-  var l = s.length;
+  var l = this.regLastOffset;
 
   if (c0+1 >= l)
     return this.regErr_EOFParen();
@@ -36,7 +36,7 @@ function() {
 
 this.regPeekOrGroup =
 function() {
-  var c0 = this.c, s = this.src, l = s.length;
+  var c0 = this.c, s = this.src, l = this.regLastOffset;
   switch (this.scat(c0+2)) {
   case CH_EQUALITY_SIGN:
     return this.regPeek(true);

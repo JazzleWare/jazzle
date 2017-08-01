@@ -5,7 +5,7 @@ function(ce) {
     this.regSemiRange.max.escape !== 'hex4' && !this.regTryCompleteSemiRange())
     return null;
 
-  var c = this.c, s = this.src, l = s.length;
+  var c = this.c, s = this.src, l = this.regLastOffset;
   c += 2; // \u
   if (c >= l)
     return this.rf.u ? this.regErr_insuffucientNumsAfterU() : null;
@@ -43,7 +43,7 @@ function(ce) {
   if (ch >= 0x0dc00 && ch <= 0x0dfff)
     return this.regSurrogateComponent_VOKE(ch, c, 'trail', 'hex4');
 
-  return this.regChar_VECI(String.fromCharCode(v), c, ch, ce);
+  return this.regChar_VECI(String.fromCharCode(ch), c, ch, ce);
 };
 
 this.regEsc_uCurly =
@@ -51,7 +51,7 @@ function(ce) {
   if (ce && this.testSRerr())
     return null;
 
-  var c = this.c, s = this.src, l = s.length;
+  var c = this.c, s = this.src, l = this.regLastOffset;
   c += 3; // \u{
   if (c >= l)
     return this.regErr_insufficientNumsAfterU();

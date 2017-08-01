@@ -1,6 +1,6 @@
 this.regPrepareQ =
 function() {
-  var c = this.c, s = this.src, l = s.length;
+  var c = this.c, s = this.src, l = this.regLastOffset;
   if (c >= l)
     return false;
   switch (s.charCodeAt(c)) {

@@ -15,7 +15,7 @@ function() {
 
 this.expectChar =
 function(ch) {
-  var c = this.c, s = this.src, l = s.length;
+  var c = this.c, s = this.src, l = this.regLastOffset;
   if (c >= l)
     return false;
   if (s.charCodeAt(c) === ch) {
@@ -27,7 +27,7 @@ function(ch) {
 
 this.regTryToParseNum =
 function() {
-  var c = this.c, s = this.src, l = s.length;
+  var c = this.c, s = this.src, l = this.regLastOffset;
   if (c >= l)
     return -1;
   var v = 0, ch = s.charCodeAt(c);
