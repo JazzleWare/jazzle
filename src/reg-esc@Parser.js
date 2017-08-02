@@ -46,7 +46,12 @@ function(ce) {
   case CH_d: case CH_w: case CH_s:
     return this.regClassifier();
   default:
-    return (w >= CH_0 && w <= CH_7) ? this.regEsc_num(w, ce) : this.regEsc_itself(w, ce);
+    if (w >= CH_0 && w <= CH_9) {
+      elem = this.regEsc_num(w, ce);
+      if (elem || this.regErr) return elem;
+      this.rw(c0,li0,col0,luo0);
+    }
+    return this.regEsc_itself(w, ce);
   }
 };
 
@@ -140,6 +145,63 @@ function(ch, ce) {
 this.regEsc_num =
 function(ch, ce) {
   var c = this.c, s = this.src, l = this.regLastOffset;
-  if (ch === 0)
+  if (ch === CH_0)
     return this.regEsc_num0(ce);
+  var r0 = ch;
+  var num = ch - CH_0;
+  c += 2; // \[:num:]
+  while (c < l) {
+    ch = s.charCodeAt(c);
+    if (!isNum(ch)) break;
+    num *= 10;
+    num += ch - CH_0;
+    c++;
+  }
+  if (num <= this.regNC) {
+    var c0 = this.c, loc0 = this.loc();
+    this.setsimpoff(c);
+    return {
+      type: '#Regex.Ref',
+      value: num,
+      start: c0,
+      end: this.c,
+      raw: s.substring(c0, this.c),
+      loc: { start: loc0, end: this.loc() }
+    };
+  }
+  if (this.rf.u) {
+    this.setsimpoff(c);
+    return this.regErr_nonexistentRef();
+  }
+  if (r0 >= CH_8)
+    return null;
+  return this.regEsc_legacyNum(r0, ce);
+};
+
+// TODO: strict-chk
+this.regEsc_legacyNum =
+function(ch, ce) {
+  var c = this.c, s = this.src, l = this.regLastOffset;
+  var max = ch >= CH_4 ? 1 : 2, num = ch - CH_0;
+  c += 2; // \[:num:]
+  while (c < l) {
+    ch = s.charCodeAt(c);
+    if (ch < CH_0 || ch > CH_7) break;
+    num = (num<<3)|(ch-CH_0);
+    c++;
+    if (--max === 0) break;
+  }
+  return this.regChar_VECI(String.fromCharCode(num), c, num, ce);
+};
+
+this.regEsc_num0 =
+function(ce) {
+  var c = this.c, s = this.src, l = this.regLastOffset;
+  c += 2; // \0
+  if (c < l) {
+    var r = s.charCodeAt(c);
+    if (c >= CH_0 && c <= CH_7)
+      return this.regEsc_legacyNum();
+  }
+  return this.regEsc_simple('\0', ce);
 };

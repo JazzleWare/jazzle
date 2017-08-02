@@ -33,12 +33,9 @@ function() {
   var v = 0, ch = s.charCodeAt(c);
   if (!isNum(ch))
     return -1;
-  var mul = 1;
-
   do {
-    v *= mul;
+    v *= 10;
     v += (ch - CH_0);
-    if (v) mul *= 10; // leading zeros not significant
     c++;
     if (c >= l)
       break;

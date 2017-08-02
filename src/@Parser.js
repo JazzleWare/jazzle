@@ -80,6 +80,7 @@ var Parser = function (src, o) {
   this.regSemiRange = null;
   this.regCurlyChar = false;
   this.regLastOffset = -1;
+  this.regNC = -1;
 
   this.regexFlags = this.rf = {};
 };

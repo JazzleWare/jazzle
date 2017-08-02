@@ -291,6 +291,7 @@ var Parser = function (src, o) {
   this.regSemiRange = null;
   this.regCurlyChar = false;
   this.regLastOffset = -1;
+  this.regNC = -1;
 
   this.regexFlags = this.rf = {};
 };
@@ -11880,7 +11881,12 @@ function(ce) {
   case CH_d: case CH_w: case CH_s:
     return this.regClassifier();
   default:
-    return (w >= CH_0 && w <= CH_7) ? this.regEsc_num(w, ce) : this.regEsc_itself(w, ce);
+    if (w >= CH_0 && w <= CH_9) {
+      elem = this.regEsc_num(w, ce);
+      if (elem || this.regErr) return elem;
+      this.rw(c0,li0,col0,luo0);
+    }
+    return this.regEsc_itself(w, ce);
   }
 };
 
@@ -11974,8 +11980,65 @@ function(ch, ce) {
 this.regEsc_num =
 function(ch, ce) {
   var c = this.c, s = this.src, l = this.regLastOffset;
-  if (ch === 0)
+  if (ch === CH_0)
     return this.regEsc_num0(ce);
+  var r0 = ch;
+  var num = ch - CH_0;
+  c += 2; // \[:num:]
+  while (c < l) {
+    ch = s.charCodeAt(c);
+    if (!isNum(ch)) break;
+    num *= 10;
+    num += ch - CH_0;
+    c++;
+  }
+  if (num <= this.regNC) {
+    var c0 = this.c, loc0 = this.loc();
+    this.setsimpoff(c);
+    return {
+      type: '#Regex.Ref',
+      value: num,
+      start: c0,
+      end: this.c,
+      raw: s.substring(c0, this.c),
+      loc: { start: loc0, end: this.loc() }
+    };
+  }
+  if (this.rf.u) {
+    this.setsimpoff(c);
+    return this.regErr_nonexistentRef();
+  }
+  if (r0 >= CH_8)
+    return null;
+  return this.regEsc_legacyNum(r0, ce);
+};
+
+// TODO: strict-chk
+this.regEsc_legacyNum =
+function(ch, ce) {
+  var c = this.c, s = this.src, l = this.regLastOffset;
+  var max = ch >= CH_4 ? 1 : 2, num = ch - CH_0;
+  c += 2; // \[:num:]
+  while (c < l) {
+    ch = s.charCodeAt(c);
+    if (ch < CH_0 || ch > CH_7) break;
+    num = (num<<3)|(ch-CH_0);
+    c++;
+    if (--max === 0) break;
+  }
+  return this.regChar_VECI(String.fromCharCode(num), c, num, ce);
+};
+
+this.regEsc_num0 =
+function(ce) {
+  var c = this.c, s = this.src, l = this.regLastOffset;
+  c += 2; // \0
+  if (c < l) {
+    var r = s.charCodeAt(c);
+    if (c >= CH_0 && c <= CH_7)
+      return this.regEsc_legacyNum();
+  }
+  return this.regEsc_simple('\0', ce);
 };
 
 },
@@ -12015,12 +12078,9 @@ function() {
   var v = 0, ch = s.charCodeAt(c);
   if (!isNum(ch))
     return -1;
-  var mul = 1;
-
   do {
-    v *= mul;
+    v *= 10;
     v += (ch - CH_0);
-    if (v) mul *= 10; // leading zeros not significant
     c++;
     if (c >= l)
       break;
@@ -12279,7 +12339,7 @@ function(cp, offset, kind, escape) {
 function(){
 // GENERAL RULE: if error occurs while parsing an elem, the parse routine sets the `regexErr and returns null
 this. parseRegex =
-function(rc, rli, rcol, regLen, nump, flags) {
+function(rc, rli, rcol, regLast, nump, flags) {
   var c = this.c;
   var li = this.li;
   var col = this.col;
@@ -12289,8 +12349,10 @@ function(rc, rli, rcol, regLen, nump, flags) {
   this.c = rc;
   this.li = rli;
   this.col = rcol;
-  this.regLastOffset = regLen;
-  this.setsimpoff(this.c);
+  this.regLastOffset = regLast - 1 - flags.length; // -('/'.length+flags.length)
+  this.regNC = nump;
+
+  this.luo = this.c;
 
   var e = 0, str = 'guymi';
   while (e < str.length) {
@@ -12299,6 +12361,9 @@ function(rc, rli, rcol, regLen, nump, flags) {
   }
 
   var n = this.regPattern();
+
+  if (this.c !== this.regLastOffset)
+    this.err('regex.no.complete.parse');
 
   this.c = c;
   this.li = li;
