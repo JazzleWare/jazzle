@@ -59,6 +59,7 @@ this.regClassifier =
 function() {
   var c0 = this.c, loc0 = this.loc(), t = this.src.charAt(c0+1);
   this.setsimpoff(c0+2);
+  this.regIsQuantifiable = true;
   return {
     type: '#Regex.Classifier',
     start: c0,
@@ -113,7 +114,7 @@ function(ce) {
 
   INV:
   if ((ch > CH_Z || ch < CH_A) && (ch < CH_a || ch > CH_z)) {
-    if (!this.ref.u && ce && ((ch >= CH_0 && ch <= CH_9) || ch === CH_UNDERLINE))
+    if (!this.rf.u && ce && ((ch >= CH_0 && ch <= CH_9) || ch === CH_UNDERLINE))
       break INV;
     this.setsimpoff(c); // TODO: unnecessary if there is no 'u' flag
     return this.rf.u ? this.regErr_controlAZaz() : null;
@@ -200,8 +201,8 @@ function(ce) {
   c += 2; // \0
   if (c < l) {
     var r = s.charCodeAt(c);
-    if (c >= CH_0 && c <= CH_7)
-      return this.regEsc_legacyNum();
+    if (r >= CH_0 && r <= CH_7)
+      return this.regEsc_legacyNum(CH_0, ce);
   }
   return this.regEsc_simple('\0', ce);
 };

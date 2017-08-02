@@ -157,11 +157,15 @@ console.log("TESTING.....");
 try {
    new Function(builder.str).call(exports);
    var ts = require('../test/testers/parser.js')
-     .createParserTester(exports.Parser, './test/assets','.ignore');
+     .createParserTester(exports.Parser, './test/assets/test-esprima','.ignore');
    ts.runAll();
 
    ts = require('../test/testers/transpiler.js')
      .createTranspilerTester(exports.Parser,exports.Transformer,exports.Emitter);
+   ts.runAll();
+
+   ts = require('../test/testers/regex.js')
+      .createRegexTester(exports.Parser, './test/assets/regex/test-data.json');
    ts.runAll();
 
    console.log("TESTING COMPLETE.");

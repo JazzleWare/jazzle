@@ -29,10 +29,15 @@ function() {
     if (s.charCodeAt(c) !== CH_RCURLY)
       break VALID;
     this.setsimpoff(c+1);
+
+    var min = { raw: minRaw, value: minVal }, max = min;
+    if (maxRaw !== "")
+      max = maxVal === -1 ? null : { raw: maxRaw, value: maxVal };
+
     return {
       type: '#Regex.CurlyQuantifier',
-      min: { raw: minRaw, value: minVal },
-      max: { raw: maxRaw, value: maxVal },
+      min: min,
+      max: max,
       end: this.c,
       start: c0,
       loc: { start: { line: li0, column: col0 }, end: this.loc() }

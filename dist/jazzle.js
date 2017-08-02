@@ -11702,10 +11702,15 @@ function() {
     if (s.charCodeAt(c) !== CH_RCURLY)
       break VALID;
     this.setsimpoff(c+1);
+
+    var min = { raw: minRaw, value: minVal }, max = min;
+    if (maxRaw !== "")
+      max = maxVal === -1 ? null : { raw: maxRaw, value: maxVal };
+
     return {
       type: '#Regex.CurlyQuantifier',
-      min: { raw: minRaw, value: minVal },
-      max: { raw: maxRaw, value: maxVal },
+      min: min,
+      max: max,
       end: this.c,
       start: c0,
       loc: { start: { line: li0, column: col0 }, end: this.loc() }
@@ -11894,6 +11899,7 @@ this.regClassifier =
 function() {
   var c0 = this.c, loc0 = this.loc(), t = this.src.charAt(c0+1);
   this.setsimpoff(c0+2);
+  this.regIsQuantifiable = true;
   return {
     type: '#Regex.Classifier',
     start: c0,
@@ -11948,7 +11954,7 @@ function(ce) {
 
   INV:
   if ((ch > CH_Z || ch < CH_A) && (ch < CH_a || ch > CH_z)) {
-    if (!this.ref.u && ce && ((ch >= CH_0 && ch <= CH_9) || ch === CH_UNDERLINE))
+    if (!this.rf.u && ce && ((ch >= CH_0 && ch <= CH_9) || ch === CH_UNDERLINE))
       break INV;
     this.setsimpoff(c); // TODO: unnecessary if there is no 'u' flag
     return this.rf.u ? this.regErr_controlAZaz() : null;
@@ -12035,8 +12041,8 @@ function(ce) {
   c += 2; // \0
   if (c < l) {
     var r = s.charCodeAt(c);
-    if (c >= CH_0 && c <= CH_7)
-      return this.regEsc_legacyNum();
+    if (r >= CH_0 && r <= CH_7)
+      return this.regEsc_legacyNum(CH_0, ce);
   }
   return this.regEsc_simple('\0', ce);
 };
@@ -12158,6 +12164,7 @@ function(notInverse) {
     end: this.c,
     loc: { start: loc0, end: this.loc() }
   };
+  this.regIsQuantifiable = !this.rf.u;
 
   if (finished) return n;
   return this.regErr_unfinishedParen(n);
@@ -12177,6 +12184,7 @@ function() {
     pattern: elem,
     loc: { start: loc0, end: this.loc() }
   };
+  this.regIsQuantifiable = !this.rf.u;
 
   if (finished) return n;
   return this.regErr_unfinishedParen(n);
@@ -12192,19 +12200,21 @@ function() {
   if (this.regErr)
     return null;
 
-  branches = [];
   if (this.expectChar(CH_OR)) {
+    branches = [];
     branches.push(elem)
     do {
+      this.resetLastRegexElem();
       elem = this.regBranch();
       if (this.regErr)
         return null;
       branches.push(elem);
-      this.resetLastRegexElem();
     } while (this.expectChar(CH_OR));
   }
   else if (elem)
-    branches.push(elem);
+    branches = [elem];
+  else
+    return null;
   
   var startLoc = branches.length && branches[0] ? branches[0].loc.start : { line: li0, column: col0 };
   var lastElem = branches.length ? branches[branches.length-1] : null;

@@ -63,6 +63,7 @@ function(notInverse) {
     end: this.c,
     loc: { start: loc0, end: this.loc() }
   };
+  this.regIsQuantifiable = !this.rf.u;
 
   if (finished) return n;
   return this.regErr_unfinishedParen(n);
@@ -82,6 +83,7 @@ function() {
     pattern: elem,
     loc: { start: loc0, end: this.loc() }
   };
+  this.regIsQuantifiable = !this.rf.u;
 
   if (finished) return n;
   return this.regErr_unfinishedParen(n);

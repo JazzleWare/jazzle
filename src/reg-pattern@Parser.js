@@ -6,19 +6,21 @@ function() {
   if (this.regErr)
     return null;
 
-  branches = [];
   if (this.expectChar(CH_OR)) {
+    branches = [];
     branches.push(elem)
     do {
+      this.resetLastRegexElem();
       elem = this.regBranch();
       if (this.regErr)
         return null;
       branches.push(elem);
-      this.resetLastRegexElem();
     } while (this.expectChar(CH_OR));
   }
   else if (elem)
-    branches.push(elem);
+    branches = [elem];
+  else
+    return null;
   
   var startLoc = branches.length && branches[0] ? branches[0].loc.start : { line: li0, column: col0 };
   var lastElem = branches.length ? branches[branches.length-1] : null;
