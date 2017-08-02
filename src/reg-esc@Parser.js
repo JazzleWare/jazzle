@@ -16,7 +16,7 @@ function(ce) {
     elem = this.regEsc_u(ce);
     if (elem || this.regErr) return elem;
     this.rw(c0,li0,col0,luo0);
-    return this.regEsc_itself(ce);
+    return this.regEsc_itself(CH_u, ce);
   }
 
   switch (w) {
@@ -45,6 +45,8 @@ function(ce) {
   case CH_D: case CH_W: case CH_S:
   case CH_d: case CH_w: case CH_s:
     return this.regClassifier();
+  case CH_B:
+    return ce ? this.regEsc_itself(w, ce) : this.regBbAssertion();
   default:
     if (w >= CH_0 && w <= CH_9) {
       elem = this.regEsc_num(w, ce);

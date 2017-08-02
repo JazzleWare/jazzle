@@ -28,7 +28,11 @@ function() {
       break VALID;
     if (s.charCodeAt(c) !== CH_RCURLY)
       break VALID;
+
     this.setsimpoff(c+1);
+
+    if (maxVal >= 0 && maxVal < minVal)
+      return this.regErr_curlyMinIsBiggerThanMax(); // TODO: max's location rather than }'s location
 
     var min = { raw: minRaw, value: minVal }, max = min;
     if (maxRaw !== "")

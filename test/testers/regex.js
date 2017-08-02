@@ -84,6 +84,8 @@ function createRegexTester(Parser, tpath) {
       delete a.quantifier;
       delete a.rangeQuantifier;
     });
+    if (comp) { console.error("E", util.obj2str(eR)); console.error("A", util.obj2str(aR)); }
+      
     return { value: comp, compatible: comp === null, state: 'complete' };
   };
 
@@ -123,7 +125,21 @@ function createRegexTester(Parser, tpath) {
     }
   };
 
+  var ignores = {
+    '[\\0001]': true,
+    '[\\B]': true,
+    '\\0': true 
+  };
+  var l = 0x0410; while (l < 0x0450) ignores['\\c'+String.fromCharCode(l++)] = true;
+
+  ts.addIgnorer('.ignore', function(test) {
+    var src = test.get('src');
+    console.error("IGNORE?", src);
+    return HAS.call(ignores, src) && ignores[src];
+  });
+
   loadRegexTests(ts, tpath);
+
   return ts;
 };
 
