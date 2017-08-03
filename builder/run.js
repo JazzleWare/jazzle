@@ -165,7 +165,11 @@ try {
    ts.runAll();
 
    ts = require('../test/testers/regex.js')
-      .createRegexTester(exports.Parser, './test/assets/regex/test-data.json');
+      .createRegexTester(exports.Parser, [
+        { flags: "", path: './test/assets/regex/test-data.json' },
+        { flags: "", path: './test/assets/regex/test-data-nonstandard.json' },
+        { flags: "u", path: './test/assets/regex/test-data-unicode.json' }
+      ]);
    ts.runAll();
 
    console.log("TESTING COMPLETE.");

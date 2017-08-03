@@ -11601,6 +11601,7 @@ function(list, tail) {
     return;
   }
 
+  if (ltop.type === '#Regex.Range' && isLead(ltop.max) && isTrail(tail)) ltop.max.next = tail;
   if (len < 2 || ltop.type !== '#Regex.Hy') { list.push(tail); return; }
 
   var max = tail;
@@ -11645,6 +11646,7 @@ function() {
     return this.regErr_minBiggerThanMax(sr.min, sr.max);
 
   sr.type = '#Regex.Range';
+  sr.end = sr.max.end;
   sr.loc.end = sr.max.loc.end;
 
   this.regSemiRange = null;

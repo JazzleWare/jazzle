@@ -37,7 +37,7 @@ function ncap(str) {
   return np;
 };
 
-function createRegexTester(Parser, tpath) {
+function createRegexTester(Parser, tpaths) {
   var ts = new lib.TestSuite('Regex-Suite');
 
   ts.tester.make =
@@ -49,7 +49,11 @@ function createRegexTester(Parser, tpath) {
   ts.tester.run =
   function(tester, test) {
 //  console.error(test);
-    var n = { src: tester.src, result: tester.parseRegex(0, 1, 0, tester.src.length + 1, ncap(tester.src), "") };
+    var fl = test.get('flags');
+    var n = {
+      src: tester.src,
+      result: tester.parseRegex(0, 1, 0, tester.src.length + 1 + fl.length, ncap(tester.src), fl, tester.src.length + 1, 1, tester.src.length + 1)
+    };
     if (!n.result)
       console.error(n);
     if (n.result.type === '#Regex.Err')
@@ -71,6 +75,11 @@ function createRegexTester(Parser, tpath) {
 //    delete a.loc; 
 //    console.error("E", e);
 //    console.error("A", a);
+      if (a.type === '#Regex.Ho') {
+        if (a.c1)
+          ASSERT.call(this, a.c2 && a.c1.next === a.c2);
+        delete a.c1; delete a.c2
+      }
       if (a.type !== '#Regex.Quantified')
         return;
       a.raw = aS.substring(a.start, a.end );
@@ -90,7 +99,7 @@ function createRegexTester(Parser, tpath) {
       delete a.quantifier;
       delete a.rangeQuantifier;
     });
-//  if (comp) { console.error("E", util.obj2str(eR)); console.error("A", util.obj2str(aR)); }
+    if (comp) { console.error("E", util.obj2str(eR)); console.error("A", util.obj2str(aR)); }
       
     return { value: comp, compatible: comp === null, state: 'complete' };
   };
@@ -122,7 +131,7 @@ function createRegexTester(Parser, tpath) {
 
       if (test && test.actual.type === 'pass' && test.incompatible()) {
         console.error(test);
-        console.error(/* util.obj2str */(test.comp.value));
+        console.error( util.obj2str (test.comp.value));
         throw new Error('pass but not matching strictly');
       }
     },
@@ -144,26 +153,32 @@ function createRegexTester(Parser, tpath) {
     return HAS.call(ignores, src) && ignores[src];
   });
 
-  loadRegexTests(ts, tpath);
+  loadRegexTests(ts, tpaths);
 
   return ts;
 };
 
-function loadRegexTests(ts, tpath) {
-  var json = fs.readFileSync(tpath, 'utf-8').toString();
-  json = JSON.parse(json);
-  for (var name in json) {
-    if (!HAS.call(json, name)) continue;
-    var test = new lib.Test();
-    test.set('src', name);
+function loadRegexTests(ts, tpaths) {
+  var e = 0;
+  while (e < tpaths.length) {
+    var elem = tpaths[e];
+    var json = fs.readFileSync(elem.path, 'utf-8').toString();
+    json = JSON.parse(json);
+    for (var name in json) {
+      if (!HAS.call(json, name)) continue;
+      var test = new lib.Test();
+      test.set('src', name);
+      test.set('flags',elem.flags);
 
-    var originalResult = json[name];
-    test.set('original', originalResult);
-    if (originalResult.type === 'error')
-      test.expectVT({src: name, result: originalResult}, 'fail');
-    else
-      test.expectVT({src: name, result: regexCast(originalResult)}, 'pass');
-    ts.add(test);
+      var originalResult = json[name];
+      test.set('original', originalResult);
+      if (originalResult.type === 'error')
+        test.expectVT({src: name, result: originalResult}, 'fail');
+      else
+        test.expectVT({src: name, result: regexCast(originalResult)}, 'pass');
+      ts.add(test);
+    }
+    e++;
   }
 }
 
@@ -236,13 +251,40 @@ function castArrayToBranch(list) {
       last.value += n.value;
       last.loc.end = n.loc.end;
     }
-    else { last = n; r.push(n); }
+    else {
+      if (last && last.type === '#Regex.SurrogateComponent' && last.kind === 'lead' &&
+        n.type === '#Regex.SurrogateComponent' && n.kind === 'trail')
+        last.next = n;
+      last = n; r.push(n);
+    }
   }
   return r;
 };
 
 Cast['value'] =
 function() {
+  var v = -1;
+  v = this.codePoint;
+  if (v > 0xFFFF)
+    return LOC({
+      type: '#Regex.Ho',
+      cp: v,
+      start: this.range[0],
+      end: this.range[1],
+      raw: this.raw
+    });
+
+  if ((v >= 0x0d800 && v <= 0x0dbff) || (v >= 0x0dc00 && v <= 0x0dfff))
+    return LOC({
+      type: '#Regex.SurrogateComponent',
+      kind: v > 0x0dbff ? 'trail' : 'lead',
+      start: this.range[0],
+      end: this.range[1],
+      cp: this.codePoint,
+      next: null,
+      raw: this.raw
+    });
+
   return LOC({
     type: '#Regex.CharSeq',
     cp: this.codePoint,
@@ -362,11 +404,18 @@ function() {
     end: this.range[1],
     elements: []
   });
-  var list = this.body, e = 0;
+  var list = this.body, last = null, e = 0;
   while (e < list.length) {
     var elem = n.elements[e] = cast.call(list[e]);
     if (elem.type === '#Regex.CharSeq' && elem.raw === '-')
       elem.type = '#Regex.Hy';
+    var l = last;
+    if (l && l.type === '#Regex.Range')
+      l = l.max;
+    if (l && l.type === '#Regex.SurrogateComponent' && l.kind === 'lead' &&
+      elem.type === '#Regex.SurrogateComponent' && elem.kind === 'trail')
+      l.next = elem;
+    last = elem;
     e++;
   }
 //console.error(util.obj2str(n));
