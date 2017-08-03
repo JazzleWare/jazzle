@@ -32,7 +32,7 @@ function(value, offset, ch, ce) {
     parent.charLength += 1;
     parent.value += value;
     parent.end += raw.length;
-    parent.loc.end += raw.length;
+    parent.loc.end.column += raw.length;
     if (parent.cp !== -1)
       parent.cp = -1;
     return parent;

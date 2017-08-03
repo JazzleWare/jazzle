@@ -11503,7 +11503,7 @@ function(value, offset, ch, ce) {
     parent.charLength += 1;
     parent.value += value;
     parent.end += raw.length;
-    parent.loc.end += raw.length;
+    parent.loc.end.column += raw.length;
     if (parent.cp !== -1)
       parent.cp = -1;
     return parent;
@@ -12224,7 +12224,7 @@ function() {
   
   var startLoc = branches.length && branches[0] ? branches[0].loc.start : { line: li0, column: col0 };
   var lastElem = branches.length ? branches[branches.length-1] : null;
-  var endLoc = lastElem ? lastElem.end.loc : this.loc();
+  var endLoc = lastElem ? lastElem.loc.end : this.loc();
 
   this.lastRegexElem = l;
 
@@ -12296,10 +12296,10 @@ function(elem) {
   var greedy = true;
   if (this.scat(this.c) === CH_QUESTION) {
     if (bq)
-      loc = { start: loc.start, end: loc.end };
+      loc = { line: loc.line, column: loc.column };
     c++;
     this.setsimpoff(c);
-    loc.end++;
+    loc.column++;
     greedy = false;
   }
 

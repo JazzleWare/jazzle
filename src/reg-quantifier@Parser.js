@@ -43,10 +43,10 @@ function(elem) {
   var greedy = true;
   if (this.scat(this.c) === CH_QUESTION) {
     if (bq)
-      loc = { start: loc.start, end: loc.end };
+      loc = { line: loc.line, column: loc.column };
     c++;
     this.setsimpoff(c);
-    loc.end++;
+    loc.column++;
     greedy = false;
   }
 

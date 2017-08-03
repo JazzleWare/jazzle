@@ -62,7 +62,7 @@ function createRegexTester(Parser, tpath) {
     var eS = e.src, aS = a.src;
 //  console.error("E", util.obj2str(eR), "A", util.obj2str(aR));
     var comp = util.compare_ea(eR, aR, null, function(e,a) {
-      delete a.loc; 
+//    delete a.loc; 
 //    console.error("E", e);
 //    console.error("A", a);
       if (a.type !== '#Regex.Quantified')
@@ -161,24 +161,33 @@ function loadRegexTests(ts, tpath) {
   }
 }
 
+function LOC(n) {
+  var str = util.obj2str(n);
+  ASSERT.call(this, !HAS.call(n, 'loc'), 'loc '+str);
+  ASSERT.call(this, HAS.call(n, 'end'), 'end '+str);
+  ASSERT.call(this, HAS.call(n, 'start'), 'start '+str);
+  n.loc = { start: { line: 1, column: n.start }, end: { line: 1, column: n.end } };
+  return n;
+}
+
 function regexNormalize(n) {
   switch (n.type) {
   case '#Regex.Main':
     return n;
   case '#Regex.Branch':
-    return {
+    return LOC({
       type: '#Regex.Main',
       branches: [n],
       start: n.start,
       end: n.end
-    };
+    });
   default:
-    return regexNormalize({
+    return regexNormalize(LOC({
       type: '#Regex.Branch',
       elements: [n],
       start: n.start,
       end: n.end
-    });
+    }));
   }
 }
 
@@ -189,12 +198,12 @@ function regexBranch(r) {
     return r;
 
   var elements = [r];
-  return {
+  return LOC({
     type: '#Regex.Branch',
     elements: elements,
     start: r.start,
     end: r.end
-  };
+  });
 };
 
 function regexCast(r) { return regexNormalize(cast.call(r)); };
@@ -219,6 +228,7 @@ function castArrayToBranch(list) {
       last.raw += n.raw;
       last.end = n.end;
       last.value += n.value;
+      last.loc.end = n.loc.end;
     }
     else { last = n; r.push(n); }
   }
@@ -227,7 +237,7 @@ function castArrayToBranch(list) {
 
 Cast['value'] =
 function() {
-  return {
+  return LOC({
     type: '#Regex.CharSeq',
     cp: this.codePoint,
     start: this.range[0],
@@ -235,7 +245,7 @@ function() {
     value: String.fromCharCode(this.codePoint),
     charLength: 1,
     raw: this.raw
-  };
+  });
 };     
 
 Cast['disjunction'] =
@@ -245,24 +255,24 @@ function() {
     var r = list[e++];
     branches.push(regexBranch(r && cast.call(r)));
   }
-  return {
+  return LOC({
     type: '#Regex.Main',
     branches: branches,
     start: this.range[0],
     end: this.range[1],
-  };
+  });
 };
 
 Cast['alternative'] =
 function() {
   if (this.body.length === 0)
     return null;
-  return {
+  return LOC({
     type: '#Regex.Branch',
     elements: castArrayToBranch(this.body),
     start: this.range[0],
     end: this.range[1]
-  };
+  });
 };
 
 Cast['group'] =
@@ -284,44 +294,45 @@ function() {
     if (list.length === 1)
       r = regexNormalize(cast.call(list[0]));
     else {
-      var branch = {
+      var branch = LOC({
         type: '#Regex.Branch',
         elements: castArrayToBranch(list),
         start: list[0].range[0],
         end: list[list.length-1].range[1]
-      };
+      });
       r = {
         type: '#Regex.Main',
         branches: [branch],
       };
       r.start = branch.start;
       r.end = branch.end;
+      r = LOC(r);
     }
     n.pattern = r;
   }
-  return n;
+  return LOC(n);
 };
 
 Cast['reference'] =
 function() {
-  return {
+  return LOC({
     type: '#Regex.Ref',
     value: this.matchIndex,
     start: this.range[0],
     end: this.range[1],
     raw: this.raw
-  };
+  });
 };
 
 Cast['quantifier'] =
 function() {
-  var n = {
+  var n = LOC({
     type: '#Regex.Quantified',
     raw: this.raw,
     start: this.range[0],
     end: this.range[1],
     greedy: this.greedy
-  };
+  });
   var list = this.body ;
   ASSERT.call(this, list.length <= 1, 'len');
   if (!list.length) 
@@ -338,13 +349,13 @@ function() {
 
 Cast['characterClass'] =
 function() {
-  var n = {
+  var n = LOC({
     type: '#Regex.Class',
     inverse: this.negative,
     start: this.range[0],
     end: this.range[1],
     elements: []
-  };
+  });
   var list = this.body, e = 0;
   while (e < list.length) {
     var elem = n.elements[e] = cast.call(list[e]);
@@ -366,42 +377,42 @@ function() {
   default: t = 'B'; break;
   }
 
-  return {
+  return LOC({
     type: '#Regex.Assertion',
     kind: t,
     start: this.range[0],
     end: this.range[1],
-  };
+  });
 };
 
 Cast['dot'] =
 function() {
-  return {
+  return LOC({
     type: '#Regex.Dot',
     end: this.range[1],
     start: this.range[0]
-  };
+  });
 };
 
 Cast['characterClassEscape'] =
 function() {
-  return {
+  return LOC({
     type: '#Regex.Classifier',
     kind: this.value,
     start: this.range[0],
     end: this.range[1],
-  };
+  });
 };
 
 Cast['characterClassRange'] =
 function() {
-  return {
+  return LOC({
     type: '#Regex.Range',
     min: cast.call(this.min),
     start: this.range[0],
     end: this.range[1],
     max: cast.call(this.max)
-  };
+  });
 };
 
  module.exports.createRegexTester = createRegexTester;
