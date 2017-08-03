@@ -103,7 +103,11 @@ function(ch) {
 };
 
 this.regErrNew =
-function(kind, eloc, ctx) {
+function() {
+  var kind = arguments[0];
+  var eloc = (arguments.length > 1 && arguments[1]) || this.loc();
+  var ctx = (arguments.length > 2 && arguments[2]) || null;
+
   ASSERT.call(this, this.regErr === null, 'regErr');
   this.regErr = {
     type: '#Regex.Err',

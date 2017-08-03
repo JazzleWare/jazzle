@@ -9618,11 +9618,14 @@ function() {
   var pattern = s.substring(this.c, c);
   c++; // '/'
 
+  var patternStart = this.c;
+  this.setsimpoff(c);
+
   var flags = "", flagsStart = c;
   while (c < l && isIDBody(s.charCodeAt(c))) c++;
   flags = s.substring(flagsStart, c);
 
-  var n = this.parseRegex(this.c, loc0.column+1, loc0.line, c, nump, flags);
+  var n = this.parseRegex(patternStart, loc0.column+1, loc0.line, c, nump, flags, this.c, this.li, this.col);
   this.setsimpoff(c);
   var regex = {
     type: 'Literal',
@@ -11834,7 +11837,11 @@ function(ch) {
 };
 
 this.regErrNew =
-function(kind, eloc, ctx) {
+function() {
+  var kind = arguments[0];
+  var eloc = (arguments.length > 1 && arguments[1]) || this.loc();
+  var ctx = (arguments.length > 2 && arguments[2]) || null;
+
   ASSERT.call(this, this.regErr === null, 'regErr');
   this.regErr = {
     type: '#Regex.Err',
@@ -12475,35 +12482,60 @@ function(cp, offset, kind, escape) {
 function(){
 // GENERAL RULE: if error occurs while parsing an elem, the parse routine sets the `regexErr and returns null
 this. parseRegex =
-function(rc, rli, rcol, regLast, nump, flags) {
+function(rc, rli, rcol, regLast, nump, flags, 
+  /* tail (flags) */
+  tc, tli, tcol) {
   var c = this.c;
   var li = this.li;
   var col = this.col;
   var luo0 = this.luo;
   var src0 = this.src;
 
-  this.c = rc;
-  this.li = rli;
-  this.col = rcol;
-  this.regLastOffset = regLast - 1 - flags.length; // -('/'.length+flags.length)
-  this.regNC = nump;
+  var e = 0, str = 'guymi';
+  while (e < str.length) 
+    this.rf[str[e++]] = false;
+  e = 0;
 
+  this.li = tli;
+  this.col = tcol;
+  this.c = tc;
   this.luo = this.c;
 
-  var e = 0, str = 'guymi';
-  while (e < str.length) {
-    this.regexFlags[str[e]] = flags.indexOf(str[e]) >= 0;
+  var n = null;
+  while (e < flags.length) {
+    var fl = flags[e];
+    if (!HAS.call(this.rf, fl)) {
+      this.setsimpoff(tc+e);
+      n = { type: '#Regex.Err', kind: 'flagunknown', loc: this.loc(), position: tc + e, ctx: { flag: fl } };
+      break;
+    }
+    if (this.rf[fl]) {
+      this.setsimpoff(tc+e);
+      n = { type: '#Regex.Err', kind: 'flagduplicate', loc: this.loc(), position: tc + e, ctx: { flag: fl } };
+      break;
+    }
+    this.rf[fl] = true;
     e++;
   }
 
-  var n = this.regPattern();
-  
-  if (this.regErr) { n = this.regErr; this.regErr = null; }
-  else if (this.c !== this.regLastOffset) {
-    this.err('regex.no.complete.parse');
-    // must never actually happen or else an error-regex-elem would have existed for it
-    if (n.branches.length <= 0)
-      this.err('regex.with.no.elements');
+  if (n === null) {
+    this.c = rc;
+    this.li = rli;
+    this.col = rcol;
+    this.regLastOffset = regLast - 1 - flags.length; // -('/'.length+flags.length)
+    this.regNC = nump;
+
+    this.luo = this.c;
+
+    var n = this.regPattern();
+    
+    if (this.regErr) { n = this.regErr; this.regErr = null; }
+    else if (this.c !== this.regLastOffset) {
+      this.err('regex.no.complete.parse');
+      // must never actually happen or else an error-regex-elem would have existed for it
+      if (n.branches.length <= 0)
+        this.err('regex.with.no.elements');
+    }
   }
 
   this.c = c;

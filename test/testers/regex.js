@@ -111,7 +111,8 @@ function createRegexTester(Parser, tpath) {
         console.error(
           state + '[ex='+test.expected.type+' got='+test.actual.type+']',
           NAMES[test.geci()],
-          test.name
+          test.actual.value,
+          test.expected.value
         );
 
       if (test && test.contrary()) {
