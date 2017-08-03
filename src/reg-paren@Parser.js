@@ -5,7 +5,7 @@ function() {
   var l = this.regLastOffset;
 
   if (c0+1 >= l)
-    return this.regErr_EOFParen();
+    return this.regErr_unfinishedParen();
 
   if (s.charCodeAt(c0+1) === CH_QUESTION)
     return this.regPeekOrGroup();
@@ -37,7 +37,8 @@ function() {
 this.regPeekOrGroup =
 function() {
   var c0 = this.c, s = this.src, l = this.regLastOffset;
-  switch (this.scat(c0+2)) {
+  var r = this.scat(c0+2);
+  switch (r) {
   case CH_EQUALITY_SIGN:
     return this.regPeek(true);
   case CH_EXCLAMATION:
@@ -45,7 +46,7 @@ function() {
   case CH_COLON:
     return this.regGroup();
   default:
-    return this.regErr_invalidCharAfterQuestionParen(); // (?
+    return this.regErr_invalidCharAfterQuestionParen(r); // (?
   }
 };
 

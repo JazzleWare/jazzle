@@ -43,6 +43,15 @@ function loadIgnores(ts, tignore) {
   ts.addIgnorer('.lineNumber', function(test) { return false && test.expected.value.hasOwnProperty('lineNumber') });
   ts.addIgnorer('.js.xml', function(test) { return test.get('uri').indexOf('JSX') !== -1 });
   ts.addIgnorer('.tokens',function(test) { return test.get('json-type') === 'tokens' });
+  ts.addIgnorer('.regex',function(test) {
+    if (test.expected && test.expected.type === 'fail' &&
+      test.expected.value && test.expected.value.message) {
+      var m = test.expected.value.message;
+      return m.indexOf('Error') !== -1 && m.match(/regular\s*-?\s*expression/i);
+    }
+
+    return false;
+  });
 
   fs.readFileSync(tignore).toString().split('\n')
     .forEach(function(line) {

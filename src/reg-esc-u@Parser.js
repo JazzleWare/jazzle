@@ -8,7 +8,7 @@ function(ce) {
   var c = this.c, s = this.src, l = this.regLastOffset;
   c += 2; // \u
   if (c >= l)
-    return this.rf.u ? this.regErr_insuffucientNumsAfterU() : null;
+    return this.rf.u ? this.regErr_insufficientNumsAfterU() : null;
 
   var r = s.charCodeAt(c);
   if (this.rf.u && r === CH_LCURLY)
@@ -54,17 +54,17 @@ function(ce) {
   var c = this.c, s = this.src, l = this.regLastOffset;
   c += 3; // \u{
   if (c >= l)
-    return this.regErr_insufficientNumsAfterU();
+    return this.regErr_insufficientNumsAfterU(ce);
   var r = s.charCodeAt(c);
   var ch = hex2num(r);
   if (ch === -1) {
     this.setsimpoff(c);
-    return this.regErr_nonNumInU();
+    return this.regErr_nonNumInU(ce);
   }
   c++;
   while (true) {
     if (c >= l)
-      return this.regErr_uBraceNotReached();
+      return this.regErr_uRCurlyNotReached();
 
     r = s.charCodeAt(c);
     if (r === CH_RCURLY) { c++; break; }
@@ -78,7 +78,7 @@ function(ce) {
     ch = (ch<<4)|r;
     if (ch > 1114111) {
       this.setsimpoff(c);
-      return this.regErr_1114111U();
+      return this.regErr_1114111U(ch, ce);
     }
     c++;
   }

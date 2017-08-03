@@ -68,11 +68,11 @@ function() {
     return this.regParen();
   case CH_LCURLY:
     if (this.rf.u)
-      return this.regErr_looseLBrace();
+      return this.regErr_looseLCurly();
     if (!this.regCurlyChar) {
       elem = this.regCurlyQuantifier();
       if (elem)
-        return this.regeErr_looseCurlyQuantifier(elem);
+        return this.regErr_looseCurlyQuantifier(elem);
       if (this.regErr) // shouldn't hold
         return null;
     }
@@ -81,6 +81,8 @@ function() {
     // regCurlyQuantifier does the rw itself
     elem = this.regChar(false); // '{'
     return elem;
+  case CH_RCURLY:
+    return this.regErr_looseRCurly();
   case CH_BACK_SLASH:
     return this.regEsc(false);
   case CH_$:
@@ -93,8 +95,6 @@ function() {
   case CH_OR:
   case CH_RPAREN:
     return null;
-  case CH_RCURLY:
-    return this.regErr_looseRCurly();
   case CH_SINGLEDOT:
     return this.regDot();
   default:

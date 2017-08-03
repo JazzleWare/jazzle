@@ -48,7 +48,13 @@ function createRegexTester(Parser, tpath) {
 
   ts.tester.run =
   function(tester, test) {
-    return { src: tester.src, result: tester.parseRegex(0, 1, 0, tester.src.length + 1, ncap(tester.src), "") };
+//  console.error(test);
+    var n = { src: tester.src, result: tester.parseRegex(0, 1, 0, tester.src.length + 1, ncap(tester.src), "") };
+    if (!n.result)
+      console.error(n);
+    if (n.result.type === '#Regex.Err')
+      throw n;
+    return n;
   };
 
   ts.comp.fail =
@@ -84,7 +90,7 @@ function createRegexTester(Parser, tpath) {
       delete a.quantifier;
       delete a.rangeQuantifier;
     });
-    if (comp) { console.error("E", util.obj2str(eR)); console.error("A", util.obj2str(aR)); }
+//  if (comp) { console.error("E", util.obj2str(eR)); console.error("A", util.obj2str(aR)); }
       
     return { value: comp, compatible: comp === null, state: 'complete' };
   };
@@ -115,7 +121,7 @@ function createRegexTester(Parser, tpath) {
 
       if (test && test.actual.type === 'pass' && test.incompatible()) {
         console.error(test);
-        console.error(util.obj2str(test.comp.value));
+        console.error(/* util.obj2str */(test.comp.value));
         throw new Error('pass but not matching strictly');
       }
     },
@@ -134,7 +140,6 @@ function createRegexTester(Parser, tpath) {
 
   ts.addIgnorer('.ignore', function(test) {
     var src = test.get('src');
-    console.error("IGNORE?", src);
     return HAS.call(ignores, src) && ignores[src];
   });
 
@@ -162,7 +167,7 @@ function loadRegexTests(ts, tpath) {
 }
 
 function LOC(n) {
-  var str = util.obj2str(n);
+  var str = ""; // util.obj2str(n);
   ASSERT.call(this, !HAS.call(n, 'loc'), 'loc '+str);
   ASSERT.call(this, HAS.call(n, 'end'), 'end '+str);
   ASSERT.call(this, HAS.call(n, 'start'), 'start '+str);

@@ -11433,11 +11433,11 @@ function() {
     return this.regParen();
   case CH_LCURLY:
     if (this.rf.u)
-      return this.regErr_looseLBrace();
+      return this.regErr_looseLCurly();
     if (!this.regCurlyChar) {
       elem = this.regCurlyQuantifier();
       if (elem)
-        return this.regeErr_looseCurlyQuantifier(elem);
+        return this.regErr_looseCurlyQuantifier(elem);
       if (this.regErr) // shouldn't hold
         return null;
     }
@@ -11446,6 +11446,8 @@ function() {
     // regCurlyQuantifier does the rw itself
     elem = this.regChar(false); // '{'
     return elem;
+  case CH_RCURLY:
+    return this.regErr_looseRCurly();
   case CH_BACK_SLASH:
     return this.regEsc(false);
   case CH_$:
@@ -11458,8 +11460,6 @@ function() {
   case CH_OR:
   case CH_RPAREN:
     return null;
-  case CH_RCURLY:
-    return this.regErr_looseRCurly();
   case CH_SINGLEDOT:
     return this.regDot();
   default:
@@ -11551,7 +11551,7 @@ function() {
     return null; // an error has got set
 
   if (!this.expectChar(CH_RSQBRACKET))
-    return this.regErr_bracketUnfinished(n);
+    return this.regErr_classUnfinished(n);
 
   n = {
     type: '#Regex.Class',
@@ -11612,7 +11612,7 @@ function(list, tail) {
   if (this.regexFlags.u && isLead(tail) && tail.escape !== '{}')
     semi = true;
   else if (minv > maxv)
-    return this.regerr_minBiggerThanMax(min, tail);
+    return this.regErr_minBiggerThanMax(min, tail);
 
   list.pop(); // '-'
   list.pop(); // head
@@ -11729,6 +11729,125 @@ function() {
 
 },
 function(){
+this.regErr_nonexistentRef =
+function(ref) {
+  return this.regErrNew('nonexistent-ref', this.loc(), { ref: ref });
+};
+
+this.regErr_looseLCurly =
+function() {
+  return this.regErrNew('loose-lcurly', this.loc());
+};
+
+this.regErr_looseRCurly =
+function() {
+  return this.regErrNew('loose-rcurly', this.loc());
+};
+
+this.regErr_invalidUEsc =
+function(esc) {
+  return this.regErrNew('invalid-uesc', this.loc(), { esc: esc });
+};
+
+this.regErr_classUnfinished =
+function() {
+  return this.regErrNew('class-unfinished', this.loc());
+};
+
+this.regErr_looseCurlyQuantifier =
+function(elem) {
+  return this.regErrNew('loose-cq', elem.loc.start);
+};
+
+this.regErr_trailSlash =
+function() {
+  return this.regErrNew('trail-slash', this.loc());
+};
+
+this.regErr_hexEOF =
+function() {
+  return this.regErrNew('hex-eof', this.loc());
+};
+
+this.regErr_hexEscNotHex =
+function() {
+  return this.regErrNew('hex-not', this.loc());
+};
+
+this.regErr_minBiggerThanMax =
+function(min, max) {
+  return this.regErrNew('min-bigger-than-max', this.loc(), { min: min, max: max });
+};
+
+this.regErr_controlAZaz =
+function(esc) {
+  return this.regErrNew('control-AZaz', this.loc(), { esc: esc });
+};
+
+this.regErr_controlEOF =
+function() {
+  return this.regErrNew('control-eof', this.loc());
+};
+
+this.regErr_insufficientNumsAfterU =
+function(ce) {
+  if (ce && this.testSRerr()) return null;
+  return this.regErrNew('insufficient-nums-after-u', this.loc());
+};
+
+this.regErr_nonNumInU =
+function(ce) {
+  if (ce && this.testSRerr()) return null;
+  return this.regErrNew('non-num-in-u', this.loc());
+};
+
+this.regErr_looseQuantifier =
+function() {
+  return this.regErrNew('loose-quantifier', this.loc());
+};
+
+this.regErr_uRCurlyNotReached =
+function(ce) {
+  if (ce && this.testSRerr()) return null;
+  return this.regErrNew('u-rcurly', this.loc());
+};
+
+this.regErr_1114111U =
+function(ch, ce) {
+  if (ce && this.testRSerr()) return null;
+  return this.regErrNew('1114111-u', this.loc(), { value: ch });
+};
+
+this.regErr_curlyMinIsBiggerThanMax =
+function(min, max) {
+  return this.regErrNew('curly-min-is-bigger-max', this.loc(), { min: min, max: max });
+};
+
+this.regErr_unfinishedParen =
+function(n) {
+  return this.regErrNew('rparen-missing', this.loc(), { element: n });
+};
+
+this.regErr_invalidCharAfterQuestionParen =
+function(ch) {
+  return this.regErrNew('qparen', this.loc(), { ch: ch });
+};
+
+this.regErrNew =
+function(kind, eloc, ctx) {
+  ASSERT.call(this, this.regErr === null, 'regErr');
+  this.regErr = {
+    type: '#Regex.Err',
+    kind: kind,
+    context: ctx,
+    position: this.c,
+    loc: eloc
+  };
+  return null;
+};
+
+},
+function(){
 // errors pertaining to u escapes will first check for pending semi ranges at the start of their corresponding routines
 this.regEsc_u =
 function(ce) {
@@ -11739,7 +11858,7 @@ function(ce) {
   var c = this.c, s = this.src, l = this.regLastOffset;
   c += 2; // \u
   if (c >= l)
-    return this.rf.u ? this.regErr_insuffucientNumsAfterU() : null;
+    return this.rf.u ? this.regErr_insufficientNumsAfterU() : null;
 
   var r = s.charCodeAt(c);
   if (this.rf.u && r === CH_LCURLY)
@@ -11785,17 +11904,17 @@ function(ce) {
   var c = this.c, s = this.src, l = this.regLastOffset;
   c += 3; // \u{
   if (c >= l)
-    return this.regErr_insufficientNumsAfterU();
+    return this.regErr_insufficientNumsAfterU(ce);
   var r = s.charCodeAt(c);
   var ch = hex2num(r);
   if (ch === -1) {
     this.setsimpoff(c);
-    return this.regErr_nonNumInU();
+    return this.regErr_nonNumInU(ce);
   }
   c++;
   while (true) {
     if (c >= l)
-      return this.regErr_uBraceNotReached();
+      return this.regErr_uRCurlyNotReached();
 
     r = s.charCodeAt(c);
     if (r === CH_RCURLY) { c++; break; }
@@ -11809,7 +11928,7 @@ function(ce) {
     ch = (ch<<4)|r;
     if (ch > 1114111) {
       this.setsimpoff(c);
-      return this.regErr_1114111U();
+      return this.regErr_1114111U(ch, ce);
     }
     c++;
   }
@@ -11933,7 +12052,7 @@ function(ce) {
   var ch2 = hex2num(s.charCodeAt(c));
   if (ch2 === -1) {
     this.setsimpoff(c);
-    return this.rf.u ? this.regErr_hexEOF() : null;
+    return this.rf.u ? this.regErr_hexEscNotHex() : null;
   }
 
   c++;
@@ -11963,7 +12082,7 @@ function(ce) {
     if (!this.rf.u && ce && ((ch >= CH_0 && ch <= CH_9) || ch === CH_UNDERLINE))
       break INV;
     this.setsimpoff(c); // TODO: unnecessary if there is no 'u' flag
-    return this.rf.u ? this.regErr_controlAZaz() : null;
+    return this.rf.u ? this.regErr_controlAZaz(ch) : null;
   }
 
   c++;
@@ -11980,7 +12099,7 @@ function(ch, ce) {
   if (this.rf.u) {
     if (!isUIEsc(ch) && (!ce || ch !== CH_MIN)) {
       this.setsimpoff(c);
-      return this.regErr_invalidUEsc();
+      return this.regErr_invalidUEsc(ch);
     }
   } else 
     ASSERT.call(this, ch !== CH_c, 'c' );
@@ -12018,7 +12137,7 @@ function(ch, ce) {
   }
   if (this.rf.u) {
     this.setsimpoff(c);
-    return this.regErr_nonexistentRef();
+    return this.regErr_nonexistentRef(num);
   }
   if (r0 >= CH_8)
     return null;
@@ -12112,7 +12231,7 @@ function() {
   var l = this.regLastOffset;
 
   if (c0+1 >= l)
-    return this.regErr_EOFParen();
+    return this.regErr_unfinishedParen();
 
   if (s.charCodeAt(c0+1) === CH_QUESTION)
     return this.regPeekOrGroup();
@@ -12144,7 +12263,8 @@ function() {
 this.regPeekOrGroup =
 function() {
   var c0 = this.c, s = this.src, l = this.regLastOffset;
-  switch (this.scat(c0+2)) {
+  var r = this.scat(c0+2);
+  switch (r) {
   case CH_EQUALITY_SIGN:
     return this.regPeek(true);
   case CH_EXCLAMATION:
@@ -12152,7 +12272,7 @@ function() {
   case CH_COLON:
     return this.regGroup();
   default:
-    return this.regErr_invalidCharAfterQuestionParen(); // (?
+    return this.regErr_invalidCharAfterQuestionParen(r); // (?
   }
 };
 
@@ -12377,9 +12497,14 @@ function(rc, rli, rcol, regLast, nump, flags) {
   }
 
   var n = this.regPattern();
-
-  if (this.c !== this.regLastOffset)
+  
+  if (this.regErr) { n = this.regErr; this.regErr = null; }
+  else if (this.c !== this.regLastOffset) {
     this.err('regex.no.complete.parse');
+    // must never actually happen or else an error-regex-elem would have existed for it
+    if (n.branches.length <= 0)
+      this.err('regex.with.no.elements');
+  }
 
   this.c = c;
   this.li = li;
@@ -12387,12 +12512,6 @@ function(rc, rli, rcol, regLast, nump, flags) {
 
   this.luo = luo0;
   this.src = src0;
-
-  // must never actually happen or else an error-regex-elem would have existed for it
-  if (n.branches.length <= 0)
-    this.err('regex.with.no.elements');
-  if (this.regErr)
-    return this.resetErrorRegex();
 
   return n;
 };

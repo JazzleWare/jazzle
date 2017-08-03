@@ -23,7 +23,7 @@ function() {
     return null; // an error has got set
 
   if (!this.expectChar(CH_RSQBRACKET))
-    return this.regErr_bracketUnfinished(n);
+    return this.regErr_classUnfinished(n);
 
   n = {
     type: '#Regex.Class',
@@ -84,7 +84,7 @@ function(list, tail) {
   if (this.regexFlags.u && isLead(tail) && tail.escape !== '{}')
     semi = true;
   else if (minv > maxv)
-    return this.regerr_minBiggerThanMax(min, tail);
+    return this.regErr_minBiggerThanMax(min, tail);
 
   list.pop(); // '-'
   list.pop(); // head

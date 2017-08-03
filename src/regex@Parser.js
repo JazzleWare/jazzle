@@ -22,9 +22,14 @@ function(rc, rli, rcol, regLast, nump, flags) {
   }
 
   var n = this.regPattern();
-
-  if (this.c !== this.regLastOffset)
+  
+  if (this.regErr) { n = this.regErr; this.regErr = null; }
+  else if (this.c !== this.regLastOffset) {
     this.err('regex.no.complete.parse');
+    // must never actually happen or else an error-regex-elem would have existed for it
+    if (n.branches.length <= 0)
+      this.err('regex.with.no.elements');
+  }
 
   this.c = c;
   this.li = li;
@@ -32,12 +37,6 @@ function(rc, rli, rcol, regLast, nump, flags) {
 
   this.luo = luo0;
   this.src = src0;
-
-  // must never actually happen or else an error-regex-elem would have existed for it
-  if (n.branches.length <= 0)
-    this.err('regex.with.no.elements');
-  if (this.regErr)
-    return this.resetErrorRegex();
 
   return n;
 };

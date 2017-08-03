@@ -89,7 +89,7 @@ function(ce) {
   var ch2 = hex2num(s.charCodeAt(c));
   if (ch2 === -1) {
     this.setsimpoff(c);
-    return this.rf.u ? this.regErr_hexEOF() : null;
+    return this.rf.u ? this.regErr_hexEscNotHex() : null;
   }
 
   c++;
@@ -119,7 +119,7 @@ function(ce) {
     if (!this.rf.u && ce && ((ch >= CH_0 && ch <= CH_9) || ch === CH_UNDERLINE))
       break INV;
     this.setsimpoff(c); // TODO: unnecessary if there is no 'u' flag
-    return this.rf.u ? this.regErr_controlAZaz() : null;
+    return this.rf.u ? this.regErr_controlAZaz(ch) : null;
   }
 
   c++;
@@ -136,7 +136,7 @@ function(ch, ce) {
   if (this.rf.u) {
     if (!isUIEsc(ch) && (!ce || ch !== CH_MIN)) {
       this.setsimpoff(c);
-      return this.regErr_invalidUEsc();
+      return this.regErr_invalidUEsc(ch);
     }
   } else 
     ASSERT.call(this, ch !== CH_c, 'c' );
@@ -174,7 +174,7 @@ function(ch, ce) {
   }
   if (this.rf.u) {
     this.setsimpoff(c);
-    return this.regErr_nonexistentRef();
+    return this.regErr_nonexistentRef(num);
   }
   if (r0 >= CH_8)
     return null;
