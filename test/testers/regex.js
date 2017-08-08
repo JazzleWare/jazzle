@@ -120,8 +120,7 @@ function createRegexTester(Parser, tpaths) {
         console.error(
           state + '[ex='+test.expected.type+' got='+test.actual.type+']',
           NAMES[test.geci()],
-          test.actual.value,
-          test.expected.value
+          "["+test.get('src')+"]"
         );
 
       if (test && test.contrary()) {

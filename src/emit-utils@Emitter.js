@@ -136,17 +136,28 @@ function(stmt) {
 this.emitStmtList =
 function(list) {
   var emittedSoFar = 0, e = 0;
-  var em = 0, hasOnW = this.wcb;
+  var em = 0, wcbu = null, wcbuOuter = true;
+  ASSERT.call(this, this.wcb, 'wcb');
+  if (!this.wcbUsed) {
+    this.wcbUsed = wcbu = {v: false};
+    wcbuOuter = false;
+  }
+  else wcbu = this.wcbUsed;
+
   while (e < list.length) {
     this.emitStmt(list[e++]);
-    if (hasOnW && !this.wcb) {
+    if (wcbu.v) {
+      if (wcbuOuter) { wcbuOuter = false; wcbu = {v: false }; }
       ++em;
-      this.onw(wcb_afterStmt);
-      hasOnW = this.wcb;
+      if (!this.wcb) {
+        this.onw(wcb_afterStmt);
+        this.wcbUsed = wcbu;
+        wcbu.v = false;
+      }
     }
   }
 
-  em && this.wcb && this.clear_onw();
+  em && !wcbu.v && this.clear_onw(); // cleanup wcb's this rountine enqueued; if there is a wcb, but it has not been enqueued by this routine, it isn't cleaned
   return emittedSoFar;
 };
 

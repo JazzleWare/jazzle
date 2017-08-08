@@ -5,9 +5,15 @@ function(n, flags, isStmt) {
   this.emc(cb, 'bef');
   this.w('{');
   this.i().onw(wcb_afterStmt);
+  var wcbu = this.wcbUsed = {v: false, name: 'fromBlock'};
   this.emitStmtList(n.body);
-  this.u();
-  this.wcb ? this.clear_onw() : this.l();
+  if (wcbu.v) { // if something was emitted
+    this.u();
+    this.l();
+  } else {
+    this.clear_onw();
+    this.u();
+  }
   this.emc(cb, 'inner');
   this.w('}');
   this.emc(cb, 'aft');

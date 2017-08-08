@@ -9,5 +9,7 @@ function Emitter() {
   this.pendingSpace = EST_NONE;
   this.wcb = null;
   this.wcbp = null;
+  this.wcbUsed = null;
+
   this.out = "";
 }

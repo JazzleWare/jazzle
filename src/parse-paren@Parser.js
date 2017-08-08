@@ -125,7 +125,13 @@ this.parseParen = function(ctx) {
       loc: { start: loc0, end: this.loc() }, '#c': {}
   };
 
-  this.augmentCB(n.expr || n, 'bef', bef);
+  if (n.expr) {
+    var cbe = CB(n.expr);
+    if (cbe.bef) cbe.bef.c = bef.c.concat(cbe.bef.c);
+    else cbe.bef = bef;
+  } else
+    CB(n).bef = bef;
+
   n.expr && this.spc(core(n.expr), 'aft');
   this.suc(CB(n), 'inner');
   if (!this.expectT(CH_RPAREN))

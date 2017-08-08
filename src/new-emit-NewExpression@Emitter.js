@@ -4,13 +4,15 @@ function(n, flags, isStmt) {
   var si = findElem(n.arguments, 'SpreadElement');
   if (si === -1) {
     this.wt('new', ETK_ID).onw(wcb_afterNew).os().emitNewHead(n.callee);
-    this.w('(').emitCommaList(n.arguments).w(')');
+    this.w('(').emitCommaList(n.arguments).emc(cb, 'inner');
+    this.w(')');
   } else {
     var hasParen = flags & EC_NEW_HEAD;
     if (hasParen) { this.w('('); flags = EC_NONE; }
     this.jz('n').w('(').eN(n.callee, EC_NONE, false).wm(',','')
       .jz('arr').w('(').emitElems(n.arguments, si >= 0, cb);
 
+    this.emc(cb, 'inner');
     this.w(')').w(')');
     hasParen && this.w(')');
   }

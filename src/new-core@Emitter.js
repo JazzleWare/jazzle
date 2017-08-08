@@ -193,6 +193,10 @@ function(wcb, wcbp) {
 this.call_onw =
 function(rawStr, tt) {
   var w = this.wcb;
+  if (this.wcbUsed) {
+    ASSERT_EQ.call(this, this.wcbUsed.v, false);
+    this.wcbUsed.v = true;
+  }
   this.clear_onw();
   w.call(this, rawStr, tt);
 };
@@ -207,6 +211,7 @@ this.clear_onw =
 function() {
   ASSERT.call(this, this.wcb, 'wcb null');
   this.wcb = null;
+  if (this.wcbUsed) this.wcbUsed = null;
   return this;
 };
 
@@ -218,6 +223,6 @@ function(name) {
 this.insertLineBreak =
 function() {
   this.curtt === ETK_NONE || this.rtt();
-  this.wcb && this.call_onw('\n', ETK_NONE);
+  this.wcb && this.call_onw('\n', ETK_NL);
   this.out += '\n';
 };

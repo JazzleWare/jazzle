@@ -33,7 +33,7 @@ function wcb_idNumGuard(rawStr, tt) {
 function wcb_afterStmt(rawStr, tt) { this.l(); }
 
 function wcb_afterLineComment(rawStr, tt) {
-  this.l();
+  tt === ETK_NL || this.l();
 }
 
 function wcb_afterNew(rawStr, tt) {

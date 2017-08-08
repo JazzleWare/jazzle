@@ -77,6 +77,8 @@ function Emitter() {
   this.pendingSpace = EST_NONE;
   this.wcb = null;
   this.wcbp = null;
+  this.wcbUsed = null;
+
   this.out = "";
 }
 ;
@@ -1438,7 +1440,7 @@ function wcb_idNumGuard(rawStr, tt) {
 function wcb_afterStmt(rawStr, tt) { this.l(); }
 
 function wcb_afterLineComment(rawStr, tt) {
-  this.l();
+  tt === ETK_NL || this.l();
 }
 
 function wcb_afterNew(rawStr, tt) {
@@ -2231,17 +2233,28 @@ function(stmt) {
 this.emitStmtList =
 function(list) {
   var emittedSoFar = 0, e = 0;
-  var em = 0, hasOnW = this.wcb;
+  var em = 0, wcbu = null, wcbuOuter = true;
+  ASSERT.call(this, this.wcb, 'wcb');
+  if (!this.wcbUsed) {
+    this.wcbUsed = wcbu = {v: false};
+    wcbuOuter = false;
+  }
+  else wcbu = this.wcbUsed;
+
   while (e < list.length) {
     this.emitStmt(list[e++]);
-    if (hasOnW && !this.wcb) {
+    if (wcbu.v) {
+      if (wcbuOuter) { wcbuOuter = false; wcbu = {v: false }; }
       ++em;
-      this.onw(wcb_afterStmt);
-      hasOnW = this.wcb;
+      if (!this.wcb) {
+        this.onw(wcb_afterStmt);
+        this.wcbUsed = wcbu;
+        wcbu.v = false;
+      }
     }
   }
 
-  em && this.wcb && this.clear_onw();
+  em && !wcbu.v && this.clear_onw(); // cleanup wcb's this rountine enqueued; if there is a wcb, but it has not been enqueued by this routine, it isn't cleaned
   return emittedSoFar;
 };
 
@@ -2595,6 +2608,10 @@ function(wcb, wcbp) {
 this.call_onw =
 function(rawStr, tt) {
   var w = this.wcb;
+  if (this.wcbUsed) {
+    ASSERT_EQ.call(this, this.wcbUsed.v, false);
+    this.wcbUsed.v = true;
+  }
   this.clear_onw();
   w.call(this, rawStr, tt);
 };
@@ -2609,6 +2626,7 @@ this.clear_onw =
 function() {
   ASSERT.call(this, this.wcb, 'wcb null');
   this.wcb = null;
+  if (this.wcbUsed) this.wcbUsed = null;
   return this;
 };
 
@@ -2620,7 +2638,7 @@ function(name) {
 this.insertLineBreak =
 function() {
   this.curtt === ETK_NONE || this.rtt();
-  this.wcb && this.call_onw('\n', ETK_NONE);
+  this.wcb && this.call_onw('\n', ETK_NL);
   this.out += '\n';
 };
 
@@ -2851,9 +2869,15 @@ function(n, flags, isStmt) {
   this.emc(cb, 'bef');
   this.w('{');
   this.i().onw(wcb_afterStmt);
+  var wcbu = this.wcbUsed = {v: false, name: 'fromBlock'};
   this.emitStmtList(n.body);
-  this.u();
-  this.wcb ? this.clear_onw() : this.l();
+  if (wcbu.v) { // if something was emitted
+    this.u();
+    this.l();
+  } else {
+    this.clear_onw();
+    this.u();
+  }
   this.emc(cb, 'inner');
   this.w('}');
   this.emc(cb, 'aft');
@@ -3029,13 +3053,15 @@ function(n, flags, isStmt) {
   var si = findElem(n.arguments, 'SpreadElement');
   if (si === -1) {
     this.wt('new', ETK_ID).onw(wcb_afterNew).os().emitNewHead(n.callee);
-    this.w('(').emitCommaList(n.arguments).w(')');
+    this.w('(').emitCommaList(n.arguments).emc(cb, 'inner');
+    this.w(')');
   } else {
     var hasParen = flags & EC_NEW_HEAD;
     if (hasParen) { this.w('('); flags = EC_NONE; }
     this.jz('n').w('(').eN(n.callee, EC_NONE, false).wm(',','')
       .jz('arr').w('(').emitElems(n.arguments, si >= 0, cb);
 
+    this.emc(cb, 'inner');
     this.w(')').w(')');
     hasParen && this.w(')');
   }
@@ -9220,7 +9246,13 @@ this.parseParen = function(ctx) {
       loc: { start: loc0, end: this.loc() }, '#c': {}
   };
 
-  this.augmentCB(n.expr || n, 'bef', bef);
+  if (n.expr) {
+    var cbe = CB(n.expr);
+    if (cbe.bef) cbe.bef.c = bef.c.concat(cbe.bef.c);
+    else cbe.bef = bef;
+  } else
+    CB(n).bef = bef;
+
   n.expr && this.spc(core(n.expr), 'aft');
   this.suc(CB(n), 'inner');
   if (!this.expectT(CH_RPAREN))
