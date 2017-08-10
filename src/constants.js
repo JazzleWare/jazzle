@@ -113,6 +113,8 @@ var OPTIONS =
 
 var HAS = {}.hasOwnProperty;
 
+var B = 'ABCDEFGHIJKLMONPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/';
+
 function ASSERT(cond, message) { if (!cond) throw new Error(message); }
 function ASSERT_EQ(val,ex) { ASSERT.call(this, val === ex, 'val must be <'+ex+'>, not <'+val+'>'); }
 

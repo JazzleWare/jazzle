@@ -601,6 +601,8 @@ var OPTIONS =
 
 var HAS = {}.hasOwnProperty;
 
+var B = 'ABCDEFGHIJKLMONPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/';
+
 function ASSERT(cond, message) { if (!cond) throw new Error(message); }
 function ASSERT_EQ(val,ex) { ASSERT.call(this, val === ex, 'val must be <'+ex+'>, not <'+val+'>'); }
 
@@ -1370,6 +1372,34 @@ function isInteger(n) { return (n|0) === n; }
 function isResolvedName(n) {
   return n.type === '#Untransformed' &&
     n.kind === 'resolved-name';
+}
+
+function vlq(num) {
+  var hexet = 0;
+  var ro = 0; // right offset (0 <= ro <= lastRo)
+  var lastRo = 5;
+  var v = "";
+  if (num < 0) { hexet = 1; num = -num; }
+  ro = 1; // sign bit
+  while (true) {
+    var c = 1; // continue;
+    var maxRead = lastRo - ro;
+    if ((num >> maxRead) === 0) {
+      c = 0; 
+      while ((num >> (maxRead-1)) === 0)
+        if (--maxRead === 0) break;
+      if (maxRead === 0)
+        break;
+    }
+    var bits = num & ((1 << maxRead)-1); 
+    num >>= maxRead;
+    hexet |= bits << ro;
+    if (c) v += B[hexet|(1 << lastRo)];
+    else { v += B[hexet]; break; } 
+    ro = 0;
+    hexet = 0;
+  } 
+  return v;
 }
 
 function findElem(list, t) {
@@ -2341,13 +2371,15 @@ function(nd) {
   var scope = nd.ref.scope;
   ASSERT.call(this, scope.hasTZCheckPoint, 'could not find any tz');
   var tz = scope.scs.getLG('tz').getL(0);
-  this.wm(tz.synthName,'<',nd.idx,'&&').jz('tz').w('(').writeString(nd.name, "'").w(')');
+  this.wm(tz.synthName,'<',nd.idx,'&&').jz('tz').w('(').writeString(nd.name, "'");
+  this.w(')');
   return true;
 };
 
 this.emitAccessChk_invalidSAT =
 function(nd) {
-  this.jz('cc').w('(').writeString(nd.name,"'").w(')');
+  this.jz('cc').w('(').writeString(nd.name,"'");
+  this.w(')');
   return true;
 };
 
@@ -2446,7 +2478,9 @@ function(rawStr) {
   this.hasPendingSpace() && this.effectPendingSpace(rawStr.length);
 
   ASSERT.call(this, arguments.length === 1, 'write must have only one single argument');
-  ASSERT.call(this, this.curLineIndent < 0 || this.curLineIndent === this.indentLevel, 'in' );
+
+  // after a call to .indent (but not to .unindent), no further calls to .write are ever allowed until a .startNewLine call.
+  ASSERT.call(this, this.curLineIndent < 0 || this.curLineIndent >= this.indentLevel, 'in' );
 
   var cll = this.curLine.length;
   cll && this.ol(cll+rawStr.length) > 0 && this.l();
@@ -3285,7 +3319,7 @@ function(n, flags, isStmt) {
     if (isRenamed)
       this.w('var').onw(wcb_afterVar).wt(scopeName.synthName, ETK_ID).wm('','=','');
     else
-      this.wm('return').onw(wcb_afterRet);
+      this.w('return').onw(wcb_afterRet);
   }
   this.emitTransformedFn(n);
   if (hasWrapper) {
@@ -15230,6 +15264,8 @@ this.transpile = function(src, options) {
     EC_NONE,
     false).code ;
 };
+
+this.vlq = vlq;
 
 this.Scope = Scope; 
 this.FunScope = FunScope; 

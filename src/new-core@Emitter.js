@@ -31,7 +31,9 @@ function(rawStr) {
   this.hasPendingSpace() && this.effectPendingSpace(rawStr.length);
 
   ASSERT.call(this, arguments.length === 1, 'write must have only one single argument');
-  ASSERT.call(this, this.curLineIndent < 0 || this.curLineIndent === this.indentLevel, 'in' );
+
+  // after a call to .indent (but not to .unindent), no further calls to .write are ever allowed until a .startNewLine call.
+  ASSERT.call(this, this.curLineIndent < 0 || this.curLineIndent >= this.indentLevel, 'in' );
 
   var cll = this.curLine.length;
   cll && this.ol(cll+rawStr.length) > 0 && this.l();

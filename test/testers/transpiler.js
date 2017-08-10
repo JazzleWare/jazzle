@@ -201,62 +201,62 @@ function loadTranspilerTests(ts) {
 
   mt('if', "if (5) {}", "if (5) {}", e, true );
   mt('if-cmn',
-    "if (5) {}",
-    "if (5) {}",
+    "/* a */if/* b */ (/* e */5/* l */) /* u */{/* inner */}/* n */",
+    "/* a */if/* b */ (/* e */5/* l */) /* u */{/* inner */}/* n */",
     e, true );
 
   mt('ifElse', "if (5) {} else {}", "if (5) {}\nelse {}", e, true );
   mt('ifElse-cmn',
-    "if (5) {} else {}",
-    "if (5) {}\nelse {}",
+    "/* a */if/* b */ (/* e */5/* l */) /* u */{/* inner */}/* e */else/* r */ {/* n */}/* L */",
+    "/* a */if/* b */ (/* e */5/* l */) /* u */{/* inner */}/* e */\nelse /* r */{/* n */}/* L */",
     e, true );
 
   mt('ifElseIf', "if (5) {} else if (12) {}", "if (5) {}\nelse if (12) {}", e, true );
   mt('ifElseIf-cmn',
-    "if (5) {} else if (12) {}",
-    "if (5) {}\nelse if (12) {}",
+    "/* a */if/* b */ (/* e */5/* l */) /* u */{/* n */}/* r */ else/* A */ if/* B */ (/* E */12/* L */) /* U */{/* N */}/* R */",
+    "/* a */if/* b */ (/* e */5/* l */) /* u */{/* n */}/* r */\nelse/* A */if/* B */ (/* E */12/* L */) /* U */{/* N */}/* R */",
     e, true );
 
   mt('ifElseIfElse', "if (5) {} else if (12) {} else {}", "if (5) {}\nelse if (12) {}\nelse {}", e, true );
   mt('ifElseIfElse-cmn',
-    "if (5) {} else if (12) {} else {}",
-    "if (5) {}\nelse if (12) {}\nelse {}",
+    "/* a */if/* b */ (/* e */5/* l */)/* u */ {/* inner */}/* n */ else/* r */ if/* A */ (/* B */12/* E */)/* L */ {/* inner */}/* U */ else /* E */ {/* N */}// stmt",
+    "/* a */if/* b */ (/* e */5/* l */) /* u */{/* inner */}/* n */\nelse/* r */if/* A */ (/* B */12/* E */) /* L */{/* inner */}/* U */\nelse /* E */{/* N */}// stmt",
     e, true );
 
   mt('stmtexpr', "5;", "5;", e, true );
   mt('stmtexpr-cmn',
-    "5;",
-    "5;",
+    "/* a */5// b\n;// e",
+    "/* a */5// b\n;// e",
     e, true );
 
   mt('stmtexpr', "{5}", "{\n  5;\n}", e, true );
   mt('stmtexpr-cmn',
-    "{5}",
-    "{\n  5;\n}",
+    "// a\n{/* b */5// e\n;/* l */}// u",
+    "// a\n{\n  /* b */5// e\n  ;/* l */\n}// u",
     e, true );
 
   mt('stmtexpr', "5", "5;", e, true );
   mt('stmtexpr-cmn',
-    "5",
-    "5;",
+    "/* a */5/* b */",
+    "/* a */5;/* b */",
     e, true );
 
   mt('stmtexpr', "{{}5}", "{\n  {}\n  5;\n}", e, true );
   mt('stmtexpr-cmn',
-    "{{}5}",
-    "{\n  {}\n  5;\n}",
+    "/* a */{/* b */{/* e */}/* l */5/* u */}/* n */",
+    "/* a */{\n  /* b */{/* e */}\n  /* l */5/* u */;\n}/* n */",
     e, true );
 
   mt('stmtexpr', "if (5) new 12; else 5", "if (5)\n  new 12();\nelse\n  5;", e, true );
   mt('stmtexpr-cmn',
-    "if (5) new 12; else 5",
-    "if (5)\n  new 12();\nelse\n  5;",
+    "/* a */if/* b */ (/* e */5/* l */)/* u */ new/* n */ 12/* r */;/* w */ else/* A */ 5/* B */",
+    "/* a */if/* b */ (/* e */5/* l */)\n  /* u */new /* n */12()/* r */;/* w */\nelse\n  /* A */5;/* B */",
     e, true );
 
   mt('stmtexpr', "{if(5) new 12; else 5; if (5) 12; else new 5()}", "{\n  if (5)\n    new 12();\n  else\n    5;\n  if (5)\n    12;\n  else\n    new 5();\n}", e, true );
   mt('stmtexpr-cmn',
-    "{if(5) new 12; else 5; if (5) 12; else new 5()}",
-    "{\n  if (5)\n    new 12();\n  else\n    5;\n  if (5)\n    12;\n  else\n    new 5();\n}",
+    "/* a */{/* b */if/* e */(/* l */5/* u */)/* n */ new/* r */ 12/* w */;// stmt\n else /* A */ 5 /* B */;/* E */ if/* L */ (/* U */5/* N */)/* R */ 12/* W */;// STMT\n else/* a */ new/* b */ 5/* e */(/* l */)/* u */}// n",
+    "/* a */{\n  /* b */if/* e */ (/* l */5/* u */)\n    /* n */new /* r */12()/* w */;// stmt\n  else\n    /* A */5/* B */;\n  /* E */if/* L */ (/* U */5/* N */)\n    /* R */12/* W */;// STMT\n  else\n    /* a */new /* b */5/* e */(/* l */)/* u */;\n}// n",
     e, true );
 
   mt('call-5(5)', "5(5)", "5(5);", e, true);

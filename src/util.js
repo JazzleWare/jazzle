@@ -180,6 +180,34 @@ function isResolvedName(n) {
     n.kind === 'resolved-name';
 }
 
+function vlq(num) {
+  var hexet = 0;
+  var ro = 0; // right offset (0 <= ro <= lastRo)
+  var lastRo = 5;
+  var v = "";
+  if (num < 0) { hexet = 1; num = -num; }
+  ro = 1; // sign bit
+  while (true) {
+    var c = 1; // continue;
+    var maxRead = lastRo - ro;
+    if ((num >> maxRead) === 0) {
+      c = 0; 
+      while ((num >> (maxRead-1)) === 0)
+        if (--maxRead === 0) break;
+      if (maxRead === 0)
+        break;
+    }
+    var bits = num & ((1 << maxRead)-1); 
+    num >>= maxRead;
+    hexet |= bits << ro;
+    if (c) v += B[hexet|(1 << lastRo)];
+    else { v += B[hexet]; break; } 
+    ro = 0;
+    hexet = 0;
+  } 
+  return v;
+}
+
 function findElem(list, t) {
   var e = 0;
   while (e < list.length) {

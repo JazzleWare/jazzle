@@ -244,12 +244,14 @@ function(nd) {
   var scope = nd.ref.scope;
   ASSERT.call(this, scope.hasTZCheckPoint, 'could not find any tz');
   var tz = scope.scs.getLG('tz').getL(0);
-  this.wm(tz.synthName,'<',nd.idx,'&&').jz('tz').w('(').writeString(nd.name, "'").w(')');
+  this.wm(tz.synthName,'<',nd.idx,'&&').jz('tz').w('(').writeString(nd.name, "'");
+  this.w(')');
   return true;
 };
 
 this.emitAccessChk_invalidSAT =
 function(nd) {
-  this.jz('cc').w('(').writeString(nd.name,"'").w(')');
+  this.jz('cc').w('(').writeString(nd.name,"'");
+  this.w(')');
   return true;
 };

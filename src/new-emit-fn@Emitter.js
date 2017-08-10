@@ -20,7 +20,7 @@ function(n, flags, isStmt) {
     if (isRenamed)
       this.w('var').onw(wcb_afterVar).wt(scopeName.synthName, ETK_ID).wm('','=','');
     else
-      this.wm('return').onw(wcb_afterRet);
+      this.w('return').onw(wcb_afterRet);
   }
   this.emitTransformedFn(n);
   if (hasWrapper) {

@@ -20,6 +20,8 @@ this.transpile = function(src, options) {
     false).code ;
 };
 
+this.vlq = vlq;
+
 this.Scope = Scope; 
 this.FunScope = FunScope; 
 this.CatchScope = CatchScope; 
