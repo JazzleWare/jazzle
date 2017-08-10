@@ -185,25 +185,24 @@ function vlq(num) {
   var ro = 0; // right offset (0 <= ro <= lastRo)
   var lastRo = 5;
   var v = "";
-  if (num < 0) { hexet = 1; num = -num; }
+  if (num < 0) { hexet = 1; num = ((~(num & I_31)) & I_31) + 1; } // TODO: for -(2**31), it must remain -(2**31)
   ro = 1; // sign bit
   while (true) {
+    var maxRead = 5 - ro;
+    var maxMask = (1<<maxRead)-1;
     var c = 1; // continue;
-    var maxRead = lastRo - ro;
-    if ((num >> maxRead) === 0) {
-      c = 0; 
-      while ((num >> (maxRead-1)) === 0)
-        if (--maxRead === 0) break;
-      if (maxRead === 0)
-        break;
-    }
-    var bits = num & ((1 << maxRead)-1); 
-    num >>= maxRead;
+
+    var bits = num & maxMask; 
+    num >>>= maxRead;
+    if (num === 0)
+      c = 0;
     hexet |= bits << ro;
-    if (c) v += B[hexet|(1 << lastRo)];
-    else { v += B[hexet]; break; } 
-    ro = 0;
-    hexet = 0;
+    if (c) hexet |= 1 << lastRo;
+    v += B[hexet];
+    if (num <= 0)
+      break;
+    maxRead = 5;
+    ro = 0; hexet = 0;
   } 
   return v;
 }

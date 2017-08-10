@@ -602,6 +602,10 @@ var OPTIONS =
 var HAS = {}.hasOwnProperty;
 
 var B = 'ABCDEFGHIJKLMONPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/';
+var I_31 = allOnes(31);
+
+function allOnes(len) { var n = 0, s = 0; while (s < len) n += (1 << s++); return n; }
+
 
 function ASSERT(cond, message) { if (!cond) throw new Error(message); }
 function ASSERT_EQ(val,ex) { ASSERT.call(this, val === ex, 'val must be <'+ex+'>, not <'+val+'>'); }
@@ -1379,25 +1383,24 @@ function vlq(num) {
   var ro = 0; // right offset (0 <= ro <= lastRo)
   var lastRo = 5;
   var v = "";
-  if (num < 0) { hexet = 1; num = -num; }
+  if (num < 0) { hexet = 1; num = ((~(num & I_31)) & I_31) + 1; } // TODO: for -(2**31), it must remain -(2**31)
   ro = 1; // sign bit
   while (true) {
+    var maxRead = 5 - ro;
+    var maxMask = (1<<maxRead)-1;
     var c = 1; // continue;
-    var maxRead = lastRo - ro;
-    if ((num >> maxRead) === 0) {
-      c = 0; 
-      while ((num >> (maxRead-1)) === 0)
-        if (--maxRead === 0) break;
-      if (maxRead === 0)
-        break;
-    }
-    var bits = num & ((1 << maxRead)-1); 
-    num >>= maxRead;
+
+    var bits = num & maxMask; 
+    num >>>= maxRead;
+    if (num === 0)
+      c = 0;
     hexet |= bits << ro;
-    if (c) v += B[hexet|(1 << lastRo)];
-    else { v += B[hexet]; break; } 
-    ro = 0;
-    hexet = 0;
+    if (c) hexet |= 1 << lastRo;
+    v += B[hexet];
+    if (num <= 0)
+      break;
+    maxRead = 5;
+    ro = 0; hexet = 0;
   } 
   return v;
 }
@@ -8992,7 +8995,10 @@ function() {
   var e = this.parseNonSeq(PREC_NONE, CTX_NULLABLE|CTX_TOP);
   e || this.err('prop.dyna.no.expr');
 
-  this.augmentCB(core(e), 'bef', b);
+  var cb = CB(e);
+  if (cb.bef) cb.bef.c = b.c.concat(cb.bef.c);
+  else cb.bef = b;
+
   var n = {
     type: PAREN,
     expr: core(e), 

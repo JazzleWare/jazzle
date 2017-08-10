@@ -114,6 +114,10 @@ var OPTIONS =
 var HAS = {}.hasOwnProperty;
 
 var B = 'ABCDEFGHIJKLMONPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/';
+var I_31 = allOnes(31);
+
+function allOnes(len) { var n = 0, s = 0; while (s < len) n += (1 << s++); return n; }
+
 
 function ASSERT(cond, message) { if (!cond) throw new Error(message); }
 function ASSERT_EQ(val,ex) { ASSERT.call(this, val === ex, 'val must be <'+ex+'>, not <'+val+'>'); }

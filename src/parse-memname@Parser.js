@@ -28,7 +28,10 @@ function() {
   var e = this.parseNonSeq(PREC_NONE, CTX_NULLABLE|CTX_TOP);
   e || this.err('prop.dyna.no.expr');
 
-  this.augmentCB(core(e), 'bef', b);
+  var cb = CB(e);
+  if (cb.bef) cb.bef.c = b.c.concat(cb.bef.c);
+  else cb.bef = b;
+
   var n = {
     type: PAREN,
     expr: core(e), 

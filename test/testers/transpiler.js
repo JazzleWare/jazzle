@@ -261,297 +261,548 @@ function loadTranspilerTests(ts) {
 
   mt('call-5(5)', "5(5)", "5(5);", e, true);
   mt('call-5(5)-cmn',
-    "5(5)",
-    "5(5);",
+    "/* a */5/* b */(/* e */5/* l */)/* u */",
+    "/* a */5/* b */(/* e */5/* l */);/* u */",
     e, true);
 
   mt('call-5(5,5)', "5(5,5)", "5(5, 5);", e, true);
   mt('call-5(5,5)-cmn',
-    "5(5,5)",
-    "5(5, 5);",
+    "/* a */5/* b */(/* e */5/* l */,/* u */5/* n */)/* r */",
+    "/* a */5/* b */(/* e */5/* l */, /* u */5/* n */);/* r */",
     e, true);
 
   mt('call-5[5](5)', "5[5](5)", "5[5](5);", e, true);
   mt('call-5[5](5)-cmn',
-    "5[5](5)",
-    "5[5](5);",
+    "/* a */5/* b */[/* e */5/* l */]/* u */(/* n */5/* r */)/* w */",
+    "/* a */5/* b */[/* e */5/* l */]/* u */(/* n */5/* r */);/* w */",
     e, true);
 
   mt('call-5(...5)', "5(...5)", "jz.c(5, jz.arr(jz.sp(5)));", e, true);
   mt('call-5(...5)-cmn',
-    "5(...5)",
-    "jz.c(5, jz.arr(jz.sp(5)));",
+    "/* a */5/* b */(/* e */.../* l */5/* u */)/* n */",
+    "jz.c(/* a */5/* b */, jz.arr(/* e */jz.sp(/* l */5)/* u */));/* n */",
     e, true);
 
   mt('call-5(5,...5)', "5(5,...5)", "jz.c(5, jz.arr([5], jz.sp(5)));", e, true);
   mt('call-5(5,...5)-cmn',
-    "5(5,...5)",
-    "jz.c(5, jz.arr([5], jz.sp(5)));",
+    "/* a */5/* b */(/* e */5/* l */,/* u */.../* n */5/* r */)/* w */",
+    "jz.c(/* a */5/* b */, jz.arr([/* e */5/* l */], /* u */jz.sp(/* n */5)/* r */));/* w */",
     e, true);
 
   mt('call-5[5](...5)', "5[5](...5)", "jz.cm(t0 = 5, t0[5], jz.arr(jz.sp(5)));", e, true);
   mt('call-5[5](...5)-cmn',
-    "5[5](...5)",
-    "jz.cm(t0 = 5, t0[5], jz.arr(jz.sp(5)));",
+    "/* a */5/* b */[/* e */5/* l */]/* u */(/* n */.../* r */5/* N */)/* w */",
+    "jz.cm(t0 = /* a */5/* b */, t0[/* e */5/* l */]/* u */, jz.arr(/* n */jz.sp(/* r */5)/* N */));/* w */",
     e, true);
 
   mt('new-5(5)', "new 5(5)", "new 5(5);", e, true);
   mt('new-5(5)-cmn',
-    "new 5(5)",
-    "new 5(5);",
+    "/* a */new/* b */ 5/* e */(/* l */5/* u */)/* n */",
+    "/* a */new /* b */5/* e */(/* l */5/* u */);/* n */",
     e, true);
 
   mt('new-5(...5)', "new 5(...5)","jz.n(5, jz.arr(jz.sp(5)));", e, true);
-  mt('new-5(...5)', "new 5(...5)","jz.n(5, jz.arr(jz.sp(5)));", e, true);
+  mt('new-5(...5)-cmn', 
+    "/* a */new/* b */ 5/* e */(/* l */.../* u */5/* n */)/* r */",
+    "/* a */jz.n(/* b */5/* e */, jz.arr(/* l */jz.sp(/* u */5)/* n */));/* r */", e, true);
 
   mt('[a]', '[a]', '[a];', e, true);
-  mt('[a]', '[a]', '[a];', e, true);
+  mt('[a]-cmn',
+    '/* a */[/* b */a/* e */]/* l */',
+    '/* a */[/* b */a/* e */];/* l */',
+    e, true);
 
   mt('[a,b]', '[a,b]', '[a, b];', null, true);
-  mt('[a,b]', '[a,b]', '[a, b];', null, true);
+  mt('[a,b]-cmn',
+    '/* a */[/* b */a/* e */,/* l */b/* u */]/* n */',
+    '/* a */[/* b */a/* e */, /* l */b/* u */];/* n */',
+    null, true);
 
   mt('[a,b,e]', '[a,b,e]', '[a, b, e];', null, true);
-  mt('[a,b,e]', '[a,b,e]', '[a, b, e];', null, true);
+  mt('[a,b,e]-cmn',
+    '/* a */[/* b */a/* e */,/* l */b/* u */,/* n */e/* r */]/* w */',
+    '/* a */[/* b */a/* e */, /* l */b/* u */, /* n */e/* r */];/* w */',
+    null, true);
 
   mt('[a,]', '[a,]', '[a];', null, true);
-  mt('[a,]', '[a,]', '[a];', null, true);
+  mt('[a,]-cmn',
+    '/* a */[/* b */a/* e */,/* l */]/* u */',
+    '/* a */[/* b */a/* e *//* l */];/* u */',
+    null, true);
 
   mt('[,a]', '[,a]', '[void 0, a];', null, true);
-  mt('[,a]', '[,a]', '[void 0, a];', null, true);
+  mt('[,a]-cmn',
+    '/* a */[/* b */,/* e */a/* l */]/* u */',
+    '/* a */[/* b */void 0, /* e */a/* l */];/* u */',
+    null, true);
 
   mt('[,5,]', '[,5,]', '[void 0, 5];', null, true);
-  mt('[,5,]', '[,5,]', '[void 0, 5];', null, true);
+  mt('[,5,]-cmn',
+    '/* a */[/* b */,/* e */5/* l */,/* u */]/* n */',
+    '/* a */[/* b */void 0, /* e */5/* l *//* u */];/* n */',
+    null, true);
 
   mt('[,]', '[,]', '[void 0];', null, true);
-  mt('[,]', '[,]', '[void 0];', null, true);
+  mt('[,]-cmn',
+    '/* a */[/* b */,/* e */]/* l */',
+    '/* a */[/* b */void 0/* e */];/* l */',
+    null, true);
 
   mt('[...5]', '[...5]', 'jz.arr(jz.sp(5));', null, true);
-  mt('[...5]', '[...5]', 'jz.arr(jz.sp(5));', null, true);
+  mt('[...5]-cmn',
+    '/* a */[/* b */.../* e */5/* l */]/* u */',
+    '/* a */jz.arr(/* b */jz.sp(/* e */5)/* l */);/* u */',
+    null, true);
 
   mt('[...5,]', '[...5,]', 'jz.arr(jz.sp(5));', null, true);
-  mt('[...5,]', '[...5,]', 'jz.arr(jz.sp(5));', null, true);
+  mt('[...5,]-cmn',
+    '/* a */[/* b */.../* e */5/* l */,/* u */]/* n */',
+    '/* a */jz.arr(/* b */jz.sp(/* e */5)/* l *//* u */);/* n */',
+    null, true);
 
   mt('[...5,,]', '[...5,,]', 'jz.arr(jz.sp(5), [void 0]);', null, true);
-  mt('[...5,,]', '[...5,,]', 'jz.arr(jz.sp(5), [void 0]);', null, true);
+  mt('[...5,,]-cmn',
+    '/* a */[/* b */.../* e */5/* l */,/* u */,/* n */]/* r */',
+    '/* a */jz.arr(/* b */jz.sp(/* e */5)/* l */, [/* u */void 0/* n */]);/* r */',
+    null, true);
 
   mt('[,...5]', '[,...5]','jz.arr([void 0], jz.sp(5));', null, true);
-  mt('[,...5]', '[,...5]','jz.arr([void 0], jz.sp(5));', null, true);
+  mt('[,...5]-cmn',
+    '/* a */[/* b */,/* e */.../* l */5/* u */]/* n */',
+    '/* a */jz.arr([/* b */void 0], /* e */jz.sp(/* l */5)/* u */);/* n */',
+    null, true);
 
-  mt('[,...5,]]', '[,...5,]','jz.arr([void 0], jz.sp(5));', null, true);
-  mt('[,...5,]]', '[,...5,]','jz.arr([void 0], jz.sp(5));', null, true);
+  mt('[,...5,]', '[,...5,]','jz.arr([void 0], jz.sp(5));', null, true);
+  mt('[,...5,]-cmn',
+    '/* a */[/* b */,/* e */.../* l */5/* u */,/* n */]/* r */',
+    '/* a */jz.arr([/* b */void 0], /* e */jz.sp(/* l */5)/* u *//* n */);/* r */',
+    null, true);
 
   mt('[...5, ...12]', '[...5, ...12]','jz.arr(jz.sp(5), jz.sp(12));', null, true);
-  mt('[...5, ...12]', '[...5, ...12]','jz.arr(jz.sp(5), jz.sp(12));', null, true);
+  mt('[...5, ...12]-cmn',
+    '/* a */[// b\n.../* e */5// l\n,/* u */ ...// n\n12/* r */]// w',
+    '/* a */jz.arr(// b\njz.sp(/* e */5)// l\n, /* u */jz.sp(// n\n12)/* r */);// w',
+    null, true);
 
   mt('[5,...12,12,...5]', '[5,...12,12,...5]','jz.arr([5], jz.sp(12), [12], jz.sp(5));', null, true);
-  mt('[5,...12,12,...5]', '[5,...12,12,...5]','jz.arr([5], jz.sp(12), [12], jz.sp(5));', null, true);
+  mt('[5,...12,12,...5]-cmn',
+    '/* a */[/* b */5/* e */,/* l */.../* u */12/* n */,/* r */12/* w */,/* A */.../* B */5/* E */]/* L */',
+    '/* a */jz.arr([/* b */5/* e */], /* l */jz.sp(/* u */12)/* n */, [/* r */12/* w */], /* A */jz.sp(/* B */5)/* E */);/* L */',
+    null, true);
 
   mt('[5,...12,12,...5,40]', '[5,...12,12,...5,40]','jz.arr([5], jz.sp(12), [12], jz.sp(5), [40]);', null, true);
-  mt('[5,...12,12,...5,40]', '[5,...12,12,...5,40]','jz.arr([5], jz.sp(12), [12], jz.sp(5), [40]);', null, true);
+  mt('[5,...12,12,...5,40]-cmn',
+    '/* a */[/* b */5/* e */,/* l */.../* u */12/* n */,/* r */12/* w */,/* A */.../* B */5/* E */,/* L */40/* U */]/* N */',
+    '/* a */jz.arr([/* b */5/* e */], /* l */jz.sp(/* u */12)/* n */, [/* r */12/* w */], /* A */jz.sp(/* B */5)/* E */, [/* L */40/* U */]);/* N */',
+    null, true);
 
   mt('5(5,)', '5(5,)', '5(5);', null, true);
-  mt('5(5,)', '5(5,)', '5(5);', null, true);
+  mt('5(5,)-cmn',
+    '/* a */5/* b */(/* e */5/* l */,/* u */)/* n */',
+    '/* a */5/* b */(/* e */5/* l *//* u */);/* n */',
+    null, true);
 
   mt('({a:b})', '({a:b})', '({a: b});', null, true);
-  mt('({a:b})', '({a:b})', '({a: b});', null, true);
+  mt('({a:b})-cmn',
+    '/* a */(/* b */{/* e */a/* l */:/* u */b/* n */}/* r */)/* w */',
+    '/* a *//* b */({/* e */a/* l */: /* u */b/* n */})/* r */;/* w */',
+    null, true);
 
   mt('({a:b,e})', '({a:b,e})', '({a: b, e: e});', null, true);
-  mt('({a:b,e})', '({a:b,e})', '({a: b, e: e});', null, true);
+  mt('({a:b,e})-cmn',
+    '/* a */(/* b */{/* e */a/* l */:/* u */b/* n */,/* r */e/* w */}/* A */)/* B */',
+    '/* a *//* b */({/* e */a/* l */: /* u */b/* n */, /* r */e: e/* w */})/* A */;/* B */',
+    null, true);
 
   mt('{{a,b:e})', '({a,b:e})', '({a: a, b: e});', null, true);
-  mt('{{a,b:e})', '({a,b:e})', '({a: a, b: e});', null, true);
+  mt('{{a,b:e})-cmn',
+    '/* a */(/* b */{/* e */a/* l */,/* u */b/* n */:/* r */e/* w */}/* A */)/* B */',
+    '/* a *//* b */({/* e */a: a/* l */, /* u */b/* n */: /* r */e/* w */})/* A */;/* B */',
+    null, true);
 
   mt('({a,b})', '({a,b})', '({a: a, b: b});', null, true);
-  mt('({a,b})', '({a,b})', '({a: a, b: b});', null, true);
+  mt('({a,b})-cmn',
+    '/* a */(/* b */{/* e */a/* l */,/* u */b/* n */}/* r */)/* w */',
+    '/* a *//* b */({/* e */a: a/* l */, /* u */b: b/* n */})/* r */;/* w */',
+    null, true);
 
   mt('({a,b,})', '({a,b,})', '({a: a, b: b});', null, true);
-  mt('({a,b,})', '({a,b,})', '({a: a, b: b});', null, true);
+  mt('({a,b,})-cmn',
+    '/* a */(/* b */{/* e */a/* l */,/* u */b/* n */,/* r */}/* w */)/* A */',
+    '/* a *//* b */({/* e */a: a/* l */, /* u */b: b/* n *//* r */})/* w */;/* A */',
+    null, true);
 
   mt('({})', '({})', '({});', null, true);
-  mt('({})', '({})', '({});', null, true);
+  mt('({})-cmn',
+    '/* a */(/* b */{/* e */}/* l */)/* u */',
+    '/* a *//* b */({/* e */})/* l */;/* u */',
+    null, true);
 
   mt('({[5]:12})', '({[5]:12})', 'jz.obj({}, 5, 12);', null, true);
-  mt('({[5]:12})', '({[5]:12})', 'jz.obj({}, 5, 12);', null, true);
+  mt('({[5]:12})-cmn',
+    '/* a */(/* b */{/* e */[/* l */5/* u */]/* n */:/* r */12/* w */}/* A */)/* B */',
+    '/* a *//* b */jz.obj({}, /* e *//* l */5/* u *//* n */, /* r */12/* w */)/* A */;/* B */',
+    null, true);
 
   mt('({5:40,[12*5]:12})', '','jz.obj({5: 40}, 12 * 5, 12);', null, true);
-  mt('({5:40,[12*5]:12})', '','jz.obj({5: 40}, 12 * 5, 12);', null, true);
+  mt('({5:40,[12*5]:12})',
+    '',
+   'jz.obj({5: 40}, 12 * 5, 12);',
+    null, true);
 
   mt('({[5]: 12, 12: 5})', '','jz.obj({}, 5, 12, 12, 5);', null, true); 
-  mt('({[5]: 12, 12: 5})', '','jz.obj({}, 5, 12, 12, 5);', null, true); 
+  mt('({[5]: 12, 12: 5})',
+    '',
+   'jz.obj({}, 5, 12, 12, 5);',
+    null, true); 
 
   mt('({[a]: b, l: [w]})', '' ,'jz.obj({}, a, b, \'l\', [w]);', null, true);
-  mt('({[a]: b, l: [w]})', '' ,'jz.obj({}, a, b, \'l\', [w]);', null, true);
+  mt('({[a]: b, l: [w]})',
+    '' ,
+    'jz.obj({}, a, b, \'l\', [w]);',
+    null, true);
 
   mt('while (false) {}', '', 'while (false) {}', null, true);
-  mt('while (false) {}', '', 'while (false) {}', null, true);
+  mt('while (false) {}',
+    '',
+    'while (false) {}',
+    null, true);
 
   mt('while (false) {5}', '', 'while (false) {\n  5;\n}', null, true);
-  mt('while (false) {5}', '', 'while (false) {\n  5;\n}', null, true);
+  mt('while (false) {5}',
+    '',
+    'while (false) {\n  5;\n}',
+    null, true);
 
   mt('while (false) 5;', '', 'while (false)\n  5;', null, true);
-  mt('while (false) 5;', '', 'while (false)\n  5;', null, true);
+  mt('while (false) 5;',
+    '',
+    'while (false)\n  5;',
+    null, true);
 
   mt('while (false);', '', 'while (false);', null, true);
-  mt('while (false);', '', 'while (false);', null, true);
+  mt('while (false);',
+    '',
+    'while (false);',
+    null, true);
 
   mt('while (false) 5; 5;', '', 'while (false)\n  5;\n5;', null, true);
-  mt('while (false) 5; 5;', '', 'while (false)\n  5;\n5;', null, true);
+  mt('while (false) 5; 5;',
+    '',
+    'while (false)\n  5;\n5;',
+    null, true);
 
   mt('(5).e()', '', '5 .e();', null, true);
-  mt('(5).e()', '', '5 .e();', null, true);
+  mt('(5).e()',
+    '',
+    '5 .e();',
+    null, true);
 
   mt('5.5.e()', '', '5.5.e();', null, true);
-  mt('5.5.e()', '', '5.5.e();', null, true);
+  mt('5.5.e()',
+    '',
+    '5.5.e();',
+    null, true);
 
   mt('- -5', '', '- -5;', null, true);
-  mt('- -5', '', '- -5;', null, true);
+  mt('- -5',
+    '',
+    '- -5;',
+    null, true);
 
   mt('- --5[5]', '', '- --5[5];', null, true);
-  mt('- --5[5]', '', '- --5[5];', null, true);
+  mt('- --5[5]',
+    '',
+    '- --5[5];',
+    null, true);
 
   mt('-5[5]--', '', '-5[5]--;', null, true);
-  mt('-5[5]--', '', '-5[5]--;', null, true);
+  mt('-5[5]--',
+    '',
+    '-5[5]--;',
+    null, true);
 
   mt('-+5', '','-+5;',null, true);
-  mt('-+5', '','-+5;',null, true);
+  mt('-+5',
+    '',
+   '-+5;',
+   null, true);
 
   mt('switch (5) {}', '', 'switch (5) {}', null, true);
-  mt('switch (5) {}', '', 'switch (5) {}', null, true);
+  mt('switch (5) {}',
+    '',
+    'switch (5) {}',
+    null, true);
 
   mt('switch (5) { case 12: }', '', 'switch (5) {\ncase 12:\n}', null, true );
-  mt('switch (5) { case 12: }', '', 'switch (5) {\ncase 12:\n}', null, true );
+  mt('switch (5) { case 12: }',
+    '',
+    'switch (5) {\ncase 12:\n}',
+    null, true );
 
   mt('switch (5) { case 40: case 12: 5() }', '', 'switch (5) {\ncase 40:\ncase 12:\n  5();\n}', null, true);
-  mt('switch (5) { case 40: case 12: 5() }', '', 'switch (5) {\ncase 40:\ncase 12:\n  5();\n}', null, true);
+  mt('switch (5) { case 40: case 12: 5() }',
+    '',
+    'switch (5) {\ncase 40:\ncase 12:\n  5();\n}',
+    null, true);
 
   mt('switch (5) { case 40: 12(); case 12: }', '', 'switch (5) {\ncase 40:\n  12();\ncase 12:\n}', null, true);
-  mt('switch (5) { case 40: 12(); case 12: }', '', 'switch (5) {\ncase 40:\n  12();\ncase 12:\n}', null, true);
+  mt('switch (5) { case 40: 12(); case 12: }',
+    '',
+    'switch (5) {\ncase 40:\n  12();\ncase 12:\n}',
+    null, true);
 
   mt('switch (5) { default: 12() }', '', 'switch (5) {\ndefault:\n  12();\n}', null, true );
-  mt('switch (5) { default: 12() }', '', 'switch (5) {\ndefault:\n  12();\n}', null, true );
+  mt('switch (5) { default: 12() }',
+    '',
+    'switch (5) {\ndefault:\n  12();\n}',
+    null, true );
 
   mt('switch (5) { case 12: switch (12) { case 5: }}', '', 'switch (5) {\ncase 12:\n  switch (12) {\n  case 5:\n  }\n}', null, true );
-  mt('switch (5) { case 12: switch (12) { case 5: }}', '', 'switch (5) {\ncase 12:\n  switch (12) {\n  case 5:\n  }\n}', null, true );
+  mt('switch (5) { case 12: switch (12) { case 5: }}',
+    '',
+    'switch (5) {\ncase 12:\n  switch (12) {\n  case 5:\n  }\n}',
+    null, true );
 
   mt('5 ? 40 : 12', '', '5 ? 40 : 12;', null, true );
-  mt('5 ? 40 : 12', '', '5 ? 40 : 12;', null, true );
+  mt('5 ? 40 : 12',
+    '',
+    '5 ? 40 : 12;',
+    null, true );
 
   mt('(5 ? 40 : 12) ? 5 : 5 ? 40 : 12', '', '(5 ? 40 : 12) ? 5 : 5 ? 40 : 12;', null, true );
-  mt('(5 ? 40 : 12) ? 5 : 5 ? 40 : 12', '', '(5 ? 40 : 12) ? 5 : 5 ? 40 : 12;', null, true );
+  mt('(5 ? 40 : 12) ? 5 : 5 ? 40 : 12',
+    '',
+    '(5 ? 40 : 12) ? 5 : 5 ? 40 : 12;',
+    null, true );
 
   mt('a=5','','a = 5;', null, true);
-  mt('a=5','','a = 5;', null, true);
+  mt('a=5',
+   '',
+   'a = 5;',
+    null, true);
 
   mt('a[b]=5','','a[b] = 5;', null, true);
-  mt('a[b]=5','','a[b] = 5;', null, true);
+  mt('a[b]=5',
+   '',
+   'a[b] = 5;',
+    null, true);
 
   mt('a*=12','','a *= 12;',null,true);
-  mt('a*=12','','a *= 12;',null,true);
+  mt('a*=12',
+   '',
+   'a *= 12;',
+   null,true);
 
   mt('a[b]*=12','','a[b] *= 12;',null,true);
-  mt('a[b]*=12','','a[b] *= 12;',null,true);
+  mt('a[b]*=12',
+   '',
+   'a[b] *= 12;',
+   null,true);
 
   mt('a |= 40','','a |= 40;',null, true);
-  mt('a |= 40','','a |= 40;',null, true);
+  mt('a |= 40',
+   '',
+   'a |= 40;',
+   null, true);
 
   mt('a[b] |= 40','','a[b] |= 40;',null,true);
-  mt('a[b] |= 40','','a[b] |= 40;',null,true);
+  mt('a[b] |= 40',
+   '',
+   'a[b] |= 40;',
+   null,true);
 
   mt('++a','','++a;',null,true);
-  mt('++a','','++a;',null,true);
+  mt('++a',
+   '',
+   '++a;',
+   null,true);
 
   mt('++a[b]','','++a[b];',null,true);
-  mt('++a[b]','','++a[b];',null,true);
+  mt('++a[b]',
+   '',
+   '++a[b];',
+   null,true);
 
   mt('a ** 1.5','','jz.ex(a, 1.5);',null,true);
-  mt('a ** 1.5','','jz.ex(a, 1.5);',null,true);
+  mt('a ** 1.5',
+   '',
+   'jz.ex(a, 1.5);',
+   null,true);
 
   mt('a[b] ** 1.5','','jz.ex(a[b], 1.5);',null,true);
-  mt('a[b] ** 1.5','','jz.ex(a[b], 1.5);',null,true);
+  mt('a[b] ** 1.5',
+   '',
+   'jz.ex(a[b], 1.5);',
+   null,true);
 
   mt('a **= 1.5','','a = jz.ex(a, 1.5);',null,true);
-  mt('a **= 1.5','','a = jz.ex(a, 1.5);',null,true);
+  mt('a **= 1.5',
+   '',
+   'a = jz.ex(a, 1.5);',
+   null,true);
 
   mt('a[b] **= 1.5','','(t0 = a)[t1 = b] = jz.ex(t0[t1], 1.5);',null,true);
-  mt('a[b] **= 1.5','','(t0 = a)[t1 = b] = jz.ex(t0[t1], 1.5);',null,true);
+  mt('a[b] **= 1.5',
+   '',
+   '(t0 = a)[t1 = b] = jz.ex(t0[t1], 1.5);',
+   null,true);
 
   mt('[] = 5','','t0 = jz.arrIter(5);\nt0.end();',null,true);
-  mt('[] = 5','','t0 = jz.arrIter(5);\nt0.end();',null,true);
+  mt('[] = 5',
+   '',
+   't0 = jz.arrIter(5);\nt0.end();',
+   null,true);
 
   mt('[,] = 5','','t0 = jz.arrIter(5);\nt0.get();\nt0.end();',null,true);
-  mt('[,] = 5','','t0 = jz.arrIter(5);\nt0.get();\nt0.end();',null,true);
+  mt('[,] = 5',
+   '',
+   't0 = jz.arrIter(5);\nt0.get();\nt0.end();',
+   null,true);
 
   mt('[] = [] = 5','','t0 = jz.arrIter((t0 = jz.arrIter(5), t0.end()));\nt0.end();',null,true);
-  mt('[] = [] = 5','','t0 = jz.arrIter((t0 = jz.arrIter(5), t0.end()));\nt0.end();',null,true);
+  mt('[] = [] = 5',
+   '',
+   't0 = jz.arrIter((t0 = jz.arrIter(5), t0.end()));\nt0.end();',
+   null,true);
 
   mt('[,] = [] = 5','','t0 = jz.arrIter((t0 = jz.arrIter(5), t0.end()));\nt0.get();\nt0.end();',null,true);
-  mt('[,] = [] = 5','','t0 = jz.arrIter((t0 = jz.arrIter(5), t0.end()));\nt0.get();\nt0.end();',null,true);
+  mt('[,] = [] = 5',
+   '',
+   't0 = jz.arrIter((t0 = jz.arrIter(5), t0.end()));\nt0.get();\nt0.end();',
+   null,true);
 
   mt('[[]] = 5','','t0 = jz.arrIter(5);\nt1 = jz.arrIter(t0.get());\nt1.end();\nt0.end();',null,true);
-  mt('[[]] = 5','','t0 = jz.arrIter(5);\nt1 = jz.arrIter(t0.get());\nt1.end();\nt0.end();',null,true);
+  mt('[[]] = 5',
+   '',
+   't0 = jz.arrIter(5);\nt1 = jz.arrIter(t0.get());\nt1.end();\nt0.end();',
+   null,true);
 
   mt('[l] = 5','','t0 = jz.arrIter(5);\nl = t0.get();\nt0.end();',null,true);
-  mt('[l] = 5','','t0 = jz.arrIter(5);\nl = t0.get();\nt0.end();',null,true);
+  mt('[l] = 5',
+   '',
+   't0 = jz.arrIter(5);\nl = t0.get();\nt0.end();',
+   null,true);
 
   mt('[l,] = 5','','t0 = jz.arrIter(5);\nl = t0.get();\nt0.end();',null,true);
-  mt('[l,] = 5','','t0 = jz.arrIter(5);\nl = t0.get();\nt0.end();',null,true);
+  mt('[l,] = 5',
+   '',
+   't0 = jz.arrIter(5);\nl = t0.get();\nt0.end();',
+   null,true);
 
   mt('a, b, e, l','','a, b, e, l;',null,true);
-  mt('a, b, e, l','','a, b, e, l;',null,true);
+  mt('a, b, e, l',
+   '',
+   'a, b, e, l;',
+   null,true);
 
   mt('(a,b),(e,l)','','(a, b), (e, l);',null,true);
-  mt('(a,b),(e,l)','','(a, b), (e, l);',null,true);
+  mt('(a,b),(e,l)',
+   '',
+   '(a, b), (e, l);',
+   null,true);
 
   mt('a * b, e = l','','a * b, e = l;',null,true);
-  mt('a * b, e = l','','a * b, e = l;',null,true);
+  mt('a * b, e = l',
+   '',
+   'a * b, e = l;',
+   null,true);
 
   mt('(a = (b, e), l), 5','','(a = (b, e), l), 5;',null,true);
-  mt('(a = (b, e), l), 5','','(a = (b, e), l), 5;',null,true);
+  mt('(a = (b, e), l), 5',
+   '',
+   '(a = (b, e), l), 5;',
+   null,true);
 
   mt('5 ? (a,b) : (e,l)','','5 ? (a, b) : (e, l);',null,true);
-  mt('5 ? (a,b) : (e,l)','','5 ? (a, b) : (e, l);',null,true);
+  mt('5 ? (a,b) : (e,l)',
+   '',
+   '5 ? (a, b) : (e, l);',
+   null,true);
 
   mt('5((a,b))','','5((a, b));',null,true );
-  mt('5((a,b))','','5((a, b));',null,true );
+  mt('5((a,b))',
+   '',
+   '5((a, b));',
+   null,true );
 
   mt('do while(false); while(false);','','do {\n  while (false);\n} while (false);',null,true);
-  mt('do while(false); while(false);','','do {\n  while (false);\n} while (false);',null,true);
+  mt('do while(false); while(false);',
+   '',
+   'do {\n  while (false);\n} while (false);',
+   null,true);
 
   mt('do {} while (false);','','do {} while (false);',null, true);
-  mt('do {} while (false);','','do {} while (false);',null, true);
+  mt('do {} while (false);',
+   '',
+   'do {} while (false);',
+   null, true);
 
   mt(';','',';',null,true);
-  mt(';','',';',null,true);
+  mt(';',
+   '',
+   ';',
+   null,true);
 
   mt('a.b','','a.b;',null,true); // TODO: handle v < 5, where kws can not come as an uncomputed memname
-  mt('a.b','','a.b;',null,true); // TODO: handle v < 5, where kws can not come as an uncomputed memname
+  mt('a.b',
+   '',
+   'a.b;',
+   null,true); // TODO: handle v < 5, where kws can not come as an uncomputed memname
 
   mt('a[b]','','a[b];',null,true);
-  mt('a[b]','','a[b];',null,true);
+  mt('a[b]',
+   '',
+   'a[b];',
+   null,true);
 
   mt('(a.b)()','','a.b();',null,true);
-  mt('(a.b)()','','a.b();',null,true);
+  mt('(a.b)()',
+   '',
+   'a.b();',
+   null,true);
 
   mt('(a[b])()','','a[b]();',null,true);
-  mt('(a[b])()','','a[b]();',null,true);
+  mt('(a[b])()',
+   '',
+   'a[b]();',
+   null,true);
 
   mt('a.b = 5','','a.b = 5;',null,true);
-  mt('a.b = 5','','a.b = 5;',null,true);
+  mt('a.b = 5',
+   '',
+   'a.b = 5;',
+   null,true);
 
   mt('a.b **= 5','','(t0 = a).b = jz.ex(t0.b, 5);',null,true);
-  mt('a.b **= 5','','(t0 = a).b = jz.ex(t0.b, 5);',null,true);
+  mt('a.b **= 5',
+   '',
+   '(t0 = a).b = jz.ex(t0.b, 5);',
+   null,true);
 
   mt('[a.b] = 5','','t0 = jz.arrIter(5);\na.b = t0.get();\nt0.end();',null,true);
-  mt('[a.b] = 5','','t0 = jz.arrIter(5);\na.b = t0.get();\nt0.end();',null,true);
+  mt('[a.b] = 5',
+   '',
+   't0 = jz.arrIter(5);\na.b = t0.get();\nt0.end();',
+   null,true);
 
   mt('[a=5]=12','','t0 = jz.arrIter(12);\na = jz.u(t1 = t0.get()) ? 5 : t1;\nt0.end();',null,true);
-  mt('[a=5]=12','','t0 = jz.arrIter(12);\na = jz.u(t1 = t0.get()) ? 5 : t1;\nt0.end();',null,true);
+  mt('[a=5]=12',
+   '',
+   't0 = jz.arrIter(12);\na = jz.u(t1 = t0.get()) ? 5 : t1;\nt0.end();',
+   null,true);
 
   mt('[a=[b]=5]=12','','t0 = jz.arrIter(12);\na = jz.u(t1 = t0.get()) ? (t1 = jz.arrIter(5), b = t1.get(), t1.end()) : t1;\nt0.end();',null, true);
-  mt('[a=[b]=5]=12','','t0 = jz.arrIter(12);\na = jz.u(t1 = t0.get()) ? (t1 = jz.arrIter(5), b = t1.get(), t1.end()) : t1;\nt0.end();',null, true);
+  mt('[a=[b]=5]=12',
+   '',
+   't0 = jz.arrIter(12);\na = jz.u(t1 = t0.get()) ? (t1 = jz.arrIter(5), b = t1.get(), t1.end()) : t1;\nt0.end();',
+   null, true);
 
   mt('[a,...b] = 12','','t0 = jz.arrIter(12);\na = t0.get();\nb = t0.rest();\nt0.end();',null,true);
-  mt('{let a;} var a;','','{\n  var a1 = void 0;\n}',e,true);
+  mt('{let a;} var a;-cmn',
+   '',
+   '{\n  var a1 = void 0;\n}',
+   e,true);
 }
 
 function buildTestBuilder(ts) {
