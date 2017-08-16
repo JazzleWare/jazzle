@@ -7,10 +7,12 @@ this.Parser = Parser;
 // this.ErrorString = ErrorString;
 // this.Template = Template;
 this.Emitter = Emitter;
+
 this.Transformer = Transformer;
 // this.Scope = Scope;
 // this.Hitmap = Hitmap;
 // this.GlobalScope = GlobalScope;
+this. PathMan = PathMan;
 
 this.transpile = function(src, options) {
   var p = new Parser(src, options);

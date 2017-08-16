@@ -180,12 +180,28 @@ function isResolvedName(n) {
     n.kind === 'resolved-name';
 }
 
+// vlq(-(2 ** 31))
+function vlq1sh31() {
+  var str = B[(1<<5)|1], len = 32 - 4;
+  while (true) {
+    if (len >= 5) { str += B[1<<5]; len -= 5; }
+    else { str += B[1 << (len-1)]; break }
+  }
+  return str;
+}
+
 function vlq(num) {
   var hexet = 0;
   var ro = 0; // right offset (0 <= ro <= lastRo)
   var lastRo = 5;
   var v = "";
-  if (num < 0) { hexet = 1; num = ((~(num & I_31)) & I_31) + 1; } // TODO: for -(2**31), it must remain -(2**31)
+  if (num < 0) {
+    hexet = 1;
+    num = ((~(num & I_31)) & I_31);
+    if (num === I_31)
+      return vlq1sh31();
+    ++num;
+  }
   ro = 1; // sign bit
   while (true) {
     var maxRead = 5 - ro;

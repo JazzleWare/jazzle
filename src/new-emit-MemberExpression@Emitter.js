@@ -4,8 +4,10 @@ function(n, flags, isStmt) {
   this.eH(n.object, flags, false);
   if (n.computed)
     this.w('[').eA(n.property, EC_NONE, false).w(']');
-  else
-    this.dot().writeIDName(n.property.name); // TODO: node itself rather than its name's string value
+  else {
+    this.dot().emc(CB(n.property), 'bef');
+    this.writeIDName(n.property.name); // TODO: node itself rather than its name's string value
+  }
   this.emc(cb, 'aft');
   isStmt && this.w(';');
   return true;

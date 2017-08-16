@@ -298,6 +298,8 @@ var Parser = function (src, o) {
   this.regexFlags = this.rf = {};
 };
 ;
+function PathMan() {}
+;
 function Ref(scope) {
   this.i = 0;
   this.rsList = [];
@@ -1378,12 +1380,28 @@ function isResolvedName(n) {
     n.kind === 'resolved-name';
 }
 
+// vlq(-(2 ** 31))
+function vlq1sh31() {
+  var str = B[(1<<5)|1], len = 32 - 4;
+  while (true) {
+    if (len >= 5) { str += B[1<<5]; len -= 5; }
+    else { str += B[1 << (len-1)]; break }
+  }
+  return str;
+}
+
 function vlq(num) {
   var hexet = 0;
   var ro = 0; // right offset (0 <= ro <= lastRo)
   var lastRo = 5;
   var v = "";
-  if (num < 0) { hexet = 1; num = ((~(num & I_31)) & I_31) + 1; } // TODO: for -(2**31), it must remain -(2**31)
+  if (num < 0) {
+    hexet = 1;
+    num = ((~(num & I_31)) & I_31);
+    if (num === I_31)
+      return vlq1sh31();
+    ++num;
+  }
   ro = 1; // sign bit
   while (true) {
     var maxRead = 5 - ro;
@@ -3073,8 +3091,10 @@ function(n, flags, isStmt) {
   this.eH(n.object, flags, false);
   if (n.computed)
     this.w('[').eA(n.property, EC_NONE, false).w(']');
-  else
-    this.dot().writeIDName(n.property.name); // TODO: node itself rather than its name's string value
+  else {
+    this.dot().emc(CB(n.property), 'bef');
+    this.writeIDName(n.property.name); // TODO: node itself rather than its name's string value
+  }
   this.emc(cb, 'aft');
   isStmt && this.w(';');
   return true;
@@ -3190,7 +3210,7 @@ function(n, flags, isStmt) {
   this.emitStmtList(n.cases);
   this.wcb ? this.clear_onw() : this.l();
   this.emc(cb, 'inner');
-  this.w('}');
+  this.w('}').emc(cb, 'aft');
   return true;
 };
 
@@ -12872,6 +12892,58 @@ function(shouldCheck) {
 };
 
 }]  ],
+[PathMan.prototype, [function(){
+this.rawAt =
+function(path, at) {
+  if (at >= path.length)
+    return "";
+  var tail = -1;
+  if (path.charAt(at) === '/')
+    tail = at + 1;
+  else {
+    tail = path.indexOf('/', at);
+    if (tail === -1) tail = path.length;
+  }
+  while (tail < path.length && path.charAt(tail) === '/')
+    tail++;
+  return path.substring(at, tail);
+};
+
+this.tail =
+function(path) {
+  var start = path.lastIndexOf('/');
+  if (start === -1) start = 0;
+  return path.substring(0);
+};
+
+this.isRoot =
+function(path) {
+  return path.length && path.charAt(0) === '/';
+};
+
+this.joinRaw =
+function(a,b,nd) { // join raw no dot
+  if (this.isRoot(b))
+    return b;
+  if (nd && b === '.')
+    return a;
+  if (a.charAt(a.length-1) !== '/')
+    a += '/';
+  return a + b;
+};
+
+this.trimAll =
+function(raw) {
+  var e = raw.indexOf('/');
+  return e === -1 ? raw : raw.substring(0, e);
+};
+
+this.trimLast =
+function(raw) {
+  return raw.charAt(raw.length-1) === '/' ? raw.substring(0, raw.length-1) : raw;
+};
+
+}]  ],
 [Ref.prototype, [function(){
 this.absorbDirect =
 function(ref) { return this.absorb(ref, true); };
@@ -15258,10 +15330,12 @@ this.Parser = Parser;
 // this.ErrorString = ErrorString;
 // this.Template = Template;
 this.Emitter = Emitter;
+
 this.Transformer = Transformer;
 // this.Scope = Scope;
 // this.Hitmap = Hitmap;
 // this.GlobalScope = GlobalScope;
+this. PathMan = PathMan;
 
 this.transpile = function(src, options) {
   var p = new Parser(src, options);

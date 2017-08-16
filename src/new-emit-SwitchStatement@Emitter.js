@@ -9,7 +9,7 @@ function(n, flags, isStmt) {
   this.emitStmtList(n.cases);
   this.wcb ? this.clear_onw() : this.l();
   this.emc(cb, 'inner');
-  this.w('}');
+  this.w('}').emc(cb, 'aft');
   return true;
 };
 

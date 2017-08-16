@@ -446,188 +446,191 @@ function loadTranspilerTests(ts) {
 
   mt('({5:40,[12*5]:12})', '','jz.obj({5: 40}, 12 * 5, 12);', null, true);
   mt('({5:40,[12*5]:12})',
-    '',
-   'jz.obj({5: 40}, 12 * 5, 12);',
+    '/* a */(/* b */{/* e */5/* l */:/* u */40/* n */,/* A */[/* B */12/* E */*/* L */5/* U */]/* N */:/* R */12/* W */}/* n */)/* r */',
+    '/* a *//* b */jz.obj({/* e */5/* l */: /* u */40/* n */}, /* A *//* B */12/* E */ * /* L */5/* U *//* N */, /* R */12/* W */)/* n */;/* r */',
     null, true);
 
   mt('({[5]: 12, 12: 5})', '','jz.obj({}, 5, 12, 12, 5);', null, true); 
   mt('({[5]: 12, 12: 5})',
-    '',
-   'jz.obj({}, 5, 12, 12, 5);',
+    '/* a */(/* b */{/* e */[/* l */5/* u */]/* n */: /* r */12/* w */, /* A */12/* B */:/* E */5/* L */}/* U */)/* N */',
+    '/* a *//* b */jz.obj({}, /* e *//* l */5/* u *//* n */, /* r */12/* w */, /* A */12/* B */, /* E */5/* L */)/* U */;/* N */',
     null, true); 
 
   mt('({[a]: b, l: [w]})', '' ,'jz.obj({}, a, b, \'l\', [w]);', null, true);
   mt('({[a]: b, l: [w]})',
-    '' ,
-    'jz.obj({}, a, b, \'l\', [w]);',
+    '/* a */(/* b */{/* e */[/* l */a/* u */]/* n */: /* r */b/* w */, /* A */l/* B */: /* E */[/* L */w/* U */]/* N */}/* R */)/* W */' ,
+    '/* a *//* b */jz.obj({}, /* e *//* l */a/* u *//* n */, /* r */b/* w */, /* A */\'l\'/* B */, /* E */[/* L */w/* U */]/* N */)/* R */;/* W */',
     null, true);
 
   mt('while (false) {}', '', 'while (false) {}', null, true);
   mt('while (false) {}',
-    '',
-    'while (false) {}',
+    '/* a */while/* b */ (/* e */false/* l */) /* u */{/* n */}/* L */',
+    '/* a */while/* b */(/* e */false/* l */) /* u */{/* n */}/* L */',
     null, true);
 
   mt('while (false) {5}', '', 'while (false) {\n  5;\n}', null, true);
   mt('while (false) {5}',
-    '',
-    'while (false) {\n  5;\n}',
+    '/* a */while/* b */ (/* e */false/* l */) /* u */{/* n */5/* r */}/* w */',
+    '/* a */while/* b */(/* e */false/* l */) /* u */{\n  /* n */5/* r */;\n}/* w */',
     null, true);
 
   mt('while (false) 5;', '', 'while (false)\n  5;', null, true);
   mt('while (false) 5;',
-    '',
-    'while (false)\n  5;',
+    '/* a */while/* b */ (/* e */false/* l */) // u\n5/* n */;// r',
+    '/* a */while/* b */(/* e */false/* l */)\n  // u\n  5/* n */;// r',
     null, true);
 
   mt('while (false);', '', 'while (false);', null, true);
   mt('while (false);',
-    '',
-    'while (false);',
+    '/* a */while/* b */ (/* e */false/* l */)/* u */;/* n */',
+    '/* a */while/* b */(/* e */false/* l */)/* u */;/* n */',
     null, true);
 
   mt('while (false) 5; 5;', '', 'while (false)\n  5;\n5;', null, true);
   mt('while (false) 5; 5;',
-    '',
-    'while (false)\n  5;\n5;',
+    '/* a */while/* b */ (/* e */false/* l */)/* u */ 5/* n */;/* r */ 5/* w */;/* L */',
+    '/* a */while/* b */(/* e */false/* l */)\n  /* u */5/* n */;\n/* r */5/* w */;/* L */',
     null, true);
 
   mt('(5).e()', '', '5 .e();', null, true);
   mt('(5).e()',
-    '',
-    '5 .e();',
+    '/* a */(/* b */5/* e */)/* l */./* u */e/* n */(/* inner */)/* r */',
+    '/* a *//* b */5/* e *//* l */./* u */e/* n */(/* inner */);/* r */',
     null, true);
 
   mt('5.5.e()', '', '5.5.e();', null, true);
   mt('5.5.e()',
-    '',
-    '5.5.e();',
+    '/* a */5.5/* b */./* e */e/* l */(/* u */)/* n */',
+    '/* a */5.5/* b */./* e */e/* l */(/* u */);/* n */',
     null, true);
 
   mt('- -5', '', '- -5;', null, true);
   mt('- -5',
-    '',
-    '- -5;',
+    '/* a */-/* b */-/* e */5/* l */',
+    '/* a */-/* b */-/* e */5;/* l */',
     null, true);
 
   mt('- --5[5]', '', '- --5[5];', null, true);
   mt('- --5[5]',
-    '',
-    '- --5[5];',
+    '/* a */-/* b */ --/* e */5/* l */[/* u */5/* n */]/* r */',
+    '/* a */-/* b */--/* e */5/* l */[/* u */5/* n */];/* r */',
     null, true);
 
   mt('-5[5]--', '', '-5[5]--;', null, true);
   mt('-5[5]--',
-    '',
-    '-5[5]--;',
+    '/* a */-/* b */5/* e */[/* l */5/* u */]/* n */--/* r */',
+    '/* a */-/* b */5/* e */[/* l */5/* u */]/* n */--;/* r */',
     null, true);
 
   mt('-+5', '','-+5;',null, true);
   mt('-+5',
-    '',
-   '-+5;',
-   null, true);
+    '/* a */-/* b */+/* e */5/* l */',
+    '/* a */-/* b */+/* e */5;/* l */',
+    null, true);
 
   mt('switch (5) {}', '', 'switch (5) {}', null, true);
   mt('switch (5) {}',
-    '',
-    'switch (5) {}',
+    '/* a */switch/* b */ (/* e */5/* l */)/* u */ {/* n */}/* r */',
+    '/* a */switch/* b */ (/* e */5/* l */)/* u */{/* n */}/* r */',
     null, true);
 
   mt('switch (5) { case 12: }', '', 'switch (5) {\ncase 12:\n}', null, true );
   mt('switch (5) { case 12: }',
-    '',
-    'switch (5) {\ncase 12:\n}',
+    '/* a */switch/* b */ (/* e */5/* l */)/* u */ { /* n */case/* r */ 12/* w */:/* inner */ }/* L */',
+    '/* a */switch/* b */ (/* e */5/* l */)/* u */{\n/* n */case/* r */12/* w */:/* inner */\n}/* L */',
     null, true );
 
+  // must not actually suck trailing comments (TODO-)
   mt('switch (5) { case 40: case 12: 5() }', '', 'switch (5) {\ncase 40:\ncase 12:\n  5();\n}', null, true);
   mt('switch (5) { case 40: case 12: 5() }',
-    '',
-    'switch (5) {\ncase 40:\ncase 12:\n  5();\n}',
+    '/* a */switch/* b */ (/* e */5/* l */)/* u */ {/* n */ case/* r */ 40/* w */: /* A */case/* B */ 12/* E */: /* L */5/* U */(/* N */)/* R */ }/* W */',
+    '/* a */switch/* b */ (/* e */5/* l */)/* u */{\n/* n */case/* r */40/* w */:/* A */\ncase/* B */12/* E */:\n  /* L */5/* U */(/* N */)/* R */;\n}/* W */',
     null, true);
 
   mt('switch (5) { case 40: 12(); case 12: }', '', 'switch (5) {\ncase 40:\n  12();\ncase 12:\n}', null, true);
   mt('switch (5) { case 40: 12(); case 12: }',
-    '',
-    'switch (5) {\ncase 40:\n  12();\ncase 12:\n}',
+    '/* a */switch/* b */ (/* e */5/* l */)/* u */ { /* n */ case /* r */ 40 /* w */: /* A */ 12 /* B */(/* E */)/* L */;/* U */ case /* N */ 12/* R */: /* inner */ }// STMT',
+    '/* a */switch/* b */ (/* e */5/* l */)/* u */{\n/* n */case/* r */40/* w */:\n  /* A */12/* B */(/* E */)/* L */;/* U */\ncase/* N */12/* R */:/* inner */\n}// STMT',
     null, true);
 
   mt('switch (5) { default: 12() }', '', 'switch (5) {\ndefault:\n  12();\n}', null, true );
   mt('switch (5) { default: 12() }',
-    '',
-    'switch (5) {\ndefault:\n  12();\n}',
+    '/* a */switch/* b */ (/* e */5/* l */) /* u */{/* n */ default/* r */: /* A */12/* B */(/* E */)/* L */ }/* U */',
+    '/* a */switch/* b */ (/* e */5/* l */)/* u */{\n/* n */default/* r */:\n  /* A */12/* B */(/* E */)/* L */;\n}/* U */',
     null, true );
 
   mt('switch (5) { case 12: switch (12) { case 5: }}', '', 'switch (5) {\ncase 12:\n  switch (12) {\n  case 5:\n  }\n}', null, true );
   mt('switch (5) { case 12: switch (12) { case 5: }}',
-    '',
-    'switch (5) {\ncase 12:\n  switch (12) {\n  case 5:\n  }\n}',
+    '/* a */switch/* b */ (/* e */5/* l */) /* u */{/* n */ case/* r */ 12/* w */: /* A */switch/* B */ (/* E */12/* L */) /* U */{/* N */ case/* R */ 5/* W */: /* A */ }/* 12 */}/* B */',
+    '/* a */switch/* b */ (/* e */5/* l */)/* u */{\n/* n */case/* r */12/* w */:\n  /* A */switch/* B */ (/* E */12/* L */)/* U */{\n  /* N */case/* R */5/* W */:/* A */\n  }/* 12 */\n}/* B */',
     null, true );
 
   mt('5 ? 40 : 12', '', '5 ? 40 : 12;', null, true );
   mt('5 ? 40 : 12',
-    '',
-    '5 ? 40 : 12;',
+    '/* a */5// b\n ? // e\n 40 /* l */ : /* u */ 12 // n',
+    '/* a */5// b\n ? // e\n40/* l */ : /* u */12;// n',
     null, true );
 
+  // because leading is attached to the smallest node while trailing is attached to the biggest; reverse should actually hold
+  // there must be a flag named EC_FPAREN (force parentheses); that way, the `emitCondTest` routing need not parenthesize anything -- and /* r *//* w */ will get out then
   mt('(5 ? 40 : 12) ? 5 : 5 ? 40 : 12', '', '(5 ? 40 : 12) ? 5 : 5 ? 40 : 12;', null, true );
   mt('(5 ? 40 : 12) ? 5 : 5 ? 40 : 12',
-    '',
-    '(5 ? 40 : 12) ? 5 : 5 ? 40 : 12;',
+    '/* a */(/* b */5/* e */ ? // l\n 40 /* u */ : /* n */ 12 /* r */)/* w */ ? /* A */ 5 /* B */ : /* E */ 5 /* L */ ? // U\n 40 /* N */ : /* R */ 12 /* W */',
+    '(/* a *//* b */5/* e */ ? // l\n40/* u */ : /* n */12/* r *//* w */) ? /* A */5/* B */ : /* E */5/* L */ ? // U\n40/* N */ : /* R */12;/* W */',
     null, true );
 
   mt('a=5','','a = 5;', null, true);
   mt('a=5',
-   '',
-   'a = 5;',
+   '/* a */a/* b */=/* e */5/* l */',
+   '/* a */a/* b */ = /* e */5;/* l */',
     null, true);
 
   mt('a[b]=5','','a[b] = 5;', null, true);
   mt('a[b]=5',
-   '',
-   'a[b] = 5;',
+   '/* a */a/* b */[/* e */b/* l */]/* u */=/* n */5/* r */',
+   '/* a */a/* b */[/* e */b/* l */]/* u */ = /* n */5;/* r */',
     null, true);
 
   mt('a*=12','','a *= 12;',null,true);
   mt('a*=12',
-   '',
-   'a *= 12;',
+   '/* a */a/* b */*=/* e */12/* l */',
+   '/* a */a/* b */ *= /* e */12;/* l */',
    null,true);
 
   mt('a[b]*=12','','a[b] *= 12;',null,true);
   mt('a[b]*=12',
-   '',
-   'a[b] *= 12;',
+   '/* a */a/* b */[/* e */b/* l */]/* u */*=/* n */12/* r */',
+   '/* a */a/* b */[/* e */b/* l */]/* u */ *= /* n */12;/* r */',
    null,true);
 
   mt('a |= 40','','a |= 40;',null, true);
   mt('a |= 40',
-   '',
-   'a |= 40;',
+   '/* a */a// b\n |= // e\n  40/* l */',
+   '/* a */a// b\n |= // e\n40;/* l */',
    null, true);
 
   mt('a[b] |= 40','','a[b] |= 40;',null,true);
   mt('a[b] |= 40',
-   '',
-   'a[b] |= 40;',
+   '/* a */a/* b */[/* e */b/* l */]/* u */ |= // n\n40// r\n',
+   '/* a */a/* b */[/* e */b/* l */]/* u */ |= // n\n40;// r',
    null,true);
 
   mt('++a','','++a;',null,true);
   mt('++a',
-   '',
-   '++a;',
+   '// a\n++// b\na// e',
+   '// a\n++// b\na;// e',
    null,true);
 
   mt('++a[b]','','++a[b];',null,true);
   mt('++a[b]',
-   '',
-   '++a[b];',
+   '// a\n++// b\na// e\n[// l\nb// u\n]// r',
+   '// a\n++// b\na// e\n[// l\nb// u\n];// r',
    null,true);
 
   mt('a ** 1.5','','jz.ex(a, 1.5);',null,true);
   mt('a ** 1.5',
-   '',
-   'jz.ex(a, 1.5);',
+   '/* a */a/* b */ ** /* e */1.5/* l */',
+   'jz.ex(/* a */a/* b */, /* e */1.5);/* l */',
    null,true);
 
   mt('a[b] ** 1.5','','jz.ex(a[b], 1.5);',null,true);
