@@ -653,8 +653,8 @@ function loadTranspilerTests(ts) {
 
   mt('[] = 5','','t0 = jz.arrIter(5);\nt0.end();',null,true);
   mt('[] = 5',
-   '',
-   't0 = jz.arrIter(5);\nt0.end();',
+   '/* a */[/* b */]/* e */ = /* l */5/* u */',
+   '/* a */t0 = jz.arrIter(/* l */5);\nt0.end();/* b *//* e *//* u */',
    null,true);
 
   mt('[,] = 5','','t0 = jz.arrIter(5);\nt0.get();\nt0.end();',null,true);

@@ -3510,8 +3510,8 @@ function(n, flags, isStmt) {
     this.emc(cb, 'bef');
     this.wcb || this.onw(wcb_startStmtList);
     this.emitStmtList(n.list);
-    this.emc(cb, 'left.aft');
     this.emc(cb, 'inner');
+    this.emc(cb, 'left.aft');
     this.emc(cb, 'aft');
   }
   else {
@@ -3519,8 +3519,8 @@ function(n, flags, isStmt) {
     if (hasParen) { this.w('('); flags &= EC_IN; }
     this.emc(cb, 'bef');
     this.emitCommaList(n.list, flags);
-    this.emc(cb, 'left.aft');
     this.emc(cb, 'inner');
+    this.emc(cb, 'left.aft');
     this.emc(cb, 'aft');
     hasParen && this.w(')');
   }
