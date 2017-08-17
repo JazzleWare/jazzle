@@ -635,20 +635,20 @@ function loadTranspilerTests(ts) {
 
   mt('a[b] ** 1.5','','jz.ex(a[b], 1.5);',null,true);
   mt('a[b] ** 1.5',
-   '',
-   'jz.ex(a[b], 1.5);',
+   '/* a */a/* b */[/* e */b/* l */]/* u */ ** /* n */1.5/* r */',
+   'jz.ex(/* a */a/* b */[/* e */b/* l */]/* u */, /* n */1.5);/* r */',
    null,true);
 
   mt('a **= 1.5','','a = jz.ex(a, 1.5);',null,true);
   mt('a **= 1.5',
-   '',
-   'a = jz.ex(a, 1.5);',
+   '/* a */a/* b */ **= /* e */1.5/* l */',
+   '/* a */a/* b */ = jz.ex(a, /* e */1.5);/* l */',
    null,true);
 
   mt('a[b] **= 1.5','','(t0 = a)[t1 = b] = jz.ex(t0[t1], 1.5);',null,true);
   mt('a[b] **= 1.5',
-   '',
-   '(t0 = a)[t1 = b] = jz.ex(t0[t1], 1.5);',
+   '/* a */a/* b */[/* e */b/* l */]/* u */ **= /* n */1.5/* L */',
+   '(t0 = /* a */a/* b */)[t1 = /* e */b/* l */]/* u */ = jz.ex(t0[t1], /* n */1.5);/* L */',
    null,true);
 
   mt('[] = 5','','t0 = jz.arrIter(5);\nt0.end();',null,true);

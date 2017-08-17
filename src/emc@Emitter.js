@@ -1,6 +1,11 @@
 this.emc =
 function(cb, i) {
-  return HAS.call(cb, i) && this.emcim(cb[i]);
+  if (HAS.call(cb, i)) {
+    var e = cb[i];
+    cb[i] = null;
+    return this.emcim(e);
+  }
+  return false;
 };
 
 this.emce = // emc erase
