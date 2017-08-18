@@ -683,86 +683,87 @@ function loadTranspilerTests(ts) {
 
   mt('[l] = 5','','t0 = jz.arrIter(5);\nl = t0.get();\nt0.end();',null,true);
   mt('[l] = 5',
-   '',
-   't0 = jz.arrIter(5);\nl = t0.get();\nt0.end();',
+   '/* a */[/* b */l/* l */]/* e */ = /* u */5/* n */',
+   '/* a */t0 = jz.arrIter(/* u */5);\n/* b */l/* l */ = t0.get();\nt0.end();/* e *//* n */',
    null,true);
 
   mt('[l,] = 5','','t0 = jz.arrIter(5);\nl = t0.get();\nt0.end();',null,true);
   mt('[l,] = 5',
-   '',
-   't0 = jz.arrIter(5);\nl = t0.get();\nt0.end();',
+   '/* a */[/* b */l/* l */,/* e */]/* u */ = /* n */5/* r */',
+   '/* a */t0 = jz.arrIter(/* n */5);\n/* b */l/* l */ = t0.get();\nt0.end();/* e *//* u *//* r */',
    null,true);
 
   mt('a, b, e, l','','a, b, e, l;',null,true);
   mt('a, b, e, l',
-   '',
-   'a, b, e, l;',
+   '/* a */a/* b */,/* e */ b/* l */,/* u */ e/* n */,/* r */ l/* w */',
+   '/* a */a/* b */, /* e */b/* l */, /* u */e/* n */, /* r */l;/* w */',
    null,true);
 
   mt('(a,b),(e,l)','','(a, b), (e, l);',null,true);
   mt('(a,b),(e,l)',
-   '',
-   '(a, b), (e, l);',
+   '/* a */(/* b */a/* e */,/* l */b/* u */)/* n */,/* A */(/* B */e/* E */,/* L */l/* U */)/* N */',
+   '/* a */(/* b */a/* e */, /* l */b)/* u *//* n */, /* A */(/* B */e/* E */, /* L */l)/* U */;/* N */',
    null,true);
 
   mt('a * b, e = l','','a * b, e = l;',null,true);
   mt('a * b, e = l',
-   '',
-   'a * b, e = l;',
+   '/* a */a/* b */ * /* e */b/* l */, /* u */e/* n */ = /* r */l/* w */',
+   '/* a */a/* b */ * /* e */b/* l */, /* u */e/* n */ = /* r */l;/* w */',
    null,true);
 
   mt('(a = (b, e), l), 5','','(a = (b, e), l), 5;',null,true);
   mt('(a = (b, e), l), 5',
-   '',
-   '(a = (b, e), l), 5;',
+   '/* a */(/* b */a/* l */ =/* e */ (/* u */b/* n */, /* r */e/* w */)/* A */, /* B */l/* L */)/* E */, /* U */5/* N */',
+   '/* a */(/* b */a/* l */ = /* e */(/* u */b/* n */, /* r */e)/* w *//* A */, /* B */l)/* L *//* E */, /* U */5;/* N */',
    null,true);
 
   mt('5 ? (a,b) : (e,l)','','5 ? (a, b) : (e, l);',null,true);
   mt('5 ? (a,b) : (e,l)',
-   '',
-   '5 ? (a, b) : (e, l);',
+   '/* a */5/* b */ ? /* e */(/* l */a/* u */,/* n */b/* r */)/* w */ : /* A */(/* B */e/* E */,/* L */l/* U */)/* N */',
+   '/* a */5/* b */ ? /* e */(/* l */a/* u */, /* n */b)/* r *//* w */ : /* A */(/* B */e/* E */, /* L */l)/* U */;/* N */',
    null,true);
 
   mt('5((a,b))','','5((a, b));',null,true );
   mt('5((a,b))',
-   '',
-   '5((a, b));',
+   '/* a */5/* b */(/* l */(/* e */a/* u */,/* n */b/* r */)/* w */)/* E */',
+   '/* a */5/* b */(/* l */(/* e */a/* u */, /* n */b)/* r *//* w */);/* E */',
    null,true );
 
   mt('do while(false); while(false);','','do {\n  while (false);\n} while (false);',null,true);
   mt('do while(false); while(false);',
-   '',
-   'do {\n  while (false);\n} while (false);',
+   '/* a */do/* b */ while/* e */(/* l */false/* u */)/* n */;/* r */ while/* w */(/* A */false/* B */)/* E */;/* L */',
+   '/* a */do {\n  /* b */while/* e */(/* l */false/* u */)/* n */;/* r */\n} while/* w */(/* A */false/* B */)/* E */;/* L */',
    null,true);
 
+  // TODO: would be better to have things like `{// a\n}` become `{\n  // a\n}`
   mt('do {} while (false);','','do {} while (false);',null, true);
   mt('do {} while (false);',
-   '',
-   'do {} while (false);',
+   '// a\ndo// b\n {// l\n}// e\n while// u\n (// n\nfalse// r\n)// w\n;// E\n',
+   '// a\ndo // b\n{// l\n}// e\n while// u\n(// n\nfalse// r\n)// w\n;// E',
    null, true);
 
   mt(';','',';',null,true);
   mt(';',
-   '',
-   ';',
+   '/* a */;/* b */',
+   '/* a */;/* b */',
    null,true);
 
   mt('a.b','','a.b;',null,true); // TODO: handle v < 5, where kws can not come as an uncomputed memname
   mt('a.b',
-   '',
-   'a.b;',
+   '/* a */a/* b */./* l */b/* e */',
+   '/* a */a/* b */./* l */b;/* e */',
    null,true); // TODO: handle v < 5, where kws can not come as an uncomputed memname
 
   mt('a[b]','','a[b];',null,true);
   mt('a[b]',
-   '',
-   'a[b];',
+   '/* a */a/* b */[/* l */b/* e */]/* u */',
+   '/* a */a/* b */[/* l */b/* e */];/* u */',
    null,true);
 
   mt('(a.b)()','','a.b();',null,true);
   mt('(a.b)()',
-   '',
-   'a.b();',
+   '/* a */(/* b */a/* l */./* e */b/* u */)/* n */(/* r */)/* w */',
+   '/* a *//* b */a/* l */./* e */b/* u *//* n */(/* r */);/* w */',
    null,true);
 
   mt('(a[b])()','','a[b]();',null,true);

@@ -102,6 +102,7 @@ this.parseParen = function(ctx) {
         this.err('rest.arg.has.trailing.comma');
       if (list === null)
         list = [core(elem)];
+      this.spc(core(elem), 'aft');
       this.next();
     }
     else break;
