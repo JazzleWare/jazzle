@@ -768,41 +768,46 @@ function loadTranspilerTests(ts) {
 
   mt('(a[b])()','','a[b]();',null,true);
   mt('(a[b])()',
-   '',
-   'a[b]();',
+   '/* a */(/* b */a/* e */[/* l */b/* u */]/* n */)/* r */(/* w */)/* L */',
+   '/* a *//* b */a/* e */[/* l */b/* u */]/* n *//* r */(/* w */);/* L */',
    null,true);
 
   mt('a.b = 5','','a.b = 5;',null,true);
   mt('a.b = 5',
-   '',
-   'a.b = 5;',
+   '/* a */a/* b */./* l */b/* e */ = /* u */5/* n */',
+   '/* a */a/* b */./* l */b/* e */ = /* u */5;/* n */',
    null,true);
 
   mt('a.b **= 5','','(t0 = a).b = jz.ex(t0.b, 5);',null,true);
   mt('a.b **= 5',
-   '',
-   '(t0 = a).b = jz.ex(t0.b, 5);',
+   '/* a */a/* b */./* l */b/* e */ **= /* u */5/* n */',
+   '(t0 = /* a */a/* b */)./* l */b/* e */ = jz.ex(t0.b, /* u */5);/* n */',
    null,true);
 
   mt('[a.b] = 5','','t0 = jz.arrIter(5);\na.b = t0.get();\nt0.end();',null,true);
   mt('[a.b] = 5',
-   '',
-   't0 = jz.arrIter(5);\na.b = t0.get();\nt0.end();',
+   '/* a */[/* b */a/* l */./* e */b/* u */]/* n */ = /* r */5/* w */',
+   '/* a */t0 = jz.arrIter(/* r */5);\n/* b */a/* l */./* e */b/* u */ = t0.get();\nt0.end();/* n *//* w */',
    null,true);
 
   mt('[a=5]=12','','t0 = jz.arrIter(12);\na = jz.u(t1 = t0.get()) ? 5 : t1;\nt0.end();',null,true);
   mt('[a=5]=12',
-   '',
-   't0 = jz.arrIter(12);\na = jz.u(t1 = t0.get()) ? 5 : t1;\nt0.end();',
+   '/* a */[/* b */a/* l */=/* e */5/* u */]/* n */=/* r */12/* w */',
+   '/* a */t0 = jz.arrIter(/* r */12);\n/* b */a/* l */ = jz.u(t1 = t0.get()) ? /* e */5 : t1/* u */;\nt0.end();/* n *//* w */',
    null,true);
 
   mt('[a=[b]=5]=12','','t0 = jz.arrIter(12);\na = jz.u(t1 = t0.get()) ? (t1 = jz.arrIter(5), b = t1.get(), t1.end()) : t1;\nt0.end();',null, true);
   mt('[a=[b]=5]=12',
-   '',
-   't0 = jz.arrIter(12);\na = jz.u(t1 = t0.get()) ? (t1 = jz.arrIter(5), b = t1.get(), t1.end()) : t1;\nt0.end();',
+   '/* a */[/* b */a/* l */=/* e */[/* u */b/* n */]/* r */=/* w */5/* A */]/* B */=/* L */12/* E */',
+   '/* a */t0 = jz.arrIter(/* L */12);\n/* b */a/* l */ = jz.u(t1 = t0.get()) ? (/* e */t1 = jz.arrIter(/* w */5), /* u */b/* n */ = t1.get(), t1.end()/* r */) : t1/* A */;\nt0.end();/* B *//* E */',
    null, true);
 
   mt('[a,...b] = 12','','t0 = jz.arrIter(12);\na = t0.get();\nb = t0.rest();\nt0.end();',null,true);
+  mt('[a,...b] = 12',
+    '/* a */[/* b */a/* l */,/* e */.../* u */b/* n */]/* r */ = /* w */12/* A */',
+    '/* a */t0 = jz.arrIter(/* w */12);\n/* b */a/* l */ = t0.get();\n/* e *//* u */b = t0.rest()/* n */;\nt0.end();/* r *//* A */',
+    null,true);
+
   mt('{let a;} var a;-cmn',
    '',
    '{\n  var a1 = void 0;\n}',
