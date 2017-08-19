@@ -1,49 +1,64 @@
-this.rawAt =
+this.isSlash =
 function(path, at) {
-  if (at >= path.length)
-    return "";
-  var tail = -1;
-  if (path.charAt(at) === '/')
-    tail = at + 1;
-  else {
-    tail = path.indexOf('/', at);
-    if (tail === -1) tail = path.length;
-  }
-  while (tail < path.length && path.charAt(tail) === '/')
-    tail++;
-  return path.substring(at, tail);
+  return path.length <= at ? false : 
+    path.charCodeAt(at) === CH_DIV;
 };
 
+this.findSlash =
+function(path, at) {
+  ASSERT.call(this, arguments.length === 2, 'arguments');
+  return path.indexOf('/', at);
+};
+
+this.findLastSlash =
+function(path, at) {
+  ASSERT.call(this, arguments.length === 2, 'arguments');
+  return path.lastIndexOf('/', at);
+}; 
+
+// tail(a/b) -> b; tail(a) -> ""
 this.tail =
 function(path) {
-  var start = path.lastIndexOf('/');
-  if (start === -1) start = 0;
-  return path.substring(0);
+  var slash = this.findLastSlash(path, path.length);
+  if (slash === -1)
+    return "";
+  ++slash;
+  return slash >= path.length ? "" : path.substring(slash);
 };
 
-this.isRoot =
+// head(a/b) -> a; head(a) -> ""
+this.head =
 function(path) {
-  return path.length && path.charAt(0) === '/';
+  var slash = this.findLastSlash(path, path.length);
+  return slash === -1 ? "" : slash === 0 ? path.charAt(0) : path.substring(0, slash);
+};
+ 
+this.len =
+function(path, start) {
+  if (start >= path.length)
+    return 0;
+  var tail = -1;
+  if (this.isSlash(path, start))
+    tail = start + 1;
+  else {
+    tail = this.findSlash(path, start);
+    if (tail === -1) 
+      tail = path.length;
+  }
+  while (path.length > tail && this.isSlash(path, tail))
+    tail++;
+  return tail - start;
 };
 
-this.joinRaw =
-function(a,b,nd) { // join raw no dot
-  if (this.isRoot(b))
-    return b;
-  if (nd && b === '.')
-    return a;
-  if (a.charAt(a.length-1) !== '/')
-    a += '/';
-  return a + b;
+this.trimSlash =
+function(path) {
+  return path !== '/' && this.isSlash(path, path.length-1) ?
+    path.substring(0, path.length-1) : path;
 };
 
 this.trimAll =
-function(raw) {
-  var e = raw.indexOf('/');
-  return e === -1 ? raw : raw.substring(0, e);
-};
-
-this.trimLast =
-function(raw) {
-  return raw.charAt(raw.length-1) === '/' ? raw.substring(0, raw.length-1) : raw;
+function(path) {
+  var slash = this.findSlash(path, 0);
+  return slash === -1 ? path :
+    slash === 0 ? path.charAt(0) : path.substring(0,slash);
 };

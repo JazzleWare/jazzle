@@ -471,11 +471,6 @@ function Transformer() {
 
 }
 ;
-function VirtualSourceLoader(fsmap) {
-  this.fsmap = fsmap || {}
-
-}
-;
  ConcreteScope.prototype = createObj(Scope.prototype);
  GlobalScope.prototype = createObj(Scope.prototype);
  FunScope.prototype = createObj(ConcreteScope.prototype);
@@ -12899,54 +12894,69 @@ function(shouldCheck) {
 
 }]  ],
 [PathMan.prototype, [function(){
-this.rawAt =
+this.isSlash =
 function(path, at) {
-  if (at >= path.length)
-    return "";
-  var tail = -1;
-  if (path.charAt(at) === '/')
-    tail = at + 1;
-  else {
-    tail = path.indexOf('/', at);
-    if (tail === -1) tail = path.length;
-  }
-  while (tail < path.length && path.charAt(tail) === '/')
-    tail++;
-  return path.substring(at, tail);
+  return path.length <= at ? false : 
+    path.charCodeAt(at) === CH_DIV;
 };
 
+this.findSlash =
+function(path, at) {
+  ASSERT.call(this, arguments.length === 2, 'arguments');
+  return path.indexOf('/', at);
+};
+
+this.findLastSlash =
+function(path, at) {
+  ASSERT.call(this, arguments.length === 2, 'arguments');
+  return path.lastIndexOf('/', at);
+}; 
+
+// tail(a/b) -> b; tail(a) -> ""
 this.tail =
 function(path) {
-  var start = path.lastIndexOf('/');
-  if (start === -1) start = 0;
-  return path.substring(0);
+  var slash = this.findLastSlash(path, path.length);
+  if (slash === -1)
+    return "";
+  ++slash;
+  return slash >= path.length ? "" : path.substring(slash);
 };
 
-this.isRoot =
+// head(a/b) -> a; head(a) -> ""
+this.head =
 function(path) {
-  return path.length && path.charAt(0) === '/';
+  var slash = this.findLastSlash(path, path.length);
+  return slash === -1 ? "" : slash === 0 ? path.charAt(0) : path.substring(0, slash);
+};
+ 
+this.len =
+function(path, start) {
+  if (start >= path.length)
+    return 0;
+  var tail = -1;
+  if (this.isSlash(path, start))
+    tail = start + 1;
+  else {
+    tail = this.findSlash(path, start);
+    if (tail === -1) 
+      tail = path.length;
+  }
+  while (path.length > tail && this.isSlash(path, tail))
+    tail++;
+  return tail - start;
 };
 
-this.joinRaw =
-function(a,b,nd) { // join raw no dot
-  if (this.isRoot(b))
-    return b;
-  if (nd && b === '.')
-    return a;
-  if (a.charAt(a.length-1) !== '/')
-    a += '/';
-  return a + b;
+this.trimSlash =
+function(path) {
+  return path !== '/' && this.isSlash(path, path.length-1) ?
+    path.substring(0, path.length-1) : path;
 };
 
 this.trimAll =
-function(raw) {
-  var e = raw.indexOf('/');
-  return e === -1 ? raw : raw.substring(0, e);
-};
-
-this.trimLast =
-function(raw) {
-  return raw.charAt(raw.length-1) === '/' ? raw.substring(0, raw.length-1) : raw;
+function(path) {
+  var slash = this.findSlash(path, 0);
+  return slash === -1 ? path :
+    slash === 0 ? path.charAt(0) : path.substring(0,slash);
 };
 
 }]  ],
@@ -15287,31 +15297,6 @@ function(list, isVal) {
 };
 
 }]  ],
-[VirtualSourceLoader.prototype, [function(){
-this.has =
-function(base, sub) {
-  base = cd("", base);
-  sub = cd(base, sub);
-  return HAS.call(this.fsmap, _m(sub));
-};
-
-this.load =
-function(base, sub) {
-  base = cd("", base);
-  ASSERT.call(this, this.has(base, sub), '[:'+sub+':]');
-  sub = cd(base, sub);
-  return this.fsmap[_m(sub)];
-};
-
-this.set =
-function(base, sub, src) {
-  base = cd("", base);
-  sub = cd(base, sub);
-  this.fsmap[_m(sub)] = src;
-  return this;
-};
-
-}]  ],
 null,
 null,
 null,
@@ -15341,7 +15326,7 @@ this.Transformer = Transformer;
 // this.Scope = Scope;
 // this.Hitmap = Hitmap;
 // this.GlobalScope = GlobalScope;
-this. PathMan = PathMan;
+ this. PathMan = PathMan;
 
 this.transpile = function(src, options) {
   var p = new Parser(src, options);
@@ -15384,12 +15369,12 @@ this.ST_CATCH = ST_BARE << 1,
 this.ST_PAREN = ST_CATCH << 1,
 this.ST_NONE = 0; 
 
-this. VirtualSourceLoader = VirtualSourceLoader;
+// this. VirtualSourceLoader = VirtualSourceLoader;
 this. Bundler = Bundler;
 this. makeAcceptor = makeAcceptor;
 
-this.cd = cd;
-this.pathFor = pathFor;
-this.tailFor = tailFor;
+// this.cd = cd;
+// this.pathFor = pathFor;
+// this.tailFor = tailFor;
 
 ;}).call (function(){try{return module.exports;}catch(e){return this;}}.call(this))

@@ -12,7 +12,7 @@ this.Transformer = Transformer;
 // this.Scope = Scope;
 // this.Hitmap = Hitmap;
 // this.GlobalScope = GlobalScope;
-this. PathMan = PathMan;
+ this. PathMan = PathMan;
 
 this.transpile = function(src, options) {
   var p = new Parser(src, options);
@@ -55,11 +55,11 @@ this.ST_CATCH = ST_BARE << 1,
 this.ST_PAREN = ST_CATCH << 1,
 this.ST_NONE = 0; 
 
-this. VirtualSourceLoader = VirtualSourceLoader;
+// this. VirtualSourceLoader = VirtualSourceLoader;
 this. Bundler = Bundler;
 this. makeAcceptor = makeAcceptor;
 
-this.cd = cd;
-this.pathFor = pathFor;
-this.tailFor = tailFor;
+// this.cd = cd;
+// this.pathFor = pathFor;
+// this.tailFor = tailFor;
 
