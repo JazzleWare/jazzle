@@ -62,3 +62,24 @@ function(path) {
   return slash === -1 ? path :
     slash === 0 ? path.charAt(0) : path.substring(0,slash);
 };
+
+this.hasTailSlash =
+function(path) {
+  return this.isSlash(path, path.length-1) ;
+};
+
+this.hasHeadSlash =
+function(path) {
+  return this.isSlash(path, 0);
+};
+
+this.joinRaw =
+function(a, b, nd) {
+  if (this.hasHeadSlash(b))
+    return b;
+  if (b === '.' && nd)
+    return a;
+  a = this.trimSlash(a);
+  if (a != '/') a += '/';
+  return a + b
+};

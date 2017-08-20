@@ -12959,6 +12959,27 @@ function(path) {
     slash === 0 ? path.charAt(0) : path.substring(0,slash);
 };
 
+this.hasTailSlash =
+function(path) {
+  return this.isSlash(path, path.length-1) ;
+};
+
+this.hasHeadSlash =
+function(path) {
+  return this.isSlash(path, 0);
+};
+
+this.joinRaw =
+function(a, b, nd) {
+  if (this.hasHeadSlash(b))
+    return b;
+  if (b === '.' && nd)
+    return a;
+  a = this.trimSlash(a);
+  if (a != '/') a += '/';
+  return a + b
+};
+
 }]  ],
 [Ref.prototype, [function(){
 this.absorbDirect =
@@ -14120,6 +14141,7 @@ function(origin, mname, loni, bundler) {
     var entry = satisfierNamespace.findExportedEntry_m(mname);
 
     // a.js: export * from './a.js'; import {l} // will blow the stack if the satisfier scope is the same as the origin
+    // TODO: what about this? a.js: import {l} from './b'; b.js: export * from './b';
     if (entry === null && origin !== satisfierNamespace)
       entry = satisfierNamespace.findInForwardEntries_m(origin, mname, loni, bundler);
     if (entry)
