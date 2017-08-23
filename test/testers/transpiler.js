@@ -289,10 +289,10 @@ function loadTranspilerTests(ts) {
     "jz.c(/* a */5/* b */, jz.arr([/* e */5/* l */], /* u */jz.sp(/* n */5)/* r */));/* w */",
     e, true);
 
-  mt('call-5[5](...5)', "5[5](...5)", "jz.cm(t0 = 5, t0[5], jz.arr(jz.sp(5)));", e, true);
+  mt('call-5[5](...5)', "5[5](...5)", "jz.cm(t = 5, t[5], jz.arr(jz.sp(5)));", e, true);
   mt('call-5[5](...5)-cmn',
     "/* a */5/* b */[/* e */5/* l */]/* u */(/* n */.../* r */5/* N */)/* w */",
-    "jz.cm(t0 = /* a */5/* b */, t0[/* e */5/* l */]/* u */, jz.arr(/* n */jz.sp(/* r */5)/* N */));/* w */",
+    "jz.cm(t = /* a */5/* b */, t[/* e */5/* l */]/* u */, jz.arr(/* n */jz.sp(/* r */5)/* N */));/* w */",
     e, true);
 
   mt('new-5(5)', "new 5(5)", "new 5(5);", e, true);
@@ -645,52 +645,52 @@ function loadTranspilerTests(ts) {
    '/* a */a/* b */ = jz.ex(a, /* e */1.5);/* l */',
    e, true);
 
-  mt('a[b] **= 1.5','','(t0 = a)[t1 = b] = jz.ex(t0[t1], 1.5);',e, true);
+  mt('a[b] **= 1.5','','(t = a)[t1 = b] = jz.ex(t[t1], 1.5);',e, true);
   mt('a[b] **= 1.5',
    '/* a */a/* b */[/* e */b/* l */]/* u */ **= /* n */1.5/* L */',
-   '(t0 = /* a */a/* b */)[t1 = /* e */b/* l */]/* u */ = jz.ex(t0[t1], /* n */1.5);/* L */',
+   '(t = /* a */a/* b */)[t1 = /* e */b/* l */]/* u */ = jz.ex(t[t1], /* n */1.5);/* L */',
    e, true);
 
-  mt('[] = 5','','t0 = jz.arrIter(5);\nt0.end();',e, true);
+  mt('[] = 5','','t = jz.arrIter(5);\nt.end();',e, true);
   mt('[] = 5',
    '/* a */[/* b */]/* e */ = /* l */5/* u */',
-   '/* a */t0 = jz.arrIter(/* l */5);\nt0.end();/* b *//* e *//* u */',
+   '/* a */t = jz.arrIter(/* l */5);\nt.end();/* b *//* e *//* u */',
    e, true);
 
-  mt('[,] = 5','','t0 = jz.arrIter(5);\nt0.get();\nt0.end();',e, true);
+  mt('[,] = 5','','t = jz.arrIter(5);\nt.get();\nt.end();',e, true);
   mt('[,] = 5',
    '/* a */[/* b */,/* e */]/* l */ = /* u */5/* n */',
-   '/* a */t0 = jz.arrIter(/* u */5);\n/* b */t0.get();\nt0.end();/* e *//* l *//* n */',
+   '/* a */t = jz.arrIter(/* u */5);\n/* b */t.get();\nt.end();/* e *//* l *//* n */',
    e, true);
 
-  mt('[] = [] = 5','','t0 = jz.arrIter((t0 = jz.arrIter(5), t0.end()));\nt0.end();',e, true);
+  mt('[] = [] = 5','','t = jz.arrIter((t = jz.arrIter(5), t.end()));\nt.end();',e, true);
   mt('[] = [] = 5',
    '/* a */[/* b */]/* e */ = /* l */[/* u */]/* n */ = /* N */5/* L */',
-   '/* a */t0 = jz.arrIter((/* l */t0 = jz.arrIter(/* N */5), t0.end()/* u *//* n */));\nt0.end();/* b *//* e *//* L */',
+   '/* a */t = jz.arrIter((/* l */t = jz.arrIter(/* N */5), t.end()/* u *//* n */));\nt.end();/* b *//* e *//* L */',
    e, true);
 
-  mt('[,] = [] = 5','','t0 = jz.arrIter((t0 = jz.arrIter(5), t0.end()));\nt0.get();\nt0.end();',e, true);
+  mt('[,] = [] = 5','','t = jz.arrIter((t = jz.arrIter(5), t.end()));\nt.get();\nt.end();',e, true);
   mt('[,] = [] = 5',
    '/* a */[/* b */,/* n */]/* l */ = /* e */[/* N */]/* E */ = /* 12 */5// 12L',
-   '/* a */t0 = jz.arrIter((/* e */t0 = jz.arrIter(/* 12 */5), t0.end()/* N *//* E */));\n/* b */t0.get();\nt0.end();/* n *//* l */// 12L',
+   '/* a */t = jz.arrIter((/* e */t = jz.arrIter(/* 12 */5), t.end()/* N *//* E */));\n/* b */t.get();\nt.end();/* n *//* l */// 12L',
    e, true);
 
-  mt('[[]] = 5','','t0 = jz.arrIter(5);\nt1 = jz.arrIter(t0.get());\nt1.end();\nt0.end();',e, true);
+  mt('[[]] = 5','','t = jz.arrIter(5);\nt1 = jz.arrIter(t.get());\nt1.end();\nt.end();',e, true);
   mt('[[]] = 5',
    '// a\n[// b\n[// n\n]// e\n]// u\n = // l\n5// N\n',
-   '// a\nt0 = jz.arrIter(// l\n5);\n// b\nt1 = jz.arrIter(t0.get());\nt1.end();// n\n// e\nt0.end();// u\n// N',
+   '// a\nt = jz.arrIter(// l\n5);\n// b\nt1 = jz.arrIter(t.get());\nt1.end();// n\n// e\nt.end();// u\n// N',
    e, true);
 
-  mt('[l] = 5','','t0 = jz.arrIter(5);\nl = t0.get();\nt0.end();',e, true);
+  mt('[l] = 5','','t = jz.arrIter(5);\nl = t.get();\nt.end();',e, true);
   mt('[l] = 5',
    '/* a */[/* b */l/* l */]/* e */ = /* u */5/* n */',
-   '/* a */t0 = jz.arrIter(/* u */5);\n/* b */l/* l */ = t0.get();\nt0.end();/* e *//* n */',
+   '/* a */t = jz.arrIter(/* u */5);\n/* b */l/* l */ = t.get();\nt.end();/* e *//* n */',
    e, true);
 
-  mt('[l,] = 5','','t0 = jz.arrIter(5);\nl = t0.get();\nt0.end();',e, true);
+  mt('[l,] = 5','','t = jz.arrIter(5);\nl = t.get();\nt.end();',e, true);
   mt('[l,] = 5',
    '/* a */[/* b */l/* l */,/* e */]/* u */ = /* n */5/* r */',
-   '/* a */t0 = jz.arrIter(/* n */5);\n/* b */l/* l */ = t0.get();\nt0.end();/* e *//* u *//* r */',
+   '/* a */t = jz.arrIter(/* n */5);\n/* b */l/* l */ = t.get();\nt.end();/* e *//* u *//* r */',
    e, true);
 
   mt('a, b, e, l','','a, b, e, l;',e, true);
@@ -778,34 +778,34 @@ function loadTranspilerTests(ts) {
    '/* a */a/* b */./* l */b/* e */ = /* u */5;/* n */',
    e, true);
 
-  mt('a.b **= 5','','(t0 = a).b = jz.ex(t0.b, 5);',e, true);
+  mt('a.b **= 5','','(t = a).b = jz.ex(t.b, 5);',e, true);
   mt('a.b **= 5',
    '/* a */a/* b */./* l */b/* e */ **= /* u */5/* n */',
-   '(t0 = /* a */a/* b */)./* l */b/* e */ = jz.ex(t0.b, /* u */5);/* n */',
+   '(t = /* a */a/* b */)./* l */b/* e */ = jz.ex(t.b, /* u */5);/* n */',
    e, true);
 
-  mt('[a.b] = 5','','t0 = jz.arrIter(5);\na.b = t0.get();\nt0.end();',e, true);
+  mt('[a.b] = 5','','t = jz.arrIter(5);\na.b = t.get();\nt.end();',e, true);
   mt('[a.b] = 5',
    '/* a */[/* b */a/* l */./* e */b/* u */]/* n */ = /* r */5/* w */',
-   '/* a */t0 = jz.arrIter(/* r */5);\n/* b */a/* l */./* e */b/* u */ = t0.get();\nt0.end();/* n *//* w */',
+   '/* a */t = jz.arrIter(/* r */5);\n/* b */a/* l */./* e */b/* u */ = t.get();\nt.end();/* n *//* w */',
    e, true);
 
-  mt('[a=5]=12','','t0 = jz.arrIter(12);\na = jz.u(t1 = t0.get()) ? 5 : t1;\nt0.end();',e, true);
+  mt('[a=5]=12','','t = jz.arrIter(12);\na = jz.u(t1 = t.get()) ? 5 : t1;\nt.end();',e, true);
   mt('[a=5]=12',
    '/* a */[/* b */a/* l */=/* e */5/* u */]/* n */=/* r */12/* w */',
-   '/* a */t0 = jz.arrIter(/* r */12);\n/* b */a/* l */ = jz.u(t1 = t0.get()) ? /* e */5 : t1/* u */;\nt0.end();/* n *//* w */',
+   '/* a */t = jz.arrIter(/* r */12);\n/* b */a/* l */ = jz.u(t1 = t.get()) ? /* e */5 : t1/* u */;\nt.end();/* n *//* w */',
    e, true);
 
-  mt('[a=[b]=5]=12','','t0 = jz.arrIter(12);\na = jz.u(t1 = t0.get()) ? (t1 = jz.arrIter(5), b = t1.get(), t1.end()) : t1;\nt0.end();',e, true);
+  mt('[a=[b]=5]=12','','t = jz.arrIter(12);\na = jz.u(t1 = t.get()) ? (t1 = jz.arrIter(5), b = t1.get(), t1.end()) : t1;\nt.end();',e, true);
   mt('[a=[b]=5]=12',
    '/* a */[/* b */a/* l */=/* e */[/* u */b/* n */]/* r */=/* w */5/* A */]/* B */=/* L */12/* E */',
-   '/* a */t0 = jz.arrIter(/* L */12);\n/* b */a/* l */ = jz.u(t1 = t0.get()) ? (/* e */t1 = jz.arrIter(/* w */5), /* u */b/* n */ = t1.get(), t1.end()/* r */) : t1/* A */;\nt0.end();/* B *//* E */',
+   '/* a */t = jz.arrIter(/* L */12);\n/* b */a/* l */ = jz.u(t1 = t.get()) ? (/* e */t1 = jz.arrIter(/* w */5), /* u */b/* n */ = t1.get(), t1.end()/* r */) : t1/* A */;\nt.end();/* B *//* E */',
    e, true);
 
-  mt('[a,...b] = 12','','t0 = jz.arrIter(12);\na = t0.get();\nb = t0.rest();\nt0.end();',e, true);
+  mt('[a,...b] = 12','','t = jz.arrIter(12);\na = t.get();\nb = t.rest();\nt.end();',e, true);
   mt('[a,...b] = 12',
     '/* a */[/* b */a/* l */,/* e */.../* u */b/* n */]/* r */ = /* w */12/* A */',
-    '/* a */t0 = jz.arrIter(/* w */12);\n/* b */a/* l */ = t0.get();\n/* e *//* u */b = t0.rest()/* n */;\nt0.end();/* r *//* A */',
+    '/* a */t = jz.arrIter(/* w */12);\n/* b */a/* l */ = t.get();\n/* e *//* u */b = t.rest()/* n */;\nt.end();/* r *//* A */',
     e, true);
 
   mt('{let a;} var a;-cmn',

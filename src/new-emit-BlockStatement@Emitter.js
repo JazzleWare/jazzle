@@ -6,6 +6,10 @@ function(n, flags, isStmt) {
   this.w('{');
   this.i().onw(wcb_afterStmt);
   var wcbu = this.wcbUsed = {v: false, name: 'fromBlock'};
+
+  if (this.emitSimpleHead(n))
+    this.wcb || this.onw(wcb_afterStmt);
+
   this.emitStmtList(n.body);
   if (wcbu.v) { // if something was emitted
     this.u();

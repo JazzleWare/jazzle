@@ -70,4 +70,47 @@ function(scope, hasPrev) {
 };
 
 this.emitFunList =
-function(scope, hasPrev) {};
+function(scope, hasPrev) {
+  return 0;
+  var allowsDecl = this.isSourceLevel() || scope.isAnyFn();
+  var u = null;
+  var o = {v: false};
+
+  if (hasPrev) {
+    if (!this.wcb) this.onw(wcb_afterStmt);
+    if (!this.wcbUsed) this.wcbUsed = u = o;
+    else u = this.wcbUsed;
+  }
+
+  var list = scope.funLists, i = 0, len = list.length(), em = 0;
+  while (i < len)
+    this.emitFunList_subList(list.at(i++), allowsDecl, em) && em++;
+
+  if (u && u === o)
+    u.v || this.clear_onw();
+  return em;
+};
+
+this.emitLLINOSAList =
+function(scope, hasPrev) {
+  ASSERT.call(this, !scope.isSourceLevel() && !scope.isAnyFn(), 'scope/fn');
+  var u = null, o = {v: false};
+  if (hasPrev) {
+    if (!this.wcb) this.onw(wcb_afterStmt);
+    if (!this.wcbUsed) this.wcbUsed = u = o;
+    else u = this.wcbUsed;
+  }
+
+  var list = scope.defs, i = 0, len = list.length(), em = 0;
+  while (i < len) {
+    var elem = list.at(i++);
+    if (!elem.isLLINOSA()) continue;
+    em ? this.w(',').os() : this.w('var').bs();
+    this.w(elem.synthName).os().w('=').os().wm('{','v',':','','void').bs().wm('0','}');
+    em++;
+  }
+  em && this.w(';');
+  if (u && u === o)
+    u.v || this.clear_onw();
+  return em;
+};

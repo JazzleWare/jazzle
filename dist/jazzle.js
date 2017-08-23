@@ -2433,7 +2433,50 @@ function(scope, hasPrev) {
 };
 
 this.emitFunList =
-function(scope, hasPrev) {};
+function(scope, hasPrev) {
+  return 0;
+  var allowsDecl = this.isSourceLevel() || scope.isAnyFn();
+  var u = null;
+  var o = {v: false};
+
+  if (hasPrev) {
+    if (!this.wcb) this.onw(wcb_afterStmt);
+    if (!this.wcbUsed) this.wcbUsed = u = o;
+    else u = this.wcbUsed;
+  }
+
+  var list = scope.funLists, i = 0, len = list.length(), em = 0;
+  while (i < len)
+    this.emitFunList_subList(list.at(i++), allowsDecl, em) && em++;
+
+  if (u && u === o)
+    u.v || this.clear_onw();
+  return em;
+};
+
+this.emitLLINOSAList =
+function(scope, hasPrev) {
+  ASSERT.call(this, !scope.isSourceLevel() && !scope.isAnyFn(), 'scope/fn');
+  var u = null, o = {v: false};
+  if (hasPrev) {
+    if (!this.wcb) this.onw(wcb_afterStmt);
+    if (!this.wcbUsed) this.wcbUsed = u = o;
+    else u = this.wcbUsed;
+  }
+
+  var list = scope.defs, i = 0, len = list.length(), em = 0;
+  while (i < len) {
+    var elem = list.at(i++);
+    if (!elem.isLLINOSA()) continue;
+    em ? this.w(',').os() : this.w('var').bs();
+    this.w(elem.synthName).os().w('=').os().wm('{','v',':','','void').bs().wm('0','}');
+    em++;
+  }
+  em && this.w(';');
+  if (u && u === o)
+    u.v || this.clear_onw();
+  return em;
+};
 
 },
 function(){
@@ -2896,6 +2939,10 @@ function(n, flags, isStmt) {
   this.w('{');
   this.i().onw(wcb_afterStmt);
   var wcbu = this.wcbUsed = {v: false, name: 'fromBlock'};
+
+  if (this.emitSimpleHead(n))
+    this.wcb || this.onw(wcb_afterStmt);
+
   this.emitStmtList(n.body);
   if (wcbu.v) { // if something was emitted
     this.u();
@@ -13500,8 +13547,10 @@ function(mname, t) {
   var tdecl = this.findDeclAny_m(mname);
 
   if (tdecl) {
-    if (tdecl.isOverridableByVar())
+    if (tdecl.isOverridableByVar()) {
+      tdecl.type |= t;
       return tdecl;
+    }
     this.err('var.can.not.override.existing');
   }
 
@@ -13516,7 +13565,7 @@ function(mname, t) {
     isNew = true;
 
   }
-  else { tscope = tdecl.ref.scope; }
+  else { tdecl.type |= t; tscope = tdecl.ref.scope; }
 
   this.insertDecl_m(mname, tdecl);
 
