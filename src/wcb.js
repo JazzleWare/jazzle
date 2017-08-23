@@ -57,3 +57,27 @@ function wcb_afterVar(rawStr, tt) {
 function wcb_afterVDT(rawStr, tt) {
   wcb_idNumGuard.call(this, rawStr, tt);
 }
+
+// NOTE: only register it after a return that has a non-null argument
+function wcb_afterRet(rawStr, tt) {
+  if (tt === ETK_NL) { this.os().w('('); this.wcbp.hasParen = true; return; }
+  var lineLen = this.curLine.length;
+  if (tt & (ETK_NUM|ETK_ID)) {
+    if (this.ol(lineLen+1+rawStr.length) > 0) {
+      this.w('(');
+      this.wcbp.hasParen = true;
+      this.l();
+    }
+    else this.hs();
+    return;
+  }
+  if (this.ol(lineLen+1+rawStr.length) > 0) {
+    if (this.ol(lineLen+rawStr.length) > 0) {
+      this.w('(');
+      this.wcbp.hasParen = true;
+      this.l();
+    }
+    return;
+  }
+  this.hs();
+}

@@ -1,22 +1,9 @@
 (function(){
 "use strict";
 ;
-function BundleScope(globalScope) {
-  if (globalScope === null)
-    globalScope = new GlobalScope();
-  else
-    ASSERT.call(this, globalScope.isGlobal(), 'not global');
-  ConcreteScope.call(this, globalScope, ST_BUNDLE);
-};
-;
-function Bundler() {
-  this.type = '#Bundler';
-  this.loaded = {};
-  this.main = null;
-  this.path = "";
-  this.resolver = null;
-  this['#scope'] = null;
-  this['#y'] = 0;
+function BundleScope() {
+  Scope.call(this, null, ST_BUNDLE);
+  this.globals = new SortedObj();
 }
 ;
 function CatchScope(sParent) {
@@ -1510,6 +1497,30 @@ function wcb_afterVar(rawStr, tt) {
 function wcb_afterVDT(rawStr, tt) {
   wcb_idNumGuard.call(this, rawStr, tt);
 }
+
+// NOTE: only register it after a return that has a non-null argument
+function wcb_afterRet(rawStr, tt) {
+  if (tt === ETK_NL) { this.os().w('('); this.wcbp.hasParen = true; return; }
+  var lineLen = this.curLine.length;
+  if (tt & (ETK_NUM|ETK_ID)) {
+    if (this.ol(lineLen+1+rawStr.length) > 0) {
+      this.w('(');
+      this.wcbp.hasParen = true;
+      this.l();
+    }
+    else this.hs();
+    return;
+  }
+  if (this.ol(lineLen+1+rawStr.length) > 0) {
+    if (this.ol(lineLen+rawStr.length) > 0) {
+      this.w('(');
+      this.wcbp.hasParen = true;
+      this.l();
+    }
+    return;
+  }
+  this.hs();
+}
 ;
  (function(){
        var i = 0;
@@ -1521,63 +1532,7 @@ function wcb_afterVDT(rawStr, tt) {
              def[1][e++].call(def[0]);
        }
      }).call([
-[BundleScope.prototype, [function(){
-
-
-}]  ],
-[Bundler.prototype, [function(){
-this.forProg =
-function(n) {
-  ASSERT.call(this, this.main === null, 'main');
-  ASSERT.call(this, n.type === 'Program', 'program');
-  this.main = n;
-  return this;
-};
-
-this.withPath =
-function(url) {
-  ASSERT.call(this, this.path === "", 'not');
-  ASSERT.call(this, this.main, 'main');
-  url = cd("", url);
-  this.loaded[_m(url)] = this.main;
-  url = pathFor(url);
-  this.path = url;
-  return this;
-};
-
-this.cd =
-function(url) {
-  var oPath = this.path;
-  this.path = cd(oPath, url);
-  return oPath;
-};
-
-this.has =
-function(url) {
-  url = cd(this.path, url);
-  return HAS.call(this.loaded, _m(url));
-};
-
-this.load =
-function(url) {
-  var normalizedURL = cd(this.path, url);
-  ASSERT.call(this, !this.has(normalizedURL));
-  var src = this.resolver.load(this.path, url);
-  var n = new Parser(src, {sourceType: 'module'}).parseProgram();
-  this.loaded[_m(url)] = n;
-  var transformer = new Transformer();
-  transformer.bundler = this;
-  return transformer.tr(n, false);
-};
-
-this.get =
-function(url) {
-  url = cd(this.path, url);
-  ASSERT.call(this, this.has(url));
-  return this.loaded[_m(url)];
-};
-
-}]  ],
+null,
 null,
 [ClassScope.prototype, [function(){
 this.hasHeritage =
@@ -2406,63 +2361,79 @@ function(nd) {
 
 },
 function(){
-this.emitHead_temps =
-function(scope, isScript) {
-  var temps = scope.getLG('<t>'), e = 0, len = temps.length();
-  while (e < len) {
-    e ? this.wm(',','') : this.w('var').onw(wcb_afterVar);
-    this.wt(temps.at(e++).synthName, ETK_ID);
-  }
-  e && this.w(';');
-  return this;
+this.emitSourceHead =
+function(n) {
+  var scope = n['#scope'], em = 0;
+  this.emitFunList(scope, em) && em++;
+  this.emitVarList(scope, em) && em++;
+  this.emitTempList(scope, em) && em++;
+  return em;
 };
 
-this.emitHead_vars =
-function(scope, isScript) {
-  var vars = scope.defs, e = 0, len = vars.length(); 
-  var em = 0, v = null;
-  while (e < len) {
-    v = vars.at(e++);
-    if (v.isVar() && !v.isFn()) {
-      em ? this.wm(',','') : this.w('var').onw(wcb_afterVar);
-      this.wt(v.synthName, ETK_ID);
-      em++;
-    }
+this.emitFnHead =
+function(n) {
+  var scope = n['#scope'], em = 0;
+  this.emitFunList(scope, em) && em++;
+  this.emitVarList(scope, em) && em++;
+  this.emitTempList(scope, em) && em++;
+  return em;
+};
+
+this.emitSimpleHead =
+function(n) {
+  var scope = n['#scope'], em = 0;
+  this.emitLLINOSAList(scope, em) && em++;
+  this.emitFunList(scope, em) && em++;
+  return em;
+};
+
+this.emitVarList =
+function(scope, hasPrev) {
+  ASSERT.call(this, scope.isSourceLevel() || scope.isAnyFn(), 'source/fn');
+  var u = null, o = {v: false};
+  if (hasPrev) {
+    if (!this.wcb) this.onw(wcb_afterStmt);
+    if (!this.wcbUsed) this.wcbUsed = u = o;
+    else u = this.wcbUsed;
+  }
+  var list = scope.defs, i = 0, len = list.length(), em = 0;
+  while (i < len) {
+    var elem = list.at(i++);
+    if (!elem.isVar()) continue;
+    em ? this.w(',').os() : this.w('var').bs();
+    this.w(elem.synthName);
+    em++;
   }
   em && this.w(';');
+  if (u && u === o)
+    u.v || this.clear_onw();
+  return em;
 };
 
-this.emitHead_fns =
-function(scope, isScript) {
-  var list = scope.funLists, e = 0, len = list.length();
-  var onw = this.wcb, em = 0;
-  while (e < len) {
-    this.emitFunList(list.at(e++));
-    if (onw && !this.wcb) {
-      ++em;
-      this.onW(wcb_afterVar);
-      onw = this.wcb;
-    }
+this.emitTempList =
+function(scope, hasPrev) {
+  ASSERT.call(this, scope.isSourceLevel() || scope.isAnyFn(), 'source/fn');
+  var u = null, o = {v: false};
+  if (hasPrev) {
+    if (!this.wcb) this.onw(wcb_afterStmt);
+    if (!this.wcbUsed) this.wcbUsed = u = o;
+    else u = this.wcbUsed;
   }
-
-  em && this.wcb && this.clear_onw();
-};
-
-this.emitHead_llinosa =
-function(scope, isScript) {
-  var list = scope.defs, e = 0, len = list.length();
-  var em = 0, item = null;
-  while (e < len) {
-    item = list.at(e++ );
-    if (item.isLLINOSA()) {
-      em ? this.wm(',','') : this.w('var').onw(wcb_afterVar);
-      this.wt(item.synthName, ETK_ID).os().w('=').os()
-        .wm('{','v',':','void',' ','0','}');
-      ++em
-    }
+  var list = scope.getLG('<t>'), i = 0, len = list ? list.length : 0;
+  while (i < len) {
+    var elem = list.getL(i);
+    i ? this.w(',').os() : this.w('var').bs();
+    this.w(elem.synthName);
+    i++;
   }
-  if (em > 0) this.w(';');
+  i && this.w(';');
+  if (u && u === o)
+    u.v || this.clear_onw();
+  return i;
 };
+
+this.emitFunList =
+function(scope, hasPrev) {};
 
 },
 function(){
@@ -3423,7 +3394,10 @@ function(n, flags, isStmt) {
 function(){
 Emitters['Program'] =
 function(n, flags, isStmt) {
-  this.wcb || this.onw(wcb_startStmtList);
+  if (this.emitSourceHead(n))
+    this.wcb || this.onw(wcb_afterStmt);
+  else
+    this.wcb || this.onw(wcb_startStmtList);
   this.emitStmtList(n.body);
   this.emc(CB(n), 'inner');
   return true;
@@ -3653,7 +3627,8 @@ function(n, flags, isStmt) {
 function(){
 UntransformedEmitters['temp'] =
 function(n, flags, isStmt) {
-  this.wt(n.liq.name+n.liq.idx, ETK_ID );
+//this.wt(n.liq.name+n.liq.idx, ETK_ID );
+  this.wt(n.liq.synthName, ETK_ID);
   return true;
 };
 
@@ -15392,7 +15367,7 @@ this.ST_PAREN = ST_CATCH << 1,
 this.ST_NONE = 0; 
 
 // this. VirtualSourceLoader = VirtualSourceLoader;
-this. Bundler = Bundler;
+// this. Bundler = Bundler;
 this. makeAcceptor = makeAcceptor;
 
 // this.cd = cd;

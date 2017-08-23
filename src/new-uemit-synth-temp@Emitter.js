@@ -1,6 +1,7 @@
 UntransformedEmitters['temp'] =
 function(n, flags, isStmt) {
-  this.wt(n.liq.name+n.liq.idx, ETK_ID );
+//this.wt(n.liq.name+n.liq.idx, ETK_ID );
+  this.wt(n.liq.synthName, ETK_ID);
   return true;
 };
 

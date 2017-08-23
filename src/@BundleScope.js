@@ -1,7 +1,4 @@
-function BundleScope(globalScope) {
-  if (globalScope === null)
-    globalScope = new GlobalScope();
-  else
-    ASSERT.call(this, globalScope.isGlobal(), 'not global');
-  ConcreteScope.call(this, globalScope, ST_BUNDLE);
-};
+function BundleScope() {
+  Scope.call(this, null, ST_BUNDLE);
+  this.globals = new SortedObj();
+}
