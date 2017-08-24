@@ -1,7 +1,7 @@
 this.emitSourceHead =
 function(n) {
   var scope = n['#scope'], em = 0;
-  this.emitFunList(scope, em) && em++;
+  this.emitFunLists(scope, true, em) && em++;
   this.emitVarList(scope, em) && em++;
   this.emitTempList(scope, em) && em++;
   return em;
@@ -10,7 +10,7 @@ function(n) {
 this.emitFnHead =
 function(n) {
   var scope = n['#scope'], em = 0;
-  this.emitFunList(scope, em) && em++;
+  this.emitFunLists(scope, true, em) && em++;
   this.emitVarList(scope, em) && em++;
   this.emitTempList(scope, em) && em++;
   return em;
@@ -20,16 +20,16 @@ this.emitSimpleHead =
 function(n) {
   var scope = n['#scope'], em = 0;
   this.emitLLINOSAList(scope, em) && em++;
-  this.emitFunList(scope, em) && em++;
+  this.emitFunLists(scope, false, em) && em++;
   return em;
 };
 
 this.emitVarList =
 function(scope, hasPrev) {
   ASSERT.call(this, scope.isSourceLevel() || scope.isAnyFn(), 'source/fn');
-  var u = null, o = {v: false};
+  var u = null, own = false, o = {v: false};
   if (hasPrev) {
-    if (!this.wcb) this.onw(wcb_afterStmt);
+    if (!this.wcb) { own = true; this.onw(wcb_afterStmt); }
     if (!this.wcbUsed) this.wcbUsed = u = o;
     else u = this.wcbUsed;
   }
@@ -42,17 +42,16 @@ function(scope, hasPrev) {
     em++;
   }
   em && this.w(';');
-  if (u && u === o)
-    u.v || this.clear_onw();
+  if (own) u.v || this.clear_onw();
   return em;
 };
 
 this.emitTempList =
 function(scope, hasPrev) {
   ASSERT.call(this, scope.isSourceLevel() || scope.isAnyFn(), 'source/fn');
-  var u = null, o = {v: false};
+  var u = null, own = false, o = {v: false};
   if (hasPrev) {
-    if (!this.wcb) this.onw(wcb_afterStmt);
+    if (!this.wcb) { own = true; this.onw(wcb_afterStmt); }
     if (!this.wcbUsed) this.wcbUsed = u = o;
     else u = this.wcbUsed;
   }
@@ -64,20 +63,18 @@ function(scope, hasPrev) {
     i++;
   }
   i && this.w(';');
-  if (u && u === o)
-    u.v || this.clear_onw();
+  if (own) u.v || this.clear_onw();
   return i;
 };
 
-this.emitFunList =
-function(scope, hasPrev) {
-  return 0;
-  var allowsDecl = this.isSourceLevel() || scope.isAnyFn();
+this.emitFunLists =
+function(scope, allowsDecl, hasPrev) {
   var u = null;
   var o = {v: false};
+  var own = false;
 
   if (hasPrev) {
-    if (!this.wcb) this.onw(wcb_afterStmt);
+    if (!this.wcb) { own = true; this.onw(wcb_afterStmt); }
     if (!this.wcbUsed) this.wcbUsed = u = o;
     else u = this.wcbUsed;
   }
@@ -86,17 +83,16 @@ function(scope, hasPrev) {
   while (i < len)
     this.emitFunList_subList(list.at(i++), allowsDecl, em) && em++;
 
-  if (u && u === o)
-    u.v || this.clear_onw();
+  if (own) u.v || this.clear_onw();
   return em;
 };
 
 this.emitLLINOSAList =
 function(scope, hasPrev) {
   ASSERT.call(this, !scope.isSourceLevel() && !scope.isAnyFn(), 'scope/fn');
-  var u = null, o = {v: false};
+  var u = null, own = false, o = {v: false};
   if (hasPrev) {
-    if (!this.wcb) this.onw(wcb_afterStmt);
+    if (!this.wcb) { own = true; this.onw(wcb_afterStmt); }
     if (!this.wcbUsed) this.wcbUsed = u = o;
     else u = this.wcbUsed;
   }
@@ -110,7 +106,62 @@ function(scope, hasPrev) {
     em++;
   }
   em && this.w(';');
-  if (u && u === o)
-    u.v || this.clear_onw();
+  if (own) u.v || this.clear_onw();
   return em;
+};
+
+this.emitFunList_subList =
+function(funList, allowsDecl, hasPrev) {
+  var u = null, own = false, o = {v: false};
+  if (hasPrev) {
+    if (!this.wcb) { own = true; this.onw(wcb_afterStmt); }
+    if (!this.wcbUsed) this.wcbUsed = u = o;
+    else u = this.wcbUsed;
+  }
+
+  var i = 0;
+  while (i < funList.length) {
+    this.emitSingleFun(funList[i], allowsDecl, i);
+    i++;
+  }
+
+  if (own) u.v || this.clear_onw();
+  return i;
+};
+
+this.emitThisRef =
+function(scope, hasPrev) {};
+
+this.emitSingleFun =
+function(n, allowsDecl, i) {
+  var scope = n.fun['#scope'];
+  var o = {v: false};
+  var own = false;
+
+  var target = n.target;
+  ASSERT.call(this, target, 'n.target' );
+  var u = null;
+
+  if (i) {
+    if (!this.wcb) { own = true; this.onw(wcb_afterStmt); }
+    if (!this.wcbUsed) this.wcbUsed = u = o;
+    else u = this.wcbUsed;
+  }
+
+  if (allowsDecl && scope.scopeName.getAS() === ATS_SAME)
+    this.emitTransformedFn(n, EC_NONE, true);
+  else {
+    var ll = target.isLLINOSA();
+    if (i === 0 && !ll)
+      this.w('var').bs();
+    this.w(target.synthName);
+    ll && this.wm('.','v');
+    this.wm('','=','');
+    n.target = null;
+    scope.scopeName.synthName = scope.scopeName.name;
+    this.emitExprFn(n, EC_NONE, false);
+    this.w(';'); // could have been done above, with true instead of false
+  }
+
+  if (own) u.v || this.clear_onw();
 };

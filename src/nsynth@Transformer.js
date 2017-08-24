@@ -265,3 +265,7 @@ function(l) {
   }
   ASSERT.call(this, false, 'Unknown ['+l.type+']');
 };
+
+var SKIP = {type: '#Untransformed', kind: 'skip' };
+this.synth_Skip =
+function() { return SKIP; };

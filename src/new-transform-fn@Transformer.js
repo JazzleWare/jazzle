@@ -66,7 +66,7 @@ Transformers['FunctionDeclaration'] =
 function(n, isVal) {
   ASSERT_EQ.call(this, isVal, false);
   this.cur.pushFun(n.id.name, this.transformDeclFn(n));
-  return null;
+  return this.synth_Skip();
 };
 
 Transformers['FunctionExpression'] =
