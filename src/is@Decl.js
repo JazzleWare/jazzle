@@ -65,13 +65,13 @@ var _VARLIKE = DT_FNARG|DT_VAR;
 this.isVarLike =
 function() {
   if (this.isFn())
-    return !this.ref.scope.isLexical();
+    return !this.ref.scope.isLexicalLike();
   return this.type & _VARLIKE;
 };
 
 var _OVERRIDABLE = DT_CATCHARG|_VARLIKE;
 this.isOverridableByVar =
-function() { return this.type & _OVERRIDABLE; };
+function() { return this.isVarLike() || (this.type & _OVERRIDABLE); };
 
 this.isIDefault =
 function() { return this.type & DT_IDEFAULT; };

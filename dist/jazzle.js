@@ -1991,13 +1991,13 @@ var _VARLIKE = DT_FNARG|DT_VAR;
 this.isVarLike =
 function() {
   if (this.isFn())
-    return !this.ref.scope.isLexical();
+    return !this.ref.scope.isLexicalLike();
   return this.type & _VARLIKE;
 };
 
 var _OVERRIDABLE = DT_CATCHARG|_VARLIKE;
 this.isOverridableByVar =
-function() { return this.type & _OVERRIDABLE; };
+function() { return this.isVarLike() || (this.type & _OVERRIDABLE); };
 
 this.isIDefault =
 function() { return this.type & DT_IDEFAULT; };
@@ -3497,12 +3497,24 @@ function(n, flags, isStmt) {
 function(){
 Emitters['Program'] =
 function(n, flags, isStmt) {
-  if (this.emitSourceHead(n))
-    this.wcb || this.onw(wcb_afterStmt);
-  else
-    this.wcb || this.onw(wcb_startStmtList);
+  var u = null, o = {v: false}, own = false, em = 0;
+  if (this.emitSourceHead(n)) {
+    em++;
+    if (!this.wcb) {
+      this.onw(wcb_afterStmt);
+      this.wcbUsed = u = o;
+      own = true;
+    }
+  }
+  else {
+    ASSERT.call(this, this.wcb === null, 'wcb');
+    this.onw(wcb_startStmtList);
+    this.wcbUsed = u = o;
+    own = true;
+  }
   this.emitStmtList(n.body);
   this.emc(CB(n), 'inner');
+  if (own) u.v || this.clear_onw();
   return true;
 };
 
