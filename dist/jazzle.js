@@ -9801,7 +9801,7 @@ function() {
   while (c < l && isIDBody(s.charCodeAt(c))) c++;
   flags = s.substring(flagsStart, c);
 
-  var n = this.parseRegex(patternStart, loc0.column+1, loc0.line, c, nump, flags, this.c, this.li, this.col);
+  var n = this.parseRegex(patternStart, loc0.line, loc0.column+1, c, nump, flags, this.c, this.li, this.col);
   this.setsimpoff(c);
   var regex = {
     type: 'Literal',
@@ -12546,6 +12546,7 @@ this.regDot =
 function() {
   var c0 = this.c, loc0 = this.loc();
   this.setsimpoff(c0+1);
+  this.regIsQuantifiable = true;
   return {
     type: '#Regex.Dot',
     start: c0,
@@ -13264,10 +13265,12 @@ function() {
   while (e<len) {
     ref = list.at(e);
     mname = list.keys[e];
-    if (isCatch)
-      this.refDirect_m(mname, ref);
-    else
-      this.refInHead(mname, ref);
+    if (ref && (ref.d || ref.i)) {
+      if (isCatch)
+        this.refDirect_m(mname, ref);
+      else
+        this.refInHead(mname, ref);
+    }
     e++;
   }
   this.inBody = false;

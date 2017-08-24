@@ -41,6 +41,7 @@ this.regDot =
 function() {
   var c0 = this.c, loc0 = this.loc();
   this.setsimpoff(c0+1);
+  this.regIsQuantifiable = true;
   return {
     type: '#Regex.Dot',
     start: c0,

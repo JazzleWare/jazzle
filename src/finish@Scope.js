@@ -18,10 +18,12 @@ function() {
   while (e<len) {
     ref = list.at(e);
     mname = list.keys[e];
-    if (isCatch)
-      this.refDirect_m(mname, ref);
-    else
-      this.refInHead(mname, ref);
+    if (ref && (ref.d || ref.i)) {
+      if (isCatch)
+        this.refDirect_m(mname, ref);
+      else
+        this.refInHead(mname, ref);
+    }
     e++;
   }
   this.inBody = false;
