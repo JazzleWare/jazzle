@@ -25,8 +25,15 @@ function() {
     ASSERT.call(this, !target.isLiquid(), 'got liquid');
     ASSERT.call(this, !this.owns(target), 'local');
 
-    if (target.isLexicalLike() && target.ref.scope.insideLoop())
-      (list || (list = [])).push(target);
+    if (target.isLexicalLike() && target.ref.scope.insideLoop()) {
+      var mname = _m(target.name);
+      var ll = this.getClosureLLINOSA_m(mname);
+      if (ll) ASSERT.call(this, ll === target, 'll');
+      else {
+        (list || (list = [])).push(target);
+        this.insertClosureLLINOSA_m(mname, target);
+      }
+    }
   }
 
   return list;

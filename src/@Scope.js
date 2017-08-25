@@ -36,6 +36,7 @@ function Scope(sParent, type) {
           this.parent.varTargets;
 
   this.funLists = new SortedObj();
+  this.tcTracker = new SortedObj(); // names tracked for tz/cv (const violation)
 
   if (this.parent && this.parent.isParen())
     this.parent.ch.push(this);

@@ -115,6 +115,7 @@ ErrorString.from = function(str) {
   return error;
 };
 ;
+// TODO: inBody makes the logic brittle
 function FunScope(parent, type) {
   ConcreteScope.call(this, parent, type|ST_FN);
 
@@ -129,10 +130,14 @@ function FunScope(parent, type) {
   this.inBody = false;
   this.bodyRefs = new SortedObj();
 
+  this.closureLLINOSA = 
+    this.parent.scs.isAnyFn() ? createObj(this.parent.scs.closureLLINOSA) : {};
+
   this.refs = this.argRefs;
 
   this.spArguments = null;
   this.spSuperCall = null;
+
 }
 ;
 function GlobalScope() {
@@ -336,6 +341,7 @@ function Scope(sParent, type) {
           this.parent.varTargets;
 
   this.funLists = new SortedObj();
+  this.tcTracker = new SortedObj(); // names tracked for tz/cv (const violation)
 
   if (this.parent && this.parent.isParen())
     this.parent.ch.push(this);
@@ -3917,8 +3923,15 @@ function() {
     ASSERT.call(this, !target.isLiquid(), 'got liquid');
     ASSERT.call(this, !this.owns(target), 'local');
 
-    if (target.isLexicalLike() && target.ref.scope.insideLoop())
-      (list || (list = [])).push(target);
+    if (target.isLexicalLike() && target.ref.scope.insideLoop()) {
+      var mname = _m(target.name);
+      var ll = this.getClosureLLINOSA_m(mname);
+      if (ll) ASSERT.call(this, ll === target, 'll');
+      else {
+        (list || (list = [])).push(target);
+        this.insertClosureLLINOSA_m(mname, target);
+      }
+    }
   }
 
   return list;
@@ -3958,7 +3971,48 @@ function(mname, ref) {
 
 },
 function(){
+// the only names that are checked via hasClosureLLINOSA_m are the ones already known to be external refs
+// this is because the routine below is only called during getLoopLexicals. while there, the LLINOSA names
+// are then queried against the scope's closureLLINOSA. if not found, they will be added to the ll array, and will be recorded in the scope's closureLLINOSA
+// else it means the parent fn has them in its closure, and they need not get into yet another closure:
+//
+// var a = []; while (a.length < 12) { let len = a.length; a.push(function() { return len-- * (function() { return len })() }) }
+//
+// withOUT:
+// var a = [];
+// while (a.length < 12) {
+//   var len = {v: void 0};
+//   len.v = a.length;
+//   a.push(function(len) {
+//     return function() {
+//       return len.v-- * function(len) { return function() { return len.v } }(len)();
+//     };
+//   }(len));
+// }
+//
+// WITH:
+// var a = [];
+// while (a.length < 12) {
+//   var len = {v: void 0};
+//   len.v = a.length;
+//   a.push(function(len) {
+//     return function() {
+//       return len.v-- * function() { return len.v };
+//     };
+//   }(len));
+// }
 
+this.getClosureLLINOSA_m =
+function(mname) {
+  return this.closureLLINOSA[mname]; 
+};
+
+// CLs are only inserted when an fn's outer-loop-lexicals are getting calculated;
+this.insertClosureLLINOSA_m =
+function(mname, llinosa) {
+  ASSERT.call(this, !this.getClosureLLINOSA_m(mname), 'closure-l');
+  this.closureLLINOSA[mname] = llinosa;
+};
 
 },
 function(){
