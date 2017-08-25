@@ -9,5 +9,5 @@ function Transformer() {
   this.bundler = null;
   this.tempStack = [];
   this.reachedRef = {v: true};
-
+  this.cvtz = {};
 }

@@ -169,3 +169,7 @@ var PE_NO_NONVAR = 1,
     PE_NO_LABEL = PE_NO_NONVAR << 1,
     PE_LEXICAL = PE_NO_NONVAR,
     PE_NONE = 0;
+
+var CHK_T = 1,
+    CHK_V = CHK_T << 1,
+    CHK_NONE = 0;

@@ -1,7 +1,6 @@
-this.makeReached =
-function(target) {
-  ASSERT.call(this, target.reached === null, 'reached used');
-  target.reached = this.reachedRef;
+this.getTCCache =
+function(decl) {
+  return this.cvtz[_m(decl.ref.scope.scopeID+':'+decl.name)];
 };
 
 this.needsTZ =
@@ -9,19 +8,46 @@ function(decl) {
   if (!decl.isTemporal())
     return false;
 
-  if (!decl.isReached())
-    return true;
-
-  var ownerScope = decl.ref.scope, cur = this.cur;
-  if (ownerScope === cur)
+  var tc = this.getTCCache(decl) ;
+  if (tc && (tc & CHK_T))
     return false;
 
-  while (cur.parent !== ownerScope) {
-    cur = cur.parent;
-    ASSERT.call(this, cur, 'reached top before decl owner is reached -- tz test is only allowed in scopes that '+
-      'can access the decl');
+  TZ: {
+    var tz = false;
+    if (!decl.isReached()) {
+      tz = true;
+      break TZ; 
+    }
+    var ownerScope = decl.ref.scope, cur = this.cur;
+    if (ownerScope === cur) {
+      tz = false;
+      break TZ;
+    }
+    while (cur.parent !== ownerScope) {
+      cur = cur.parent;
+      ASSERT.call(this, cur, 'reached top before decl owner is reached -- tz test is only allowed in scopes that '+
+        'can access the decl');
+    }
+    tz = cur.isHoisted();
   }
-  return cur.isHoisted();
+  tz && this.cacheTZ(decl);
+  return tz;
+};
+
+this.cacheTZ =
+function(decl) {
+  var tc = this.getTCCache(decl);
+  if (tc)
+    ASSERT.call(this, !(tc & CHK_T), 'cache');
+  else
+    tc = CHK_NONE;
+  this.cvtz[_m(decl.ref.scope.scopeID+':'+decl.name)] = tc | CHK_T;
+};
+
+this.makeReached =
+function(target) {
+  ASSERT.call(this, target.reached === null, 'reached used');
+  target.reached = this.reachedRef;
 };
 
 this.toResolvedName =
@@ -49,7 +75,8 @@ function(id, bes) {
     bes: bes,
     id: id,
     tz: hasTZ,
-    type: '#Untransformed' ,
-    kind: 'resolved-name'
+    cv: false,
+    kind: 'resolved-name',
+    type: '#Untransformed'
   };
 };

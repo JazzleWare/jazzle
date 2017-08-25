@@ -127,17 +127,22 @@ function(n, isVal, isB) {
 TransformByLeft['Identifier'] =
 function(n, isVal, isB) {
   n.left = this.toResolvedName(n.left, isB ? 'binding' : 'sat');
-  n.right = this.tr(n.right, true);
   if (isB) {
     var target = n.left.target;
     if (!target.isReached())
       this.makeReached(target);
   } 
   else {
-    n.left.target.ref.assigned();
-    if (n.left.target.isRG())
+    var l = n.left.target;
+    l.ref.assigned();
+    if (this.needsCVLHS(l)) {
+      n.left.cv = true;
+      this.cacheCVLHS(l);
+    }
+    else if (l.isRG())
       n = this.synth_GlobalUpdate(n, false);
   }
+  n.right = this.tr(n.right, true);
   return n;
 };
 
@@ -194,4 +199,24 @@ function(elem, iter, isB) {
   var left = elem.value;
 
   return this.tr(this.synth_SynthAssig(left, right), false, isB);
+};
+
+this.needsCVLHS =
+function(decl) {
+  if (!decl.isImmutable())
+    return false;
+  var tc = this.getTCCache(decl);
+  if (tc && (tc & CHK_V))
+    return false;
+  return true;
+};
+
+this.cacheCVLHS =
+function(decl) {
+  var tc = this.getTCCache(decl);
+  if (tc)
+    ASSERT.call(this, !(tc & CHK_V), 'cache');
+  else
+    tc = CHK_NONE;
+  this.cvtz[_m(decl.ref.scope.scopeID+':'+decl.name)] = tc | CHK_V;
 };

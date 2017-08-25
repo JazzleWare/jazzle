@@ -9,7 +9,7 @@ function(n, flags, isStmt) {
   if (isResolvedName(left)) {
     target = left.target;
     tz = left.tz;
-    cc = target.isImmutable()
+    cc = left.cv;
     if (!hasParen)
       hasParen = tz || cc;
   }

@@ -1,8 +1,8 @@
-this.setTS =
-function(ts) {
-  var ts0 = this.tempStack;
-  this.tempStack = ts;
-  return ts0;
+this.setCVTZ =
+function(cvtz) {
+  var l = this.cvtz;
+  this.cvtz = cvtz;
+  return l;
 };
 
 this.setRR =
@@ -17,6 +17,13 @@ function(scope) {
   var cur = this.cur;
   this.cur = scope ;
   return cur;
+};
+
+this.setTS =
+function(ts) {
+  var ts0 = this.tempStack;
+  this.tempStack = ts;
+  return ts0;
 };
 
 this.tr =

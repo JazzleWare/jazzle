@@ -461,7 +461,7 @@ function Transformer() {
   this.bundler = null;
   this.tempStack = [];
   this.reachedRef = {v: true};
-
+  this.cvtz = {};
 }
 ;
  ConcreteScope.prototype = createObj(Scope.prototype);
@@ -647,6 +647,10 @@ var PE_NO_NONVAR = 1,
     PE_NO_LABEL = PE_NO_NONVAR << 1,
     PE_LEXICAL = PE_NO_NONVAR,
     PE_NONE = 0;
+
+var CHK_T = 1,
+    CHK_V = CHK_T << 1,
+    CHK_NONE = 0;
 ;
 function isNum(c) {
   return (c >= CH_0 && c <= CH_9);
@@ -2807,7 +2811,7 @@ function(n, flags, isStmt) {
   if (isResolvedName(left)) {
     target = left.target;
     tz = left.tz;
-    cc = target.isImmutable()
+    cc = left.cv;
     if (!hasParen)
       hasParen = tz || cc;
   }
@@ -14381,11 +14385,11 @@ function(cb, n) {
 
 },
 function(){
-this.setTS =
-function(ts) {
-  var ts0 = this.tempStack;
-  this.tempStack = ts;
-  return ts0;
+this.setCVTZ =
+function(cvtz) {
+  var l = this.cvtz;
+  this.cvtz = cvtz;
+  return l;
 };
 
 this.setRR =
@@ -14400,6 +14404,13 @@ function(scope) {
   var cur = this.cur;
   this.cur = scope ;
   return cur;
+};
+
+this.setTS =
+function(ts) {
+  var ts0 = this.tempStack;
+  this.tempStack = ts;
+  return ts0;
 };
 
 this.tr =
@@ -14424,10 +14435,9 @@ function(n, ownerBody, isVal) {
 
 },
 function(){
-this.makeReached =
-function(target) {
-  ASSERT.call(this, target.reached === null, 'reached used');
-  target.reached = this.reachedRef;
+this.getTCCache =
+function(decl) {
+  return this.cvtz[_m(decl.ref.scope.scopeID+':'+decl.name)];
 };
 
 this.needsTZ =
@@ -14435,19 +14445,46 @@ function(decl) {
   if (!decl.isTemporal())
     return false;
 
-  if (!decl.isReached())
-    return true;
-
-  var ownerScope = decl.ref.scope, cur = this.cur;
-  if (ownerScope === cur)
+  var tc = this.getTCCache(decl) ;
+  if (tc && (tc & CHK_T))
     return false;
 
-  while (cur.parent !== ownerScope) {
-    cur = cur.parent;
-    ASSERT.call(this, cur, 'reached top before decl owner is reached -- tz test is only allowed in scopes that '+
-      'can access the decl');
+  TZ: {
+    var tz = false;
+    if (!decl.isReached()) {
+      tz = true;
+      break TZ; 
+    }
+    var ownerScope = decl.ref.scope, cur = this.cur;
+    if (ownerScope === cur) {
+      tz = false;
+      break TZ;
+    }
+    while (cur.parent !== ownerScope) {
+      cur = cur.parent;
+      ASSERT.call(this, cur, 'reached top before decl owner is reached -- tz test is only allowed in scopes that '+
+        'can access the decl');
+    }
+    tz = cur.isHoisted();
   }
-  return cur.isHoisted();
+  tz && this.cacheTZ(decl);
+  return tz;
+};
+
+this.cacheTZ =
+function(decl) {
+  var tc = this.getTCCache(decl);
+  if (tc)
+    ASSERT.call(this, !(tc & CHK_T), 'cache');
+  else
+    tc = CHK_NONE;
+  this.cvtz[_m(decl.ref.scope.scopeID+':'+decl.name)] = tc | CHK_T;
+};
+
+this.makeReached =
+function(target) {
+  ASSERT.call(this, target.reached === null, 'reached used');
+  target.reached = this.reachedRef;
 };
 
 this.toResolvedName =
@@ -14475,8 +14512,9 @@ function(id, bes) {
     bes: bes,
     id: id,
     tz: hasTZ,
-    type: '#Untransformed' ,
-    kind: 'resolved-name'
+    cv: false,
+    kind: 'resolved-name',
+    type: '#Untransformed'
   };
 };
 
@@ -14619,17 +14657,22 @@ function(n, isVal, isB) {
 TransformByLeft['Identifier'] =
 function(n, isVal, isB) {
   n.left = this.toResolvedName(n.left, isB ? 'binding' : 'sat');
-  n.right = this.tr(n.right, true);
   if (isB) {
     var target = n.left.target;
     if (!target.isReached())
       this.makeReached(target);
   } 
   else {
-    n.left.target.ref.assigned();
-    if (n.left.target.isRG())
+    var l = n.left.target;
+    l.ref.assigned();
+    if (this.needsCVLHS(l)) {
+      n.left.cv = true;
+      this.cacheCVLHS(l);
+    }
+    else if (l.isRG())
       n = this.synth_GlobalUpdate(n, false);
   }
+  n.right = this.tr(n.right, true);
   return n;
 };
 
@@ -14688,6 +14731,26 @@ function(elem, iter, isB) {
   return this.tr(this.synth_SynthAssig(left, right), false, isB);
 };
 
+this.needsCVLHS =
+function(decl) {
+  if (!decl.isImmutable())
+    return false;
+  var tc = this.getTCCache(decl);
+  if (tc && (tc & CHK_V))
+    return false;
+  return true;
+};
+
+this.cacheCVLHS =
+function(decl) {
+  var tc = this.getTCCache(decl);
+  if (tc)
+    ASSERT.call(this, !(tc & CHK_V), 'cache');
+  else
+    tc = CHK_NONE;
+  this.cvtz[_m(decl.ref.scope.scopeID+':'+decl.name)] = tc | CHK_V;
+};
+
 },
 function(){
 Transformers['LogicalExpression'] = Transformers['BinaryExpression'] =
@@ -14743,7 +14806,9 @@ function(){
 Transformers['ConditionalExpression'] =
 function(n, isVal) {
   n.test = this.tr(n.test, true);
+  var cvtz = this.setCVTZ(createObj(this.cvtz));
   n.consequent = this.tr(n.consequent, isVal);
+  this.setCVTZ(cvtz) ;
   n.alternate = this.tr(n.alternate, isVal);
 
   return n;
