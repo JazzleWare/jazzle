@@ -1514,7 +1514,7 @@ function wcb_afterRet(rawStr, tt) {
   var lineLen = this.curLine.length;
   if (tt & (ETK_NUM|ETK_ID)) {
     if (this.ol(lineLen+1+rawStr.length) > 0) {
-      this.w('(');
+      this.rwr('(');
       this.wcbp.hasParen = true;
       this.l();
     }
@@ -1523,7 +1523,7 @@ function wcb_afterRet(rawStr, tt) {
   }
   if (this.ol(lineLen+1+rawStr.length) > 0) {
     if (this.ol(lineLen+rawStr.length) > 0) {
-      this.w('(');
+      this.rwr('(');
       this.wcbp.hasParen = true;
       this.l();
     }
@@ -2384,6 +2384,7 @@ function(n) {
   this.emitFunLists(scope, true, em) && em++;
   this.emitVarList(scope, em) && em++;
   this.emitTempList(scope, em) && em++;
+  this.emitTCheckVar(scope, em) && em++;
   return em;
 };
 
@@ -2544,6 +2545,21 @@ function(n, allowsDecl, i) {
   }
 
   if (own) u.v || this.clear_onw();
+};
+
+this.emitTCheckVar =
+function(scope, hasPrev) {
+  var tg = scope.getLG('tz');
+  if (tg === null) return 0;
+  tg = tg.getL(0);
+  var u = null, own = false, o = {v: false};
+  if (hasPrev) {
+    if (!this.wcb) { this.onw(wcb_afterStmt); own = true; }
+    if (!this.wcbUsed) this.wcbUsed = u = o;
+    else u = this.wcbUsed;
+  }
+  this.w('var').bs().w(tg.synthName).os().w('=').os().w(scope.di0+"").w(';');
+  return 1;
 };
 
 },
@@ -3345,6 +3361,18 @@ function(n, flags, isStmt) {
 
 },
 function(){
+Emitters['ThrowStatement'] =
+function(n, flags, isStmt) {
+  var r = {hasParen: false}, cb = CB(n);
+  this.emc(cb, 'bef');
+  this.w('throw').onw(wcb_afterRet, r);
+  this.eA(n.argument, EC_NONE, false);
+  if (r.hasParen) this.w(')');
+  this.w(';').emc(cb, 'aft');
+};
+
+},
+function(){
 Emitters['UnaryExpression'] = 
 function(n, flags, isStmt) {
   var cb = CB(n); this.emc(cb, 'bef' );
@@ -3447,6 +3475,7 @@ function(n, flags, isStmt) {
       hasParen = flags & EC_NEW_HEAD;
   }
 
+  var l = {hasParen: false };
   if (hasParen) { this.w('('); flags = EC_NONE; }
   if (hasWrapper) {
     this.wt('function', ETK_ID).w('(');
@@ -3455,13 +3484,17 @@ function(n, flags, isStmt) {
     if (isRenamed)
       this.w('var').onw(wcb_afterVar).wt(scopeName.synthName, ETK_ID).wm('','=','');
     else
-      this.w('return').onw(wcb_afterRet);
+      this.w('return').onw(wcb_afterRet, l);
   }
   this.emitTransformedFn(n);
+  if (l.hasParen) this.w(')');
   if (hasWrapper) {
     this.w(';');
-    if (isRenamed)
-      this.l().w('return').onw(wcb_afterRet).wt(scopeName.synthName, ETK_ID).w(';');
+    if (isRenamed) {
+      this.l().w('return').onw(wcb_afterRet, l).wt(scopeName.synthName, ETK_ID);
+      if (l.hasParen) this.w(')');
+      this.w(';');
+    }
     this.u().l().wm('}','(');
     lonll && this.wsndl(lonll);
     this.w(')');
@@ -14939,7 +14972,8 @@ function(){
 Transformers['ReturnStatement'] =
 function(n, isVal) {
   // TODO: try { return 'a' /* <-- this */ } finally { yield 'b' }
-  n.argument = this.tr(n.argument, true);
+  if (n.argument)
+    n.argument = this.tr(n.argument, true);
   return n;
 };
 
@@ -14981,6 +15015,14 @@ function(n, isVal) {
   this.trList(n.consequent, false);
   rr = this.setRR(rr);
   rr .v = false;
+  return n;
+};
+
+},
+function(){
+Transformers['ThrowStatement'] =
+function(n, isVal) {
+  n.argument = this.tr(n.argument, true);
   return n;
 };
 

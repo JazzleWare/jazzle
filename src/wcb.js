@@ -64,7 +64,7 @@ function wcb_afterRet(rawStr, tt) {
   var lineLen = this.curLine.length;
   if (tt & (ETK_NUM|ETK_ID)) {
     if (this.ol(lineLen+1+rawStr.length) > 0) {
-      this.w('(');
+      this.rwr('(');
       this.wcbp.hasParen = true;
       this.l();
     }
@@ -73,7 +73,7 @@ function wcb_afterRet(rawStr, tt) {
   }
   if (this.ol(lineLen+1+rawStr.length) > 0) {
     if (this.ol(lineLen+rawStr.length) > 0) {
-      this.w('(');
+      this.rwr('(');
       this.wcbp.hasParen = true;
       this.l();
     }

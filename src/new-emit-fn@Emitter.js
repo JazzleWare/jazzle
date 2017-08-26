@@ -12,6 +12,7 @@ function(n, flags, isStmt) {
       hasParen = flags & EC_NEW_HEAD;
   }
 
+  var l = {hasParen: false };
   if (hasParen) { this.w('('); flags = EC_NONE; }
   if (hasWrapper) {
     this.wt('function', ETK_ID).w('(');
@@ -20,13 +21,17 @@ function(n, flags, isStmt) {
     if (isRenamed)
       this.w('var').onw(wcb_afterVar).wt(scopeName.synthName, ETK_ID).wm('','=','');
     else
-      this.w('return').onw(wcb_afterRet);
+      this.w('return').onw(wcb_afterRet, l);
   }
   this.emitTransformedFn(n);
+  if (l.hasParen) this.w(')');
   if (hasWrapper) {
     this.w(';');
-    if (isRenamed)
-      this.l().w('return').onw(wcb_afterRet).wt(scopeName.synthName, ETK_ID).w(';');
+    if (isRenamed) {
+      this.l().w('return').onw(wcb_afterRet, l).wt(scopeName.synthName, ETK_ID);
+      if (l.hasParen) this.w(')');
+      this.w(';');
+    }
     this.u().l().wm('}','(');
     lonll && this.wsndl(lonll);
     this.w(')');

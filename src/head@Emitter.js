@@ -4,6 +4,7 @@ function(n) {
   this.emitFunLists(scope, true, em) && em++;
   this.emitVarList(scope, em) && em++;
   this.emitTempList(scope, em) && em++;
+  this.emitTCheckVar(scope, em) && em++;
   return em;
 };
 
@@ -164,4 +165,19 @@ function(n, allowsDecl, i) {
   }
 
   if (own) u.v || this.clear_onw();
+};
+
+this.emitTCheckVar =
+function(scope, hasPrev) {
+  var tg = scope.getLG('tz');
+  if (tg === null) return 0;
+  tg = tg.getL(0);
+  var u = null, own = false, o = {v: false};
+  if (hasPrev) {
+    if (!this.wcb) { this.onw(wcb_afterStmt); own = true; }
+    if (!this.wcbUsed) this.wcbUsed = u = o;
+    else u = this.wcbUsed;
+  }
+  this.w('var').bs().w(tg.synthName).os().w('=').os().w(scope.di0+"").w(';');
+  return 1;
 };
