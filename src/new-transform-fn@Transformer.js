@@ -1,6 +1,7 @@
 this.transformRawFn =
 function(n, isVal) {
   var s = this.setScope(n['#scope'] );
+  var cvtz = this.setCVTZ(createObj(this.cvtz));
   this.cur.synth_start();
   ASSERT.call(this, !this.cur.inBody, 'inBody');
   var argsPrologue = this.transformParams(n.params);
@@ -11,6 +12,7 @@ function(n, isVal) {
   this.cur.deactivateBody();
   this.cur.synth_finish();
   this.setScope(s);
+  this.setCVTZ(cvtz) ;
   return this.synth_TransformedFn(n, argsPrologue);
 };
 

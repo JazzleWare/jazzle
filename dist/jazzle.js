@@ -1510,7 +1510,7 @@ function wcb_afterVDT(rawStr, tt) {
 
 // NOTE: only register it after a return that has a non-null argument
 function wcb_afterRet(rawStr, tt) {
-  if (tt === ETK_NL) { this.os().w('('); this.wcbp.hasParen = true; return; }
+  if (tt & ETK_NL) { this.os().w('('); this.wcbp.hasParen = true; return; }
   var lineLen = this.curLine.length;
   if (tt & (ETK_NUM|ETK_ID)) {
     if (this.ol(lineLen+1+rawStr.length) > 0) {
@@ -2326,6 +2326,13 @@ function(list, selem /* i.e., it contains a spread element */, cb) {
   return true;
 };
 
+this.emitTZCheckPoint =
+function(l) {
+  ASSERT_EQ.call(this, l.hasTZCheck, true);
+  var tz = l.ref.scope.scs.getLG('tz').getL(0);
+  this.wm(tz.synthName,'','=','',l.idx,';');
+};
+
 this.emitElems_toRest =
 function(list, s, cb) {
   var e = s;
@@ -2849,23 +2856,25 @@ function(n, flags, isStmt) {
 
 Emitters['#SynthAssig'] =
 function(n, flags, isStmt) {
-  if (n.binding && !n.left.target.isVar() && !n.left.target.isLLINOSA())
+  if (n.binding && !n.left.target.isVar())
     return this.emitAssignment_binding(n, flags, isStmt);
   return this.emitAssignment_ex(n, flags, isStmt);
 };
 
 this.emitAssignment_binding =
 function(n, flags, isStmt) {
+  ASSERT.call(this, isResolvedName(n.left), 'name');
   var cb = n['#c']; this.emc(cb, 'bef');
-  this.w('var').onw(wcb_afterVar).os().emitRName_binding(n.left);
+  n.left.target.isLLINOSA() || this.w('var').onw(wcb_afterVar).os();
+  this.emitRName_binding(n.left);
+  n.left.target.isLLINOSA() && this.wm('.','v');
   this.os().w('=').os();
-  if (n.left.target.isLLINOSA())
-    this.emitWrappedInV(n.right);
-  else
-    this.eN(n.right, flags, false);
-
+  this.eN(n.right, flags, false);
   this.w(';');
   this.emc('aft');
+  
+  var l = n.left;
+  l.target.hasTZCheck && this.os().emitTZCheckPoint(l.target);
 };
 
 },
@@ -3265,6 +3274,26 @@ function(n, flags, isStmt) {
 
   isStmt && this.w(';');
   return true;
+};
+
+},
+function(){
+Emitters['ReturnStatement'] =
+function(n, flags, isStmt) {
+  ASSERT_EQ.call(this, isStmt, true);
+
+  var cb = CB(n);
+  this.emc(cb, 'bef');
+  this.w('return');
+  if (n.argument) {
+    var param = {hasParen: false};
+    this.onw(wcb_afterRet, param);
+    this.emitAny(n.argument, EC_NONE, false);
+    if (param.hasParen) this.w(')');
+  } else
+    this.emc(cb, 'ret.aft');
+  this.w(';');
+  this.emc(cb, 'aft');
 };
 
 },
@@ -3718,11 +3747,24 @@ function(n, flags, isStmt) {
   var hasParen = false;
   var hasZero = false;
   var tv = n.target.isLLINOSA(); // tail v
+  var tz = false;
+
   if (tv)
     hasZero = hasParen = flags & EC_CALL_HEAD;
+  if (n.bes === 'ex') {
+    ASSERT_EQ.call(this, n.cv, false);
+    tz = n.tz;
+    if (tz) {
+      if (!hasParen) hasParen = true;
+      if (hasZero) hasZero = false;
+    }
+  }
   if (hasParen) { this.w('('); flags = EC_NONE; }
+
+  if (hasZero) this.wm('0',',')
+  else if ( tz) { this.emitAccessChk_tz(n.target); this.w(',').os(); }
+
   var cb = CB(n.id); this.emc(cb, 'bef');
-  hasZero && this.wm('0',',');
   this.wt(n.target.synthName, ETK_ID );
   tv && this.v();
   this.emc(cb, 'aft');
@@ -9460,12 +9502,14 @@ this.parseParen = function(ctx) {
       loc: { start: loc0, end: this.loc() }, '#c': {}
   };
 
-  if (n.expr) {
-    var cbe = CB(n.expr);
-    if (cbe.bef) cbe.bef.c = bef.c.concat(cbe.bef.c);
-    else cbe.bef = bef;
-  } else
-    CB(n).bef = bef;
+  if (bef) {
+    if (n.expr) {
+      var cbe = CB(n.expr);
+      if (cbe.bef) cbe.bef.c = bef.c.concat(cbe.bef.c);
+      else cbe.bef = bef;
+    } else
+      CB(n).bef = bef;
+  }
 
   n.expr && this.spc(core(n.expr), 'aft');
   this.suc(CB(n), 'inner');
@@ -9651,6 +9695,9 @@ function() {
       }
       else {
         this.validate(name.name);
+        this.declare(name);
+        if (this.scope.insideStrict() && arorev(name.name))
+          this.err('bind.arguments.or.eval');
         val = name;
       }
     }
@@ -14606,7 +14653,10 @@ function(n, isVal, isB) {
   var test = this.synth_U(this.synth_TempSave(t, r));
   this.releaseTemp(t);
 
+  var cvtz = this.setCVTZ(createObj(this.cvtz));
   var consequent = this.tr(d, true);
+  this.setCVTZ(cvtz);
+
   var assig = this.synth_SynthAssig(
     l,
     this.synth_UCond(test, consequent, t),
@@ -14728,7 +14778,7 @@ function(elem, iter, isB) {
   var right = this.synth_ObjIterGet(iter, name, elem.computed);
   var left = elem.value;
 
-  return this.tr(this.synth_SynthAssig(left, right), false, isB);
+  return this.tr(this.synth_SynthAssig(left, right, isB), false);
 };
 
 this.needsCVLHS =
@@ -14808,9 +14858,9 @@ function(n, isVal) {
   n.test = this.tr(n.test, true);
   var cvtz = this.setCVTZ(createObj(this.cvtz));
   n.consequent = this.tr(n.consequent, isVal);
-  this.setCVTZ(cvtz) ;
+  this.setCVTZ(createObj(cvtz));
   n.alternate = this.tr(n.alternate, isVal);
-
+  this.setCVTZ(cvtz) ;
   return n;
 };
 
@@ -14881,6 +14931,15 @@ function(n, isVal) {
       elem.key = this.tr(elem.key, true);
     elem.value = this.tr(elem.value, true);
   }
+  return n;
+};
+
+},
+function(){
+Transformers['ReturnStatement'] =
+function(n, isVal) {
+  // TODO: try { return 'a' /* <-- this */ } finally { yield 'b' }
+  n.argument = this.tr(n.argument, true);
   return n;
 };
 
@@ -14997,6 +15056,7 @@ function(){
 this.transformRawFn =
 function(n, isVal) {
   var s = this.setScope(n['#scope'] );
+  var cvtz = this.setCVTZ(createObj(this.cvtz));
   this.cur.synth_start();
   ASSERT.call(this, !this.cur.inBody, 'inBody');
   var argsPrologue = this.transformParams(n.params);
@@ -15007,6 +15067,7 @@ function(n, isVal) {
   this.cur.deactivateBody();
   this.cur.synth_finish();
   this.setScope(s);
+  this.setCVTZ(cvtz) ;
   return this.synth_TransformedFn(n, argsPrologue);
 };
 

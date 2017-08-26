@@ -60,7 +60,7 @@ function wcb_afterVDT(rawStr, tt) {
 
 // NOTE: only register it after a return that has a non-null argument
 function wcb_afterRet(rawStr, tt) {
-  if (tt === ETK_NL) { this.os().w('('); this.wcbp.hasParen = true; return; }
+  if (tt & ETK_NL) { this.os().w('('); this.wcbp.hasParen = true; return; }
   var lineLen = this.curLine.length;
   if (tt & (ETK_NUM|ETK_ID)) {
     if (this.ol(lineLen+1+rawStr.length) > 0) {

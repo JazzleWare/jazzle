@@ -49,6 +49,9 @@ function() {
       }
       else {
         this.validate(name.name);
+        this.declare(name);
+        if (this.scope.insideStrict() && arorev(name.name))
+          this.err('bind.arguments.or.eval');
         val = name;
       }
     }

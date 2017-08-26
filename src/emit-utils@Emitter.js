@@ -213,6 +213,13 @@ function(list, selem /* i.e., it contains a spread element */, cb) {
   return true;
 };
 
+this.emitTZCheckPoint =
+function(l) {
+  ASSERT_EQ.call(this, l.hasTZCheck, true);
+  var tz = l.ref.scope.scs.getLG('tz').getL(0);
+  this.wm(tz.synthName,'','=','',l.idx,';');
+};
+
 this.emitElems_toRest =
 function(list, s, cb) {
   var e = s;

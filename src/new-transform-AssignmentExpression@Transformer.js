@@ -76,7 +76,10 @@ function(n, isVal, isB) {
   var test = this.synth_U(this.synth_TempSave(t, r));
   this.releaseTemp(t);
 
+  var cvtz = this.setCVTZ(createObj(this.cvtz));
   var consequent = this.tr(d, true);
+  this.setCVTZ(cvtz);
+
   var assig = this.synth_SynthAssig(
     l,
     this.synth_UCond(test, consequent, t),
@@ -198,7 +201,7 @@ function(elem, iter, isB) {
   var right = this.synth_ObjIterGet(iter, name, elem.computed);
   var left = elem.value;
 
-  return this.tr(this.synth_SynthAssig(left, right), false, isB);
+  return this.tr(this.synth_SynthAssig(left, right, isB), false);
 };
 
 this.needsCVLHS =

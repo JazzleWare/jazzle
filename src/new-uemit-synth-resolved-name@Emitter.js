@@ -21,11 +21,24 @@ function(n, flags, isStmt) {
   var hasParen = false;
   var hasZero = false;
   var tv = n.target.isLLINOSA(); // tail v
+  var tz = false;
+
   if (tv)
     hasZero = hasParen = flags & EC_CALL_HEAD;
+  if (n.bes === 'ex') {
+    ASSERT_EQ.call(this, n.cv, false);
+    tz = n.tz;
+    if (tz) {
+      if (!hasParen) hasParen = true;
+      if (hasZero) hasZero = false;
+    }
+  }
   if (hasParen) { this.w('('); flags = EC_NONE; }
+
+  if (hasZero) this.wm('0',',')
+  else if ( tz) { this.emitAccessChk_tz(n.target); this.w(',').os(); }
+
   var cb = CB(n.id); this.emc(cb, 'bef');
-  hasZero && this.wm('0',',');
   this.wt(n.target.synthName, ETK_ID );
   tv && this.v();
   this.emc(cb, 'aft');

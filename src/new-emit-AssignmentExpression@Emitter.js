@@ -47,21 +47,23 @@ function(n, flags, isStmt) {
 
 Emitters['#SynthAssig'] =
 function(n, flags, isStmt) {
-  if (n.binding && !n.left.target.isVar() && !n.left.target.isLLINOSA())
+  if (n.binding && !n.left.target.isVar())
     return this.emitAssignment_binding(n, flags, isStmt);
   return this.emitAssignment_ex(n, flags, isStmt);
 };
 
 this.emitAssignment_binding =
 function(n, flags, isStmt) {
+  ASSERT.call(this, isResolvedName(n.left), 'name');
   var cb = n['#c']; this.emc(cb, 'bef');
-  this.w('var').onw(wcb_afterVar).os().emitRName_binding(n.left);
+  n.left.target.isLLINOSA() || this.w('var').onw(wcb_afterVar).os();
+  this.emitRName_binding(n.left);
+  n.left.target.isLLINOSA() && this.wm('.','v');
   this.os().w('=').os();
-  if (n.left.target.isLLINOSA())
-    this.emitWrappedInV(n.right);
-  else
-    this.eN(n.right, flags, false);
-
+  this.eN(n.right, flags, false);
   this.w(';');
   this.emc('aft');
+  
+  var l = n.left;
+  l.target.hasTZCheck && this.os().emitTZCheckPoint(l.target);
 };
