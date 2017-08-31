@@ -19,6 +19,8 @@ function() {
 
 this.synth_liquids_to =
 function(targetScope) {
+  if (this.spThis !== null && this.spThis.ref.i)
+    targetScope.synthLiquid(this.spThis);
   var list = this.liquidDefs, e = 0, len = list.length();
   while (e < len)
     this.synth_lg_to(list.at(e++), targetScope);

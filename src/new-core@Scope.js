@@ -49,6 +49,9 @@ function(name, source) {
   return this.scopeName;
 };
 
+this.getThisBase =
+function() { return this.scs; };
+
 this.pushFun =
 function(name, transformedFn) {
   ASSERT.call(

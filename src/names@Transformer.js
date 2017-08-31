@@ -1,6 +1,8 @@
 this.getTCCache =
 function(decl) {
-  return this.cvtz[_m(decl.ref.scope.scopeID+':'+decl.name)];
+  var mname =_m(decl.ref.scope.scopeID+':'+decl.name);
+  return decl.ref.scope.reached ? this.cvtz[mname] :
+    HAS.call(this.cvtz, mname) ? this.cvtz[mname] : CHK_NONE;
 };
 
 this.needsTZ =

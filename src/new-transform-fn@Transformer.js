@@ -1,6 +1,9 @@
 this.transformRawFn =
 function(n, isVal) {
   var s = this.setScope(n['#scope'] );
+  ASSERT.call(this, s.reached, 'not reached');
+  s.reached = false;
+
   var cvtz = this.setCVTZ(createObj(this.cvtz));
   this.cur.synth_start();
   ASSERT.call(this, !this.cur.inBody, 'inBody');
@@ -11,7 +14,12 @@ function(n, isVal) {
   this.trList(fnBody, false);
   this.cur.deactivateBody();
   this.cur.synth_finish();
+
+  ASSERT.call(this, !s.reached, 'reached');
+
   this.setScope(s);
+  s.reached = true;
+
   this.setCVTZ(cvtz) ;
   return this.synth_TransformedFn(n, argsPrologue);
 };
@@ -68,6 +76,7 @@ Transformers['FunctionDeclaration'] =
 function(n, isVal) {
   ASSERT_EQ.call(this, isVal, false);
   this.cur.pushFun(n.id.name, this.transformDeclFn(n));
+
   return this.synth_Skip();
 };
 

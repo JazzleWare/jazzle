@@ -173,3 +173,8 @@ var PE_NO_NONVAR = 1,
 var CHK_T = 1,
     CHK_V = CHK_T << 1,
     CHK_NONE = 0;
+
+// `this` state
+var THS_NEEDS_CHK = 1,
+    THS_IS_REACHED = THS_NEEDS_CHK << 1,
+    THS_NONE = 0;

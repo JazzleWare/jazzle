@@ -29,7 +29,7 @@ function(n, flags, isStmt) {
     ASSERT_EQ.call(this, n.cv, false);
     tz = n.tz;
     if (tz) {
-      if (!hasParen) hasParen = true;
+      if (!hasParen) hasParen = flags & (EC_EXPR_HEAD|EC_NON_SEQ);
       if (hasZero) hasZero = false;
     }
   }

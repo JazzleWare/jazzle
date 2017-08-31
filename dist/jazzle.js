@@ -305,6 +305,7 @@ function Ref(scope) {
 ;
 function Scope(sParent, type) {
   this.parent = sParent;
+  this.parent && ASSERT.call(this, this.parent.reached, 'not reached');
   this.type = type;
   this.refs = new SortedObj();
   this.defs = new SortedObj();
@@ -342,6 +343,8 @@ function Scope(sParent, type) {
 
   this.funLists = new SortedObj();
   this.tcTracker = new SortedObj(); // names tracked for tz/cv (const violation)
+
+  this.reached = true;
 
   if (this.parent && this.parent.isParen())
     this.parent.ch.push(this);
@@ -457,11 +460,12 @@ function Transformer() {
   this.script = null;
   this.cur = null;
 
-  // the could be per scope (i.e., a scope attibute),
-  this.bundler = null;
+  // this could be per scope (i.e., a scope attibute),
   this.tempStack = [];
+
   this.reachedRef = {v: true};
   this.cvtz = {};
+  this.thisState = THS_NONE;
 }
 ;
  ConcreteScope.prototype = createObj(Scope.prototype);
@@ -651,6 +655,11 @@ var PE_NO_NONVAR = 1,
 var CHK_T = 1,
     CHK_V = CHK_T << 1,
     CHK_NONE = 0;
+
+// `this` state
+var THS_NEEDS_CHK = 1,
+    THS_IS_REACHED = THS_NEEDS_CHK << 1,
+    THS_NONE = 0;
 ;
 function isNum(c) {
   return (c >= CH_0 && c <= CH_9);
@@ -1618,6 +1627,8 @@ function() {
 
 this.synth_liquids_to =
 function(targetScope) {
+  if (this.spThis !== null && this.spThis.ref.i)
+    targetScope.synthLiquid(this.spThis);
   var list = this.liquidDefs, e = 0, len = list.length();
   while (e < len)
     this.synth_lg_to(list.at(e++), targetScope);
@@ -2381,16 +2392,19 @@ function(){
 this.emitSourceHead =
 function(n) {
   var scope = n['#scope'], em = 0;
+  this.emitTCheckVar(scope, em) && em++;
+  this.emitThisRef(scope, em) && em++;
   this.emitFunLists(scope, true, em) && em++;
   this.emitVarList(scope, em) && em++;
   this.emitTempList(scope, em) && em++;
-  this.emitTCheckVar(scope, em) && em++;
   return em;
 };
 
 this.emitFnHead =
 function(n) {
   var scope = n['#scope'], em = 0;
+  this.emitTCheckVar(scope, em) && em++;
+  this.emitThisRef(scope,em) && em++;
   this.emitFunLists(scope, true, em) && em++;
   this.emitVarList(scope, em) && em++;
   this.emitTempList(scope, em) && em++;
@@ -2418,6 +2432,7 @@ function(scope, hasPrev) {
   while (i < len) {
     var elem = list.at(i++);
     if (!elem.isVar()) continue;
+    if (elem.isFn() || elem.isFnArg()) continue;
     em ? this.w(',').os() : this.w('var').bs();
     this.w(elem.synthName);
     em++;
@@ -2511,7 +2526,24 @@ function(funList, allowsDecl, hasPrev) {
 };
 
 this.emitThisRef =
-function(scope, hasPrev) {};
+function(scope, hasPrev) {
+  var th = scope.spThis;
+  if (th === null) return 0;
+
+  var u = null;
+  var own = false, o = {v: false};
+
+  if (hasPrev) {
+    if (!this.wcb) { own = true; this.onw(wcb_afterStmt); }
+    if (!this.wcbUsed) this.wcbUsed = u = o;
+    else u = this.wcbUsed;
+  }
+
+  this.w('var').bs().w(th.synthName).os().w('=').os().w('this').w(';');
+  if (own) u.v || this.clear_onw();
+
+  return 1;
+};
 
 this.emitSingleFun =
 function(n, allowsDecl, i) {
@@ -2885,7 +2917,7 @@ function(n, flags, isStmt) {
   this.emitRName_binding(n.left);
   n.left.target.isLLINOSA() && this.wm('.','v');
   this.os().w('=').os();
-  this.eN(n.right, flags, false);
+  this.eN(n.right, EC_NONE, false);
   this.w(';');
   this.emc('aft');
   
@@ -3788,7 +3820,7 @@ function(n, flags, isStmt) {
     ASSERT_EQ.call(this, n.cv, false);
     tz = n.tz;
     if (tz) {
-      if (!hasParen) hasParen = true;
+      if (!hasParen) hasParen = flags & (EC_EXPR_HEAD|EC_NON_SEQ);
       if (hasZero) hasZero = false;
     }
   }
@@ -3813,6 +3845,30 @@ function(n, flags, isStmt) {
   this.wt(n.target.synthName, ETK_ID );
   this.emc(cb, 'aft');
   return true;
+};
+
+},
+function(){
+UntransformedEmitters['resolved-this'] =
+function(n, flags, isStmt) {
+  var hasParen = false, b = CB(n.id);
+  var th = n.plain ? 'this' : n.target.synthName;
+
+  if (n.chk) hasParen = flags & EC_EXPR_HEAD;
+  if (hasParen) { this.w('('); flags = EC_NONE; }
+
+  if (n.chk) { 
+    this.w(n.target.ref.scope.scs.getLG('ti').getL(0).synthName)
+      .w('||').jz('tz').w('(').writeString('this',"'");
+    this.wm(')',',');
+  }
+  this.emc(b, 'bef');
+  this.wt(th, ETK_ID);
+  this.emc(b, 'aft');
+
+  hasParen && this.w(')'); 
+
+  isStmt && this.w(';');
 };
 
 },
@@ -3998,6 +4054,11 @@ function() {
       continue;
     if (target === this.spThis)
       continue;
+    if (target.isLiquid()) {
+      switch (target.category) {
+      case '<this>': continue;
+      }
+    }
 
     ASSERT.call(this, !target.isLiquid(), 'got liquid');
     ASSERT.call(this, !this.owns(target), 'local');
@@ -4183,6 +4244,10 @@ function() {
     var item = list.at(e++);
     if (item) {
       var target = item.getDecl(), mname = "";
+      if (target.isLiquid()) {
+        ASSERT.call(this, target.category === '<this>', 'liq');
+        continue;
+      }
       ASSERT.call(this, target.synthName !== "" || target.isGlobal(), 'synth');
 
       mname = _m(target.synthName);
@@ -13693,6 +13758,9 @@ function(name, source) {
   return this.scopeName;
 };
 
+this.getThisBase =
+function() { return this.scs; };
+
 this.pushFun =
 function(name, transformedFn) {
   ASSERT.call(
@@ -14493,6 +14561,13 @@ function(ts) {
   return ts0;
 };
 
+this.setThis =
+function(thisState) {
+  var th = this.thisState;
+  this.thisState = thisState;
+  return th;
+};
+
 this.tr =
 function(n, ownerBody, isVal) {
   var ntype = n.type;
@@ -14517,7 +14592,9 @@ function(n, ownerBody, isVal) {
 function(){
 this.getTCCache =
 function(decl) {
-  return this.cvtz[_m(decl.ref.scope.scopeID+':'+decl.name)];
+  var mname =_m(decl.ref.scope.scopeID+':'+decl.name);
+  return decl.ref.scope.reached ? this.cvtz[mname] :
+    HAS.call(this.cvtz, mname) ? this.cvtz[mname] : CHK_NONE;
 };
 
 this.needsTZ =
@@ -14740,12 +14817,7 @@ function(n, isVal, isB) {
 TransformByLeft['Identifier'] =
 function(n, isVal, isB) {
   n.left = this.toResolvedName(n.left, isB ? 'binding' : 'sat');
-  if (isB) {
-    var target = n.left.target;
-    if (!target.isReached())
-      this.makeReached(target);
-  } 
-  else {
+  if (!isB) {
     var l = n.left.target;
     l.ref.assigned();
     if (this.needsCVLHS(l)) {
@@ -14756,6 +14828,11 @@ function(n, isVal, isB) {
       n = this.synth_GlobalUpdate(n, false);
   }
   n.right = this.tr(n.right, true);
+  if (isB) {
+    var target = n.left.target;
+    if (!target.isReached())
+      this.makeReached(target);
+  } 
   return n;
 };
 
@@ -15020,6 +15097,30 @@ function(n, isVal) {
 
 },
 function(){
+Transformers['ThisExpression'] =
+function(n, isVal) {
+  var ref = this.cur.findRefU_m(RS_THIS);
+  ASSERT.call(this, ref, 'could not find [:this:]');
+  var th = ref.getDecl();
+  var ths = this.thisState;
+  if ((ths & THS_NEEDS_CHK) && !(ths & THS_IS_REACHED)) {
+    var lg = th.ref.scope.scs.gocLG('ti');
+    var ti = lg.getL(0);
+    if (ti === null) { ti = lg.newL(); lg.seal(); }
+    ti.track(this.cur);
+
+    // that is, no longer check; but, TODO: better make this optimization optional to turn off
+    // class A extends L { constructor() { this/* <-- need */; this /* <-- needn't since the previous one has done it */ } }
+    this.thisState &= ~THS_NEEDS_CHK;
+
+    return this.synth_ResolvedThis(n, th, true);
+  }
+
+  return this.synth_ResolvedThis(n, th, false);
+};
+
+},
+function(){
 Transformers['ThrowStatement'] =
 function(n, isVal) {
   n.argument = this.tr(n.argument, true);
@@ -15098,6 +15199,9 @@ function(){
 this.transformRawFn =
 function(n, isVal) {
   var s = this.setScope(n['#scope'] );
+  ASSERT.call(this, s.reached, 'not reached');
+  s.reached = false;
+
   var cvtz = this.setCVTZ(createObj(this.cvtz));
   this.cur.synth_start();
   ASSERT.call(this, !this.cur.inBody, 'inBody');
@@ -15108,7 +15212,12 @@ function(n, isVal) {
   this.trList(fnBody, false);
   this.cur.deactivateBody();
   this.cur.synth_finish();
+
+  ASSERT.call(this, !s.reached, 'reached');
+
   this.setScope(s);
+  s.reached = true;
+
   this.setCVTZ(cvtz) ;
   return this.synth_TransformedFn(n, argsPrologue);
 };
@@ -15165,6 +15274,7 @@ Transformers['FunctionDeclaration'] =
 function(n, isVal) {
   ASSERT_EQ.call(this, isVal, false);
   this.cur.pushFun(n.id.name, this.transformDeclFn(n));
+
   return this.synth_Skip();
 };
 
@@ -15550,6 +15660,19 @@ function(l) {
 var SKIP = {type: '#Untransformed', kind: 'skip' };
 this.synth_Skip =
 function() { return SKIP; };
+
+this.synth_ResolvedThis =
+function(src, th, chk) {
+  var simp = th.ref.scope === this.cur.getThisBase();
+  return {
+    kind: 'resolved-this',
+    id: src,
+    target: th,
+    type: '#Untransformed' ,
+    plain: simp,
+    chk: chk
+  };
+};
 
 },
 function(){

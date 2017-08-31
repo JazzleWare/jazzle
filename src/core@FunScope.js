@@ -21,6 +21,11 @@ function() {
       continue;
     if (target === this.spThis)
       continue;
+    if (target.isLiquid()) {
+      switch (target.category) {
+      case '<this>': continue;
+      }
+    }
 
     ASSERT.call(this, !target.isLiquid(), 'got liquid');
     ASSERT.call(this, !this.owns(target), 'local');

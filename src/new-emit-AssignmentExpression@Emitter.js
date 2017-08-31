@@ -60,7 +60,7 @@ function(n, flags, isStmt) {
   this.emitRName_binding(n.left);
   n.left.target.isLLINOSA() && this.wm('.','v');
   this.os().w('=').os();
-  this.eN(n.right, flags, false);
+  this.eN(n.right, EC_NONE, false);
   this.w(';');
   this.emc('aft');
   

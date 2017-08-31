@@ -5,9 +5,10 @@ function Transformer() {
   this.script = null;
   this.cur = null;
 
-  // the could be per scope (i.e., a scope attibute),
-  this.bundler = null;
+  // this could be per scope (i.e., a scope attibute),
   this.tempStack = [];
+
   this.reachedRef = {v: true};
   this.cvtz = {};
+  this.thisState = THS_NONE;
 }

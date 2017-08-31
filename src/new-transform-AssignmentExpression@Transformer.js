@@ -130,12 +130,7 @@ function(n, isVal, isB) {
 TransformByLeft['Identifier'] =
 function(n, isVal, isB) {
   n.left = this.toResolvedName(n.left, isB ? 'binding' : 'sat');
-  if (isB) {
-    var target = n.left.target;
-    if (!target.isReached())
-      this.makeReached(target);
-  } 
-  else {
+  if (!isB) {
     var l = n.left.target;
     l.ref.assigned();
     if (this.needsCVLHS(l)) {
@@ -146,6 +141,11 @@ function(n, isVal, isB) {
       n = this.synth_GlobalUpdate(n, false);
   }
   n.right = this.tr(n.right, true);
+  if (isB) {
+    var target = n.left.target;
+    if (!target.isReached())
+      this.makeReached(target);
+  } 
   return n;
 };
 

@@ -26,6 +26,13 @@ function(ts) {
   return ts0;
 };
 
+this.setThis =
+function(thisState) {
+  var th = this.thisState;
+  this.thisState = thisState;
+  return th;
+};
+
 this.tr =
 function(n, ownerBody, isVal) {
   var ntype = n.type;

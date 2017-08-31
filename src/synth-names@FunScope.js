@@ -43,6 +43,10 @@ function() {
     var item = list.at(e++);
     if (item) {
       var target = item.getDecl(), mname = "";
+      if (target.isLiquid()) {
+        ASSERT.call(this, target.category === '<this>', 'liq');
+        continue;
+      }
       ASSERT.call(this, target.synthName !== "" || target.isGlobal(), 'synth');
 
       mname = _m(target.synthName);

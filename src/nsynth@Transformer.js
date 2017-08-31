@@ -269,3 +269,16 @@ function(l) {
 var SKIP = {type: '#Untransformed', kind: 'skip' };
 this.synth_Skip =
 function() { return SKIP; };
+
+this.synth_ResolvedThis =
+function(src, th, chk) {
+  var simp = th.ref.scope === this.cur.getThisBase();
+  return {
+    kind: 'resolved-this',
+    id: src,
+    target: th,
+    type: '#Untransformed' ,
+    plain: simp,
+    chk: chk
+  };
+};

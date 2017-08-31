@@ -1,5 +1,6 @@
 function Scope(sParent, type) {
   this.parent = sParent;
+  this.parent && ASSERT.call(this, this.parent.reached, 'not reached');
   this.type = type;
   this.refs = new SortedObj();
   this.defs = new SortedObj();
@@ -37,6 +38,8 @@ function Scope(sParent, type) {
 
   this.funLists = new SortedObj();
   this.tcTracker = new SortedObj(); // names tracked for tz/cv (const violation)
+
+  this.reached = true;
 
   if (this.parent && this.parent.isParen())
     this.parent.ch.push(this);
