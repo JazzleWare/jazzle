@@ -26,21 +26,26 @@ function(n, flags, isStmt) {
     this.emitCommaList(raw.params);
     this.emc(cb, 'inner');
   }
-  this.wm(')','','{').i().onw(wcb_afterStmt);
 
-  if (n.argsPrologue) {
-    this.emitStmt(n.argsPrologue);
-    this.emc(cb, 'inner');
-  }
-
-  var em = 0;
-  this.wcb ? this.clear_onw() : em++;
+  var u = null, own = false, o = {v: false}, em = 0;
+  this.wm(')','','{').i();
 
   this.onw(wcb_afterStmt);
-  this.emitStmtList(raw.body.body);
+  own = true;
+  u = this.wcbUsed = o;
 
+  if (this.emitFnHead(n)) {
+    em++;
+    if (!this.wcb) {
+      this.onw(wcb_afterStmt);
+      u.v = false;
+      this.wcbUsed = u;
+    }
+  }
+
+  this.emitStmtList(raw.body.body);
+  u.v ? em++ : this.clear_onw();
   this.u();
-  this.wcb ? this.clear_onw() : em++;
 
   em && this.l();
 

@@ -11,8 +11,9 @@ function(n) {
 
 this.emitFnHead =
 function(n) {
-  var scope = n['#scope'], em = 0;
+  var scope = n.fun['#scope'], em = 0;
   this.emitTCheckVar(scope, em) && em++;
+  if (n.argsPrologue) this.emitTransformedArgs(n, em) && em++;
   this.emitThisRef(scope,em) && em++;
   this.emitFunLists(scope, true, em) && em++;
   this.emitVarList(scope, em) && em++;
@@ -200,5 +201,28 @@ function(scope, hasPrev) {
     else u = this.wcbUsed;
   }
   this.w('var').bs().w(tg.synthName).os().w('=').os().w(scope.di0+"").w(';');
+  return 1;
+};
+
+this.emitTransformedArgs =
+function(n, hasPrev) {
+  var ta = n.argsPrologue;
+  if (ta === null)
+    return 0;
+  var own = false;
+  var o = {v: false};
+  var u = null;
+  var b = CB(n.fun);
+
+  if (hasPrev) {
+    if (!this.wcb) { this.onw(wcb_afterStmt); own = true; }
+    if (!this.wcbUsed) this.wcbUsed = u = o;
+    else u = this.wcbUsed;
+  }
+  
+  this.emitStmt(ta);
+  this.emc(b, 'inner');
+
+  if (own) u.v || this.clear_onw();
   return 1;
 };

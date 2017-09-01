@@ -2402,8 +2402,9 @@ function(n) {
 
 this.emitFnHead =
 function(n) {
-  var scope = n['#scope'], em = 0;
+  var scope = n.fun['#scope'], em = 0;
   this.emitTCheckVar(scope, em) && em++;
+  if (n.argsPrologue) this.emitTransformedArgs(n, em) && em++;
   this.emitThisRef(scope,em) && em++;
   this.emitFunLists(scope, true, em) && em++;
   this.emitVarList(scope, em) && em++;
@@ -2591,6 +2592,29 @@ function(scope, hasPrev) {
     else u = this.wcbUsed;
   }
   this.w('var').bs().w(tg.synthName).os().w('=').os().w(scope.di0+"").w(';');
+  return 1;
+};
+
+this.emitTransformedArgs =
+function(n, hasPrev) {
+  var ta = n.argsPrologue;
+  if (ta === null)
+    return 0;
+  var own = false;
+  var o = {v: false};
+  var u = null;
+  var b = CB(n.fun);
+
+  if (hasPrev) {
+    if (!this.wcb) { this.onw(wcb_afterStmt); own = true; }
+    if (!this.wcbUsed) this.wcbUsed = u = o;
+    else u = this.wcbUsed;
+  }
+  
+  this.emitStmt(ta);
+  this.emc(b, 'inner');
+
+  if (own) u.v || this.clear_onw();
   return 1;
 };
 
@@ -3935,21 +3959,26 @@ function(n, flags, isStmt) {
     this.emitCommaList(raw.params);
     this.emc(cb, 'inner');
   }
-  this.wm(')','','{').i().onw(wcb_afterStmt);
 
-  if (n.argsPrologue) {
-    this.emitStmt(n.argsPrologue);
-    this.emc(cb, 'inner');
-  }
-
-  var em = 0;
-  this.wcb ? this.clear_onw() : em++;
+  var u = null, own = false, o = {v: false}, em = 0;
+  this.wm(')','','{').i();
 
   this.onw(wcb_afterStmt);
-  this.emitStmtList(raw.body.body);
+  own = true;
+  u = this.wcbUsed = o;
 
+  if (this.emitFnHead(n)) {
+    em++;
+    if (!this.wcb) {
+      this.onw(wcb_afterStmt);
+      u.v = false;
+      this.wcbUsed = u;
+    }
+  }
+
+  this.emitStmtList(raw.body.body);
+  u.v ? em++ : this.clear_onw();
   this.u();
-  this.wcb ? this.clear_onw() : em++;
 
   em && this.l();
 
