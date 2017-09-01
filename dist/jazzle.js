@@ -4431,7 +4431,7 @@ this.track =
 function(scope) {
   var cur = scope, root = this.ref.scope ;
   while (true) {
-    if (cur.hasSignificantNames()) {
+    if (cur.hasSignificantNames() || cur.isAnyFn() || cur.isCatch()) {
       if (HAS.call(this.rsMap, cur.scopeID))
         break;
       this.rsMap[cur.scopeID] = true;
@@ -14792,13 +14792,13 @@ function(n, isVal, isB) {
   var test = this.synth_U(this.synth_TempSave(t, r));
   this.releaseTemp(t);
 
-  var cvtz = this.setCVTZ(createObj(this.cvtz));
-  var consequent = this.tr(d, true);
-  this.setCVTZ(cvtz);
+//var cvtz = this.setCVTZ(createObj(this.cvtz));
+  var consequent = /* this.tr(d, true) */ d;
+//this.setCVTZ(cvtz);
 
   var assig = this.synth_SynthAssig(
     l,
-    this.synth_UCond(test, consequent, t),
+    this.synth_UCond(test, consequent, t, (true)),
     isB
   );
 
@@ -15454,12 +15454,12 @@ function(list) {
 };
 
 this.synth_UCond =
-function(t,c,a) {
+function(t,c,a,tr) {
   return {
     kind: 'ucond' ,
     test: t,
     consequent: c,
-    type: '#Untransformed' ,
+    type: tr ? 'ConditionalExpression' : '#Untransformed' ,
     alternate: a,
     '#c': {}
   };

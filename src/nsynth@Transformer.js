@@ -34,12 +34,12 @@ function(list) {
 };
 
 this.synth_UCond =
-function(t,c,a) {
+function(t,c,a,tr) {
   return {
     kind: 'ucond' ,
     test: t,
     consequent: c,
-    type: '#Untransformed' ,
+    type: tr ? 'ConditionalExpression' : '#Untransformed' ,
     alternate: a,
     '#c': {}
   };

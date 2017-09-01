@@ -7,7 +7,7 @@ this.track =
 function(scope) {
   var cur = scope, root = this.ref.scope ;
   while (true) {
-    if (cur.hasSignificantNames()) {
+    if (cur.hasSignificantNames() || cur.isAnyFn() || cur.isCatch()) {
       if (HAS.call(this.rsMap, cur.scopeID))
         break;
       this.rsMap[cur.scopeID] = true;

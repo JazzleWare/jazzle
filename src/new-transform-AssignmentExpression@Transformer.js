@@ -76,13 +76,13 @@ function(n, isVal, isB) {
   var test = this.synth_U(this.synth_TempSave(t, r));
   this.releaseTemp(t);
 
-  var cvtz = this.setCVTZ(createObj(this.cvtz));
-  var consequent = this.tr(d, true);
-  this.setCVTZ(cvtz);
+//var cvtz = this.setCVTZ(createObj(this.cvtz));
+  var consequent = /* this.tr(d, true) */ d;
+//this.setCVTZ(cvtz);
 
   var assig = this.synth_SynthAssig(
     l,
-    this.synth_UCond(test, consequent, t),
+    this.synth_UCond(test, consequent, t, (true)),
     isB
   );
 
