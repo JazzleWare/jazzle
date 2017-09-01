@@ -2415,6 +2415,7 @@ function(n) {
 this.emitSimpleHead =
 function(n) {
   var scope = n['#scope'], em = 0;
+  scope.hasTZCheckPoint && this.emitTCHP(scope, em) && em++;
   this.emitLLINOSAList(scope, em) && em++;
   this.emitFunLists(scope, false, em) && em++;
   return em;
@@ -2530,6 +2531,7 @@ this.emitThisRef =
 function(scope, hasPrev) {
   var th = scope.spThis;
   if (th === null) return 0;
+  if (th.ref.i === 0) return 0;
 
   var u = null;
   var own = false, o = {v: false};
@@ -2615,6 +2617,25 @@ function(n, hasPrev) {
   this.emc(b, 'inner');
 
   if (own) u.v || this.clear_onw();
+  return 1;
+};
+
+this.emitTCHP =
+function(scope, hasPrev) {
+  var tg = scope.scs.getLG('tz').getL(0);
+  if (tg === null)
+    return 0;
+  var own = false;
+  var o = {v: false};
+
+  var u = null;
+  if (hasPrev) {
+    if (!this.wcb) { this.onw(wcb_afterStmt); own = true; }
+    if (!this.wcbUsed) this.wcbUsed = u = o;
+    else u = this.wcbUsed;
+  }
+
+  this.wm(tg.synthName,'=',scope.di0+"",';');
   return 1;
 };
 
@@ -14974,6 +14995,7 @@ function(n, isVal) {
 
   var head = n.callee, mem = null;
   if ( head.type === 'MemberExpression') {
+    head.object = this.tr(head.object, true);
     var t = this.allocTemp();
     var h0 = head;
     head = this.synth_TempSave(t, head.object);
@@ -15232,10 +15254,20 @@ function(n, isVal) {
   s.reached = false;
 
   var cvtz = this.setCVTZ(createObj(this.cvtz));
+  var th = this.thisState;
   this.cur.synth_start();
   ASSERT.call(this, !this.cur.inBody, 'inBody');
+
+  if (n.type === 'FunctionDeclaration')
+    this.thisState &= ~THS_IS_REACHED;
   var argsPrologue = this.transformParams(n.params);
   if (argsPrologue) n.params = null;
+
+  if (n.type === 'ArrowFunctionExpression')
+    this.thisState = th;
+  else
+    this.thisState = THS_NONE;
+
   this.cur.activateBody();
   var fnBody = n.body.body;
   this.trList(fnBody, false);
@@ -15248,6 +15280,8 @@ function(n, isVal) {
   s.reached = true;
 
   this.setCVTZ(cvtz) ;
+  this.thisState = th;
+
   return this.synth_TransformedFn(n, argsPrologue);
 };
 

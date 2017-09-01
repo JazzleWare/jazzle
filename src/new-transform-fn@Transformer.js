@@ -5,10 +5,20 @@ function(n, isVal) {
   s.reached = false;
 
   var cvtz = this.setCVTZ(createObj(this.cvtz));
+  var th = this.thisState;
   this.cur.synth_start();
   ASSERT.call(this, !this.cur.inBody, 'inBody');
+
+  if (n.type === 'FunctionDeclaration')
+    this.thisState &= ~THS_IS_REACHED;
   var argsPrologue = this.transformParams(n.params);
   if (argsPrologue) n.params = null;
+
+  if (n.type === 'ArrowFunctionExpression')
+    this.thisState = th;
+  else
+    this.thisState = THS_NONE;
+
   this.cur.activateBody();
   var fnBody = n.body.body;
   this.trList(fnBody, false);
@@ -21,6 +31,8 @@ function(n, isVal) {
   s.reached = true;
 
   this.setCVTZ(cvtz) ;
+  this.thisState = th;
+
   return this.synth_TransformedFn(n, argsPrologue);
 };
 

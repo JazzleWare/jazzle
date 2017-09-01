@@ -24,6 +24,7 @@ function(n) {
 this.emitSimpleHead =
 function(n) {
   var scope = n['#scope'], em = 0;
+  scope.hasTZCheckPoint && this.emitTCHP(scope, em) && em++;
   this.emitLLINOSAList(scope, em) && em++;
   this.emitFunLists(scope, false, em) && em++;
   return em;
@@ -139,6 +140,7 @@ this.emitThisRef =
 function(scope, hasPrev) {
   var th = scope.spThis;
   if (th === null) return 0;
+  if (th.ref.i === 0) return 0;
 
   var u = null;
   var own = false, o = {v: false};
@@ -224,5 +226,24 @@ function(n, hasPrev) {
   this.emc(b, 'inner');
 
   if (own) u.v || this.clear_onw();
+  return 1;
+};
+
+this.emitTCHP =
+function(scope, hasPrev) {
+  var tg = scope.scs.getLG('tz').getL(0);
+  if (tg === null)
+    return 0;
+  var own = false;
+  var o = {v: false};
+
+  var u = null;
+  if (hasPrev) {
+    if (!this.wcb) { this.onw(wcb_afterStmt); own = true; }
+    if (!this.wcbUsed) this.wcbUsed = u = o;
+    else u = this.wcbUsed;
+  }
+
+  this.wm(tg.synthName,'=',scope.di0+"",';');
   return 1;
 };

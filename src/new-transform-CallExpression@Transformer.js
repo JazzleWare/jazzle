@@ -9,6 +9,7 @@ function(n, isVal) {
 
   var head = n.callee, mem = null;
   if ( head.type === 'MemberExpression') {
+    head.object = this.tr(head.object, true);
     var t = this.allocTemp();
     var h0 = head;
     head = this.synth_TempSave(t, head.object);
