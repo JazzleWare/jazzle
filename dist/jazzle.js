@@ -4315,7 +4315,7 @@ function() {
   var list = this.argList, nmap = {}, e = list.length - 1;
   while (e >= 0) {
     var arg = list[e], mname = _m(arg.name);
-    arg = arg.ref.getDecl(); // must not be a dupl
+    arg = arg.ref.getDecl(); // must not be a dupl (TODO:should eliminate this)
     if (!HAS.call(nmap, mname)) {
       nmap[mname] = arg;
       this.synthDecl(arg);
@@ -15015,6 +15015,8 @@ function(n, isVal) {
 
 },
 function(){
+// TODO: when transforming is done and the original cvtz is re-activated, it should be augment by the
+// elements common between if.cvtz and else.cvtz; e.g., 12 ? l /* <-- tz */ : l() /* <-- tz */; /* cvtz += if.cvtz :@: else.cvtz let l = l /* has tz but no chk */
 Transformers['ConditionalExpression'] =
 function(n, isVal) {
   n.test = this.tr(n.test, true);
