@@ -64,6 +64,7 @@ function() {
   var list = this.argList, nmap = {}, e = list.length - 1;
   while (e >= 0) {
     var arg = list[e], mname = _m(arg.name);
+    arg = arg.ref.getDecl(); // must not be a dupl (TODO:should eliminate this)
     if (!HAS.call(nmap, mname)) {
       nmap[mname] = arg;
       this.synthDecl(arg);

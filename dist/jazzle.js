@@ -3712,7 +3712,7 @@ function(n, flags, isStmt) {
 UntransformedEmitters['arr-iter-end'] =
 function(n, flags, isStmt) {
   var cb = CB(n);
-  this.eA(n.iter).wm('.','end');
+  this.eA(n.iter, EC_NONE, false).wm('.','end');
   this.wm('(',')');
   this.emc(cb, 'aft');
   isStmt && this.w(';');
@@ -3721,7 +3721,7 @@ function(n, flags, isStmt) {
 
 UntransformedEmitters['arr-iter'] =
 function(n, flags, isStmt) {
-  this.jz('arrIter').w('(').eN(n.iter).w(')');
+  this.jz('arrIter', EC_NONE, false).w('(').eN(n.iter, EC_NONE, false).w(')');
   return true;
 };
 
@@ -3729,7 +3729,7 @@ UntransformedEmitters['arr-iter-get-rest'] =
 function(n, flags, isStmt) {
   var cb = CB(n);
   this.emc(cb, 'bef' );
-  this.eA(n.iter).wm('.','rest').wm('(',')').emc(cb, 'aft');
+  this.eA(n.iter, EC_NONE, false).wm('.','rest').wm('(',')').emc(cb, 'aft');
 
   return true;
 };
@@ -4315,6 +4315,7 @@ function() {
   var list = this.argList, nmap = {}, e = list.length - 1;
   while (e >= 0) {
     var arg = list[e], mname = _m(arg.name);
+    arg = arg.ref.getDecl(); // must not be a dupl
     if (!HAS.call(nmap, mname)) {
       nmap[mname] = arg;
       this.synthDecl(arg);
@@ -14085,7 +14086,7 @@ function(mname, t) {
     this.canDup() || this.err('var.fn.is.dup.arg');
     if (!this.firstDup)
       this.firstDup = existing;
-    newDecl.ref = ref; // unnecessary; also, no  Decl::`r() is not needed -- `ref.hasTarget` holds
+    newDecl.ref = ref; // unnecessary; also, no Decl::`r() is needed -- `ref.hasTarget` holds
   }
   else {
     ref = this.rocRefU_m(mname);

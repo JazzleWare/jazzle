@@ -209,7 +209,7 @@ function(mname, t) {
     this.canDup() || this.err('var.fn.is.dup.arg');
     if (!this.firstDup)
       this.firstDup = existing;
-    newDecl.ref = ref; // unnecessary; also, no  Decl::`r() is not needed -- `ref.hasTarget` holds
+    newDecl.ref = ref; // unnecessary; also, no Decl::`r() is needed -- `ref.hasTarget` holds
   }
   else {
     ref = this.rocRefU_m(mname);
