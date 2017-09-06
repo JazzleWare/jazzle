@@ -1,6 +1,8 @@
 this.setRefsAndArgRefs =
 function(refs) {
   ASSERT.call(this, !this.inBody, 'sraar must be in args');
+  var len = refs.length(), e = 0;
+  while (e < len) refs.at(e++).scope = this;
   this.argRefs = refs;
   this.refs = this.argRefs;
 };

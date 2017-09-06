@@ -1356,6 +1356,10 @@ function cmn_erase(cb, name) {
   return null;
 }
 
+function cmn(cb, name) {
+  return HAS.call(cb, name) ? cb[name] : null;
+}
+
 function cpReg(n) {
   switch (n.type) {
   case '#Regex.Hy':
@@ -4084,6 +4088,8 @@ function(){
 this.setRefsAndArgRefs =
 function(refs) {
   ASSERT.call(this, !this.inBody, 'sraar must be in args');
+  var len = refs.length(), e = 0;
+  while (e < len) refs.at(e++).scope = this;
   this.argRefs = refs;
   this.refs = this.argRefs;
 };
@@ -4295,7 +4301,7 @@ function() {
     if (item) {
       var target = item.getDecl(), mname = "";
       if (target.isLiquid()) {
-        ASSERT.call(this, target.category === '<this>', 'liq');
+        ASSERT.call(this, target.category === '<this>' || target.category === '<arguments>', 'liq');
         continue;
       }
       ASSERT.call(this, target.synthName !== "" || target.isGlobal(), 'synth');
@@ -4766,11 +4772,15 @@ this.inferName =
 function(left, right, isComputed) {
   if (isComputed && left.type === 'Identifier')
     return null;
-  if (right.type !== 'FunctionDeclaration' &&
-    right.type !== 'FunctionExpression')
-    return null;
-  if (right.id)
-    return null;
+  switch (right.type) {
+  case 'ArrowFunctionExpression':
+    break;
+  case 'FunctionDeclaration':
+  case 'FunctionExpression':
+    if (right.id)
+      return null;
+  default: return null
+  }
 
   var scope = right['#scope'];
   var t = DT_FN|DT_INFERRED;
@@ -8455,8 +8465,8 @@ this.parseArrow = function(arg, ctx)   {
       else
         this.asArrowFuncArg(arg.expr);
     }
-    cb.bef = arg['#c'].bef;
-    cb.inner = arg['#c'].inner;
+    cb.bef = cmn(arg['#c'], 'bef' );
+    cb.inner = cmn(arg['#c'], 'inner');
     this.suc(cb, 'list.bef' );
     break;
 
@@ -15353,6 +15363,13 @@ function(n, isVal) {
   return this.synth_Skip();
 };
 
+Transformers['ArrowFunctionExpression'] =
+function(n, isVal) {
+  if (n.expression) 
+    n.body = this.e2b(n.body);
+  return this.transformExprFn(n);
+};
+
 Transformers['FunctionExpression'] =
 function(n, isVal) {
   return this.transformExprFn(n);
@@ -15420,6 +15437,24 @@ function(fnName) {
   } while (synthName = baseName + "" + (num+=1), true);
 
   fnName.synthName = synthName;
+};
+
+this.e2b =
+function(ex) {
+  return {
+    type: 'BlockStatement',
+    body: [{
+      type: 'ReturnStatement',
+      argument: ex,
+      start: ex.start,
+      end: ex.end,
+      loc: ex.loc,
+      '#c': {}, '#y': 0
+    }],
+    start: ex.start,
+    end: ex.end,
+    loc: ex.loc, '#c': {}, '#y': 0
+  };
 };
 
 },

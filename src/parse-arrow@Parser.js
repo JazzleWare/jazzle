@@ -30,8 +30,8 @@ this.parseArrow = function(arg, ctx)   {
       else
         this.asArrowFuncArg(arg.expr);
     }
-    cb.bef = arg['#c'].bef;
-    cb.inner = arg['#c'].inner;
+    cb.bef = cmn(arg['#c'], 'bef' );
+    cb.inner = cmn(arg['#c'], 'inner');
     this.suc(cb, 'list.bef' );
     break;
 

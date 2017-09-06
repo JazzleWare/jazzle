@@ -92,6 +92,13 @@ function(n, isVal) {
   return this.synth_Skip();
 };
 
+Transformers['ArrowFunctionExpression'] =
+function(n, isVal) {
+  if (n.expression) 
+    n.body = this.e2b(n.body);
+  return this.transformExprFn(n);
+};
+
 Transformers['FunctionExpression'] =
 function(n, isVal) {
   return this.transformExprFn(n);
@@ -159,4 +166,22 @@ function(fnName) {
   } while (synthName = baseName + "" + (num+=1), true);
 
   fnName.synthName = synthName;
+};
+
+this.e2b =
+function(ex) {
+  return {
+    type: 'BlockStatement',
+    body: [{
+      type: 'ReturnStatement',
+      argument: ex,
+      start: ex.start,
+      end: ex.end,
+      loc: ex.loc,
+      '#c': {}, '#y': 0
+    }],
+    start: ex.start,
+    end: ex.end,
+    loc: ex.loc, '#c': {}, '#y': 0
+  };
 };

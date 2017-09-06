@@ -2,11 +2,15 @@ this.inferName =
 function(left, right, isComputed) {
   if (isComputed && left.type === 'Identifier')
     return null;
-  if (right.type !== 'FunctionDeclaration' &&
-    right.type !== 'FunctionExpression')
-    return null;
-  if (right.id)
-    return null;
+  switch (right.type) {
+  case 'ArrowFunctionExpression':
+    break;
+  case 'FunctionDeclaration':
+  case 'FunctionExpression':
+    if (right.id)
+      return null;
+  default: return null
+  }
 
   var scope = right['#scope'];
   var t = DT_FN|DT_INFERRED;
