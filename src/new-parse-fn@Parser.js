@@ -63,9 +63,10 @@ function(ctx, st) {
       else if (!(ctx & CTX_DEFAULT))
         this.err('fun.decl.has.got.no.actual.name');
     }
-    else if (this.lttype === TK_ID) {
+    else {
       st |= ST_EXPR ;
-      fnName = this.getName_fn(st);
+      if (this.lttype === TK_ID)
+        fnName = this.getName_fn(st);
     }
   }
 

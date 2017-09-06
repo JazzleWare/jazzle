@@ -5,6 +5,7 @@ function(n, isVal) {
   s.reached = false;
 
   var cvtz = this.setCVTZ(createObj(this.cvtz));
+  var ts = this.setTS([]);
   var th = this.thisState;
   this.cur.synth_start();
   ASSERT.call(this, !this.cur.inBody, 'inBody');
@@ -31,6 +32,7 @@ function(n, isVal) {
   s.reached = true;
 
   this.setCVTZ(cvtz) ;
+  this.setTS(ts);
   this.thisState = th;
 
   return this.synth_TransformedFn(n, argsPrologue);

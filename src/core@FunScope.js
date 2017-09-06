@@ -25,7 +25,8 @@ function() {
       continue;
     if (target.isLiquid()) {
       switch (target.category) {
-      case '<this>': continue;
+      case '<this>':
+      case '<arguments>': continue;
       }
     }
 

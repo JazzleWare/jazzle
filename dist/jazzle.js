@@ -1633,6 +1633,9 @@ this.synth_liquids_to =
 function(targetScope) {
   if (this.spThis !== null && this.spThis.ref.i)
     targetScope.synthLiquid(this.spThis);
+  if (this.isAnyFn() && this.spArguments !== null && this.spArguments.ref.i)
+    targetScope.synthLiquid(this.spArguments);
+
   var list = this.liquidDefs, e = 0, len = list.length();
   while (e < len)
     this.synth_lg_to(list.at(e++), targetScope);
@@ -2408,6 +2411,7 @@ this.emitFnHead =
 function(n) {
   var scope = n.fun['#scope'], em = 0;
   this.emitTCheckVar(scope, em) && em++;
+  this.emitArgumentsRef(scope,em) && em++;
   if (n.argsPrologue) this.emitTransformedArgs(n, em) && em++;
   this.emitThisRef(scope,em) && em++;
   this.emitFunLists(scope, true, em) && em++;
@@ -2640,6 +2644,29 @@ function(scope, hasPrev) {
   }
 
   this.wm(tg.synthName,'=',scope.di0+"",';');
+
+  if (own) u.v || this.clear_onw();
+  return 1;
+};
+
+this.emitArgumentsRef =
+function(scope, hasPrev) {
+  var ar = scope.spArguments;
+  if (ar === null) return 0;
+  if (ar.ref.i === 0) return 0;
+  var own = false;
+  var o = {v: false};
+
+  var u = null;
+  if (hasPrev) {
+    if (!this.wcb) { this.onw(wcb_afterStmt); own = true; }
+    if (!this.wcbUsed) this.wcbUsed = u = o;
+    else u = this.wcbUsed;
+  }
+
+  this.wm('var',' ',ar.synthName,'','=','','arguments',';');
+
+  if (own) u.v || this.clear_onw();
   return 1;
 };
 
@@ -4112,7 +4139,8 @@ function() {
       continue;
     if (target.isLiquid()) {
       switch (target.category) {
-      case '<this>': continue;
+      case '<this>':
+      case '<arguments>': continue;
       }
     }
 
@@ -6540,9 +6568,10 @@ function(ctx, st) {
       else if (!(ctx & CTX_DEFAULT))
         this.err('fun.decl.has.got.no.actual.name');
     }
-    else if (this.lttype === TK_ID) {
+    else {
       st |= ST_EXPR ;
-      fnName = this.getName_fn(st);
+      if (this.lttype === TK_ID)
+        fnName = this.getName_fn(st);
     }
   }
 
@@ -15276,6 +15305,7 @@ function(n, isVal) {
   s.reached = false;
 
   var cvtz = this.setCVTZ(createObj(this.cvtz));
+  var ts = this.setTS([]);
   var th = this.thisState;
   this.cur.synth_start();
   ASSERT.call(this, !this.cur.inBody, 'inBody');
@@ -15302,6 +15332,7 @@ function(n, isVal) {
   s.reached = true;
 
   this.setCVTZ(cvtz) ;
+  this.setTS(ts);
   this.thisState = th;
 
   return this.synth_TransformedFn(n, argsPrologue);
