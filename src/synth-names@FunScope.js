@@ -5,8 +5,8 @@ this.synth_name_is_valid_binding_m =
 function(mname) { return true; };
 
 this.synth_ref_find_homonym_m =
-function(mname) {
-  this.isBooted || this.synth_boot();
+function(mname, r) {
+  this.isBooted || this.synth_boot(r);
   var synth = this.findSynth_m(mname)
   if (synth === null && this.scopeName && this.scopeName.hasName_m(mname))
     synth = this.scopeName;
@@ -14,13 +14,14 @@ function(mname) {
 };
 
 this.synth_decl_find_homonym_m =
-function(mname) {
-  this.isBooted || this.synth_boot();
+function(mname, r) {
+  this.isBooted || this.synth_boot(r);
   return this.findSynth_m(mname);
 };
 
 this.synth_boot =
-function() {
+function(r) {
+  if (this.renamer === null) this.renamer = r;
   this.synth_boot_init();
   ASSERT.call(this, !this.inBody, 'inBody');
   this.synth_args();
@@ -30,8 +31,8 @@ function() {
 };
 
 this.synth_start =
-function() {
-  this.isBooted || this.synth_boot();
+function(r) {
+  this.isBooted || this.synth_boot(r);
   this.synth_externals();
 };
 

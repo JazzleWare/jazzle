@@ -10,7 +10,7 @@ function(n, isVal) {
   var ps = this.setScope(this.script);
   var ts = this.setTS([]);
 
-  this.cur.synth_start();
+  this.cur.synth_start(this.renamer);
   this.trList(n.body, isVal);
   this.cur.synth_finish();
 

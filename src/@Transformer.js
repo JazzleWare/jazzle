@@ -11,4 +11,6 @@ function Transformer() {
   this.reachedRef = {v: true};
   this.cvtz = {};
   this.thisState = THS_NONE;
+
+  this.renamer = renamer_incremental;
 }

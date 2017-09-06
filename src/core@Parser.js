@@ -9,6 +9,8 @@ function(left, right, isComputed) {
   case 'FunctionExpression':
     if (right.id)
       return null;
+    break;
+
   default: return null
   }
 

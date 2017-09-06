@@ -63,3 +63,5 @@ this. makeAcceptor = makeAcceptor;
 // this.pathFor = pathFor;
 // this.tailFor = tailFor;
 
+this.renamer_incremental = renamer_incremental;
+this.renamer_minify = renamer_minify;

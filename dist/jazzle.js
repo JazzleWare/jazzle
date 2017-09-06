@@ -39,6 +39,8 @@ function ConcreteScope(parent, type) {
 
   this.spThis = null;
   this.isBooted = false;
+
+  this.renamer = null;
 }
 ;
 function Decl() {
@@ -466,6 +468,8 @@ function Transformer() {
   this.reachedRef = {v: true};
   this.cvtz = {};
   this.thisState = THS_NONE;
+
+  this.renamer = renamer_incremental;
 }
 ;
  ConcreteScope.prototype = createObj(Scope.prototype);
@@ -947,6 +951,25 @@ function uAkin(a,b) {
   ASSERT.call(this, isSurroComp(a), 'a');
   ASSERT.call(this, isSurroComp(b), 'b');
   return a.escape === b.escape;
+}
+;
+function renamer_incremental(base, i) {
+  if (i === 0) return base;
+  return base + "" + i;
+}
+
+var HEAD = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ_$', TAIL = HEAD + '1234567890',
+    HEADLEN = HEAD.length, TAILLEN = TAIL.length;
+
+// naive minified names -- true minified names are shortest for the most used name, and longerst for the least used name
+function renamer_minify(base, i) {
+  var tail = false, name = "";
+  do {
+    var m = -1;
+    if (tail) { m = i % TAILLEN; name += TAIL.charAt(m); i =  (i-m)/TAILLEN; }
+    else { m = i % HEADLEN; name += HEAD.charAt(m); i = (i-m)/HEADLEN; }
+  } while (i > 0);
+  return name;
 }
 ;
 var ST_GLOBAL = 1,
@@ -1611,7 +1634,8 @@ function(){
 },
 function(){
 this.synth_boot =
-function() {
+function(r) {
+  if (this.renamer === null) this.renamer = r;
   ASSERT.call(this, this.isSourceLevel(), 'script m');
   this.synth_boot_init();
   this.synth_externals();
@@ -1624,9 +1648,9 @@ function() {
 };
 
 this.synth_start =
-function() {
+function(r) {
   ASSERT.call(this, this.isSourceLevel(), 'script m');
-  this.isBooted || this.synth_boot();
+  this.isBooted || this.synth_boot(r);
 };
 
 this.synth_liquids_to =
@@ -1687,16 +1711,16 @@ this.synth_name_is_valid_binding_m =
 function(mname) { return true; };
 
 this.synth_ref_find_homonym_m =
-function(mname) {
+function(mname, r) {
   ASSERT.call(this, this.isSourceLevel(), 'script m');
-  this.isBooted || this.synth_boot();
+  this.isBooted || this.synth_boot(r);
   return this.findSynth_m(mname);
 };
 
 this.synth_decl_find_homonym_m =
 function(mname) {
   ASSERT.call(this, this.isSourceLevel(), 'script m');
-  this.isBooted || this.synth_boot();
+  this.isBooted || this.synth_boot(r);
   return this.findSynth_m(mname);
 };
 
@@ -1724,7 +1748,7 @@ function(decl) {
   var num = 0;
   var baseName = decl.name;
   var mname = "";
-  var synthName = baseName;
+  var synthName = this.rename(baseName, num);
 
   RENAME:
   do {
@@ -1737,7 +1761,7 @@ function(decl) {
       if (!scope.synth_ref_may_escape_m(mname))
         continue RENAME;
 
-      synth = scope.synth_ref_find_homonym_m(mname);
+      synth = scope.synth_ref_find_homonym_m(mname, this.renamer);
       if (synth) {
         if (synth.isName() && synth.getAS() !== ATS_DISTINCT)
           synth = synth.source;
@@ -1749,7 +1773,7 @@ function(decl) {
     if (num === 0 && !this.synth_name_is_valid_binding_m(mname)) // shortcut: num === 0 (because currently no invalid name contains a number)
       continue RENAME;
 
-    synth = this.synth_decl_find_homonym_m(mname);
+    synth = this.synth_decl_find_homonym_m(mname, this.renamer);
     if (synth) {
       if (synth.isName() && synth.getAS() !== ATS_DISTINCT)
         synth = synth.source;
@@ -1758,7 +1782,7 @@ function(decl) {
     }
 
     break;
-  } while (synthName = baseName + "" + (num+=1), true);
+  } while (synthName = this.rename(baseName, ++num), true);
 
   decl.synthName = synthName;
   this.insertSynth_m(mname, decl);
@@ -1776,7 +1800,7 @@ function(global) {
   var rsList = global.ref.rsList;
   var num = 0;
   var name = global.name;
-  var synthNames = [name, ""];
+  var synthNames = [name, ""]; // no rename(base, 0) -- this is a global
 
   var m = 0, mname = "";
 
@@ -1793,7 +1817,7 @@ function(global) {
         var scope = rsList[l++];
         if (!scope.synth_ref_may_escape_m(mname))
           continue RENAME;
-        var synth = scope.synth_ref_find_homonym_m(mname);
+        var synth = scope.synth_ref_find_homonym_m(mname, this.renamer);
         if (synth) {
           if (synth.isName() && synth.getAS() !== ATS_DISTINCT)
             synth = synth.source;
@@ -1806,8 +1830,8 @@ function(global) {
     break;
   } while (
     ++num,
-    synthNames[0] = name + "" + num,
-    synthNames[1] = name + "" + num + "u",
+    synthNames[0] = this.rename(name, num),
+    synthNames[1] = synthNames[0] + "u",
     true
   );
 
@@ -1827,7 +1851,7 @@ function(liquid) {
   var num = 0;
   var baseName = liquid.name;
   var mname = "";
-  var synthName = baseName;
+  var synthName = this.rename(baseName, num);
 
   RENAME:
   do {
@@ -1839,22 +1863,25 @@ function(liquid) {
       if (!scope.synth_ref_may_escape_m(mname))
         continue RENAME;
 
-      if (scope.synth_ref_find_homonym_m(mname))
+      if (scope.synth_ref_find_homonym_m(mname, this.renamer))
         continue RENAME;
     }
 
     if (!this.synth_name_is_valid_binding_m(mname))
       continue RENAME;
 
-    if (this.synth_decl_find_homonym_m(mname))
+    if (this.synth_decl_find_homonym_m(mname, this.renamer))
       continue RENAME;
 
      break;
-  } while (synthName = baseName + "" + (num+=1), true);
+  } while (synthName = this.rename(baseName, ++num), true);
 
   liquid.synthName = synthName;
   this.insertSynth_m(mname, liquid );
 };
+
+this.rename =
+function(base, i) { return this.renamer(base, i); };
 
 }]  ],
 [Decl.prototype, [function(){
@@ -4290,8 +4317,8 @@ this.synth_name_is_valid_binding_m =
 function(mname) { return true; };
 
 this.synth_ref_find_homonym_m =
-function(mname) {
-  this.isBooted || this.synth_boot();
+function(mname, r) {
+  this.isBooted || this.synth_boot(r);
   var synth = this.findSynth_m(mname)
   if (synth === null && this.scopeName && this.scopeName.hasName_m(mname))
     synth = this.scopeName;
@@ -4299,13 +4326,14 @@ function(mname) {
 };
 
 this.synth_decl_find_homonym_m =
-function(mname) {
-  this.isBooted || this.synth_boot();
+function(mname, r) {
+  this.isBooted || this.synth_boot(r);
   return this.findSynth_m(mname);
 };
 
 this.synth_boot =
-function() {
+function(r) {
+  if (this.renamer === null) this.renamer = r;
   this.synth_boot_init();
   ASSERT.call(this, !this.inBody, 'inBody');
   this.synth_args();
@@ -4315,8 +4343,8 @@ function() {
 };
 
 this.synth_start =
-function() {
-  this.isBooted || this.synth_boot();
+function(r) {
+  this.isBooted || this.synth_boot(r);
   this.synth_externals();
 };
 
@@ -4807,6 +4835,8 @@ function(left, right, isComputed) {
   case 'FunctionExpression':
     if (right.id)
       return null;
+    break;
+
   default: return null
   }
 
@@ -15307,7 +15337,8 @@ function(n, isVal) {
   var cvtz = this.setCVTZ(createObj(this.cvtz));
   var ts = this.setTS([]);
   var th = this.thisState;
-  this.cur.synth_start();
+
+  this.cur.synth_start(this.renamer);
   ASSERT.call(this, !this.cur.inBody, 'inBody');
 
   if (n.type === 'FunctionDeclaration')
@@ -15445,7 +15476,7 @@ this.synthFnExprName =
 function(fnName) {
   ASSERT.call(this, fnName.synthName === "", 'synth');
   ASSERT.call(this, fnName.ref.scope.isExpr(), 'fn not an expr');
-  var baseName = fnName.name, mname = "", synthName = baseName, num = 0;
+  var baseName = fnName.name, mname = "", synthName = this.rename(baseName, 0), num = 0;
   var rsList = fnName.ref.rsList;
 
   RENAME:
@@ -15465,7 +15496,7 @@ function(fnName) {
     }
 
     break;
-  } while (synthName = baseName + "" + (num+=1), true);
+  } while (synthName = this.rename(baseName, num), true);
 
   fnName.synthName = synthName;
 };
@@ -15521,7 +15552,7 @@ function(n, isVal) {
   var ps = this.setScope(this.script);
   var ts = this.setTS([]);
 
-  this.cur.synth_start();
+  this.cur.synth_start(this.renamer);
   this.trList(n.body, isVal);
   this.cur.synth_finish();
 
@@ -15923,6 +15954,7 @@ null,
 null,
 null,
 null,
+null,
 null]);
 this.parse = function(src, isModule ) {
   var newp = new Parser(src, isModule);
@@ -15989,4 +16021,6 @@ this. makeAcceptor = makeAcceptor;
 // this.pathFor = pathFor;
 // this.tailFor = tailFor;
 
+this.renamer_incremental = renamer_incremental;
+this.renamer_minify = renamer_minify;
 ;}).call (function(){try{return module.exports;}catch(e){return this;}}.call(this))

@@ -1,5 +1,6 @@
 this.synth_boot =
-function() {
+function(r) {
+  if (this.renamer === null) this.renamer = r;
   ASSERT.call(this, this.isSourceLevel(), 'script m');
   this.synth_boot_init();
   this.synth_externals();
@@ -12,9 +13,9 @@ function() {
 };
 
 this.synth_start =
-function() {
+function(r) {
   ASSERT.call(this, this.isSourceLevel(), 'script m');
-  this.isBooted || this.synth_boot();
+  this.isBooted || this.synth_boot(r);
 };
 
 this.synth_liquids_to =
@@ -75,16 +76,16 @@ this.synth_name_is_valid_binding_m =
 function(mname) { return true; };
 
 this.synth_ref_find_homonym_m =
-function(mname) {
+function(mname, r) {
   ASSERT.call(this, this.isSourceLevel(), 'script m');
-  this.isBooted || this.synth_boot();
+  this.isBooted || this.synth_boot(r);
   return this.findSynth_m(mname);
 };
 
 this.synth_decl_find_homonym_m =
 function(mname) {
   ASSERT.call(this, this.isSourceLevel(), 'script m');
-  this.isBooted || this.synth_boot();
+  this.isBooted || this.synth_boot(r);
   return this.findSynth_m(mname);
 };
 
@@ -112,7 +113,7 @@ function(decl) {
   var num = 0;
   var baseName = decl.name;
   var mname = "";
-  var synthName = baseName;
+  var synthName = this.rename(baseName, num);
 
   RENAME:
   do {
@@ -125,7 +126,7 @@ function(decl) {
       if (!scope.synth_ref_may_escape_m(mname))
         continue RENAME;
 
-      synth = scope.synth_ref_find_homonym_m(mname);
+      synth = scope.synth_ref_find_homonym_m(mname, this.renamer);
       if (synth) {
         if (synth.isName() && synth.getAS() !== ATS_DISTINCT)
           synth = synth.source;
@@ -137,7 +138,7 @@ function(decl) {
     if (num === 0 && !this.synth_name_is_valid_binding_m(mname)) // shortcut: num === 0 (because currently no invalid name contains a number)
       continue RENAME;
 
-    synth = this.synth_decl_find_homonym_m(mname);
+    synth = this.synth_decl_find_homonym_m(mname, this.renamer);
     if (synth) {
       if (synth.isName() && synth.getAS() !== ATS_DISTINCT)
         synth = synth.source;
@@ -146,7 +147,7 @@ function(decl) {
     }
 
     break;
-  } while (synthName = baseName + "" + (num+=1), true);
+  } while (synthName = this.rename(baseName, ++num), true);
 
   decl.synthName = synthName;
   this.insertSynth_m(mname, decl);
@@ -164,7 +165,7 @@ function(global) {
   var rsList = global.ref.rsList;
   var num = 0;
   var name = global.name;
-  var synthNames = [name, ""];
+  var synthNames = [name, ""]; // no rename(base, 0) -- this is a global
 
   var m = 0, mname = "";
 
@@ -181,7 +182,7 @@ function(global) {
         var scope = rsList[l++];
         if (!scope.synth_ref_may_escape_m(mname))
           continue RENAME;
-        var synth = scope.synth_ref_find_homonym_m(mname);
+        var synth = scope.synth_ref_find_homonym_m(mname, this.renamer);
         if (synth) {
           if (synth.isName() && synth.getAS() !== ATS_DISTINCT)
             synth = synth.source;
@@ -194,8 +195,8 @@ function(global) {
     break;
   } while (
     ++num,
-    synthNames[0] = name + "" + num,
-    synthNames[1] = name + "" + num + "u",
+    synthNames[0] = this.rename(name, num),
+    synthNames[1] = synthNames[0] + "u",
     true
   );
 
@@ -215,7 +216,7 @@ function(liquid) {
   var num = 0;
   var baseName = liquid.name;
   var mname = "";
-  var synthName = baseName;
+  var synthName = this.rename(baseName, num);
 
   RENAME:
   do {
@@ -227,19 +228,22 @@ function(liquid) {
       if (!scope.synth_ref_may_escape_m(mname))
         continue RENAME;
 
-      if (scope.synth_ref_find_homonym_m(mname))
+      if (scope.synth_ref_find_homonym_m(mname, this.renamer))
         continue RENAME;
     }
 
     if (!this.synth_name_is_valid_binding_m(mname))
       continue RENAME;
 
-    if (this.synth_decl_find_homonym_m(mname))
+    if (this.synth_decl_find_homonym_m(mname, this.renamer))
       continue RENAME;
 
      break;
-  } while (synthName = baseName + "" + (num+=1), true);
+  } while (synthName = this.rename(baseName, ++num), true);
 
   liquid.synthName = synthName;
   this.insertSynth_m(mname, liquid );
 };
+
+this.rename =
+function(base, i) { return this.renamer(base, i); };

@@ -6,4 +6,6 @@ function ConcreteScope(parent, type) {
 
   this.spThis = null;
   this.isBooted = false;
+
+  this.renamer = null;
 }

@@ -7,7 +7,8 @@ function(n, isVal) {
   var cvtz = this.setCVTZ(createObj(this.cvtz));
   var ts = this.setTS([]);
   var th = this.thisState;
-  this.cur.synth_start();
+
+  this.cur.synth_start(this.renamer);
   ASSERT.call(this, !this.cur.inBody, 'inBody');
 
   if (n.type === 'FunctionDeclaration')
@@ -145,7 +146,7 @@ this.synthFnExprName =
 function(fnName) {
   ASSERT.call(this, fnName.synthName === "", 'synth');
   ASSERT.call(this, fnName.ref.scope.isExpr(), 'fn not an expr');
-  var baseName = fnName.name, mname = "", synthName = baseName, num = 0;
+  var baseName = fnName.name, mname = "", synthName = this.rename(baseName, 0), num = 0;
   var rsList = fnName.ref.rsList;
 
   RENAME:
@@ -165,7 +166,7 @@ function(fnName) {
     }
 
     break;
-  } while (synthName = baseName + "" + (num+=1), true);
+  } while (synthName = this.rename(baseName, num), true);
 
   fnName.synthName = synthName;
 };
