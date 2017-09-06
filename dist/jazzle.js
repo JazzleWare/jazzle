@@ -14708,6 +14708,9 @@ function(n, ownerBody, isVal) {
   return transformer.call(this, n, ownerBody, isVal);
 };
 
+this.rename =
+function(base, i) { return this.renamer(base, i); };
+
 },
 function(){
 this.getTCCache =
