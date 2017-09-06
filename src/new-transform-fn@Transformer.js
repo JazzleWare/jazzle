@@ -8,6 +8,9 @@ function(n, isVal) {
   var ts = this.setTS([]);
   var th = this.thisState;
 
+  this.cur.closureLLINOSA = this.cur.parent.scs.isAnyFn() ?
+    createObj(this.cur.parent.scs.closureLLINOSA) : {};
+
   this.cur.synth_start(this.renamer);
   ASSERT.call(this, !this.cur.inBody, 'inBody');
 

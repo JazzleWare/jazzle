@@ -132,8 +132,7 @@ function FunScope(parent, type) {
   this.inBody = false;
   this.bodyRefs = new SortedObj();
 
-  this.closureLLINOSA = 
-    this.parent.scs.isAnyFn() ? createObj(this.parent.scs.closureLLINOSA) : {};
+  this.closureLLINOSA = null;
 
   this.refs = this.argRefs;
 
@@ -15340,6 +15339,9 @@ function(n, isVal) {
   var cvtz = this.setCVTZ(createObj(this.cvtz));
   var ts = this.setTS([]);
   var th = this.thisState;
+
+  this.cur.closureLLINOSA = this.cur.parent.scs.isAnyFn() ?
+    createObj(this.cur.parent.scs.closureLLINOSA) : {};
 
   this.cur.synth_start(this.renamer);
   ASSERT.call(this, !this.cur.inBody, 'inBody');

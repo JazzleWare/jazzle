@@ -13,8 +13,7 @@ function FunScope(parent, type) {
   this.inBody = false;
   this.bodyRefs = new SortedObj();
 
-  this.closureLLINOSA = 
-    this.parent.scs.isAnyFn() ? createObj(this.parent.scs.closureLLINOSA) : {};
+  this.closureLLINOSA = null;
 
   this.refs = this.argRefs;
 
