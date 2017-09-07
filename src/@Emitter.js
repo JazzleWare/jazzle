@@ -10,6 +10,7 @@ function Emitter() {
   this.wcb = null;
   this.wcbp = null;
   this.wcbUsed = null;
+  this.allow = { space: true, nl: true, comments: { l: true, m: true } };
 
   this.out = "";
 }

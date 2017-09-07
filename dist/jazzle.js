@@ -67,6 +67,7 @@ function Emitter() {
   this.wcb = null;
   this.wcbp = null;
   this.wcbUsed = null;
+  this.allow = { space: true, nl: true, comments: { l: true, m: true } };
 
   this.out = "";
 }
@@ -1566,6 +1567,11 @@ function wcb_afterRet(rawStr, tt) {
   }
   this.hs();
 }
+
+function wcb_wrap(rawStr, tt) {
+  if (tt & ETK_NL) return;
+  this.insertLineBreak(true);
+}
 ;
  (function(){
        var i = 0;
@@ -2712,7 +2718,8 @@ function() {
 
 this.os =
 function() {
-  this.setPendingSpace(EST_OMITTABLE);
+  if (this.allow.space)
+    this.setPendingSpace(EST_OMITTABLE);
   return this;
 };
 
@@ -2763,8 +2770,8 @@ function() {
 };
 
 this.startNewLine =
-function() {
-  this.flush();
+function(mustNL) {
+  this.flush(mustNL);
 };
 
 this.l =
@@ -2777,17 +2784,19 @@ this.wrap =
 function() { return this.l(); };
 
 this.flush =
-function() {
+function(mustNL) {
   ASSERT.call(this, this.pendingSpace === EST_NONE, 'pending space');
   var line = this.curLine;
   var len = line.length;
   if (len === 0)
     return;
 
-  var optimalIndent = this.curLineIndent;
-  if (optimalIndent >= 0 && this.wrapLimit > 0 && optimalIndent + len > this.wrapLimit)
+  var optimalIndent = this.allow.space ? this.curLineIndent : 0;
+  if (optimalIndent >= 0 && this.wrapLimit > 0 && optimalIndent + len > this.wrapLimit) {
     optimalIndent = len < this.wrapLimit ? this.wrapLimit - len : 0;
-  this.out.length && this.insertLineBreak();
+    mustNL = true;
+  }
+  this.out.length && this.insertLineBreak(mustNL);
   this.out += this.geti(optimalIndent) + line;
 
   this.curLine = "";
@@ -2869,7 +2878,8 @@ function(len) {
     this.ol(len+1) <= 0 && this.insertSpace();
     break;
   case EST_BREAKABLE:
-    this.ol(len+1) <= 0 ? this.insertSpace() : this.startNewLine();
+    if (this.ol(len+1) <= 0) this.insertSpace();
+    else { this.startNewLine(); this.onw(wcb_wrap); }
     break;
   default:
     ASSERT.call(this, false, 'invalid type for pending space');
@@ -2923,7 +2933,8 @@ function(name) {
 };
 
 this.insertLineBreak =
-function() {
+function(mustNL) {
+  if (!this.allow.nl && !mustNL) return;
   this.curtt === ETK_NONE || this.rtt();
   this.wcb && this.call_onw('\n', ETK_NL);
   this.out += '\n';
