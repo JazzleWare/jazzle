@@ -2879,7 +2879,7 @@ function(len) {
     break;
   case EST_BREAKABLE:
     if (this.ol(len+1) <= 0) this.insertSpace();
-    else { this.startNewLine(); this.onw(wcb_wrap); }
+    else { this.startNewLine(); }
     break;
   default:
     ASSERT.call(this, false, 'invalid type for pending space');
