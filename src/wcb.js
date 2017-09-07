@@ -79,7 +79,7 @@ function wcb_afterRet(rawStr, tt) {
     }
     return;
   }
-  this.hs();
+  this.os();
 }
 
 function wcb_wrap(rawStr, tt) {

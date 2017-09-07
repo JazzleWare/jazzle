@@ -8,6 +8,8 @@ var HEAD = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ_$', TAIL = HEAD
 
 // naive minified names -- true minified names are shortest for the most used name, and longerst for the least used name
 function renamer_minify(base, i) {
+  if (base.length === 1 && i === 0)
+    return base;
   var tail = false, name = "";
   do {
     var m = -1;

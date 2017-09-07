@@ -39,9 +39,10 @@ function(sParent) {
     }
     else {
       ASSERT.call(this, elem.isAnyFn() || elem.isClass(),
-        'current fn scopes are the only scope allowed '+
+        'currently fn scopes are the only scope allowed '+
        'to come in a paren');
-      elem.parent = sParent;
+      if (elem.parent === this)
+        elem.parent = sParent;
     }
     i++;
   }

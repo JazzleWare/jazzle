@@ -1,0 +1,35 @@
+n() {
+  var tz4 = 0;
+  var a1 = jz.u(t = arguments[0]) ? function a() {
+    var tz3 = 0;
+    var b1 = jz.u(t = arguments[0]) ? function b() {
+      var tz2 = 0;
+      var l1 = jz.u(t = arguments[0]) ? function l() {
+        var tz1 = 0;
+        var e1 = jz.u(t = arguments[0]) ? function e() {
+          var tz = 0;
+          var u1 = jz.u(t = arguments[0]) ? function u(n) {
+            return (tz4<1&&jz.tz('a'), a1) * (tz3<1&&jz.tz('b'), b1) * (tz2<1&&jz.tz('l'), l1) * (tz1<1&&jz.tz('e'), e1) * (tz<1&&jz.tz('u'), u1);
+          } : t; tz = 1;
+          var t;
+          return (tz4<1&&jz.tz('a'), a1) * (tz3<1&&jz.tz('b'), b1) * (tz2<1&&jz.tz('l'), l1) * (tz1<1&&jz.tz('e'), e1);
+        } : t; tz1 = 1;
+        var t;
+        return (tz4<1&&jz.tz('a'), a1) * (tz3<1&&jz.tz('b'), b1);
+      } : t; tz2 = 1;
+      var t;
+      return tz4<1&&jz.tz('a'), a1;
+    } : t; tz3 = 1;
+    var t;
+    return 12;
+  } : t; tz4 = 1;
+  var t;
+  return 40;
+});
+
+(  // l0; ch = []
+  (  // l1@src(l0); ch = [], l1.ch=[l1]
+     a = ( // l2@src(l1); ch = [], l1.ch=[l2]
+       n) => /* new: n0@src(l1), l2.adjustTo(n0);  l1.ch=[l2, n0] */ 
+  ) => 12 /* new: n1@src(l0), l1.adjustTo(n1) { l2.adjustTo(n1); n0@src(n1) }; l0.ch=[l1, n1] */
+) // l0.adjustTo(main) { l1.adjustTo(main) { l2.adjustTo(main); /* no --> */n0@src(main) }; n1@src(main) }

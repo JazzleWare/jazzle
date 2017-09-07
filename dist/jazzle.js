@@ -963,6 +963,8 @@ var HEAD = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ_$', TAIL = HEAD
 
 // naive minified names -- true minified names are shortest for the most used name, and longerst for the least used name
 function renamer_minify(base, i) {
+  if (base.length === 1 && i === 0)
+    return base;
   var tail = false, name = "";
   do {
     var m = -1;
@@ -1565,7 +1567,7 @@ function wcb_afterRet(rawStr, tt) {
     }
     return;
   }
-  this.hs();
+  this.os();
 }
 
 function wcb_wrap(rawStr, tt) {
@@ -2414,7 +2416,7 @@ function(nd) {
   var scope = nd.ref.scope;
   ASSERT.call(this, scope.hasTZCheckPoint, 'could not find any tz');
   var tz = scope.scs.getLG('tz').getL(0);
-  this.wm(tz.synthName,'<',nd.idx,'&&').jz('tz').w('(').writeString(nd.name, "'");
+  this.wt(tz.synthName,ETK_ID).wm('<',nd.idx,'&&').jz('tz').w('(').writeString(nd.name, "'");
   this.w(')');
   return true;
 };
@@ -2743,7 +2745,10 @@ function(rawStr) {
   ASSERT.call(this, this.curLineIndent < 0 || this.curLineIndent >= this.indentLevel, 'in' );
 
   var cll = this.curLine.length;
-  cll && this.ol(cll+rawStr.length) > 0 && this.l();
+  if (cll && this.ol(cll+rawStr.length) > 0) {
+    this.startNewLine();
+    this.insertLineBreak(true);
+  }
 
   this.rwr(rawStr);
 };
@@ -2784,7 +2789,7 @@ this.wrap =
 function() { return this.l(); };
 
 this.flush =
-function(mustNL) {
+function() {
   ASSERT.call(this, this.pendingSpace === EST_NONE, 'pending space');
   var line = this.curLine;
   var len = line.length;
@@ -2792,11 +2797,12 @@ function(mustNL) {
     return;
 
   var optimalIndent = this.allow.space ? this.curLineIndent : 0;
+  var mustNL = false;
   if (optimalIndent >= 0 && this.wrapLimit > 0 && optimalIndent + len > this.wrapLimit) {
     optimalIndent = len < this.wrapLimit ? this.wrapLimit - len : 0;
     mustNL = true;
   }
-  this.out.length && this.insertLineBreak(mustNL);
+  this.out.length && this.insertLineBreak(false);
   this.out += this.geti(optimalIndent) + line;
 
   this.curLine = "";
@@ -2879,7 +2885,7 @@ function(len) {
     break;
   case EST_BREAKABLE:
     if (this.ol(len+1) <= 0) this.insertSpace();
-    else { this.startNewLine(); }
+    else { this.startNewLine(false); this.insertLineBreak(true); }
     break;
   default:
     ASSERT.call(this, false, 'invalid type for pending space');
@@ -4610,9 +4616,10 @@ function(sParent) {
     }
     else {
       ASSERT.call(this, elem.isAnyFn() || elem.isClass(),
-        'current fn scopes are the only scope allowed '+
+        'currently fn scopes are the only scope allowed '+
        'to come in a paren');
-      elem.parent = sParent;
+      if (elem.parent === this)
+        elem.parent = sParent;
     }
     i++;
   }
