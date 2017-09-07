@@ -21,9 +21,7 @@ function CatchScope(sParent) {
 ;
 function ClassScope(sParent, sType) {
   Scope.call(this, sParent, sType|ST_CLS);  
-
   this.scopeName = null;
-  this.clsTemp = null;
 }
 ;
 function Comments() {
@@ -3579,8 +3577,17 @@ function(){
 Emitters['UpdateExpression'] =
 function(n, flags, isStmt) {
   var cb = CB(n); this.emc(cb, 'bef' );
-  var hasParen = flags & EC_EXPR_HEAD;
+  var hasParen = false;
+  var l = n.argument;
+  var t = false, v = false;
+  if (isResolvedName(l)) { t = l.tz; v = l.cv; hasParen = t || v; }
+  else hasParen = flags & EC_EXPR_HEAD;
+
   if (hasParen) { this.w('('); flags = EC_NONE; }
+
+  if (t) { this.emitAccessChk_tz(l.target); this.w(',').os(); }
+  if (v) { this.emitAccessChk_invalidSAT(l.target); this.w(',').os(); }
+
   var o = n.operator;
   if (n.prefix) {
     this.wt(o, o !== '--' ? ETK_ADD : ETK_MIN);
@@ -15295,6 +15302,7 @@ function(n, isVal) {
   n.argument = arg;
   if (isResolvedName(arg)) {
     arg.target.ref.assigned();
+    if (this.needsCVLHS(arg.target)) { arg.cv = true; this.cacheCVLHS(arg.target); }
     if (arg.target.isRG())
       n = this.synth_GlobalUpdate(n, true);
   }

@@ -5,8 +5,17 @@
 Emitters['UpdateExpression'] =
 function(n, flags, isStmt) {
   var cb = CB(n); this.emc(cb, 'bef' );
-  var hasParen = flags & EC_EXPR_HEAD;
+  var hasParen = false;
+  var l = n.argument;
+  var t = false, v = false;
+  if (isResolvedName(l)) { t = l.tz; v = l.cv; hasParen = t || v; }
+  else hasParen = flags & EC_EXPR_HEAD;
+
   if (hasParen) { this.w('('); flags = EC_NONE; }
+
+  if (t) { this.emitAccessChk_tz(l.target); this.w(',').os(); }
+  if (v) { this.emitAccessChk_invalidSAT(l.target); this.w(',').os(); }
+
   var o = n.operator;
   if (n.prefix) {
     this.wt(o, o !== '--' ? ETK_ADD : ETK_MIN);
