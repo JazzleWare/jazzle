@@ -2,7 +2,8 @@ this.transformRawFn =
 function(n, isVal) {
   var s = this.setScope(n['#scope'] );
   ASSERT.call(this, s.reached, 'not reached');
-  s.reached = false;
+  var unreach = n.type === 'FunctionDeclaration';
+  if (unreach) s.reached = false;
 
   var cvtz = this.setCVTZ(createObj(this.cvtz));
   var ts = this.setTS([]);
@@ -30,10 +31,11 @@ function(n, isVal) {
   this.cur.deactivateBody();
   this.cur.synth_finish();
 
-  ASSERT.call(this, !s.reached, 'reached');
-
+  if (unreach) {
+    ASSERT.call(this, !s.reached, 'reached');
+    s.reached = true;
+  }
   this.setScope(s);
-  s.reached = true;
 
   this.setCVTZ(cvtz) ;
   this.setTS(ts);
