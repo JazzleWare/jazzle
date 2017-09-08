@@ -6,6 +6,7 @@
 this.track =
 function(scope) {
   var cur = scope, root = this.ref.scope ;
+  this.ref.d++;
   while (true) {
     if (cur.hasSignificantNames() || cur.isAnyFn() || cur.isCatch()) {
       if (HAS.call(this.rsMap, cur.scopeID))

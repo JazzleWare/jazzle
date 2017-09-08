@@ -7,7 +7,7 @@ function(n, isVal) {
   if ((ths & THS_NEEDS_CHK) && !(ths & THS_IS_REACHED)) {
     var lg = th.ref.scope.scs.gocLG('ti');
     var ti = lg.getL(0);
-    if (ti === null) { ti = lg.newL(); lg.seal(); }
+    if (ti === null) { ti = lg.newL(); ti.name = 'ti'; lg.seal(); }
     ti.track(this.cur);
 
     // that is, no longer check; but, TODO: better make this optimization optional to turn off

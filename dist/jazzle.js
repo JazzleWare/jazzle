@@ -3206,17 +3206,21 @@ function(n, flags, isStmt) {
   var cb = CB(n);
   this.emc(cb, 'bef');
   var hasParen = flags & EC_NEW_HEAD;
-  if (hasParen) { this.w('('); flags = EC_NONE; }
 
   var c = n.callee;
+  var e = c.type === 'Super';
+  var l = e ? c['#ti'] : null;
 
-  if (c.type === 'Super')
-    this.wt(c['#liq'].synthName).wm('.','call');
+  if (hasParen) { this.w('('); flags = EC_NONE; }
+
+  if (l && l.ref.d) this.jz('o').w('(');
+  if (e)
+    this.wt(c['#liq'].synthName, ETK_ID).wm('.','call');
   else
     this.emitCallHead(n.callee, flags);
 
   this.w('(');
-  if (c.type === 'Super') {
+  if (e) {
     this.eN(c['#this'], EC_NONE, false );
     n.arguments.length && this.wm(',','');
   }
@@ -3225,6 +3229,8 @@ function(n, flags, isStmt) {
   this.emc(cb, 'inner');
   this.w(')');
 
+  if (l && l.ref.d)
+    this.wm(',','',l.synthName,'','=','','1').w(')');
   hasParen && this.w(')');
   this.emc(cb, 'aft');
   isStmt && this.w(';');
@@ -4019,7 +4025,7 @@ function(n, flags, isStmt) {
   var hasParen = false, b = CB(n.id);
   var th = n.plain ? 'this' : n.target.synthName;
 
-  if (n.chk) hasParen = flags & EC_EXPR_HEAD;
+  if (n.chk) hasParen = flags & (EC_EXPR_HEAD|EC_NON_SEQ);
   if (hasParen) { this.w('('); flags = EC_NONE; }
 
   if (n.chk) { 
@@ -4588,6 +4594,7 @@ this.newSynthLabelName = function(baseLabelName) {
 this.track =
 function(scope) {
   var cur = scope, root = this.ref.scope ;
+  this.ref.d++;
   while (true) {
     if (cur.hasSignificantNames() || cur.isAnyFn() || cur.isCatch()) {
       if (HAS.call(this.rsMap, cur.scopeID))
@@ -9029,7 +9036,8 @@ this.parseSuper = function() {
     start: this.c0,
     end: this.c ,
    '#c': cb,
-   '#liq': null, '#this': null
+   '#liq': null,
+   '#this': null, '#ti': void 0
   };
  
   this.next();
@@ -15161,16 +15169,26 @@ function(n, isVal) {
 function(){
 Transformers['CallExpression'] =
 function(n, isVal) {
-  var l = n.callee;
+  var ti = false, l = n.callee;
   if (l.type === 'Super') {
     l['#liq'] = this.cur.findRefU_m(RS_SCALL).getDecl();
-    l['#this'] = this.synth_BareThis(this.cur.findRefU_m(RS_THIS).getDecl());
+    var th = this.cur.findRefU_m(RS_THIS).getDecl();
+    l['#this'] = this.synth_BareThis(th);
+    if (this.thisState & THS_NEEDS_CHK) {
+      ti = true;
+      var lg = th.ref.scope.gocLG('ti'), li = lg.getL(0);
+      if (li === null) { li = lg.newL(); lg.seal(); li.name = 'ti'; }
+      l['#ti'] = li;
+      li.track(this.cur); li.ref.d--;
+    }
   }
+
   var si = findElem(n.arguments, 'SpreadElement');
   if (si === -1) {
     if (l.type !== 'Super')
       n.callee = this.tr(n.callee, true );
     this.trList(n.arguments, true );
+    if (ti) this.thisState &= ~THS_NEEDS_CHK;
     return n;
   }
 
@@ -15194,6 +15212,7 @@ function(n, isVal) {
 
   this.trList(n.arguments, true );
 
+  if (ti) this.thisState &= ~THS_NEEDS_CHK;
   return this.synth_Call(head, mem, n.arguments);
 };
 
@@ -15344,7 +15363,7 @@ function(n, isVal) {
   if ((ths & THS_NEEDS_CHK) && !(ths & THS_IS_REACHED)) {
     var lg = th.ref.scope.scs.gocLG('ti');
     var ti = lg.getL(0);
-    if (ti === null) { ti = lg.newL(); lg.seal(); }
+    if (ti === null) { ti = lg.newL(); ti.name = 'ti'; lg.seal(); }
     ti.track(this.cur);
 
     // that is, no longer check; but, TODO: better make this optimization optional to turn off
@@ -15561,7 +15580,8 @@ function(n, isVal) {
   if (n.type === 'ArrowFunctionExpression')
     this.thisState = th;
   else
-    this.thisState = THS_NONE;
+    this.thisState = this.cur.isCtor() && this.cur.parent.hasHeritage() ?
+      THS_NEEDS_CHK : THS_NONE;
 
   this.cur.activateBody();
   var fnBody = n.body.body;

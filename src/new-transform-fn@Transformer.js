@@ -23,7 +23,8 @@ function(n, isVal) {
   if (n.type === 'ArrowFunctionExpression')
     this.thisState = th;
   else
-    this.thisState = THS_NONE;
+    this.thisState = this.cur.isCtor() && this.cur.parent.hasHeritage() ?
+      THS_NEEDS_CHK : THS_NONE;
 
   this.cur.activateBody();
   var fnBody = n.body.body;

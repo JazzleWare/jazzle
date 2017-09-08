@@ -3,7 +3,7 @@ function(n, flags, isStmt) {
   var hasParen = false, b = CB(n.id);
   var th = n.plain ? 'this' : n.target.synthName;
 
-  if (n.chk) hasParen = flags & EC_EXPR_HEAD;
+  if (n.chk) hasParen = flags & (EC_EXPR_HEAD|EC_NON_SEQ);
   if (hasParen) { this.w('('); flags = EC_NONE; }
 
   if (n.chk) { 

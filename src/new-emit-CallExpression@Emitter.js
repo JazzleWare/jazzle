@@ -3,17 +3,21 @@ function(n, flags, isStmt) {
   var cb = CB(n);
   this.emc(cb, 'bef');
   var hasParen = flags & EC_NEW_HEAD;
-  if (hasParen) { this.w('('); flags = EC_NONE; }
 
   var c = n.callee;
+  var e = c.type === 'Super';
+  var l = e ? c['#ti'] : null;
 
-  if (c.type === 'Super')
-    this.wt(c['#liq'].synthName).wm('.','call');
+  if (hasParen) { this.w('('); flags = EC_NONE; }
+
+  if (l && l.ref.d) this.jz('o').w('(');
+  if (e)
+    this.wt(c['#liq'].synthName, ETK_ID).wm('.','call');
   else
     this.emitCallHead(n.callee, flags);
 
   this.w('(');
-  if (c.type === 'Super') {
+  if (e) {
     this.eN(c['#this'], EC_NONE, false );
     n.arguments.length && this.wm(',','');
   }
@@ -22,6 +26,8 @@ function(n, flags, isStmt) {
   this.emc(cb, 'inner');
   this.w(')');
 
+  if (l && l.ref.d)
+    this.wm(',','',l.synthName,'','=','','1').w(')');
   hasParen && this.w(')');
   this.emc(cb, 'aft');
   isStmt && this.w(';');

@@ -1,15 +1,25 @@
 Transformers['CallExpression'] =
 function(n, isVal) {
-  var l = n.callee;
+  var ti = false, l = n.callee;
   if (l.type === 'Super') {
     l['#liq'] = this.cur.findRefU_m(RS_SCALL).getDecl();
-    l['#this'] = this.synth_BareThis(this.cur.findRefU_m(RS_THIS).getDecl());
+    var th = this.cur.findRefU_m(RS_THIS).getDecl();
+    l['#this'] = this.synth_BareThis(th);
+    if (this.thisState & THS_NEEDS_CHK) {
+      ti = true;
+      var lg = th.ref.scope.gocLG('ti'), li = lg.getL(0);
+      if (li === null) { li = lg.newL(); lg.seal(); li.name = 'ti'; }
+      l['#ti'] = li;
+      li.track(this.cur); li.ref.d--;
+    }
   }
+
   var si = findElem(n.arguments, 'SpreadElement');
   if (si === -1) {
     if (l.type !== 'Super')
       n.callee = this.tr(n.callee, true );
     this.trList(n.arguments, true );
+    if (ti) this.thisState &= ~THS_NEEDS_CHK;
     return n;
   }
 
@@ -33,5 +43,6 @@ function(n, isVal) {
 
   this.trList(n.arguments, true );
 
+  if (ti) this.thisState &= ~THS_NEEDS_CHK;
   return this.synth_Call(head, mem, n.arguments);
 };

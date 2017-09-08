@@ -307,6 +307,7 @@ mex.ej_adjust = function(e, j, name) {
   delete j['#elseScope'];
   delete j['#liq'];
   delete j['#this'];
+  delete j['#ti'];
   delete j.tokens;
   delete j.argumentPrologue;
   delete j['#imports'];

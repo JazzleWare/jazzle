@@ -132,7 +132,8 @@ this.parseSuper = function() {
     start: this.c0,
     end: this.c ,
    '#c': cb,
-   '#liq': null, '#this': null
+   '#liq': null,
+   '#this': null, '#ti': void 0
   };
  
   this.next();
