@@ -99,11 +99,12 @@ function(mname, synth) {
 this.synthDecl =
 function(decl) {
   ASSERT.call(this,
-    decl.isFn() ||
+    decl.isFnArg() ||
     decl.isLet() ||
     decl.isConst() ||
     decl.isVar() ||
-    decl.isFnArg(),
+    decl.isCls() ||
+    decl.isFn(),
     'fun/let/const/var/fnarg'
   );
 

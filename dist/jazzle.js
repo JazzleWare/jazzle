@@ -1739,11 +1739,12 @@ function(mname, synth) {
 this.synthDecl =
 function(decl) {
   ASSERT.call(this,
-    decl.isFn() ||
+    decl.isFnArg() ||
     decl.isLet() ||
     decl.isConst() ||
     decl.isVar() ||
-    decl.isFnArg(),
+    decl.isCls() ||
+    decl.isFn(),
     'fun/let/const/var/fnarg'
   );
 
@@ -15358,6 +15359,29 @@ Transformers['WhileStatement'] =
 function(n, isVal) {
   n.test = this.tr(n.test, true);
   n.body = this.tr(n.body, false);
+  return n;
+};
+
+},
+function(){
+Transformers['ClassExpression'] =
+function(n, isVal) {
+  return this.transformClsExpr(n, isVal);
+};
+
+Transformers['ClassDeclaration'] =
+function(n, isVal) {
+  var target = this.cur.findDeclOwn_m(_m(n.id.name));
+  var classToItself = n['#scope'].findRefU_m(_m(n.id.name));
+  if (classToItself) {
+    ASSERT.call(this, classToItself.getDecl() === target, 'class');
+    if (classToItself.d === target.ref.d &&
+      classToItself.i === target.ref.i)
+      return this.transformClsExpr(n, isVal);
+  }
+  n = this.transformClsBinding(n, isVal);
+  n.target = target;
+
   return n;
 };
 
