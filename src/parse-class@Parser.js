@@ -49,7 +49,8 @@ function(ctx) {
   if (this.lttype === TK_ID && this.ltval === 'extends') {
     name ? this.spc(name, 'aft') : this.suc(cb, 'class.aft');
     this.next();
-    superClass = this.parseExprHead(CTX_NONE);
+    superClass = this.parseExprHead(CTX_NONE) || this.err('no.heritage');
+    superClass = this.parseTail(superClass);
   }
 
   var mmflags = ST_CLSMEM, mmctx = CTX_NONE;

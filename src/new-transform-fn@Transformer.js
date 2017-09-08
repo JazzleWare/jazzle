@@ -55,7 +55,8 @@ function(n) {
 
 this.transformExprFn =
 function(n) {
-  n.id && this.synthFnExprName(n['#scope'].scopeName);
+  var sn = n['#scope'].scopeName;
+  if (sn) sn.isInsignificant() || this.synthFnExprName(sn);
   n = this.transformRawFn(n, true);
   return n;
 };
@@ -150,7 +151,7 @@ function(list) {
 this.synthFnExprName =
 function(fnName) {
   ASSERT.call(this, fnName.synthName === "", 'synth');
-  ASSERT.call(this, fnName.ref.scope.isExpr(), 'fn not an expr');
+  ASSERT.call(this, fnName.ref.scope.isExpr() || fnName.ref.scope.isCtor(), 'fn not an expr');
   var baseName = fnName.name, mname = "", synthName = this.rename(baseName, 0), num = 0;
   var rsList = fnName.ref.rsList;
 
@@ -171,7 +172,7 @@ function(fnName) {
     }
 
     break;
-  } while (synthName = this.rename(baseName, num), true);
+  } while (synthName = this.rename(baseName, ++num), true);
 
   fnName.synthName = synthName;
 };

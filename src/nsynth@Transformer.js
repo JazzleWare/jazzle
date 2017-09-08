@@ -282,3 +282,16 @@ function(src, th, chk) {
     chk: chk
   };
 };
+
+this.synth_MakeClass =
+function(cls, herit, target) {
+  return {
+    cls: cls,
+    heritage: herit,
+    kind: 'cls',
+    type: '#Untransformed' ,
+    target: target
+  };
+
+};
+
