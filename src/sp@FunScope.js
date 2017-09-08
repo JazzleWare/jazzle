@@ -17,9 +17,13 @@ function(ref) {
   ASSERT.call(this, ref,
     'ref must be provided to create a scallSP');
 
-  var spSuperCall = new Liquid('<scall>')
-    .r(ref)
-    .n('s');
+  var lg = this.gocLG('scall');
+  var spSuperCall = lg.newL();
+  lg.seal();
+
+  spSuperCall.ref = null;
+  spSuperCall.r(ref);
+  spSuperCall.name = 's';
 
   return this.spSuperCall = spSuperCall;
 };

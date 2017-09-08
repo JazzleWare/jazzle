@@ -163,10 +163,10 @@ function(fnName) {
 
     while (l < rsList.length) {
       var scope = rsList[l++ ];
-      if (!scope.synth_ref_may_escape_m(mname))
+      if (!scope.synth_ref_may_escape_m(mname, this.renamer))
         continue RENAME;
 
-      synth = scope.synth_ref_find_homonym_m(mname);
+      synth = scope.synth_ref_find_homonym_m(mname, this.renamer);
       if (synth && synth !== fnName)
         continue RENAME;
     }

@@ -131,7 +131,8 @@ this.parseSuper = function() {
     loc: { start: this.loc0(), end: this.loc() },
     start: this.c0,
     end: this.c ,
-   '#c': cb
+   '#c': cb,
+   '#liq': null, '#this': null
   };
  
   this.next();
@@ -140,6 +141,7 @@ this.parseSuper = function() {
     if (!this.scope.canScall())
       this.err('class.super.call',{tn:n});
     this.scope.refDirect_m(RS_SCALL, null);
+    this.scope.refDirect_m(RS_THIS, null);
     break;
  
   case CH_SINGLEDOT:

@@ -3207,8 +3207,21 @@ function(n, flags, isStmt) {
   this.emc(cb, 'bef');
   var hasParen = flags & EC_NEW_HEAD;
   if (hasParen) { this.w('('); flags = EC_NONE; }
-  this.emitCallHead(n.callee, flags);
-  this.w('(').emitCommaList(n.arguments);
+
+  var c = n.callee;
+
+  if (c.type === 'Super')
+    this.wt(c['#liq'].synthName).wm('.','call');
+  else
+    this.emitCallHead(n.callee, flags);
+
+  this.w('(');
+  if (c.type === 'Super') {
+    this.eN(c['#this'], EC_NONE, false );
+    n.arguments.length && this.wm(',','');
+  }
+
+  this.emitCommaList(n.arguments);
   this.emc(cb, 'inner');
   this.w(')');
 
@@ -3628,17 +3641,20 @@ function(n, flags, isStmt) {
   var scopeName = scope.scopeName;
   var lonll = scope.getNonLocalLoopLexicals();
   var isRenamed = scopeName && scopeName.name !== scopeName.synthName;
-  var hasWrapper = isRenamed || lonll;
+  var hasWrapper = isRenamed || lonll || n.scall;
+  var em = 0;
   if (hasWrapper) {
     if (!hasParen)
       hasParen = flags & EC_NEW_HEAD;
   }
 
   var l = {hasParen: false };
+
   if (hasParen) { this.w('('); flags = EC_NONE; }
   if (hasWrapper) {
     this.wt('function', ETK_ID).w('(');
-    lonll && this.wsndl(lonll);
+    if (n.scall) { this.w(n.scall.inner.synthName); em++; }
+    if (lonll) { em && this.w(',').os(); this.wsndl(lonll); }
     this.w(')').os().w('{').i().l();
     if (isRenamed)
       this.w('var').onw(wcb_afterVar).wt(scopeName.synthName, ETK_ID).wm('','=','');
@@ -3655,7 +3671,9 @@ function(n, flags, isStmt) {
       this.w(';');
     }
     this.u().l().wm('}','(');
-    lonll && this.wsndl(lonll);
+    em = 0;
+    if (n.scall) { this.eN(n.scall.outer, EC_NONE, false); em++; }
+    if (lonll) { em && this.w(',').os(); this.wsndl(lonll); }
     this.w(')');
   }
   hasParen && this.w(')');
@@ -3848,11 +3866,16 @@ function(n, flags, isStmt) {
   var hasParen = flags & EC_NEW_HEAD;
   var cb = CB(n); this.emc(cb, 'bef');
   if (hasParen) { this.w('('); } 
-  if (n.mem !== null)
-    this.jz('cm').w('(').eN(n.head, EC_NONE, false)
-      .w(',').os().eN(n.mem, EC_NONE, false);
-  else
-    this.jz('c').w('(').eN(n.head, EC_NONE, false);
+  if (n.mem !== null) {
+    this.jz('cm').w('(').eN(n.head, EC_NONE, false).w(',').os();
+    var m = n.mem;
+    m.type === 'Super' ? this.w(m['#liq'].synthName) : this.eN(m, EC_NONE, false) ;
+  }
+  else {
+    this.jz('c').w('(');
+    if (n.head.type === 'Super') this.w(n.head['#liq'].synthName);
+    else this.eN(n.head, EC_NONE, false);
+  }
 
   this.w(',').os();
   this.jz('arr').w('(').emitElems(n.list, true, cb);
@@ -4011,6 +4034,12 @@ function(n, flags, isStmt) {
   hasParen && this.w(')'); 
 
   isStmt && this.w(';');
+};
+
+UntransformedEmitters['bthis'] =
+function(n, flags, isStmt) {
+  ASSERT_EQ.call(this, isStmt, false);
+  this.w(n.plain ? 'this' : n.target.synthName);
 };
 
 },
@@ -4206,7 +4235,8 @@ function() {
     if (target.isLiquid()) {
       switch (target.category) {
       case '<this>':
-      case '<arguments>': continue;
+      case '<arguments>':
+      case 'scall': continue;
       }
     }
 
@@ -4325,9 +4355,13 @@ function(ref) {
   ASSERT.call(this, ref,
     'ref must be provided to create a scallSP');
 
-  var spSuperCall = new Liquid('<scall>')
-    .r(ref)
-    .n('s');
+  var lg = this.gocLG('scall');
+  var spSuperCall = lg.newL();
+  lg.seal();
+
+  spSuperCall.ref = null;
+  spSuperCall.r(ref);
+  spSuperCall.name = 's';
 
   return this.spSuperCall = spSuperCall;
 };
@@ -4396,7 +4430,8 @@ function() {
     if (item) {
       var target = item.getDecl(), mname = "";
       if (target.isLiquid()) {
-        ASSERT.call(this, target.category === '<this>' || target.category === '<arguments>', 'liq');
+        ASSERT.call(this, target.category === '<this>' ||
+          target.category === '<arguments>' || target.category === 'scall', 'liq');
         continue;
       }
       ASSERT.call(this, target.synthName !== "" || target.isGlobal(), 'synth');
@@ -8993,7 +9028,8 @@ this.parseSuper = function() {
     loc: { start: this.loc0(), end: this.loc() },
     start: this.c0,
     end: this.c ,
-   '#c': cb
+   '#c': cb,
+   '#liq': null, '#this': null
   };
  
   this.next();
@@ -9002,6 +9038,7 @@ this.parseSuper = function() {
     if (!this.scope.canScall())
       this.err('class.super.call',{tn:n});
     this.scope.refDirect_m(RS_SCALL, null);
+    this.scope.refDirect_m(RS_THIS, null);
     break;
  
   case CH_SINGLEDOT:
@@ -15124,9 +15161,15 @@ function(n, isVal) {
 function(){
 Transformers['CallExpression'] =
 function(n, isVal) {
+  var l = n.callee;
+  if (l.type === 'Super') {
+    l['#liq'] = this.cur.findRefU_m(RS_SCALL).getDecl();
+    l['#this'] = this.synth_BareThis(this.cur.findRefU_m(RS_THIS).getDecl());
+  }
   var si = findElem(n.arguments, 'SpreadElement');
   if (si === -1) {
-    n.callee = this.tr(n.callee, true );
+    if (l.type !== 'Super')
+      n.callee = this.tr(n.callee, true );
     this.trList(n.arguments, true );
     return n;
   }
@@ -15141,6 +15184,10 @@ function(n, isVal) {
     this.releaseTemp(t);
     h0.property = this.tr(h0.property, true );
     mem = h0;
+  }
+  else if (l.type === 'Super') {
+    mem = l;
+    head = this.synth_BareThis(this.cur.findRefU_m(RS_THIS).getDecl());
   }
   else
     head = this.tr(head, true );
@@ -15383,17 +15430,19 @@ function(){
 this.transformCls =
 function(n, isVal, oBinding) { // o -> outer
   var ex = oBinding === null;
-  var ctor = n['#ct'].value;
+  var ctor = n['#ct'] && n['#ct'].value;
   var list = [];
 
-  var tempsup = null, tempsupSave = null;
+  var tempsup = null, tempsupSave = null, s = null;
   if (n.superClass) {
     n.superClass = this.tr(n.superClass, true);
     tempsup = this.allocTemp();
     tempsupSave = this.synth_TempSave(tempsup, n.superClass);
+    s = ctor && ctor['#scope'].spSuperCall;
   }
 
   ctor = ctor ? this.transformCtor(ctor, oBinding) : this.syntheticCtor(n);
+  if (s) { ctor.scall = { inner: s, outer: tempsup } };
 
   var clsTemp = null;
   var classSave = null;
@@ -15463,7 +15512,7 @@ function(ctor, oBinding) {
     sn.ref.absorbDirect(ref);
   }
 
-  return oBinding ? this.transformRawfn(ctor, true) : this.transformExprFn(ctor);
+  return oBinding ? this.transformRawFn(ctor, true) : this.transformExprFn(ctor);
 };
 
 Transformers['ClassExpression'] =
@@ -15652,10 +15701,10 @@ function(fnName) {
 
     while (l < rsList.length) {
       var scope = rsList[l++ ];
-      if (!scope.synth_ref_may_escape_m(mname))
+      if (!scope.synth_ref_may_escape_m(mname, this.renamer))
         continue RENAME;
 
-      synth = scope.synth_ref_find_homonym_m(mname);
+      synth = scope.synth_ref_find_homonym_m(mname, this.renamer);
       if (synth && synth !== fnName)
         continue RENAME;
     }
@@ -16009,6 +16058,17 @@ function(src, th, chk) {
     plain: simp,
     chk: chk
   };
+};
+
+this.synth_BareThis =
+function(th) {
+  return {
+    type: '#Untransformed' ,
+    target: th,
+    kind: 'bthis',
+    plain: th.ref.scope === this.cur.getThisBase()
+  };
+
 };
 
 this.synth_MakeClass =

@@ -283,6 +283,17 @@ function(src, th, chk) {
   };
 };
 
+this.synth_BareThis =
+function(th) {
+  return {
+    type: '#Untransformed' ,
+    target: th,
+    kind: 'bthis',
+    plain: th.ref.scope === this.cur.getThisBase()
+  };
+
+};
+
 this.synth_MakeClass =
 function(cls, herit, target) {
   return {

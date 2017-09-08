@@ -6,17 +6,20 @@ function(n, flags, isStmt) {
   var scopeName = scope.scopeName;
   var lonll = scope.getNonLocalLoopLexicals();
   var isRenamed = scopeName && scopeName.name !== scopeName.synthName;
-  var hasWrapper = isRenamed || lonll;
+  var hasWrapper = isRenamed || lonll || n.scall;
+  var em = 0;
   if (hasWrapper) {
     if (!hasParen)
       hasParen = flags & EC_NEW_HEAD;
   }
 
   var l = {hasParen: false };
+
   if (hasParen) { this.w('('); flags = EC_NONE; }
   if (hasWrapper) {
     this.wt('function', ETK_ID).w('(');
-    lonll && this.wsndl(lonll);
+    if (n.scall) { this.w(n.scall.inner.synthName); em++; }
+    if (lonll) { em && this.w(',').os(); this.wsndl(lonll); }
     this.w(')').os().w('{').i().l();
     if (isRenamed)
       this.w('var').onw(wcb_afterVar).wt(scopeName.synthName, ETK_ID).wm('','=','');
@@ -33,7 +36,9 @@ function(n, flags, isStmt) {
       this.w(';');
     }
     this.u().l().wm('}','(');
-    lonll && this.wsndl(lonll);
+    em = 0;
+    if (n.scall) { this.eN(n.scall.outer, EC_NONE, false); em++; }
+    if (lonll) { em && this.w(',').os(); this.wsndl(lonll); }
     this.w(')');
   }
   hasParen && this.w(')');

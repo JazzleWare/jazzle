@@ -19,3 +19,9 @@ function(n, flags, isStmt) {
 
   isStmt && this.w(';');
 };
+
+UntransformedEmitters['bthis'] =
+function(n, flags, isStmt) {
+  ASSERT_EQ.call(this, isStmt, false);
+  this.w(n.plain ? 'this' : n.target.synthName);
+};

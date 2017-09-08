@@ -1,17 +1,19 @@
 this.transformCls =
 function(n, isVal, oBinding) { // o -> outer
   var ex = oBinding === null;
-  var ctor = n['#ct'].value;
+  var ctor = n['#ct'] && n['#ct'].value;
   var list = [];
 
-  var tempsup = null, tempsupSave = null;
+  var tempsup = null, tempsupSave = null, s = null;
   if (n.superClass) {
     n.superClass = this.tr(n.superClass, true);
     tempsup = this.allocTemp();
     tempsupSave = this.synth_TempSave(tempsup, n.superClass);
+    s = ctor && ctor['#scope'].spSuperCall;
   }
 
   ctor = ctor ? this.transformCtor(ctor, oBinding) : this.syntheticCtor(n);
+  if (s) { ctor.scall = { inner: s, outer: tempsup } };
 
   var clsTemp = null;
   var classSave = null;
@@ -81,7 +83,7 @@ function(ctor, oBinding) {
     sn.ref.absorbDirect(ref);
   }
 
-  return oBinding ? this.transformRawfn(ctor, true) : this.transformExprFn(ctor);
+  return oBinding ? this.transformRawFn(ctor, true) : this.transformExprFn(ctor);
 };
 
 Transformers['ClassExpression'] =

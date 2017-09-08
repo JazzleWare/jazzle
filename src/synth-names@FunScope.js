@@ -45,7 +45,8 @@ function() {
     if (item) {
       var target = item.getDecl(), mname = "";
       if (target.isLiquid()) {
-        ASSERT.call(this, target.category === '<this>' || target.category === '<arguments>', 'liq');
+        ASSERT.call(this, target.category === '<this>' ||
+          target.category === '<arguments>' || target.category === 'scall', 'liq');
         continue;
       }
       ASSERT.call(this, target.synthName !== "" || target.isGlobal(), 'synth');

@@ -1,8 +1,14 @@
 Transformers['CallExpression'] =
 function(n, isVal) {
+  var l = n.callee;
+  if (l.type === 'Super') {
+    l['#liq'] = this.cur.findRefU_m(RS_SCALL).getDecl();
+    l['#this'] = this.synth_BareThis(this.cur.findRefU_m(RS_THIS).getDecl());
+  }
   var si = findElem(n.arguments, 'SpreadElement');
   if (si === -1) {
-    n.callee = this.tr(n.callee, true );
+    if (l.type !== 'Super')
+      n.callee = this.tr(n.callee, true );
     this.trList(n.arguments, true );
     return n;
   }
@@ -17,6 +23,10 @@ function(n, isVal) {
     this.releaseTemp(t);
     h0.property = this.tr(h0.property, true );
     mem = h0;
+  }
+  else if (l.type === 'Super') {
+    mem = l;
+    head = this.synth_BareThis(this.cur.findRefU_m(RS_THIS).getDecl());
   }
   else
     head = this.tr(head, true );

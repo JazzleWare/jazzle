@@ -3,11 +3,16 @@ function(n, flags, isStmt) {
   var hasParen = flags & EC_NEW_HEAD;
   var cb = CB(n); this.emc(cb, 'bef');
   if (hasParen) { this.w('('); } 
-  if (n.mem !== null)
-    this.jz('cm').w('(').eN(n.head, EC_NONE, false)
-      .w(',').os().eN(n.mem, EC_NONE, false);
-  else
-    this.jz('c').w('(').eN(n.head, EC_NONE, false);
+  if (n.mem !== null) {
+    this.jz('cm').w('(').eN(n.head, EC_NONE, false).w(',').os();
+    var m = n.mem;
+    m.type === 'Super' ? this.w(m['#liq'].synthName) : this.eN(m, EC_NONE, false) ;
+  }
+  else {
+    this.jz('c').w('(');
+    if (n.head.type === 'Super') this.w(n.head['#liq'].synthName);
+    else this.eN(n.head, EC_NONE, false);
+  }
 
   this.w(',').os();
   this.jz('arr').w('(').emitElems(n.list, true, cb);
