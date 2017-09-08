@@ -25,7 +25,7 @@ function(memName, ctx, st) {
     this.spc(core(memName), 'aft');
     val = this.parseFn(CTX_NONE, st);
 
-    this.inferName(core(memName), val, computed);
+    (st & ST_CTOR) || this.inferName(core(memName), val, computed);
 
     return {
       type: 'MethodDefinition',

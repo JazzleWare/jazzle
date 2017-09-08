@@ -2,20 +2,27 @@ this.inferName =
 function(left, right, isComputed) {
   if (isComputed && left.type === 'Identifier')
     return null;
+
+  var t = DT_NONE, c = false;
   switch (right.type) {
   case 'ArrowFunctionExpression':
+    t = DT_FN;
     break;
-  case 'FunctionDeclaration':
   case 'FunctionExpression':
+    if (right.id) return null;
+    t = DT_FN;
+    break;
+  case 'ClassExpression':
     if (right.id)
       return null;
-    break;
+    t = DT_CLS; c = true;
+    break; 
 
   default: return null
   }
 
   var scope = right['#scope'];
-  var t = DT_FN|DT_INFERRED;
+  t |= DT_INFERRED;
   var name = "";
 
   name = getIDName(left);
@@ -24,8 +31,11 @@ function(left, right, isComputed) {
 
   var scopeName = null;
   scopeName = scope.setName(name, null).t(t);
+  scopeName.site = left;
   scopeName.synthName = scopeName.name;
-  
+
+  if (c) this.inferName(left, right['#ct'].value, false);
+
   return scopeName;
 };
 

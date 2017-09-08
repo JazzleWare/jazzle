@@ -4852,20 +4852,27 @@ this.inferName =
 function(left, right, isComputed) {
   if (isComputed && left.type === 'Identifier')
     return null;
+
+  var t = DT_NONE, c = false;
   switch (right.type) {
   case 'ArrowFunctionExpression':
+    t = DT_FN;
     break;
-  case 'FunctionDeclaration':
   case 'FunctionExpression':
+    if (right.id) return null;
+    t = DT_FN;
+    break;
+  case 'ClassExpression':
     if (right.id)
       return null;
-    break;
+    t = DT_CLS; c = true;
+    break; 
 
   default: return null
   }
 
   var scope = right['#scope'];
-  var t = DT_FN|DT_INFERRED;
+  t |= DT_INFERRED;
   var name = "";
 
   name = getIDName(left);
@@ -4874,8 +4881,11 @@ function(left, right, isComputed) {
 
   var scopeName = null;
   scopeName = scope.setName(name, null).t(t);
+  scopeName.site = left;
   scopeName.synthName = scopeName.name;
-  
+
+  if (c) this.inferName(left, right['#ct'].value, false);
+
   return scopeName;
 };
 
@@ -7336,7 +7346,7 @@ function(memName, ctx, st) {
     this.spc(core(memName), 'aft');
     val = this.parseFn(CTX_NONE, st);
 
-    this.inferName(core(memName), val, computed);
+    (st & ST_CTOR) || this.inferName(core(memName), val, computed);
 
     return {
       type: 'MethodDefinition',
@@ -8903,7 +8913,7 @@ function(ctx) {
 
   var mem = null;
 
-  var y = 0;
+  var y = 0, ct = null;
   while (true) {
     if (this.lttype === CH_SEMI) {
       this.commentBuf && cbb.semis.push([list.length, this.cc()]);
@@ -8914,8 +8924,10 @@ function(ctx) {
     if (mem !== null) {
       list.push(mem);
       y += this.Y(mem);
-      if (mem.kind === 'constructor')
+      if (mem.kind === 'constructor') {
+        ct = mem;
         mmctx |= CTX_CTOR_NOT_ALLOWED;
+      }
     }
     else break;
   }
@@ -8937,13 +8949,16 @@ function(ctx) {
       '#y': y, '#c': cbb
     },
     '#y': (superClass ? this.Y(superClass) : 0)+y,
-    '#scope': scope, '#c': cb
+    '#scope': scope, '#c': cb, '#ct': ct
   };
 
   this.suc(cbb, 'inner');
   if (!this.expectT(CH_RCURLY))
     this.err('class.unfinished',{tn:n, extra:{delim:'}'}});
 
+  if (name) {
+    if (ct) this.inferName(name, ct.value, false);
+  }
   this.exitScope();
 
   if (isStmt)

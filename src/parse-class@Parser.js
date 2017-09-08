@@ -67,7 +67,7 @@ function(ctx) {
 
   var mem = null;
 
-  var y = 0;
+  var y = 0, ct = null;
   while (true) {
     if (this.lttype === CH_SEMI) {
       this.commentBuf && cbb.semis.push([list.length, this.cc()]);
@@ -78,8 +78,10 @@ function(ctx) {
     if (mem !== null) {
       list.push(mem);
       y += this.Y(mem);
-      if (mem.kind === 'constructor')
+      if (mem.kind === 'constructor') {
+        ct = mem;
         mmctx |= CTX_CTOR_NOT_ALLOWED;
+      }
     }
     else break;
   }
@@ -101,13 +103,16 @@ function(ctx) {
       '#y': y, '#c': cbb
     },
     '#y': (superClass ? this.Y(superClass) : 0)+y,
-    '#scope': scope, '#c': cb
+    '#scope': scope, '#c': cb, '#ct': ct
   };
 
   this.suc(cbb, 'inner');
   if (!this.expectT(CH_RCURLY))
     this.err('class.unfinished',{tn:n, extra:{delim:'}'}});
 
+  if (name) {
+    if (ct) this.inferName(name, ct.value, false);
+  }
   this.exitScope();
 
   if (isStmt)
