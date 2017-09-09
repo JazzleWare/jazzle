@@ -23,6 +23,7 @@ function(rawStr) { this.curLine += rawStr; };
 
 this.write =
 function(rawStr) {
+  rawStr += "";
   this.hasPendingSpace() && this.effectPendingSpace(rawStr.length);
   if (this.wcb) {
     var tt = this.curtt;
@@ -38,8 +39,8 @@ function(rawStr) {
 
   var rll = this.rll;
   if (rll && this.ol(rawStr.length) > 0) {
+    this.wrapLine = true;
     this.startNewLine();
-    this.insertLineBreak(true);
   }
 
   this.rll += rawStr.length;
@@ -95,7 +96,13 @@ function() {
     optimalIndent = len < this.wrapLimit ? this.wrapLimit - len : 0;
     mustNL = true;
   }
-  this.out.length && this.insertLineBreak(false);
+  if (this.wrapLine) {
+    this.allow.nl || this.insertLineBreak(true);
+    this.wrapLine = false;
+  }
+  else
+    this.out.length && this.insertLineBreak(false);
+
   this.out += this.geti(optimalIndent) + line;
 
   this.curLine = "";
@@ -177,7 +184,7 @@ function(len) {
     break;
   case EST_BREAKABLE:
     if (this.ol(len+1) <= 0) this.insertSpace();
-    else { this.startNewLine(false); this.insertLineBreak(true); }
+    else { this.startNewLine(false); }
     break;
   default:
     ASSERT.call(this, false, 'invalid type for pending space');

@@ -12,6 +12,7 @@ function Emitter() {
   this.wcbUsed = null;
   this.allow = { space: true, nl: true, comments: { l: true, m: true } };
   this.rll = 0; // real line length; TODO: eliminate need for it
+  this.wrapLine = false;
 
   this.out = "";
 }

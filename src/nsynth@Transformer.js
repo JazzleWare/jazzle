@@ -233,7 +233,8 @@ function(n, a) {
     fun: n,
     argsPrologue: a,
     target: null,
-    '#c': {}
+    '#c': {},
+    scall: null, cls: null
   };
 };
 
@@ -314,6 +315,17 @@ function(v,t) {
     th: t,
     kind: 'rcheck',
     type: '#Untransformed'
+  };
+
+};
+
+this.synth_MemList =
+function(mList, tProto) {
+  return {
+    m: mList,
+    type: '#Untransformed' ,
+    kind: 'memlist',
+    p: tProto
   };
 
 };

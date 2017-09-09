@@ -31,7 +31,8 @@ function(n, isVal) {
     head = this.synth_TempSave(t, head.object);
     h0.object = t;
     this.releaseTemp(t);
-    h0.property = this.tr(h0.property, true );
+    if (h0.computed)
+      h0.property = this.tr(h0.property, true );
     mem = h0;
   }
   else if (l.type === 'Super') {

@@ -29,19 +29,23 @@ function(n, isVal, oBinding) { // o -> outer
   var tproto = null;
 
   var memList = n.body.body, i = 0;
-  var m = 0;
+  var m = 0, reached = {v: true};
   while (i < memList.length) {
-    var elem = memList[i++];
-    if (elem.kind === 'constructor')
+    var elem = memList[i];
+    if (elem.kind === 'constructor') {
+      memList[i++] = null;
       continue;
+    }
     if (m === 0) {
       tproto = this.allocTemp();
       jzCreateCls = this.synth_TempSave(tproto, jzCreateCls);
     }
     if (elem.computed)
       elem.key = this.tr(elem.key, true);
-    elem.value = this.transformMem(elem.value, ex);
+    var mem = elem.value = this.transformMem(elem.value, oBinding, reached);
+    if (mem.cls) mem.cls.outer = clsTemp;
     m++;
+    i++;
   }
 
   tempsupSave && list.push(tempsupSave );
@@ -49,7 +53,7 @@ function(n, isVal, oBinding) { // o -> outer
   list. push(jzCreateCls);
 
   if (m) {
-    var classcut = this.synth_ClassSection(memList, tproto);
+    var classcut = this.synth_MemList(memList, tproto);
     list. push(classcut);
   }
 
@@ -62,6 +66,8 @@ function(n, isVal, oBinding) { // o -> outer
   tproto && this.releaseTemp(tproto);
   clsTemp && this.releaseTemp(clsTemp);
   tempsup && this.releaseTemp(tempsup );
+
+  oBinding && this.makeReached(oBinding);
 
   return this.synth_AssigList(list);
 };
@@ -86,6 +92,42 @@ function(ctor, oBinding) {
   }
 
   return oBinding ? this.transformRawFn(ctor, true) : this.transformExprFn(ctor);
+};
+
+this.transformMem =
+function(mem, oBinding, r) {
+  var r0 = null, scope = mem['#scope'], cls = scope.parent;
+  if (oBinding) {
+    r0 = oBinding.reached;
+    oBinding.reached = r;
+    mem = this.transformExprFn(mem);
+    oBinding.reached = r0;
+    return mem;
+  }
+
+  var sn = null;
+  REF:
+  if (cls.scopeName && !cls.scopeName.isInsignificant()) {
+    sn = cls.scopeName;
+    var ref = scope.findRefU_m(_m(sn.name));
+    if (ref === null) { sn = null; break REF; }
+    ASSERT.call(this, sn === ref.getDecl(), 'sn' );
+    sn = new ScopeName(sn.name, null).t(DT_FNNAME);
+    ASSERT.call(this,scope.parent.isClass(),'cls');
+    sn.r(new Ref(scope.parent));
+
+    ref.hasTarget = false;
+    ref.parentRef = null;
+    ref.targetDecl = null;
+    sn.ref.absorbDirect(ref);
+
+    this.synthFnExprName(sn);
+  }
+
+  mem = this.transformExprFn(mem);
+  mem.cls = { inner: sn, outer: null };
+
+  return mem;
 };
 
 this.syntheticCtor =

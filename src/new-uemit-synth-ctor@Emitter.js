@@ -9,11 +9,15 @@ function(n, flags, isStmt) {
       while (name === s)
         s = base + (++num);
     }  
-    this.wt('function',ETK_ID).wm('(',s,')','','{','','return').onw(wcb_afterRet);
+    this.wt('function',ETK_ID).wm('(',s,')','','{','','return').onw(wcb_afterRet,{hasParen: false});
+    var obj = this.wcbp;
     this.wt('function',ETK_ID);
     if (n.name) this.wm(' ',n.name.name);
     this.wm('(',')','','{', s,'.','apply','(',
-      'this',',','arguments',')',';','}','','}','(').eN(n.heritage).w(')');
+      'this',',','arguments',')',';','}');
+    obj.hasParen && this.w(')')
+    this.wm(';','','}','(').eN(n.heritage).w(')');
+
   } else {
     this.w('function');
     if (n.name) this.wm(' ',n.name.name);

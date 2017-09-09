@@ -167,7 +167,7 @@ function(list) {
 this.synthFnExprName =
 function(fnName) {
   ASSERT.call(this, fnName.synthName === "", 'synth');
-  ASSERT.call(this, fnName.ref.scope.isExpr() || fnName.ref.scope.isCtor(), 'fn not an expr');
+//ASSERT.call(this, fnName.ref.scope.isExpr() || fnName.ref.scope.isCtor(), 'fn not an expr');
   var baseName = fnName.name, mname = "", synthName = this.rename(baseName, 0), num = 0;
   var rsList = fnName.ref.rsList;
 

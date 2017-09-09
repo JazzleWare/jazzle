@@ -67,6 +67,7 @@ function Emitter() {
   this.wcbUsed = null;
   this.allow = { space: true, nl: true, comments: { l: true, m: true } };
   this.rll = 0; // real line length; TODO: eliminate need for it
+  this.wrapLine = false;
 
   this.out = "";
 }
@@ -2755,6 +2756,7 @@ function(rawStr) { this.curLine += rawStr; };
 
 this.write =
 function(rawStr) {
+  rawStr += "";
   this.hasPendingSpace() && this.effectPendingSpace(rawStr.length);
   if (this.wcb) {
     var tt = this.curtt;
@@ -2770,8 +2772,8 @@ function(rawStr) {
 
   var rll = this.rll;
   if (rll && this.ol(rawStr.length) > 0) {
+    this.wrapLine = true;
     this.startNewLine();
-    this.insertLineBreak(true);
   }
 
   this.rll += rawStr.length;
@@ -2827,7 +2829,13 @@ function() {
     optimalIndent = len < this.wrapLimit ? this.wrapLimit - len : 0;
     mustNL = true;
   }
-  this.out.length && this.insertLineBreak(false);
+  if (this.wrapLine) {
+    this.allow.nl || this.insertLineBreak(true);
+    this.wrapLine = false;
+  }
+  else
+    this.out.length && this.insertLineBreak(false);
+
   this.out += this.geti(optimalIndent) + line;
 
   this.curLine = "";
@@ -2909,7 +2917,7 @@ function(len) {
     break;
   case EST_BREAKABLE:
     if (this.ol(len+1) <= 0) this.insertSpace();
-    else { this.startNewLine(false); this.insertLineBreak(true); }
+    else { this.startNewLine(false); }
     break;
   default:
     ASSERT.call(this, false, 'invalid type for pending space');
@@ -3948,11 +3956,15 @@ function(n, flags, isStmt) {
       while (name === s)
         s = base + (++num);
     }  
-    this.wt('function',ETK_ID).wm('(',s,')','','{','','return').onw(wcb_afterRet);
+    this.wt('function',ETK_ID).wm('(',s,')','','{','','return').onw(wcb_afterRet,{hasParen: false});
+    var obj = this.wcbp;
     this.wt('function',ETK_ID);
     if (n.name) this.wm(' ',n.name.name);
     this.wm('(',')','','{', s,'.','apply','(',
-      'this',',','arguments',')',';','}','','}','(').eN(n.heritage).w(')');
+      'this',',','arguments',')',';','}');
+    obj.hasParen && this.w(')')
+    this.wm(';','','}','(').eN(n.heritage).w(')');
+
   } else {
     this.w('function');
     if (n.name) this.wm(' ',n.name.name);
@@ -3978,6 +3990,27 @@ function(n, flags, isStmt) {
 function(){
 UntransformedEmitters['synth-literal'] =
 Emitters['Literal'];
+
+},
+function(){
+UntransformedEmitters['memlist'] =
+function(n, flags, isStmt) {
+  var list = n.m, tproto = n.p, e = 0;
+  var m = 0;
+  while (e < list.length) {
+    var mem = list[e++];
+    if (mem === null) continue;
+    if (m) isStmt ? this.w(';').l() : this.w(',').os();
+    this.eH(tproto);
+    if (mem.computed || mem.key.type === 'Literal')
+      this.w('[').eA(mem.key, EC_NONE, false).w(']');
+    else
+      this.w('.').writeMemName(mem.key, false);
+    this.wm('','=','').eA(mem.value, EC_NONE, false );
+    m++;
+  }
+  isStmt && m && this.w(';');
+};
 
 },
 function(){
@@ -15262,7 +15295,8 @@ function(n, isVal) {
     head = this.synth_TempSave(t, head.object);
     h0.object = t;
     this.releaseTemp(t);
-    h0.property = this.tr(h0.property, true );
+    if (h0.computed)
+      h0.property = this.tr(h0.property, true );
     mem = h0;
   }
   else if (l.type === 'Super') {
@@ -15548,19 +15582,23 @@ function(n, isVal, oBinding) { // o -> outer
   var tproto = null;
 
   var memList = n.body.body, i = 0;
-  var m = 0;
+  var m = 0, reached = {v: true};
   while (i < memList.length) {
-    var elem = memList[i++];
-    if (elem.kind === 'constructor')
+    var elem = memList[i];
+    if (elem.kind === 'constructor') {
+      memList[i++] = null;
       continue;
+    }
     if (m === 0) {
       tproto = this.allocTemp();
       jzCreateCls = this.synth_TempSave(tproto, jzCreateCls);
     }
     if (elem.computed)
       elem.key = this.tr(elem.key, true);
-    elem.value = this.transformMem(elem.value, ex);
+    var mem = elem.value = this.transformMem(elem.value, oBinding, reached);
+    if (mem.cls) mem.cls.outer = clsTemp;
     m++;
+    i++;
   }
 
   tempsupSave && list.push(tempsupSave );
@@ -15568,7 +15606,7 @@ function(n, isVal, oBinding) { // o -> outer
   list. push(jzCreateCls);
 
   if (m) {
-    var classcut = this.synth_ClassSection(memList, tproto);
+    var classcut = this.synth_MemList(memList, tproto);
     list. push(classcut);
   }
 
@@ -15581,6 +15619,8 @@ function(n, isVal, oBinding) { // o -> outer
   tproto && this.releaseTemp(tproto);
   clsTemp && this.releaseTemp(clsTemp);
   tempsup && this.releaseTemp(tempsup );
+
+  oBinding && this.makeReached(oBinding);
 
   return this.synth_AssigList(list);
 };
@@ -15605,6 +15645,42 @@ function(ctor, oBinding) {
   }
 
   return oBinding ? this.transformRawFn(ctor, true) : this.transformExprFn(ctor);
+};
+
+this.transformMem =
+function(mem, oBinding, r) {
+  var r0 = null, scope = mem['#scope'], cls = scope.parent;
+  if (oBinding) {
+    r0 = oBinding.reached;
+    oBinding.reached = r;
+    mem = this.transformExprFn(mem);
+    oBinding.reached = r0;
+    return mem;
+  }
+
+  var sn = null;
+  REF:
+  if (cls.scopeName && !cls.scopeName.isInsignificant()) {
+    sn = cls.scopeName;
+    var ref = scope.findRefU_m(_m(sn.name));
+    if (ref === null) { sn = null; break REF; }
+    ASSERT.call(this, sn === ref.getDecl(), 'sn' );
+    sn = new ScopeName(sn.name, null).t(DT_FNNAME);
+    ASSERT.call(this,scope.parent.isClass(),'cls');
+    sn.r(new Ref(scope.parent));
+
+    ref.hasTarget = false;
+    ref.parentRef = null;
+    ref.targetDecl = null;
+    sn.ref.absorbDirect(ref);
+
+    this.synthFnExprName(sn);
+  }
+
+  mem = this.transformExprFn(mem);
+  mem.cls = { inner: sn, outer: null };
+
+  return mem;
 };
 
 this.syntheticCtor =
@@ -15808,7 +15884,7 @@ function(list) {
 this.synthFnExprName =
 function(fnName) {
   ASSERT.call(this, fnName.synthName === "", 'synth');
-  ASSERT.call(this, fnName.ref.scope.isExpr() || fnName.ref.scope.isCtor(), 'fn not an expr');
+//ASSERT.call(this, fnName.ref.scope.isExpr() || fnName.ref.scope.isCtor(), 'fn not an expr');
   var baseName = fnName.name, mname = "", synthName = this.rename(baseName, 0), num = 0;
   var rsList = fnName.ref.rsList;
 
@@ -16129,7 +16205,8 @@ function(n, a) {
     fun: n,
     argsPrologue: a,
     target: null,
-    '#c': {}
+    '#c': {},
+    scall: null, cls: null
   };
 };
 
@@ -16210,6 +16287,17 @@ function(v,t) {
     th: t,
     kind: 'rcheck',
     type: '#Untransformed'
+  };
+
+};
+
+this.synth_MemList =
+function(mList, tProto) {
+  return {
+    m: mList,
+    type: '#Untransformed' ,
+    kind: 'memlist',
+    p: tProto
   };
 
 };
