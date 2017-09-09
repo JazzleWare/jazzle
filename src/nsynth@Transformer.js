@@ -307,11 +307,13 @@ function(cls, herit, target) {
 };
 
 this.synth_RCheck =
-function(ti) {
+function(v,t) {
   this.accessJZ();
   return {
-    type: '#Untransformed' ,
-    th: ti,
-    kind: 'rcheck'
+    val: v,
+    th: t,
+    kind: 'rcheck',
+    type: '#Untransformed'
   };
+
 };

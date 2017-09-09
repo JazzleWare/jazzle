@@ -41,7 +41,7 @@ function(n, isVal) {
 
   if (l && !(this.thisState & THS_IS_REACHED) && (this.thisState & THS_NEEDS_CHK)) {
     l.track(this.cur);
-    fnBody.push(this.synth_RCheck(l));
+    fnBody.push(this.synth_RCheck(null, l));
   }
 
   this.cur.deactivateBody();

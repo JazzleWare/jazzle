@@ -3986,7 +3986,9 @@ function(n, flags, isStmt) {
 function(){
 UntransformedEmitters['rcheck'] =
 function(n, flags, isStmt) {
-  this.jz('r').wm('(',n.th.synthName,')');
+  this.jz('r').w('(');
+  if (n.val) { this.eN(n.val, EC_NONE, false).w(',').os(); }
+  this.wm(n.th.synthName,')');
   isStmt && this.w(';');
 };
 
@@ -15347,8 +15349,7 @@ function(n, isVal) {
     if (l===null) { l = lg.newL(); lg.seal(); l.name = 'ti'; }
     if ((this.thisState & THS_IS_REACHED) || !(this.thisState & THS_NEEDS_CHK)) break RET;
     l.track(this.cur);
-    var rc = this.synth_RCheck(l);
-    n.argument = n.argument ? this.synth_AssigList([rc, n.argument]) : rc;
+    n.argument = this.synth_RCheck(n.argument, l);
   }
   return n;
 };
@@ -15640,7 +15641,7 @@ function(n, isVal) {
 
   if (l && !(this.thisState & THS_IS_REACHED) && (this.thisState & THS_NEEDS_CHK)) {
     l.track(this.cur);
-    fnBody.push(this.synth_RCheck(l));
+    fnBody.push(this.synth_RCheck(null, l));
   }
 
   this.cur.deactivateBody();
@@ -16161,13 +16162,15 @@ function(cls, herit, target) {
 };
 
 this.synth_RCheck =
-function(ti) {
+function(v,t) {
   this.accessJZ();
   return {
-    type: '#Untransformed' ,
-    th: ti,
-    kind: 'rcheck'
+    val: v,
+    th: t,
+    kind: 'rcheck',
+    type: '#Untransformed'
   };
+
 };
 
 },
