@@ -7,7 +7,13 @@ function(n, isVal) {
 
   var cvtz = this.setCVTZ(createObj(this.cvtz));
   var ts = this.setTS([]);
-  var th = this.thisState;
+  var th = this.thisState, lg = null, l = null;
+
+  if (this.cur.isCtor() && this.cur.parent.hasHeritage()) {
+    lg = this.cur.gocLG('ti');
+    l = lg.getL(0);
+    if (l===null) { l = lg.newL(); lg.seal(); l.name = 'ti'; }
+  }
 
   this.cur.closureLLINOSA = this.cur.parent.scs.isAnyFn() ?
     createObj(this.cur.parent.scs.closureLLINOSA) : {};
@@ -15,8 +21,11 @@ function(n, isVal) {
   this.cur.synth_start(this.renamer);
   ASSERT.call(this, !this.cur.inBody, 'inBody');
 
-  if (n.type === 'FunctionDeclaration')
-    this.thisState &= ~THS_IS_REACHED;
+  if (n.type === 'FunctionDeclaration') {
+    var out = s.scs;
+    this.thisState = out.isCtor() && out.parent.hasHeritage() ? THS_NEEDS_CHK : THS_NONE;
+  }
+
   var argsPrologue = this.transformParams(n.params);
   if (argsPrologue) n.params = null;
 
@@ -29,6 +38,12 @@ function(n, isVal) {
   this.cur.activateBody();
   var fnBody = n.body.body;
   this.trList(fnBody, false);
+
+  if (l && !(this.thisState & THS_IS_REACHED) && (this.thisState & THS_NEEDS_CHK)) {
+    l.track(this.cur);
+    fnBody.push(this.synth_RCheck(l));
+  }
+
   this.cur.deactivateBody();
   this.cur.synth_finish();
 

@@ -306,3 +306,12 @@ function(cls, herit, target) {
 
 };
 
+this.synth_RCheck =
+function(ti) {
+  this.accessJZ();
+  return {
+    type: '#Untransformed' ,
+    th: ti,
+    kind: 'rcheck'
+  };
+};

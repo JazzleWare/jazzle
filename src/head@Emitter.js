@@ -13,12 +13,13 @@ this.emitFnHead =
 function(n) {
   var scope = n.fun['#scope'], em = 0;
   this.emitTCheckVar(scope, em) && em++;
+  this.emitTempList(scope, em) && em++;
+  this.emitThisRef(scope,em) && em++;
+  this.emitThisChk(scope,em) && em++;
   this.emitArgumentsRef(scope,em) && em++;
   if (n.argsPrologue) this.emitTransformedArgs(n, em) && em++;
-  this.emitThisRef(scope,em) && em++;
   this.emitFunLists(scope, true, em) && em++;
   this.emitVarList(scope, em) && em++;
-  this.emitTempList(scope, em) && em++;
   return em;
 };
 
@@ -267,6 +268,29 @@ function(scope, hasPrev) {
   }
 
   this.wm('var',' ',ar.synthName,'','=','','arguments',';');
+
+  if (own) u.v || this.clear_onw();
+  return 1;
+};
+
+this.emitThisChk =
+function(scope, hasPrev) {
+  var ti = scope.getLG('ti');
+  if (ti === null) return 0;
+  ti = ti.getL(0);
+  if (ti === null) return 0;
+
+  var own = false;
+  var o = {v: false};
+
+  var u = null;
+  if (hasPrev) {
+    if (!this.wcb) { this.onw(wcb_afterStmt); own = true; }
+    if (!this.wcbUsed) this.wcbUsed = u = o;
+    else u = this.wcbUsed;
+  }
+
+  this.wm('var',' ',ti.synthName,'','=','','0',';');
 
   if (own) u.v || this.clear_onw();
   return 1;

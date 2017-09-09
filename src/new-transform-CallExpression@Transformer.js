@@ -5,7 +5,7 @@ function(n, isVal) {
     l['#liq'] = this.cur.findRefU_m(RS_SCALL).getDecl();
     var th = this.cur.findRefU_m(RS_THIS).getDecl();
     l['#this'] = this.synth_BareThis(th);
-    if (this.thisState & THS_NEEDS_CHK) {
+    if (!(this.thisState & THS_IS_REACHED)) {
       ti = true;
       var lg = th.ref.scope.gocLG('ti'), li = lg.getL(0);
       if (li === null) { li = lg.newL(); lg.seal(); li.name = 'ti'; }
@@ -19,7 +19,7 @@ function(n, isVal) {
     if (l.type !== 'Super')
       n.callee = this.tr(n.callee, true );
     this.trList(n.arguments, true );
-    if (ti) this.thisState &= ~THS_NEEDS_CHK;
+    if (ti) { this.thisState |= THS_IS_REACHED; this.thisState &= ~THS_NEEDS_CHK; }
     return n;
   }
 
@@ -43,6 +43,6 @@ function(n, isVal) {
 
   this.trList(n.arguments, true );
 
-  if (ti) this.thisState &= ~THS_NEEDS_CHK;
+  if (ti) { this.thisState |= THS_IS_REACHED; this.thisState &= ~THS_NEEDS_CHK; }
   return this.synth_Call(head, mem, n.arguments);
 };
