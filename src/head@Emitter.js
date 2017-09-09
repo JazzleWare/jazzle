@@ -278,7 +278,7 @@ function(scope, hasPrev) {
   var ti = scope.getLG('ti');
   if (ti === null) return 0;
   ti = ti.getL(0);
-  if (ti === null) return 0;
+  if (ti === null || ti.ref.d <= 0) return 0;
 
   var own = false;
   var o = {v: false};

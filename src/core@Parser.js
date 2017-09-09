@@ -34,7 +34,7 @@ function(left, right, isComputed) {
   scopeName.site = left;
   scopeName.synthName = scopeName.name;
 
-  if (c) this.inferName(left, right['#ct'].value, false);
+  if (c && right['#ct'] !== null) this.inferName(left, right['#ct'].value, false);
 
   return scopeName;
 };

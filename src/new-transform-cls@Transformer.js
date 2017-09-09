@@ -12,9 +12,11 @@ function(n, isVal, oBinding) { // o -> outer
     s = ctor && ctor['#scope'].spSuperCall;
   }
 
-  ctor = ctor ? this.transformCtor(ctor, oBinding) : this.syntheticCtor(n);
-  if (s) { ctor.scall = { inner: s, outer: tempsup } };
-
+  if (null === ctor) ctor = this.syntheticCtor(n, tempsup);
+  else {
+    ctor = this.transformCtor(ctor, oBinding);
+    if (s) { ctor.scall = { inner: s, outer: tempsup } };
+  }
   var clsTemp = null;
   var classSave = null;
   if (ex) {
@@ -84,6 +86,17 @@ function(ctor, oBinding) {
   }
 
   return oBinding ? this.transformRawFn(ctor, true) : this.transformExprFn(ctor);
+};
+
+this.syntheticCtor =
+function(cls, heritage) {
+  return {
+    kind: 'synthc',
+    heritage: heritage,
+    name: cls['#scope'].scopeName,
+    type: '#Untransformed'
+  };
+
 };
 
 Transformers['ClassExpression'] =

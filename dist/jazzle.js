@@ -66,6 +66,7 @@ function Emitter() {
   this.wcbp = null;
   this.wcbUsed = null;
   this.allow = { space: true, nl: true, comments: { l: true, m: true } };
+  this.rll = 0; // real line length; TODO: eliminate need for it
 
   this.out = "";
 }
@@ -1549,7 +1550,7 @@ function wcb_afterRet(rawStr, tt) {
   if (tt & ETK_NL) { this.os().w('('); this.wcbp.hasParen = true; return; }
   var lineLen = this.curLine.length;
   if (tt & (ETK_NUM|ETK_ID)) {
-    if (this.ol(lineLen+1+rawStr.length) > 0) {
+    if (this.ol(1+rawStr.length) > 0) {
       this.rwr('(');
       this.wcbp.hasParen = true;
       this.l();
@@ -1557,8 +1558,8 @@ function wcb_afterRet(rawStr, tt) {
     else this.hs();
     return;
   }
-  if (this.ol(lineLen+1+rawStr.length) > 0) {
-    if (this.ol(lineLen+rawStr.length) > 0) {
+  if (this.ol(rawStr.length) > 0) {
+    if (this.ol(rawStr.length) > 0) {
       this.rwr('(');
       this.wcbp.hasParen = true;
       this.l();
@@ -2174,7 +2175,7 @@ function(sv,ql) {
     var l = v.length;
     if (o === len-1)
       l  += ql;
-    if (this.ol(this.curLine.length+l) > 0) {
+    if (this.ol(l) > 0) {
       this.rwr('\\');
       this.l();
       this.curLineIndent = -1; // deactivate indentation
@@ -2709,7 +2710,7 @@ function(scope, hasPrev) {
   var ti = scope.getLG('ti');
   if (ti === null) return 0;
   ti = ti.getL(0);
-  if (ti === null) return 0;
+  if (ti === null || ti.ref.d <= 0) return 0;
 
   var own = false;
   var o = {v: false};
@@ -2767,12 +2768,13 @@ function(rawStr) {
   // after a call to .indent (but not to .unindent), no further calls to .write are ever allowed until a .startNewLine call.
   ASSERT.call(this, this.curLineIndent < 0 || this.curLineIndent >= this.indentLevel, 'in' );
 
-  var cll = this.curLine.length;
-  if (cll && this.ol(cll+rawStr.length) > 0) {
+  var rll = this.rll;
+  if (rll && this.ol(rawStr.length) > 0) {
     this.startNewLine();
     this.insertLineBreak(true);
   }
 
+  this.rll += rawStr.length;
   this.rwr(rawStr);
 };
 
@@ -2815,7 +2817,7 @@ this.flush =
 function() {
   ASSERT.call(this, this.pendingSpace === EST_NONE, 'pending space');
   var line = this.curLine;
-  var len = line.length;
+  var len = this.rll;
   if (len === 0)
     return;
 
@@ -2890,7 +2892,7 @@ function(tmask) { return this.curtt & tmask; };
 
 this.ol =
 function(e) { // overflow line-length
-  return this.wrapLimit && (e - this.wrapLimit);
+  return this.wrapLimit && (e+this.rll - this.wrapLimit);
 };
 
 this.hasPendingSpace =
@@ -2899,7 +2901,6 @@ function() { return this.pendingSpace !== EST_NONE; };
 this.effectPendingSpace =
 function(len) {
   ASSERT.call(this, this.curLine.length, 'leading');
-  len += this.curLine.length;
   var s = this.pendingSpace;
   this.pendingSpace = EST_NONE;
   switch (s) {
@@ -2946,6 +2947,7 @@ this.insertSpace =
 function() {
   this.wcb && this.call_onw(' ', ETK_NONE);
   this.curLine += ' '; 
+  this.rll++;
 };
 
 this.clear_onw =
@@ -2967,6 +2969,7 @@ function(mustNL) {
   this.curtt === ETK_NONE || this.rtt();
   this.wcb && this.call_onw('\n', ETK_NL);
   this.out += '\n';
+  this.rll = 0;
 };
 
 },
@@ -3930,6 +3933,31 @@ function(n, flags, isStmt) {
   n.heritage && this.w(',').os().eN(n.heritage);
   this.w(')');
   isStmt && this.w(';');
+};
+
+},
+function(){
+UntransformedEmitters['synthc'] =
+function(n, flags, isStmt) {
+  ASSERT_EQ.call(this, isStmt, false ) ;
+  var s = 's';
+  if (n.heritage) {
+    var base = 's', num = 0;
+    if (n.name) {
+      var name = n.name.name;
+      while (name === s)
+        s = base + (++num);
+    }  
+    this.wt('function',ETK_ID).wm('(',s,')','','{','','return').onw(wcb_afterRet);
+    this.wt('function',ETK_ID);
+    if (n.name) this.wm(' ',n.name.name);
+    this.wm('(',')','','{', s,'.','apply','(',
+      'this',',','arguments',')',';','}','','}','(').eN(n.heritage).w(')');
+  } else {
+    this.w('function');
+    if (n.name) this.wm(' ',n.name.name);
+    this.wm('(',')','','{','}');
+  }
 };
 
 },
@@ -4976,7 +5004,7 @@ function(left, right, isComputed) {
   scopeName.site = left;
   scopeName.synthName = scopeName.name;
 
-  if (c) this.inferName(left, right['#ct'].value, false);
+  if (c && right['#ct'] !== null) this.inferName(left, right['#ct'].value, false);
 
   return scopeName;
 };
@@ -15503,9 +15531,11 @@ function(n, isVal, oBinding) { // o -> outer
     s = ctor && ctor['#scope'].spSuperCall;
   }
 
-  ctor = ctor ? this.transformCtor(ctor, oBinding) : this.syntheticCtor(n);
-  if (s) { ctor.scall = { inner: s, outer: tempsup } };
-
+  if (null === ctor) ctor = this.syntheticCtor(n, tempsup);
+  else {
+    ctor = this.transformCtor(ctor, oBinding);
+    if (s) { ctor.scall = { inner: s, outer: tempsup } };
+  }
   var clsTemp = null;
   var classSave = null;
   if (ex) {
@@ -15575,6 +15605,17 @@ function(ctor, oBinding) {
   }
 
   return oBinding ? this.transformRawFn(ctor, true) : this.transformExprFn(ctor);
+};
+
+this.syntheticCtor =
+function(cls, heritage) {
+  return {
+    kind: 'synthc',
+    heritage: heritage,
+    name: cls['#scope'].scopeName,
+    type: '#Untransformed'
+  };
+
 };
 
 Transformers['ClassExpression'] =

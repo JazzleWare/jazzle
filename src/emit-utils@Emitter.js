@@ -10,7 +10,7 @@ function(sv,ql) {
     var l = v.length;
     if (o === len-1)
       l  += ql;
-    if (this.ol(this.curLine.length+l) > 0) {
+    if (this.ol(l) > 0) {
       this.rwr('\\');
       this.l();
       this.curLineIndent = -1; // deactivate indentation

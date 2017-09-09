@@ -36,12 +36,13 @@ function(rawStr) {
   // after a call to .indent (but not to .unindent), no further calls to .write are ever allowed until a .startNewLine call.
   ASSERT.call(this, this.curLineIndent < 0 || this.curLineIndent >= this.indentLevel, 'in' );
 
-  var cll = this.curLine.length;
-  if (cll && this.ol(cll+rawStr.length) > 0) {
+  var rll = this.rll;
+  if (rll && this.ol(rawStr.length) > 0) {
     this.startNewLine();
     this.insertLineBreak(true);
   }
 
+  this.rll += rawStr.length;
   this.rwr(rawStr);
 };
 
@@ -84,7 +85,7 @@ this.flush =
 function() {
   ASSERT.call(this, this.pendingSpace === EST_NONE, 'pending space');
   var line = this.curLine;
-  var len = line.length;
+  var len = this.rll;
   if (len === 0)
     return;
 
@@ -159,7 +160,7 @@ function(tmask) { return this.curtt & tmask; };
 
 this.ol =
 function(e) { // overflow line-length
-  return this.wrapLimit && (e - this.wrapLimit);
+  return this.wrapLimit && (e+this.rll - this.wrapLimit);
 };
 
 this.hasPendingSpace =
@@ -168,7 +169,6 @@ function() { return this.pendingSpace !== EST_NONE; };
 this.effectPendingSpace =
 function(len) {
   ASSERT.call(this, this.curLine.length, 'leading');
-  len += this.curLine.length;
   var s = this.pendingSpace;
   this.pendingSpace = EST_NONE;
   switch (s) {
@@ -215,6 +215,7 @@ this.insertSpace =
 function() {
   this.wcb && this.call_onw(' ', ETK_NONE);
   this.curLine += ' '; 
+  this.rll++;
 };
 
 this.clear_onw =
@@ -236,4 +237,5 @@ function(mustNL) {
   this.curtt === ETK_NONE || this.rtt();
   this.wcb && this.call_onw('\n', ETK_NL);
   this.out += '\n';
+  this.rll = 0;
 };
