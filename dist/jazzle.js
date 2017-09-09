@@ -3682,7 +3682,7 @@ function(n, flags, isStmt) {
   var scopeName = scope.scopeName;
   var lonll = scope.getNonLocalLoopLexicals();
   var isRenamed = scopeName && scopeName.name !== scopeName.synthName;
-  var hasWrapper = isRenamed || lonll || n.scall;
+  var hasWrapper = n.cls || n.scall || lonll || isRenamed;
   var em = 0;
   if (hasWrapper) {
     if (!hasParen)
@@ -3695,6 +3695,7 @@ function(n, flags, isStmt) {
   if (hasWrapper) {
     this.wt('function', ETK_ID).w('(');
     if (n.scall) { this.w(n.scall.inner.synthName); em++; }
+    if (n.cls) { em && this.w(',').os(); this.w(n.cls.inner.synthName); em++; }
     if (lonll) { em && this.w(',').os(); this.wsndl(lonll); }
     this.w(')').os().w('{').i().l();
     if (isRenamed)
@@ -3714,6 +3715,7 @@ function(n, flags, isStmt) {
     this.u().l().wm('}','(');
     em = 0;
     if (n.scall) { this.eN(n.scall.outer, EC_NONE, false); em++; }
+    if (n.cls) { em && this.w(',').os(); this.eN(n.cls.outer, EC_NONE, false); em++; }
     if (lonll) { em && this.w(',').os(); this.wsndl(lonll); }
     this.w(')');
   }
@@ -15590,7 +15592,7 @@ function(n, isVal, oBinding) { // o -> outer
       continue;
     }
     if (m === 0) {
-      tproto = this.allocTemp();
+      tproto = tempsup || this.allocTemp();
       jzCreateCls = this.synth_TempSave(tproto, jzCreateCls);
     }
     if (elem.computed)
@@ -15616,7 +15618,7 @@ function(n, isVal, oBinding) { // o -> outer
     list.push(clsTemp);
   }
 
-  tproto && this.releaseTemp(tproto);
+  tproto && tproto !== tempsup && this.releaseTemp(tproto);
   clsTemp && this.releaseTemp(clsTemp);
   tempsup && this.releaseTemp(tempsup );
 
@@ -15678,7 +15680,7 @@ function(mem, oBinding, r) {
   }
 
   mem = this.transformExprFn(mem);
-  mem.cls = { inner: sn, outer: null };
+  if (sn) mem.cls = { inner: sn, outer: null };
 
   return mem;
 };

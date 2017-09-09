@@ -37,7 +37,7 @@ function(n, isVal, oBinding) { // o -> outer
       continue;
     }
     if (m === 0) {
-      tproto = this.allocTemp();
+      tproto = tempsup || this.allocTemp();
       jzCreateCls = this.synth_TempSave(tproto, jzCreateCls);
     }
     if (elem.computed)
@@ -63,7 +63,7 @@ function(n, isVal, oBinding) { // o -> outer
     list.push(clsTemp);
   }
 
-  tproto && this.releaseTemp(tproto);
+  tproto && tproto !== tempsup && this.releaseTemp(tproto);
   clsTemp && this.releaseTemp(clsTemp);
   tempsup && this.releaseTemp(tempsup );
 
@@ -125,7 +125,7 @@ function(mem, oBinding, r) {
   }
 
   mem = this.transformExprFn(mem);
-  mem.cls = { inner: sn, outer: null };
+  if (sn) mem.cls = { inner: sn, outer: null };
 
   return mem;
 };
