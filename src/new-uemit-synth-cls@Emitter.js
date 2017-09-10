@@ -10,3 +10,14 @@ function(n, flags, isStmt) {
   this.w(')');
   isStmt && this.w(';');
 };
+
+UntransformedEmitters['cls-assig'] =
+function(n, flags, isStmt) {
+  ASSERT_EQ.call(this, isStmt, true);
+  var ll = n.target.isLLINOSA();
+  ll || this.w('var').bs();
+  this.w(n.target.synthName);
+  ll && this.wm('.','v');
+  this.wm('','=','').eN(n.ctor, EC_NONE, false);
+  this.w(';');
+};

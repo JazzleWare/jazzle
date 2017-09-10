@@ -20,6 +20,9 @@ function(decl) {
       tz = true;
       break TZ; 
     }
+    if (decl.isClassName())
+      return tz;
+
     var ownerScope = decl.ref.scope, cur = this.cur;
     if (ownerScope === cur) {
       tz = false;
@@ -68,6 +71,9 @@ function(id, bes) {
   var hasTZ = !isB && this.needsTZ(target);
   
   if (hasTZ) {
+    if (target.isClassName())
+      return this.synthCheckForTZ(target, null, -1);
+
     target.activateTZ();
     this.accessTZ(target.ref.scope);
   }
@@ -81,4 +87,17 @@ function(id, bes) {
     kind: 'resolved-name',
     type: '#Untransformed'
   };
+};
+
+this.synthCheckForTZ =
+function(target, t, num) {
+  this.accessJZ();
+  return {
+    liq: t,
+    idx: num,
+    kind: 'tzchk',
+    type: '#Untransformed' ,
+    target: target
+  };
+
 };

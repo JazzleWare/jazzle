@@ -40,8 +40,11 @@ function(n, isVal) {
   this.trList(fnBody, false);
 
   if (l && !(this.thisState & THS_IS_REACHED) && (this.thisState & THS_NEEDS_CHK)) {
-    l.track(this.cur);
-    fnBody.push(this.synth_RCheck(null, l));
+    var len = fnBody.length;
+    if (len && fnBody[len-1].type !== 'ReturnStatement') {
+      l.track(this.cur);
+      fnBody.push(this.synth_RCheck(null, l));
+    }
   }
 
   this.cur.deactivateBody();

@@ -2020,7 +2020,7 @@ function() {
   if (this.isFn())
     return false;
 
-  return this.isCls() || this.isLexicalLike();
+  return this.isCls() || this.isClassName() || this.isLexicalLike();
 };
 
 this.isLLINOSA =
@@ -2089,6 +2089,12 @@ this.isExported =
 function() {
   return this.isEDefault() || this.isEAliased() || this.isESelf();
 };
+
+this.isFnName =
+function() { return this.type & DT_FNNAME; };
+
+this.isClassName =
+function() { return this.type & DT_CLSNAME; };
 
 this.isName =
 function() { return this.type & (DT_FNNAME|DT_CLSNAME); };
@@ -3945,6 +3951,17 @@ function(n, flags, isStmt) {
   isStmt && this.w(';');
 };
 
+UntransformedEmitters['cls-assig'] =
+function(n, flags, isStmt) {
+  ASSERT_EQ.call(this, isStmt, true);
+  var ll = n.target.isLLINOSA();
+  ll || this.w('var').bs();
+  this.w(n.target.synthName);
+  ll && this.wm('.','v');
+  this.wm('','=','').eN(n.ctor, EC_NONE, false);
+  this.w(';');
+};
+
 },
 function(){
 UntransformedEmitters['synthc'] =
@@ -4234,6 +4251,20 @@ function(n, flags, isStmt) {
 
   this.w('}');
   this.emc(cb, 'aft');
+};
+
+},
+function(){
+UntransformedEmitters['tzchk'] =
+function(n, flags, isStmt) {
+  var hasParen = false;
+  if (!isStmt)
+    hasParen = n.li ? flags & (EC_NON_SEQ|EC_EXPR_HEAD ) :
+      flags & EC_NEW_HEAD;
+  
+  if (hasParen) { this.w('('); flags = EC_NONE; }
+  if (n.liq === null) { this.jz('tz').w('(').writeString(n.target.name,"'"); this.w(')'); }
+  else ASSERT.call(this, false,  'l');
 };
 
 },
@@ -14933,6 +14964,9 @@ function(decl) {
       tz = true;
       break TZ; 
     }
+    if (decl.isClassName())
+      return tz;
+
     var ownerScope = decl.ref.scope, cur = this.cur;
     if (ownerScope === cur) {
       tz = false;
@@ -14981,6 +15015,9 @@ function(id, bes) {
   var hasTZ = !isB && this.needsTZ(target);
   
   if (hasTZ) {
+    if (target.isClassName())
+      return this.synthCheckForTZ(target, null, -1);
+
     target.activateTZ();
     this.accessTZ(target.ref.scope);
   }
@@ -14994,6 +15031,19 @@ function(id, bes) {
     kind: 'resolved-name',
     type: '#Untransformed'
   };
+};
+
+this.synthCheckForTZ =
+function(target, t, num) {
+  this.accessJZ();
+  return {
+    liq: t,
+    idx: num,
+    kind: 'tzchk',
+    type: '#Untransformed' ,
+    target: target
+  };
+
 };
 
 },
@@ -15238,7 +15288,9 @@ Transformers['LogicalExpression'] =
 function(n, isVal) {
   n.left = this.tr(n.left, true);
   var cvtz = this.setCVTZ(createObj(this.cvtz));
+  var th = this.thisState;
   n.right = this.tr(n.right, true);
+  this.thisState = th;
   this.setCVTZ(cvtz );
   return n;
 };
@@ -15322,9 +15374,12 @@ Transformers['ConditionalExpression'] =
 function(n, isVal) {
   n.test = this.tr(n.test, true);
   var cvtz = this.setCVTZ(createObj(this.cvtz));
+  var th = this.thisState;
   n.consequent = this.tr(n.consequent, isVal);
+  var thc = this.thisState; this.thisState = th;
   this.setCVTZ(createObj(cvtz));
   n.alternate = this.tr(n.alternate, isVal);
+  this.thisState = th|(this.thisState & thc); // same should be done for the tz/cv-thing, below
   this.setCVTZ(cvtz) ;
   return n;
 };
@@ -15555,8 +15610,8 @@ function(n, isVal) {
 function(){
 this.transformCls =
 function(n, isVal, oBinding) { // o -> outer
-  var ex = oBinding === null;
-  var ctor = n['#ct'] && n['#ct'].value;
+  var scope = this.setScope(n['#scope']), ex = oBinding === null;
+  var ctor = n['#ct'] && n['#ct'].value, reached = {v: true};
   var list = [];
 
   var tempsup = null, tempsupSave = null, s = null;
@@ -15569,7 +15624,7 @@ function(n, isVal, oBinding) { // o -> outer
 
   if (null === ctor) ctor = this.syntheticCtor(n, tempsup);
   else {
-    ctor = this.transformCtor(ctor, oBinding);
+    ctor = this.transformCtor(ctor, oBinding, reached);
     if (s) { ctor.scall = { inner: s, outer: tempsup } };
   }
   var clsTemp = null;
@@ -15584,7 +15639,7 @@ function(n, isVal, oBinding) { // o -> outer
   var tproto = null;
 
   var memList = n.body.body, i = 0;
-  var m = 0, reached = {v: true};
+  var m = 0;
   while (i < memList.length) {
     var elem = memList[i];
     if (elem.kind === 'constructor') {
@@ -15623,15 +15678,25 @@ function(n, isVal, oBinding) { // o -> outer
   tempsup && this.releaseTemp(tempsup );
 
   oBinding && this.makeReached(oBinding);
+  this.setScope(scope);
 
   return this.synth_AssigList(list);
 };
 
 this.transformCtor =
-function(ctor, oBinding) {
+function(ctor, oBinding, r) {
+  var r0 = null;
+  if (oBinding) {
+    r0 = oBinding.reached;
+    oBinding.type |= DT_CLSNAME;
+    oBinding.reached = r;
+    ctor = this.transformRawFn(ctor, true) ;
+    oBinding.reached = r0;
+    oBinding.type &= ~DT_CLSNAME;
+    return ctor;
+  }
   var scope = ctor['#scope'];
-  REF:
-  if (oBinding === null) {
+  REF: { 
     var clsName = ctor['#scope'].parent.scopeName;
     if (clsName === null) break REF;
     var ref = scope.findRefU_m(_m(clsName.name));
@@ -15646,7 +15711,7 @@ function(ctor, oBinding) {
     sn.ref.absorbDirect(ref);
   }
 
-  return oBinding ? this.transformRawFn(ctor, true) : this.transformExprFn(ctor);
+  return this.transformExprFn(ctor);
 };
 
 this.transformMem =
@@ -15654,9 +15719,11 @@ function(mem, oBinding, r) {
   var r0 = null, scope = mem['#scope'], cls = scope.parent;
   if (oBinding) {
     r0 = oBinding.reached;
+    oBinding.type |= DT_CLSNAME;
     oBinding.reached = r;
     mem = this.transformExprFn(mem);
     oBinding.reached = r0;
+    oBinding.type &= ~DT_CLSNAME;
     return mem;
   }
 
@@ -15667,7 +15734,7 @@ function(mem, oBinding, r) {
     var ref = scope.findRefU_m(_m(sn.name));
     if (ref === null) { sn = null; break REF; }
     ASSERT.call(this, sn === ref.getDecl(), 'sn' );
-    sn = new ScopeName(sn.name, null).t(DT_FNNAME);
+    sn = new ScopeName(sn.name, null).t(DT_CLSNAME);
     ASSERT.call(this,scope.parent.isClass(),'cls');
     sn.r(new Ref(scope.parent));
 
@@ -15676,6 +15743,7 @@ function(mem, oBinding, r) {
     ref.targetDecl = null;
     sn.ref.absorbDirect(ref);
 
+    this.makeReached(sn);
     this.synthFnExprName(sn);
   }
 
@@ -15759,8 +15827,11 @@ function(n, isVal) {
   this.trList(fnBody, false);
 
   if (l && !(this.thisState & THS_IS_REACHED) && (this.thisState & THS_NEEDS_CHK)) {
-    l.track(this.cur);
-    fnBody.push(this.synth_RCheck(null, l));
+    var len = fnBody.length;
+    if (len && fnBody[len-1].type !== 'ReturnStatement') {
+      l.track(this.cur);
+      fnBody.push(this.synth_RCheck(null, l));
+    }
   }
 
   this.cur.deactivateBody();
@@ -16300,6 +16371,17 @@ function(mList, tProto) {
     type: '#Untransformed' ,
     kind: 'memlist',
     p: tProto
+  };
+
+};
+
+this.synth_ClassSave =
+function(target, ctor) {
+  return {
+    target: target,
+    ctor: ctor,
+    kind: 'cls-assig',
+    type: '#Untransformed'
   };
 
 };

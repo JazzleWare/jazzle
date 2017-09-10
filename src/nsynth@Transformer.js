@@ -329,3 +329,14 @@ function(mList, tProto) {
   };
 
 };
+
+this.synth_ClassSave =
+function(target, ctor) {
+  return {
+    target: target,
+    ctor: ctor,
+    kind: 'cls-assig',
+    type: '#Untransformed'
+  };
+
+};

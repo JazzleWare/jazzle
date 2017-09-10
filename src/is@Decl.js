@@ -31,7 +31,7 @@ function() {
   if (this.isFn())
     return false;
 
-  return this.isCls() || this.isLexicalLike();
+  return this.isCls() || this.isClassName() || this.isLexicalLike();
 };
 
 this.isLLINOSA =
@@ -100,6 +100,12 @@ this.isExported =
 function() {
   return this.isEDefault() || this.isEAliased() || this.isESelf();
 };
+
+this.isFnName =
+function() { return this.type & DT_FNNAME; };
+
+this.isClassName =
+function() { return this.type & DT_CLSNAME; };
 
 this.isName =
 function() { return this.type & (DT_FNNAME|DT_CLSNAME); };
