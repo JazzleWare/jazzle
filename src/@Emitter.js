@@ -13,8 +13,12 @@ function Emitter() {
   this.allow = { space: true, nl: true, comments: { l: true, m: true } };
   this.rll = 0; // real line length; TODO: eliminate need for it
   this.wrapLine = false;
+  this.locw = null;
 
   // <sourceMapVar>
+  this.smNameList = new SortedObj();
+  this.smSrcList = new SortedObj();
+
   this.lineIsLn = false;
   this.ln = false;
 

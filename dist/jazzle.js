@@ -68,8 +68,12 @@ function Emitter() {
   this.allow = { space: true, nl: true, comments: { l: true, m: true } };
   this.rll = 0; // real line length; TODO: eliminate need for it
   this.wrapLine = false;
+  this.locw = null;
 
   // <sourceMapVar>
+  this.smNameList = new SortedObj();
+  this.smSrcList = new SortedObj();
+
   this.lineIsLn = false;
   this.ln = false;
 
@@ -2808,6 +2812,8 @@ function(rawStr) {
     this.startNewLine();
   }
 
+  if (this.locw) { this.sr(this.locw); this.locw = null; }
+
   this.rll += rawStr.length;
   this.emcol_cur += rawStr.length;
   this.rwr(rawStr);
@@ -2875,7 +2881,7 @@ function() {
     var lm0 = 
       vlq(this.ln_emcol_cur+optimalIndent-this.ln_emcol_latestRec) +
       this.ln_srci_vlq +
-      this.ln_namei_vlq + this.ln_loc_vlq;
+      this.ln_loc_vlq + this.ln_namei_vlq ;
     this.ln_srci_vlq = this.ln_namei_vlq = this.ln_loc_vlq = "";
     if (this.lm.length) lm0 = lm0 + ',';
     this.lm = lm0 + this.lm;
@@ -3026,6 +3032,7 @@ function(mustNL) {
   this.sm += ';';
   this.wcb && this.call_onw('\n', ETK_NL);
   this.out += '\n';
+  this.lineIsLn = true; // TODO: somewhere else
 };
 
 },
@@ -4116,17 +4123,6 @@ function(n, flags, isStmt) {
 
 },
 function(){
-if (false)
-UntransformedEmitters['resolved-name'] =
-function(n, flags, isStmt) {
-  var str = n.target.ref.scope.scopeID+':'+n.target.name;
-  str += '#['+n.target.synthName+']';
-  if (n.tz) str += '::tz';
-  this.w(str);
-  isStmt && this.w(';');
-  return true;
-};
-
 var bes = {};
 UntransformedEmitters['resolved-name'] =
 function(n, flags, isStmt) {
@@ -4157,8 +4153,14 @@ function(n, flags, isStmt) {
   else if ( tz) { this.emitAccessChk_tz(n.target); this.w(',').os(); }
 
   var cb = CB(n.id); this.emc(cb, 'bef');
+
+//var ni = this.smSetName(n.id.name);
+  this.lw(n.id.loc.start);
   this.wt(n.target.synthName, ETK_ID );
   tv && this.v();
+//this.lw(n.id.loc.end);
+//this.namei_cur = ni;
+
   this.emc(cb, 'aft');
   hasParen && this.w(')');
   isStmt && this.w(';');
@@ -4329,20 +4331,57 @@ function(n, flags, isStmt) {
 
 },
 function(){
-this.refreshSM =
+this.smSetName =
+function(name) {
+  var nc = this.namei_cur;
+  if (name.length) {
+    var mname = _m(name);
+    this.namei_cur =
+      this.smNameList.has(mname) ?
+        this.smNameList.get(mname) :
+        this.smNameList.set(mname, this.smNameList.length());
+  } else
+    this.namei_cur = -1;
+
+  return nc;
+};
+
+this.smSetSrc =
+function(srcName) {
+  var sc = this.srci_cur;
+  var mname = _m(srcName);
+  if (name.length) {
+    this.srci_cur =
+      this.smSrcList.has(mname) ?
+        this.smSrcList.get(mname) :
+        this.smSrcList.set(mname, this.smSrcList.length());
+  } else
+    this.srci_cur = -1;
+
+  return sc;
+};
+
+this.smRefresh = this.sr =
 function(loc) {
   if (loc === this.loc_latestRec)
     return;
+
+  var l = 0;
   if (this.lineIsLn) {
     this.ln_emcol_cur = this.emcol_cur;
     this.ln_emcol_latestRec = this.emcol_latestRec;
     this.emcol_latestRec = this.emcol_cur;
 
-    this.ln_srci_vlq = vlq(this.srci_cur-this.srci_latestRec);
+    l = this.srci_latestRec;
+    this.ln_srci_vlq = vlq(this.srci_cur-(l<0?0:l));
     this.srci_latestRec = this.srci_cur;
 
-    this.n_namei_vlq = vlq(this.namei_cur-this.namei_latestRec);
-    this.namei_latestRec = this.namei_cur;
+    if (this.namei_cur>=0) {
+      l = this.namei_latestRec;
+      this.ln_namei_vlq = vlq(this.namei_cur-(l<0?0:l));
+      this.namei_latestRec = this.namei_cur;
+    }
+    else this.ln_namei_vlq = "";
 
     this.ln_loc_vlq = 
       vlq(this.loc_latestRec.line-loc.line) +
@@ -4356,17 +4395,30 @@ function(loc) {
     this.lm += vlq(this.emcol_cur-this.emcol_latestRec);
     this.emcol_latestRec = this.emcol_cur;
 
-    this.lm += vlq(this.srci_cur-this.srci_latestRec);
+    l = this.srci_latestRec;
+    this.lm += vlq(this.srci_cur-(l<0?0:l));
     this.srci_latestRec = this.srci_cur;
-
-    this.lm += vlq(this.namei_cur-this.namei_latestRec);
-    this.namei_latestRec = this.namei_cur;
 
     this.lm +=
       vlq(this.loc_latestRec.line-loc.line) +
       vlq(this.loc_latestRec.column-loc.column);
     this.loc_latestRec = loc;
+
+    if (this.namei_cur>=0) {
+      l = this.namei_latestRec; // needless
+      this.lm += vlq(this.namei_cur-(l<0?0:l));
+      this.namei_latestRec = this.namei_cur;
+    }
   }
+};
+
+this.lw =
+function(lw) {
+  ASSERT_EQ.call(this,this.locw,null);
+  ASSERT.call(this,lw,'lw');
+  this.locw = lw;
+
+  return this;
 };
 
 }]  ],

@@ -1,14 +1,3 @@
-if (false)
-UntransformedEmitters['resolved-name'] =
-function(n, flags, isStmt) {
-  var str = n.target.ref.scope.scopeID+':'+n.target.name;
-  str += '#['+n.target.synthName+']';
-  if (n.tz) str += '::tz';
-  this.w(str);
-  isStmt && this.w(';');
-  return true;
-};
-
 var bes = {};
 UntransformedEmitters['resolved-name'] =
 function(n, flags, isStmt) {
@@ -39,8 +28,14 @@ function(n, flags, isStmt) {
   else if ( tz) { this.emitAccessChk_tz(n.target); this.w(',').os(); }
 
   var cb = CB(n.id); this.emc(cb, 'bef');
+
+//var ni = this.smSetName(n.id.name);
+  this.lw(n.id.loc.start);
   this.wt(n.target.synthName, ETK_ID );
   tv && this.v();
+//this.lw(n.id.loc.end);
+//this.namei_cur = ni;
+
   this.emc(cb, 'aft');
   hasParen && this.w(')');
   isStmt && this.w(';');

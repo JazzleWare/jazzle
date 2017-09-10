@@ -43,6 +43,8 @@ function(rawStr) {
     this.startNewLine();
   }
 
+  if (this.locw) { this.sr(this.locw); this.locw = null; }
+
   this.rll += rawStr.length;
   this.emcol_cur += rawStr.length;
   this.rwr(rawStr);
@@ -110,7 +112,7 @@ function() {
     var lm0 = 
       vlq(this.ln_emcol_cur+optimalIndent-this.ln_emcol_latestRec) +
       this.ln_srci_vlq +
-      this.ln_namei_vlq + this.ln_loc_vlq;
+      this.ln_loc_vlq + this.ln_namei_vlq ;
     this.ln_srci_vlq = this.ln_namei_vlq = this.ln_loc_vlq = "";
     if (this.lm.length) lm0 = lm0 + ',';
     this.lm = lm0 + this.lm;
@@ -261,4 +263,5 @@ function(mustNL) {
   this.sm += ';';
   this.wcb && this.call_onw('\n', ETK_NL);
   this.out += '\n';
+  this.lineIsLn = true; // TODO: somewhere else
 };
