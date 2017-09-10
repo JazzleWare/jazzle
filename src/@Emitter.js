@@ -14,5 +14,31 @@ function Emitter() {
   this.rll = 0; // real line length; TODO: eliminate need for it
   this.wrapLine = false;
 
+  // <sourceMapVar>
+  this.lineIsLn = false;
+  this.ln = false;
+
+  this.emcol_cur = 0; // rll?
+  this.emcol_latestRec = 0;
+
+  this.srci_cur = 0;
+  this.srci_latestRec = 0;
+
+  this.namei_cur = 0;
+  this.namei_latestRec = 0;
+
+  this.loc_latestRec = {line: 0, column: 0};
+
+  this.ln_srci_vlq = "";
+  this.ln_loc_vlq = "";
+  this.ln_namei_vlq = "";
+
+  this.ln_emcol_cur = 0;
+  this.ln_emcol_latestRec = 0;
+
+  this.lm = ""; // sourcemap -- line
+  this.sm = ""; // sourcemap -- whole
+  // </sourceMapVar>
+
   this.out = "";
 }

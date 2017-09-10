@@ -44,6 +44,7 @@ function(rawStr) {
   }
 
   this.rll += rawStr.length;
+  this.emcol_cur += rawStr.length;
   this.rwr(rawStr);
 };
 
@@ -71,6 +72,8 @@ function() {
 this.startNewLine =
 function(mustNL) {
   this.flush(mustNL);
+  this.rll = 0;
+  this.emcol_cur = 0;
 };
 
 this.l =
@@ -103,9 +106,21 @@ function() {
   else
     this.out.length && this.insertLineBreak(false);
 
+  if (this.ln) {
+    var lm0 = 
+      vlq(this.ln_emcol_cur+optimalIndent-this.ln_emcol_latestRec) +
+      this.ln_srci_vlq +
+      this.ln_namei_vlq + this.ln_loc_vlq;
+    this.ln_srci_vlq = this.ln_namei_vlq = this.ln_loc_vlq = "";
+    if (this.lm.length) lm0 = lm0 + ',';
+    this.lm = lm0 + this.lm;
+    this.ln = false;
+  }
+
+  this.sm += this.lm;
   this.out += this.geti(optimalIndent) + line;
 
-  this.curLine = "";
+  this.curLine = this.lm = "";
   this.curLineIndent = this.indentLevel;
 };
 
@@ -223,6 +238,7 @@ function() {
   this.wcb && this.call_onw(' ', ETK_NONE);
   this.curLine += ' '; 
   this.rll++;
+  this.emcol_cur++;
 };
 
 this.clear_onw =
@@ -242,7 +258,7 @@ this.insertLineBreak =
 function(mustNL) {
   if (!this.allow.nl && !mustNL) return;
   this.curtt === ETK_NONE || this.rtt();
+  this.sm += ';';
   this.wcb && this.call_onw('\n', ETK_NL);
   this.out += '\n';
-  this.rll = 0;
 };

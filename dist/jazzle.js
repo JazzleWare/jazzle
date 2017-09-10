@@ -69,6 +69,32 @@ function Emitter() {
   this.rll = 0; // real line length; TODO: eliminate need for it
   this.wrapLine = false;
 
+  // <sourceMapVar>
+  this.lineIsLn = false;
+  this.ln = false;
+
+  this.emcol_cur = 0; // rll?
+  this.emcol_latestRec = 0;
+
+  this.srci_cur = 0;
+  this.srci_latestRec = 0;
+
+  this.namei_cur = 0;
+  this.namei_latestRec = 0;
+
+  this.loc_latestRec = {line: 0, column: 0};
+
+  this.ln_srci_vlq = "";
+  this.ln_loc_vlq = "";
+  this.ln_namei_vlq = "";
+
+  this.ln_emcol_cur = 0;
+  this.ln_emcol_latestRec = 0;
+
+  this.lm = ""; // sourcemap -- line
+  this.sm = ""; // sourcemap -- whole
+  // </sourceMapVar>
+
   this.out = "";
 }
 ;
@@ -2783,6 +2809,7 @@ function(rawStr) {
   }
 
   this.rll += rawStr.length;
+  this.emcol_cur += rawStr.length;
   this.rwr(rawStr);
 };
 
@@ -2810,6 +2837,8 @@ function() {
 this.startNewLine =
 function(mustNL) {
   this.flush(mustNL);
+  this.rll = 0;
+  this.emcol_cur = 0;
 };
 
 this.l =
@@ -2842,9 +2871,21 @@ function() {
   else
     this.out.length && this.insertLineBreak(false);
 
+  if (this.ln) {
+    var lm0 = 
+      vlq(this.ln_emcol_cur+optimalIndent-this.ln_emcol_latestRec) +
+      this.ln_srci_vlq +
+      this.ln_namei_vlq + this.ln_loc_vlq;
+    this.ln_srci_vlq = this.ln_namei_vlq = this.ln_loc_vlq = "";
+    if (this.lm.length) lm0 = lm0 + ',';
+    this.lm = lm0 + this.lm;
+    this.ln = false;
+  }
+
+  this.sm += this.lm;
   this.out += this.geti(optimalIndent) + line;
 
-  this.curLine = "";
+  this.curLine = this.lm = "";
   this.curLineIndent = this.indentLevel;
 };
 
@@ -2962,6 +3003,7 @@ function() {
   this.wcb && this.call_onw(' ', ETK_NONE);
   this.curLine += ' '; 
   this.rll++;
+  this.emcol_cur++;
 };
 
 this.clear_onw =
@@ -2981,9 +3023,9 @@ this.insertLineBreak =
 function(mustNL) {
   if (!this.allow.nl && !mustNL) return;
   this.curtt === ETK_NONE || this.rtt();
+  this.sm += ';';
   this.wcb && this.call_onw('\n', ETK_NL);
   this.out += '\n';
-  this.rll = 0;
 };
 
 },
@@ -4283,6 +4325,48 @@ function(n, flags, isStmt) {
   this.emc(cb, 'bef');
   Emitters['ConditionalExpression'].call(this, n, flags, isStmt);
   this.emc(cb, 'aft');
+};
+
+},
+function(){
+this.refreshSM =
+function(loc) {
+  if (loc === this.loc_latestRec)
+    return;
+  if (this.lineIsLn) {
+    this.ln_emcol_cur = this.emcol_cur;
+    this.ln_emcol_latestRec = this.emcol_latestRec;
+    this.emcol_latestRec = this.emcol_cur;
+
+    this.ln_srci_vlq = vlq(this.srci_cur-this.srci_latestRec);
+    this.srci_latestRec = this.srci_cur;
+
+    this.n_namei_vlq = vlq(this.namei_cur-this.namei_latestRec);
+    this.namei_latestRec = this.namei_cur;
+
+    this.ln_loc_vlq = 
+      vlq(this.loc_latestRec.line-loc.line) +
+      vlq(this.loc_latestRec.column-loc.column);
+    this.loc_latestRec = loc;
+    this.lineIsLn = false;
+  } else {
+    if (this.lm.length)
+      this.lm += ',';
+
+    this.lm += vlq(this.emcol_cur-this.emcol_latestRec);
+    this.emcol_latestRec = this.emcol_cur;
+
+    this.lm += vlq(this.srci_cur-this.srci_latestRec);
+    this.srci_latestRec = this.srci_cur;
+
+    this.lm += vlq(this.namei_cur-this.namei_latestRec);
+    this.namei_latestRec = this.namei_cur;
+
+    this.lm +=
+      vlq(this.loc_latestRec.line-loc.line) +
+      vlq(this.loc_latestRec.column-loc.column);
+    this.loc_latestRec = loc;
+  }
 };
 
 }]  ],
