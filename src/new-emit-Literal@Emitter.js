@@ -1,6 +1,9 @@
 Emitters['Literal'] =
 function(n, flags, isStmt) {
   var cb = CB(n); this.emc(cb, 'bef' );
+  if (n.value === null)
+    this.wt('null',ETK_ID);
+  else
   switch (typeof n.value) {
   case STRING_TYPE: 
     this.writeString(n.value,"'");

@@ -216,12 +216,13 @@ function(liq) {
 this.synth_node_MemberExpression =
 function(n,v) {
   return {
-    type: 'MemberExpression',
+    loc: null,
     computed: true,
     object: n,
     property: v,
     '#y': 0,
-    '#c': {}
+    '#c': {},
+    type: 'MemberExpression'
   };
 };
 

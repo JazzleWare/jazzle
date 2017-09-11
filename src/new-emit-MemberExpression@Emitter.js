@@ -1,6 +1,7 @@
 Emitters['MemberExpression'] =
 function(n, flags, isStmt) {
   var cb = CB(n); this.emc(cb, 'bef' );
+  this.lw(n.loc.start);
   this.eH(n.object, flags, false);
   if (n.computed)
     this.w('[').eA(n.property, EC_NONE, false).w(']');

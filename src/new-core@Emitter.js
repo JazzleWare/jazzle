@@ -19,11 +19,17 @@ function() {
 
 // write -- raw
 this.rwr =
-function(rawStr) { this.curLine += rawStr; };
+function(rawStr) {
+  this.rll += rawStr.length;
+  this.emcol_cur += rawStr.length;
+  this.curLine += rawStr;
+};
 
 this.write =
 function(rawStr) {
   rawStr += "";
+  var lw = null;
+  if (this.locw) { lw = this.locw; this.locw = null; }
   this.hasPendingSpace() && this.effectPendingSpace(rawStr.length);
   if (this.wcb) {
     var tt = this.curtt;
@@ -43,10 +49,8 @@ function(rawStr) {
     this.startNewLine();
   }
 
-  if (this.locw) { this.sr(this.locw); this.locw = null; }
+  if (lw) { this.sr(lw); }
 
-  this.rll += rawStr.length;
-  this.emcol_cur += rawStr.length;
   this.rwr(rawStr);
 };
 
@@ -74,8 +78,11 @@ function() {
 this.startNewLine =
 function(mustNL) {
   this.flush(mustNL);
-  this.rll = 0;
-  this.emcol_cur = 0;
+  if (this.allow.nl) {
+    this.rll = 0;
+    this.emcol_cur = 0;
+    this.lineIsLn = true;
+  }
 };
 
 this.l =
@@ -108,9 +115,12 @@ function() {
   else
     this.out.length && this.insertLineBreak(false);
 
+  var instr = this.geti(optimalIndent);
+  this.out += instr + line;
   if (this.ln) {
+    console.log('ln', this.ln_loc_vlq, 'to', this.ln_emcol_cur+optimalIndent);
     var lm0 = 
-      vlq(this.ln_emcol_cur+optimalIndent-this.ln_emcol_latestRec) +
+      vlq(this.ln_emcol_cur+instr.length) +
       this.ln_srci_vlq +
       this.ln_loc_vlq + this.ln_namei_vlq ;
     this.ln_srci_vlq = this.ln_namei_vlq = this.ln_loc_vlq = "";
@@ -120,7 +130,6 @@ function() {
   }
 
   this.sm += this.lm;
-  this.out += this.geti(optimalIndent) + line;
 
   this.curLine = this.lm = "";
   this.curLineIndent = this.indentLevel;
@@ -260,6 +269,7 @@ this.insertLineBreak =
 function(mustNL) {
   if (!this.allow.nl && !mustNL) return;
   this.curtt === ETK_NONE || this.rtt();
+  console.log('----------------------------- LINE ------------------------------');
   this.sm += ';';
   this.wcb && this.call_onw('\n', ETK_NL);
   this.out += '\n';

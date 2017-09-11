@@ -6,14 +6,18 @@ function(n, flags, isStmt) {
   if (hasParen) { this.w('('); flags = EC_NONE; }
 
   switch (o) {
-  case 'void': case 'delete': case 'typeof':
-    this.wt(o, ETK_ID).onw(wcb_afterVDT);
+  case '!':
+  case '~':
+    this.w(o);
+    break;
+  case '-':
+    this.wt(o, ETK_MIN).onw(wcb_MIN_u);
     break;
   case '+':
     this.wt(o, ETK_ADD).onw(wcb_ADD_u);
     break;
-  case '-':
-    this.wt(o, ETK_MIN).onw(wcb_MIN_u);
+  case 'void': case 'delete': case 'typeof':
+    this.wt(o, ETK_ID).onw(wcb_afterVDT);
     break;
   default:
     ASSERT.call(this, false, 'unary [:'+o+':]');

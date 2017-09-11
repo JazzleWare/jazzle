@@ -118,6 +118,7 @@ function(n, isVal, isB) {
 
     var sm = this.synth_node_MemberExpression(t1,t2);
     sm.computed = mem.computed;
+    sm.loc = mem.loc;
 
     n.right = this.synth_node_BinaryExpression(sm, '**', r);
   } else {

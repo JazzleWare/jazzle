@@ -1,8 +1,8 @@
 Transformers['SwitchStatement'] =
 function(n, isVal) {
   ASSERT_EQ.call(this, isVal, false);
-  var s = this.setScope(n['#scope']);
   n. discriminant = this.tr(n.discriminant, true);
+  var s = this.setScope(n['#scope']);
   this.trList(n.cases, false);
   this.setScope(s);
   return n;

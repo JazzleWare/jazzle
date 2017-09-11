@@ -30,7 +30,7 @@ function(n, flags, isStmt) {
   var cb = CB(n.id); this.emc(cb, 'bef');
 
 //var ni = this.smSetName(n.id.name);
-  this.lw(n.id.loc.start);
+  n.target.isGlobal() && this.lw(n.id.loc.start);
   this.wt(n.target.synthName, ETK_ID );
   tv && this.v();
 //this.lw(n.id.loc.end);

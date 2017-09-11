@@ -113,7 +113,7 @@ var OPTIONS =
 
 var HAS = {}.hasOwnProperty;
 
-var B = 'ABCDEFGHIJKLMONPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/';
+var B = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/';
 var I_31 = allOnes(31);
 
 function allOnes(len) { var n = 0, s = 0; while (s < len) n += (1 << s++); return n; }

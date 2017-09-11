@@ -7,9 +7,9 @@ function(cvtz) {
 
 this.setRR =
 function(reachedRef) {
-  var reachedRef = this.reachedRef;
+  var rr = this.reachedRef;
   this.reachedRef = reachedRef;
-  return reachedRef;
+  return rr;
 };
 
 this.setScope =
@@ -34,7 +34,7 @@ function(thisState) {
 };
 
 this.tr =
-function(n, ownerBody, isVal) {
+function(n, isVal) {
   var ntype = n.type;
   switch (ntype) {
   case 'EmptyStatement':
@@ -50,7 +50,7 @@ function(n, ownerBody, isVal) {
   if (transformer === null)
     throw new Error('could not find <'+ntype+'>-transformer');
 
-  return transformer.call(this, n, ownerBody, isVal);
+  return transformer.call(this, n, isVal);
 };
 
 this.rename =

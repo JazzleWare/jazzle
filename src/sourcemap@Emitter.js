@@ -35,8 +35,8 @@ function(loc) {
 
   var l = 0;
   if (this.lineIsLn) {
+    console.log('<ln>', this.emcol_cur);
     this.ln_emcol_cur = this.emcol_cur;
-    this.ln_emcol_latestRec = this.emcol_latestRec;
     this.emcol_latestRec = this.emcol_cur;
 
     l = this.srci_latestRec;
@@ -51,15 +51,17 @@ function(loc) {
     else this.ln_namei_vlq = "";
 
     this.ln_loc_vlq = 
-      vlq(this.loc_latestRec.line-loc.line) +
-      vlq(this.loc_latestRec.column-loc.column);
+      vlq(loc.line-this.loc_latestRec.line) +
+      vlq(loc.column-this.loc_latestRec.column);
     this.loc_latestRec = loc;
     this.lineIsLn = false;
+    this.ln = true;
   } else {
     if (this.lm.length)
       this.lm += ',';
 
     this.lm += vlq(this.emcol_cur-this.emcol_latestRec);
+    console.log('src@('+loc.line+','+loc.column+') -> (col:'+this.emcol_cur+')@em');
     this.emcol_latestRec = this.emcol_cur;
 
     l = this.srci_latestRec;
@@ -67,8 +69,8 @@ function(loc) {
     this.srci_latestRec = this.srci_cur;
 
     this.lm +=
-      vlq(this.loc_latestRec.line-loc.line) +
-      vlq(this.loc_latestRec.column-loc.column);
+      vlq(loc.line-this.loc_latestRec.line) +
+      vlq(loc.column-this.loc_latestRec.column);
     this.loc_latestRec = loc;
 
     if (this.namei_cur>=0) {
@@ -81,7 +83,8 @@ function(loc) {
 
 this.lw =
 function(lw) {
-  ASSERT_EQ.call(this,this.locw,null);
+// line below commented out to allow latest loc be used
+//ASSERT_EQ.call(this,this.locw,null);
   ASSERT.call(this,lw,'lw');
   this.locw = lw;
 

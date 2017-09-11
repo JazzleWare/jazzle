@@ -83,17 +83,16 @@ function Emitter() {
   this.srci_cur = 0;
   this.srci_latestRec = 0;
 
-  this.namei_cur = 0;
+  this.namei_cur = -1;
   this.namei_latestRec = 0;
 
-  this.loc_latestRec = {line: 0, column: 0};
+  this.loc_latestRec = {line: 1, column: 0};
 
   this.ln_srci_vlq = "";
   this.ln_loc_vlq = "";
   this.ln_namei_vlq = "";
 
   this.ln_emcol_cur = 0;
-  this.ln_emcol_latestRec = 0;
 
   this.lm = ""; // sourcemap -- line
   this.sm = ""; // sourcemap -- whole
@@ -629,7 +628,7 @@ var OPTIONS =
 
 var HAS = {}.hasOwnProperty;
 
-var B = 'ABCDEFGHIJKLMONPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/';
+var B = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/';
 var I_31 = allOnes(31);
 
 function allOnes(len) { var n = 0, s = 0; while (s < len) n += (1 << s++); return n; }
@@ -2788,11 +2787,17 @@ function() {
 
 // write -- raw
 this.rwr =
-function(rawStr) { this.curLine += rawStr; };
+function(rawStr) {
+  this.rll += rawStr.length;
+  this.emcol_cur += rawStr.length;
+  this.curLine += rawStr;
+};
 
 this.write =
 function(rawStr) {
   rawStr += "";
+  var lw = null;
+  if (this.locw) { lw = this.locw; this.locw = null; }
   this.hasPendingSpace() && this.effectPendingSpace(rawStr.length);
   if (this.wcb) {
     var tt = this.curtt;
@@ -2812,10 +2817,8 @@ function(rawStr) {
     this.startNewLine();
   }
 
-  if (this.locw) { this.sr(this.locw); this.locw = null; }
+  if (lw) { this.sr(lw); }
 
-  this.rll += rawStr.length;
-  this.emcol_cur += rawStr.length;
   this.rwr(rawStr);
 };
 
@@ -2843,8 +2846,11 @@ function() {
 this.startNewLine =
 function(mustNL) {
   this.flush(mustNL);
-  this.rll = 0;
-  this.emcol_cur = 0;
+  if (this.allow.nl) {
+    this.rll = 0;
+    this.emcol_cur = 0;
+    this.lineIsLn = true;
+  }
 };
 
 this.l =
@@ -2877,9 +2883,12 @@ function() {
   else
     this.out.length && this.insertLineBreak(false);
 
+  var instr = this.geti(optimalIndent);
+  this.out += instr + line;
   if (this.ln) {
+    console.log('ln', this.ln_loc_vlq, 'to', this.ln_emcol_cur+optimalIndent);
     var lm0 = 
-      vlq(this.ln_emcol_cur+optimalIndent-this.ln_emcol_latestRec) +
+      vlq(this.ln_emcol_cur+instr.length) +
       this.ln_srci_vlq +
       this.ln_loc_vlq + this.ln_namei_vlq ;
     this.ln_srci_vlq = this.ln_namei_vlq = this.ln_loc_vlq = "";
@@ -2889,7 +2898,6 @@ function() {
   }
 
   this.sm += this.lm;
-  this.out += this.geti(optimalIndent) + line;
 
   this.curLine = this.lm = "";
   this.curLineIndent = this.indentLevel;
@@ -3029,6 +3037,7 @@ this.insertLineBreak =
 function(mustNL) {
   if (!this.allow.nl && !mustNL) return;
   this.curtt === ETK_NONE || this.rtt();
+  console.log('----------------------------- LINE ------------------------------');
   this.sm += ';';
   this.wcb && this.call_onw('\n', ETK_NL);
   this.out += '\n';
@@ -3428,6 +3437,9 @@ function(){
 Emitters['Literal'] =
 function(n, flags, isStmt) {
   var cb = CB(n); this.emc(cb, 'bef' );
+  if (n.value === null)
+    this.wt('null',ETK_ID);
+  else
   switch (typeof n.value) {
   case STRING_TYPE: 
     this.writeString(n.value,"'");
@@ -3456,6 +3468,7 @@ function(){
 Emitters['MemberExpression'] =
 function(n, flags, isStmt) {
   var cb = CB(n); this.emc(cb, 'bef' );
+  this.lw(n.loc.start);
   this.eH(n.object, flags, false);
   if (n.computed)
     this.w('[').eA(n.property, EC_NONE, false).w(']');
@@ -3640,14 +3653,18 @@ function(n, flags, isStmt) {
   if (hasParen) { this.w('('); flags = EC_NONE; }
 
   switch (o) {
-  case 'void': case 'delete': case 'typeof':
-    this.wt(o, ETK_ID).onw(wcb_afterVDT);
+  case '!':
+  case '~':
+    this.w(o);
+    break;
+  case '-':
+    this.wt(o, ETK_MIN).onw(wcb_MIN_u);
     break;
   case '+':
     this.wt(o, ETK_ADD).onw(wcb_ADD_u);
     break;
-  case '-':
-    this.wt(o, ETK_MIN).onw(wcb_MIN_u);
+  case 'void': case 'delete': case 'typeof':
+    this.wt(o, ETK_ID).onw(wcb_afterVDT);
     break;
   default:
     ASSERT.call(this, false, 'unary [:'+o+':]');
@@ -4155,7 +4172,7 @@ function(n, flags, isStmt) {
   var cb = CB(n.id); this.emc(cb, 'bef');
 
 //var ni = this.smSetName(n.id.name);
-  this.lw(n.id.loc.start);
+  n.target.isGlobal() && this.lw(n.id.loc.start);
   this.wt(n.target.synthName, ETK_ID );
   tv && this.v();
 //this.lw(n.id.loc.end);
@@ -4368,8 +4385,8 @@ function(loc) {
 
   var l = 0;
   if (this.lineIsLn) {
+    console.log('<ln>', this.emcol_cur);
     this.ln_emcol_cur = this.emcol_cur;
-    this.ln_emcol_latestRec = this.emcol_latestRec;
     this.emcol_latestRec = this.emcol_cur;
 
     l = this.srci_latestRec;
@@ -4384,15 +4401,17 @@ function(loc) {
     else this.ln_namei_vlq = "";
 
     this.ln_loc_vlq = 
-      vlq(this.loc_latestRec.line-loc.line) +
-      vlq(this.loc_latestRec.column-loc.column);
+      vlq(loc.line-this.loc_latestRec.line) +
+      vlq(loc.column-this.loc_latestRec.column);
     this.loc_latestRec = loc;
     this.lineIsLn = false;
+    this.ln = true;
   } else {
     if (this.lm.length)
       this.lm += ',';
 
     this.lm += vlq(this.emcol_cur-this.emcol_latestRec);
+    console.log('src@('+loc.line+','+loc.column+') -> (col:'+this.emcol_cur+')@em');
     this.emcol_latestRec = this.emcol_cur;
 
     l = this.srci_latestRec;
@@ -4400,8 +4419,8 @@ function(loc) {
     this.srci_latestRec = this.srci_cur;
 
     this.lm +=
-      vlq(this.loc_latestRec.line-loc.line) +
-      vlq(this.loc_latestRec.column-loc.column);
+      vlq(loc.line-this.loc_latestRec.line) +
+      vlq(loc.column-this.loc_latestRec.column);
     this.loc_latestRec = loc;
 
     if (this.namei_cur>=0) {
@@ -4414,7 +4433,8 @@ function(loc) {
 
 this.lw =
 function(lw) {
-  ASSERT_EQ.call(this,this.locw,null);
+// line below commented out to allow latest loc be used
+//ASSERT_EQ.call(this,this.locw,null);
   ASSERT.call(this,lw,'lw');
   this.locw = lw;
 
@@ -15027,9 +15047,9 @@ function(cvtz) {
 
 this.setRR =
 function(reachedRef) {
-  var reachedRef = this.reachedRef;
+  var rr = this.reachedRef;
   this.reachedRef = reachedRef;
-  return reachedRef;
+  return rr;
 };
 
 this.setScope =
@@ -15054,7 +15074,7 @@ function(thisState) {
 };
 
 this.tr =
-function(n, ownerBody, isVal) {
+function(n, isVal) {
   var ntype = n.type;
   switch (ntype) {
   case 'EmptyStatement':
@@ -15070,7 +15090,7 @@ function(n, ownerBody, isVal) {
   if (transformer === null)
     throw new Error('could not find <'+ntype+'>-transformer');
 
-  return transformer.call(this, n, ownerBody, isVal);
+  return transformer.call(this, n, isVal);
 };
 
 this.rename =
@@ -15312,6 +15332,7 @@ function(n, isVal, isB) {
 
     var sm = this.synth_node_MemberExpression(t1,t2);
     sm.computed = mem.computed;
+    sm.loc = mem.loc;
 
     n.right = this.synth_node_BinaryExpression(sm, '**', r);
   } else {
@@ -15452,6 +15473,13 @@ function(n, isVal) {
 
 },
 function(){
+Transformers['BreakStatement'] =
+function(n, isVal) {
+  return n; // TODO: try { break } finally { yield }
+};
+
+},
+function(){
 Transformers['CallExpression'] =
 function(n, isVal) {
   var ti = false, l = n.callee;
@@ -15522,6 +15550,13 @@ function(n, isVal) {
 
 },
 function(){
+Transformers['ContinueStatement'] =
+function(n, isVal) {
+  return n;
+};
+
+},
+function(){
 Transformers['ExpressionStatement'] =
 function(n, isVal) {
   ASSERT_EQ.call(this, isVal, false);
@@ -15552,6 +15587,14 @@ function(n, isVal) {
   n.consequent = this.tr(n.consequent, false);
   if (n.alternate)
     n.alternate = this.tr(n.alternate, false);
+  return n;
+};
+
+},
+function(){
+Transformers['LabeledStatement'] =
+function(n, isVal) {
+  n.body = this.tr(n.body, false );
   return n;
 };
 
@@ -15631,8 +15674,8 @@ function(){
 Transformers['SwitchStatement'] =
 function(n, isVal) {
   ASSERT_EQ.call(this, isVal, false);
-  var s = this.setScope(n['#scope']);
   n. discriminant = this.tr(n.discriminant, true);
+  var s = this.setScope(n['#scope']);
   this.trList(n.cases, false);
   this.setScope(s);
   return n;
@@ -15679,6 +15722,13 @@ function(){
 Transformers['ThrowStatement'] =
 function(n, isVal) {
   n.argument = this.tr(n.argument, true);
+  return n;
+};
+
+},
+function(){
+Transformers['TryStatement'] =
+function(n, isVal) {
   return n;
 };
 
@@ -15989,7 +16039,7 @@ function(n, isVal) {
 this.transformDeclFn =
 function(n) {
   var target = this.cur.findDeclOwn_m(_m(n.id.name));
-  ASSERT.call(this, target, 'unresolved ('+name+')');
+  ASSERT.call(this, target, 'unresolved ('+n.id.name+')');
   n = this.transformRawFn(n, false);
   n.target = target;
   return n;
@@ -16136,6 +16186,12 @@ function(ex) {
     loc: ex.loc, '#c': {}, '#y': 0
   };
 };
+
+},
+function(){
+Transformers['ForOfStatement'] = function(n, isVal) { return n; };
+Transformers['ForInStatement'] = function(n, isVal) { return n; };
+Transformers['ForStatement'] = function(n, isVal) { return n; };
 
 },
 function(){
@@ -16397,12 +16453,13 @@ function(liq) {
 this.synth_node_MemberExpression =
 function(n,v) {
   return {
-    type: 'MemberExpression',
+    loc: null,
     computed: true,
     object: n,
     property: v,
     '#y': 0,
-    '#c': {}
+    '#c': {},
+    type: 'MemberExpression'
   };
 };
 
