@@ -35,7 +35,7 @@ function(loc) {
 
   var l = 0;
   if (this.lineIsLn) {
-    console.log('<ln>', this.emcol_cur);
+//  console.log('<ln>', this.emcol_cur);
     this.ln_emcol_cur = this.emcol_cur;
     this.emcol_latestRec = this.emcol_cur;
 
@@ -61,7 +61,7 @@ function(loc) {
       this.lm += ',';
 
     this.lm += vlq(this.emcol_cur-this.emcol_latestRec);
-    console.log('src@('+loc.line+','+loc.column+') -> (col:'+this.emcol_cur+')@em');
+//  console.log('src@('+loc.line+','+loc.column+') -> (col:'+this.emcol_cur+')@em');
     this.emcol_latestRec = this.emcol_cur;
 
     l = this.srci_latestRec;

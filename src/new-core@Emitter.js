@@ -118,7 +118,7 @@ function() {
   var instr = this.geti(optimalIndent);
   this.out += instr + line;
   if (this.ln) {
-    console.log('ln', this.ln_loc_vlq, 'to', this.ln_emcol_cur+optimalIndent);
+//  console.log('ln', this.ln_loc_vlq, 'to', this.ln_emcol_cur+optimalIndent);
     var lm0 = 
       vlq(this.ln_emcol_cur+instr.length) +
       this.ln_srci_vlq +
@@ -269,7 +269,7 @@ this.insertLineBreak =
 function(mustNL) {
   if (!this.allow.nl && !mustNL) return;
   this.curtt === ETK_NONE || this.rtt();
-  console.log('----------------------------- LINE ------------------------------');
+//console.log('----------------------------- LINE ------------------------------');
   this.sm += ';';
   this.wcb && this.call_onw('\n', ETK_NL);
   this.out += '\n';

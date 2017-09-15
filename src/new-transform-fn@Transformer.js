@@ -41,7 +41,7 @@ function(n, isVal) {
 
   if (l && !(this.thisState & THS_IS_REACHED) && (this.thisState & THS_NEEDS_CHK)) {
     var len = fnBody.length;
-    if (len && fnBody[len-1].type !== 'ReturnStatement') {
+    if (len === 0 || fnBody[len-1].type !== 'ReturnStatement') {
       l.track(this.cur);
       fnBody.push(this.synth_RCheck(null, l));
     }

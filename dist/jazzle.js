@@ -925,7 +925,7 @@ BINP['>>>'] = BINP['>>'] = BINP['<<'] =
 nextl(PREC_COMP); // >>>, >>, <<
 
 var PREC_ADD = BINP['+'] = BINP['-'] = nextl(PREC_SH); // +, -
-var PREC_MUL = BINP['*'] = nextl(PREC_ADD); // *, /
+var PREC_MUL = BINP['*'] = BINP['/'] = nextl(PREC_ADD); // *, /
 var PREC_EX = BINP['**'] = nextl(PREC_MUL); // **
 
 var PREC_UNARY = nextr(PREC_EX); // delete, void, -, +, typeof; not really a right-associative thing
@@ -2886,7 +2886,7 @@ function() {
   var instr = this.geti(optimalIndent);
   this.out += instr + line;
   if (this.ln) {
-    console.log('ln', this.ln_loc_vlq, 'to', this.ln_emcol_cur+optimalIndent);
+//  console.log('ln', this.ln_loc_vlq, 'to', this.ln_emcol_cur+optimalIndent);
     var lm0 = 
       vlq(this.ln_emcol_cur+instr.length) +
       this.ln_srci_vlq +
@@ -3037,7 +3037,7 @@ this.insertLineBreak =
 function(mustNL) {
   if (!this.allow.nl && !mustNL) return;
   this.curtt === ETK_NONE || this.rtt();
-  console.log('----------------------------- LINE ------------------------------');
+//console.log('----------------------------- LINE ------------------------------');
   this.sm += ';';
   this.wcb && this.call_onw('\n', ETK_NL);
   this.out += '\n';
@@ -3746,6 +3746,19 @@ function(n, flags, isStmt) {
 
 },
 function(){
+Emitters['ForOfStatement'] =
+Emitters['ForInStatement'] =
+Emitters['ForStatement'] =
+Emitters['TryStatement'] =
+Emitters['LabeledStatement'] =
+Emitters['ContinueStatement'] =
+Emitters['BreakStatement'] =
+function(n, flags, isStmt) {
+  console.log('SKIPPING', n.type, 'LEN', n.end - n.start);
+};
+
+},
+function(){
 this.emitExprFn =
 function(n, flags, isStmt) {
   var hasParen = flags & EC_START_STMT;
@@ -4164,6 +4177,8 @@ function(n, flags, isStmt) {
       if (hasZero) hasZero = false;
     }
   }
+  if (n.target.isGlobal() || tz)
+    this.lw(n.id.loc.start);
   if (hasParen) { this.w('('); flags = EC_NONE; }
 
   if (hasZero) this.wm('0',',')
@@ -4172,7 +4187,6 @@ function(n, flags, isStmt) {
   var cb = CB(n.id); this.emc(cb, 'bef');
 
 //var ni = this.smSetName(n.id.name);
-  n.target.isGlobal() && this.lw(n.id.loc.start);
   this.wt(n.target.synthName, ETK_ID );
   tv && this.v();
 //this.lw(n.id.loc.end);
@@ -4180,6 +4194,7 @@ function(n, flags, isStmt) {
 
   this.emc(cb, 'aft');
   hasParen && this.w(')');
+//tz && this.lw(n.id.loc.end);
   isStmt && this.w(';');
   return true;
 };
@@ -4385,7 +4400,7 @@ function(loc) {
 
   var l = 0;
   if (this.lineIsLn) {
-    console.log('<ln>', this.emcol_cur);
+//  console.log('<ln>', this.emcol_cur);
     this.ln_emcol_cur = this.emcol_cur;
     this.emcol_latestRec = this.emcol_cur;
 
@@ -4411,7 +4426,7 @@ function(loc) {
       this.lm += ',';
 
     this.lm += vlq(this.emcol_cur-this.emcol_latestRec);
-    console.log('src@('+loc.line+','+loc.column+') -> (col:'+this.emcol_cur+')@em');
+//  console.log('src@('+loc.line+','+loc.column+') -> (col:'+this.emcol_cur+')@em');
     this.emcol_latestRec = this.emcol_cur;
 
     l = this.srci_latestRec;
@@ -16014,7 +16029,7 @@ function(n, isVal) {
 
   if (l && !(this.thisState & THS_IS_REACHED) && (this.thisState & THS_NEEDS_CHK)) {
     var len = fnBody.length;
-    if (len && fnBody[len-1].type !== 'ReturnStatement') {
+    if (len === 0 || fnBody[len-1].type !== 'ReturnStatement') {
       l.track(this.cur);
       fnBody.push(this.synth_RCheck(null, l));
     }
