@@ -18,6 +18,11 @@ function(n, isVal) {
   this.cur.closureLLINOSA = this.cur.parent.scs.isAnyFn() ?
     createObj(this.cur.parent.scs.closureLLINOSA) : {};
 
+  this.tryMarkActive(this.cur);
+
+  var _AS = this.setAS(false);
+  var _AN = this.setAN(null);
+
   this.cur.synth_start(this.renamer);
   ASSERT.call(this, !this.cur.inBody, 'inBody');
 
@@ -60,13 +65,18 @@ function(n, isVal) {
   this.setTS(ts);
   this.thisState = th;
 
+  this.setAS(_AS);
+  this.setAN(_AN);
+
   return this.synth_TransformedFn(n, argsPrologue);
 };
 
 this.transformDeclFn =
 function(n) {
+  ASSERT.call(this, !this.activeIfScope && (!this.activeIfNames || !this.activeIfNames.length()), 'activeness');
   var target = this.cur.findDeclOwn_m(_m(n.id.name));
   ASSERT.call(this, target, 'unresolved ('+n.id.name+')');
+  this.active1if2(n['#scope'], target);
   n = this.transformRawFn(n, false);
   n.target = target;
   return n;

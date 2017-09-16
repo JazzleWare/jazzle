@@ -56,18 +56,14 @@ function(target) {
 };
 
 this.toResolvedName =
-function(id, bes) {
-  var name = id.name, target = null;
-  var isB = bes === 'binding';
-  if (isB)
-    target = this.cur.findDeclAny_m(_m(name));
-  else {
-    var ref = this.cur.findRefAny_m(_m(name));
-    ASSERT.call(this, ref, 'name is not used in the current scope: <'+name+'>');
-    target = ref.getDecl();
-  }
+function(id, bes, manualActivation) {
+  var name = id.name;
+  var isB = bes === 'binding', target = null;
 
+  target = this.getDeclFor(name, isB);
   ASSERT.call(this, target, 'unresolved <'+name+'>');
+
+  manualActivation || this.tryMarkActive(target);
   var hasTZ = !isB && this.needsTZ(target);
   
   if (hasTZ) {
@@ -87,6 +83,20 @@ function(id, bes) {
     kind: 'resolved-name',
     type: '#Untransformed'
   };
+};
+
+this.getDeclFor =
+function(name, isB) {
+  ASSERT.call(this, isB === true || isB === false, 'isB' );
+  var target = null;
+  if (isB)
+    target = this.cur.findDeclAny_m(_m(name));
+  else {
+    var ref = this.cur.findRefAny_m(_m(name));
+    ASSERT.call(this, ref, 'name is not used in the current scope: <'+name+'>');
+    target = ref.getDecl();
+  }
+  return target;
 };
 
 this.synthCheckForTZ =

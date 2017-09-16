@@ -41,6 +41,10 @@ function Scope(sParent, type) {
 
   this.reached = true;
 
+  this.ai = activeID_new();
+  this.activeIf = null;
+  this.activeness = ANESS_UNKNOWN;
+
   if (this.parent && this.parent.isParen())
     this.parent.ch.push(this);
 }

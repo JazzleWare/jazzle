@@ -17,10 +17,11 @@ this.remove = function(name) {
     return false;
   delete this.obj[name];
 
-  var list = this.keys, i = 0;
+  var list = this.keys;
+  var i = list.length - 1; // slighty optimize for pops
 
   while (name !== list[i])
-    i++;
+    i--;
 
   while (i < list.length-1) {
     list[i] = list[i+1];
@@ -37,4 +38,13 @@ this.has = function(name) {
 
 this.length = function() {
   return this.keys.length;
+};
+
+this.pop = function(out) {
+  var list = this.keys;
+  ASSERT.call(this, list.length, 'len' );
+  var name = list.pop();
+  var elem = this.obj[name]; delete this.obj[name];
+  if (out) { out.name = name; out.value = elem; }
+  return out;
 };

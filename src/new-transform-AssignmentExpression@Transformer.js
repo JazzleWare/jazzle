@@ -1,7 +1,10 @@
 var TransformByLeft = {};
 TransformByLeft['ArrayPattern'] =
 function(n, isVal, isB) {
+  var ais = this.setAS(true);
   n.right = this.tr(n.right, true);
+  this.setAS(ais);
+
   var s = [],
       t = this.saveInTemp(this.synth_ArrIter(n.right), s),
       list = n.left.elements,
@@ -34,7 +37,10 @@ function(n, isVal, isB) {
 
 TransformByLeft['ObjectPattern'] =
 function(n, isVal, isB) {
+  var ais = this.setAS(true);
   n.right = this.tr(n.right, true);
+  this.setAS(ais);
+
   var s = [],
       t = this.saveInTemp(this.synth_ObjIter(n.right), s),
       l = n.left.properties,
@@ -96,6 +102,7 @@ function(n, isVal, isB) {
 TransformByLeft['MemberExpression'] =
 function(n, isVal, isB) {
   ASSERT_EQ.call(this, isB, false);
+  var ais = this.setAS(true);
   if (n.operator === '**=') {
     var mem = n.left;
     mem.object = this.tr(mem.object, true );
@@ -125,28 +132,48 @@ function(n, isVal, isB) {
     n.left = this.trSAT(n.left);
     n.right = this.tr(n.right, true);
   }
+  this.setAS(ais);
   return n;
 };
 
 TransformByLeft['Identifier'] =
 function(n, isVal, isB) {
-  n.left = this.toResolvedName(n.left, isB ? 'binding' : 'sat');
+  var rn = n.left = this.toResolvedName(n.left, isB ? 'binding' : 'sat', true); // target
+  var ais = this.activeIfScope, nameNew = false, leftsig = false; // significant
+  if (rn.target.isGlobal()) {
+    leftsig = true;
+    this.active1if2(rn.target, this.cur);
+    this.setAS(true);
+  }
+  else if (rn.tz) {
+    leftsig = true;
+    this.active1if2(rn.target, this.cur);
+  }
+
   if (!isB) {
     var l = n.left.target;
     l.ref.assigned();
     if (this.needsCVLHS(l)) {
       n.left.cv = true;
+      leftsig = true;
+      this.active1if2(rn.target, this.cur);
       this.cacheCVLHS(l);
     }
     else if (l.isRG())
       n = this.synth_GlobalUpdate(n, false);
   }
+
+  if (!leftsig) nameNew = this.recAN(rn.target);
   n.right = this.tr(n.right, true);
   if (isB) {
     var target = n.left.target;
     if (!target.isReached())
       this.makeReached(target);
   } 
+
+  this.setAS(ais);
+  nameNew && this.activeIfNames.pop();
+
   return n;
 };
 

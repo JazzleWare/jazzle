@@ -12,5 +12,11 @@ function Transformer() {
   this.cvtz = {};
   this.thisState = THS_NONE;
 
+  // name.activeIf[`cur.scopeID] = `cur if set
+  this.activeIfScope = false;
+
+  // for var n in.ls `activeIfNames: name.activeIf[n#getID] = n
+  this.activeIfNames = null;
+
   this.renamer = renamer_incremental;
 }

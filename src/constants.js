@@ -122,6 +122,9 @@ function allOnes(len) { var n = 0, s = 0; while (s < len) n += (1 << s++); retur
 function ASSERT(cond, message) { if (!cond) throw new Error(message); }
 function ASSERT_EQ(val,ex) { ASSERT.call(this, val === ex, 'val must be <'+ex+'>, not <'+val+'>'); }
 
+var ACTIVE_ID = 0;
+function activeID_new() { return ++ACTIVE_ID; }
+
 var CTX_NONE = 0,
     CTX_PARAM = 1,
     CTX_FOR = CTX_PARAM << 1,
@@ -178,3 +181,8 @@ var CHK_T = 1,
 var THS_NEEDS_CHK = 1,
     THS_IS_REACHED = THS_NEEDS_CHK << 1,
     THS_NONE = 0;
+
+var ANESS_UNKNOWN = -2,
+    ANESS_CHECKING = -1,
+    ANESS_INACTIVE = 0,
+    ANESS_ACTIVE = 1;
