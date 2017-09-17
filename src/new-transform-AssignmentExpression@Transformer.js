@@ -1,6 +1,7 @@
 var TransformByLeft = {};
 TransformByLeft['ArrayPattern'] =
 function(n, isVal, isB) {
+  this.incNS();
   var ais = this.setAS(true);
   n.right = this.tr(n.right, true);
   this.setAS(ais);
@@ -37,6 +38,7 @@ function(n, isVal, isB) {
 
 TransformByLeft['ObjectPattern'] =
 function(n, isVal, isB) {
+  this.incNS();
   var ais = this.setAS(true);
   n.right = this.tr(n.right, true);
   this.setAS(ais);
@@ -102,6 +104,7 @@ function(n, isVal, isB) {
 TransformByLeft['MemberExpression'] =
 function(n, isVal, isB) {
   ASSERT_EQ.call(this, isB, false);
+  this.incNS();
   var ais = this.setAS(true);
   if (n.operator === '**=') {
     var mem = n.left;
@@ -143,10 +146,12 @@ function(n, isVal, isB) {
   if (rn.target.isGlobal()) {
     leftsig = true;
     this.active1if2(rn.target, this.cur);
+    this.incNS();
     this.setAS(true);
   }
   else if (rn.tz) {
     leftsig = true;
+    this.incNS();
     this.active1if2(rn.target, this.cur);
   }
 
@@ -156,6 +161,7 @@ function(n, isVal, isB) {
     if (this.needsCVLHS(l)) {
       n.left.cv = true;
       leftsig = true;
+      this.incNS();
       this.active1if2(rn.target, this.cur);
       this.cacheCVLHS(l);
     }

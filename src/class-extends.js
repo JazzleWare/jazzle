@@ -1,5 +1,7 @@
+ Scope.prototype = createObj(Actix.prototype);
  ConcreteScope.prototype = createObj(Scope.prototype);
  GlobalScope.prototype = createObj(Scope.prototype);
+   Decl.prototype = createObj(Actix.prototype);
  FunScope.prototype = createObj(ConcreteScope.prototype);
  ModuleScope.prototype = createObj(ConcreteScope.prototype);
  ClassScope.prototype = createObj(Scope.prototype);

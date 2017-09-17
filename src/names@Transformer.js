@@ -63,9 +63,12 @@ function(id, bes, manualActivation) {
   target = this.getDeclFor(name, isB);
   ASSERT.call(this, target, 'unresolved <'+name+'>');
 
-  manualActivation || this.tryMarkActive(target);
   var hasTZ = !isB && this.needsTZ(target);
-  
+  if (!manualActivation) {
+    if (hasTZ) this.active1if2(target, this.cur);
+    else this.tryMarkActive(target);
+  }
+
   if (hasTZ) {
     if (target.isClassName())
       return this.synthCheckForTZ(target, null, -1);

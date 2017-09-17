@@ -1,4 +1,5 @@
 function Scope(sParent, type) {
+  Actix.call(this, ACT_SCOPE);
   this.parent = sParent;
   this.parent && ASSERT.call(this, this.parent.reached, 'not reached');
   this.type = type;
@@ -40,10 +41,6 @@ function Scope(sParent, type) {
   this.tcTracker = new SortedObj(); // names tracked for tz/cv (const violation)
 
   this.reached = true;
-
-  this.ai = activeID_new();
-  this.activeIf = null;
-  this.activeness = ANESS_UNKNOWN;
 
   if (this.parent && this.parent.isParen())
     this.parent.ch.push(this);

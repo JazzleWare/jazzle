@@ -16,7 +16,9 @@ function Transformer() {
   this.activeIfScope = false;
 
   // for var n in.ls `activeIfNames: name.activeIf[n#getID] = n
-  this.activeIfNames = null;
+  this.activeIfNames = null; // TODO: should rename to activeIfOther, because it can actually contain name-, scope-, or bare actices (actixes)
+
+  this.curNS = 0; // sinde-effencts
 
   this.renamer = renamer_incremental;
 }

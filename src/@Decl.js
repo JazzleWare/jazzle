@@ -1,4 +1,5 @@
 function Decl() {
+  Actix.call(this, ACT_DECL );
   this.ref = null;
   this.idx = -1;
   this.name = "";
@@ -8,9 +9,4 @@ function Decl() {
   this.reached = null;
   this.type = DT_NONE;
   this.synthName = "";
-
-  this.ai = activeID_new();  
-  this.activeIf = null;
-
-  this.activeness = ANESS_UNKNOWN;
 }

@@ -103,6 +103,17 @@ function(a,b) {
     ASSERT.call(this, b === aIf.get(b.ai), 'not' );
     return false;
   }
+
   aIf.set(b.ai, b);
   return true;
 };
+
+this.setNS =
+function(v) {
+  var ns = this.curNS;
+  this.curNS = v;
+  return ns;
+};
+
+this.incNS =
+function() { return ++this.curNS; };

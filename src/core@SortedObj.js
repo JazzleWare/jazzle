@@ -46,5 +46,6 @@ this.pop = function(out) {
   var name = list.pop();
   var elem = this.obj[name]; delete this.obj[name];
   if (out) { out.name = name; out.value = elem; }
+  else out = elem;
   return out;
 };

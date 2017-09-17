@@ -1,6 +1,15 @@
 (function(){
 "use strict";
 ;
+function Actix(role) { // activity ctx
+  ASSERT.call(this, arguments.length === 1, 'len' );
+  this.ai = activeID_new();
+  this.activeIf = null;
+  this.activeness = ANESS_UNKNOWN;
+  this.ns = 0;
+  this.role = role;
+}
+;
 function BundleScope() {
   Scope.call(this, null, ST_BUNDLE);
   this.globals = new SortedObj();
@@ -42,6 +51,7 @@ function ConcreteScope(parent, type) {
 }
 ;
 function Decl() {
+  Actix.call(this, ACT_DECL );
   this.ref = null;
   this.idx = -1;
   this.name = "";
@@ -51,11 +61,6 @@ function Decl() {
   this.reached = null;
   this.type = DT_NONE;
   this.synthName = "";
-
-  this.ai = activeID_new();  
-  this.activeIf = null;
-
-  this.activeness = ANESS_UNKNOWN;
 }
 ;
 function Emitter() {
@@ -340,6 +345,7 @@ function Ref(scope) {
 }
 ;
 function Scope(sParent, type) {
+  Actix.call(this, ACT_SCOPE);
   this.parent = sParent;
   this.parent && ASSERT.call(this, this.parent.reached, 'not reached');
   this.type = type;
@@ -381,10 +387,6 @@ function Scope(sParent, type) {
   this.tcTracker = new SortedObj(); // names tracked for tz/cv (const violation)
 
   this.reached = true;
-
-  this.ai = activeID_new();
-  this.activeIf = null;
-  this.activeness = ANESS_UNKNOWN;
 
   if (this.parent && this.parent.isParen())
     this.parent.ch.push(this);
@@ -511,13 +513,17 @@ function Transformer() {
   this.activeIfScope = false;
 
   // for var n in.ls `activeIfNames: name.activeIf[n#getID] = n
-  this.activeIfNames = null;
+  this.activeIfNames = null; // TODO: should rename to activeIfOther, because it can actually contain name-, scope-, or bare actices (actixes)
+
+  this.curNS = 0; // sinde-effencts
 
   this.renamer = renamer_incremental;
 }
 ;
+ Scope.prototype = createObj(Actix.prototype);
  ConcreteScope.prototype = createObj(Scope.prototype);
  GlobalScope.prototype = createObj(Scope.prototype);
+   Decl.prototype = createObj(Actix.prototype);
  FunScope.prototype = createObj(ConcreteScope.prototype);
  ModuleScope.prototype = createObj(ConcreteScope.prototype);
  ClassScope.prototype = createObj(Scope.prototype);
@@ -716,6 +722,11 @@ var ANESS_UNKNOWN = -2,
     ANESS_CHECKING = -1,
     ANESS_INACTIVE = 0,
     ANESS_ACTIVE = 1;
+
+var ACT_BARE = 0,
+    ACT_DECL = 1,
+    ACT_SCOPE = 2;
+
 ;
 function isNum(c) {
   return (c >= CH_0 && c <= CH_9);
@@ -1637,6 +1648,7 @@ function wcb_wrap(rawStr, tt) {
              def[1][e++].call(def[0]);
        }
      }).call([
+null,
 null,
 null,
 [ClassScope.prototype, [function(){
@@ -14813,6 +14825,7 @@ this.pop = function(out) {
   var name = list.pop();
   var elem = this.obj[name]; delete this.obj[name];
   if (out) { out.name = name; out.value = elem; }
+  else out = elem;
   return out;
 };
 
@@ -15191,9 +15204,20 @@ function(a,b) {
     ASSERT.call(this, b === aIf.get(b.ai), 'not' );
     return false;
   }
+
   aIf.set(b.ai, b);
   return true;
 };
+
+this.setNS =
+function(v) {
+  var ns = this.curNS;
+  this.curNS = v;
+  return ns;
+};
+
+this.incNS =
+function() { return ++this.curNS; };
 
 },
 function(){
@@ -15262,9 +15286,12 @@ function(id, bes, manualActivation) {
   target = this.getDeclFor(name, isB);
   ASSERT.call(this, target, 'unresolved <'+name+'>');
 
-  manualActivation || this.tryMarkActive(target);
   var hasTZ = !isB && this.needsTZ(target);
-  
+  if (!manualActivation) {
+    if (hasTZ) this.active1if2(target, this.cur);
+    else this.tryMarkActive(target);
+  }
+
   if (hasTZ) {
     if (target.isClassName())
       return this.synthCheckForTZ(target, null, -1);
@@ -15324,6 +15351,7 @@ function(){
 var TransformByLeft = {};
 TransformByLeft['ArrayPattern'] =
 function(n, isVal, isB) {
+  this.incNS();
   var ais = this.setAS(true);
   n.right = this.tr(n.right, true);
   this.setAS(ais);
@@ -15360,6 +15388,7 @@ function(n, isVal, isB) {
 
 TransformByLeft['ObjectPattern'] =
 function(n, isVal, isB) {
+  this.incNS();
   var ais = this.setAS(true);
   n.right = this.tr(n.right, true);
   this.setAS(ais);
@@ -15425,6 +15454,7 @@ function(n, isVal, isB) {
 TransformByLeft['MemberExpression'] =
 function(n, isVal, isB) {
   ASSERT_EQ.call(this, isB, false);
+  this.incNS();
   var ais = this.setAS(true);
   if (n.operator === '**=') {
     var mem = n.left;
@@ -15466,10 +15496,12 @@ function(n, isVal, isB) {
   if (rn.target.isGlobal()) {
     leftsig = true;
     this.active1if2(rn.target, this.cur);
+    this.incNS();
     this.setAS(true);
   }
   else if (rn.tz) {
     leftsig = true;
+    this.incNS();
     this.active1if2(rn.target, this.cur);
   }
 
@@ -15479,6 +15511,7 @@ function(n, isVal, isB) {
     if (this.needsCVLHS(l)) {
       n.left.cv = true;
       leftsig = true;
+      this.incNS();
       this.active1if2(rn.target, this.cur);
       this.cacheCVLHS(l);
     }
@@ -15719,10 +15752,41 @@ function(){
 Transformers['IfStatement'] =
 function(n, isVal) {
   ASSERT_EQ.call(this, isVal, false);
+  var altax = n['#elseScope'], conax = n['#ifScope'];
+
+//altax && ASSERT.call(this, this.recAN(altax), 'altax');
+//ASSERT.call(this, this.recAN(conax), 'conax');
+
+  var ns = this.setNS(0);
+  var tesax = new Actix(ACT_BARE);
+  ASSERT.call(this, this.recAN(tesax), 'tesax');
   n.test = this.tr(n.test, true);
+  ASSERT.call(this, this.activeIfNames.pop() === tesax, 'tesax');
+  tesax.ns = this.curNS;
+  if (tesax.ns) this.active1if2(tesax, this.cur);
+  else {
+    altax && this.active1if2(tesax, altax);
+    this.active1if2(tesax, conax);
+  }
+  this.setNS(tesax.ns+ns);
+//ASSERT.call(this, this.activeIfNames.pop() === conax, 'conax');
+//altax && ASSERT.call(this, this.activeIfNames.pop() === altax, 'altax');
+
+  var s = this.setScope(conax);
+  ns = this.setNS(0);
   n.consequent = this.tr(n.consequent, false);
-  if (n.alternate)
+  conax.ns = this.curNS;
+  this.setNS(conax.ns+ns);
+
+  if (n.alternate) {
+    this.setScope(altax);
+    ns = this.setNS(0);
     n.alternate = this.tr(n.alternate, false);
+    altax.ns = this.curNS;
+    this.setNS(altax.ns+ns);
+  }
+
+  this.setScope(s);
   return n;
 };
 
@@ -15738,8 +15802,10 @@ function(n, isVal) {
 function(){
 Transformers['MemberExpression'] =
 function(n, isVal) {
+  var ais = this.setAS(true);
   n.object = this.tr(n.object, true);
   if (n.computed) n.property = this.tr(n.property, true);
+  this.setAS(ais);
   return n;
 };
 
@@ -15774,6 +15840,8 @@ function(){
 Transformers['ReturnStatement'] =
 function(n, isVal) {
   // TODO: try { return 'a' /* <-- this */ } finally { yield 'b' }
+  var ais = this.setAS(true);
+  this.incNS();
   if (n.argument)
     n.argument = this.tr(n.argument, true);
   var retRoot = this.cur.scs;
@@ -15785,6 +15853,7 @@ function(n, isVal) {
     l.track(this.cur);
     n.argument = this.synth_RCheck(n.argument, l);
   }
+  this.setAS(ais);
   return n;
 };
 
@@ -15857,7 +15926,10 @@ function(n, isVal) {
 function(){
 Transformers['ThrowStatement'] =
 function(n, isVal) {
+  var ais = this.setAS(true);
+  this.incNS();
   n.argument = this.tr(n.argument, true);
+  this.setAS(ais);
   return n;
 };
 

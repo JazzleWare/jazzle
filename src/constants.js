@@ -186,3 +186,8 @@ var ANESS_UNKNOWN = -2,
     ANESS_CHECKING = -1,
     ANESS_INACTIVE = 0,
     ANESS_ACTIVE = 1;
+
+var ACT_BARE = 0,
+    ACT_DECL = 1,
+    ACT_SCOPE = 2;
+
