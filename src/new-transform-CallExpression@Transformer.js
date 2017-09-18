@@ -1,5 +1,7 @@
 Transformers['CallExpression'] =
 function(n, isVal) {
+  this.incNS();
+  var ais = this.setAS(true);
   var ti = false, l = n.callee;
   if (l.type === 'Super') {
     l['#liq'] = this.cur.findRefU_m(RS_SCALL).getDecl();
@@ -20,6 +22,7 @@ function(n, isVal) {
       n.callee = this.tr(n.callee, true );
     this.trList(n.arguments, true );
     if (ti) { this.thisState |= THS_IS_REACHED; this.thisState &= ~THS_NEEDS_CHK; }
+    this.setAS(ais);
     return n;
   }
 
@@ -45,5 +48,7 @@ function(n, isVal) {
   this.trList(n.arguments, true );
 
   if (ti) { this.thisState |= THS_IS_REACHED; this.thisState &= ~THS_NEEDS_CHK; }
+
+  this.setAS(ais);
   return this.synth_Call(head, mem, n.arguments);
 };

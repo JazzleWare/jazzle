@@ -56,6 +56,13 @@ function(n, isVal) {
 this.rename =
 function(base, i) { return this.renamer(base, i); };
 
+this.setAT =
+function(v) {
+  var at = this.curAT;
+  this.curAT = v;
+  return at;
+};
+
 this.set_activeIfScope = this.setAS =
 function(v) {
   var ais = this.activeIfScope;
@@ -85,7 +92,7 @@ function(decl) {
 this.tryMarkActive =
 function(scod) {
   if (this.activeIfScope)
-    this.active1if2(scod, this.cur);
+    this.active1if2(scod, this.curAT);
   else if (this.activeIfNames) {
     var list = this.activeIfNames, len = list.length();
     var e = 0;

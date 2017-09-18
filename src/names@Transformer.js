@@ -65,7 +65,7 @@ function(id, bes, manualActivation) {
 
   var hasTZ = !isB && this.needsTZ(target);
   if (!manualActivation) {
-    if (hasTZ) this.active1if2(target, this.cur);
+    if (hasTZ || target.isGlobal()) this.active1if2(target, this.cur);
     else this.tryMarkActive(target);
   }
 

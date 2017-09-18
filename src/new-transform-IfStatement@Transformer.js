@@ -22,13 +22,17 @@ function(n, isVal) {
 //altax && ASSERT.call(this, this.activeIfNames.pop() === altax, 'altax');
 
   var s = this.setScope(conax);
+  var at = this.setAT(this.cur);
   ns = this.setNS(0);
+
   n.consequent = this.tr(n.consequent, false);
+
   conax.ns = this.curNS;
   this.setNS(conax.ns+ns);
 
   if (n.alternate) {
     this.setScope(altax);
+    this.setAT(this.cur);
     ns = this.setNS(0);
     n.alternate = this.tr(n.alternate, false);
     altax.ns = this.curNS;
@@ -36,5 +40,7 @@ function(n, isVal) {
   }
 
   this.setScope(s);
+  this.setAT(this.cur);
+
   return n;
 };

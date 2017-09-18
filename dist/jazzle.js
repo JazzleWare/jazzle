@@ -516,6 +516,7 @@ function Transformer() {
   this.activeIfNames = null; // TODO: should rename to activeIfOther, because it can actually contain name-, scope-, or bare actices (actixes)
 
   this.curNS = 0; // sinde-effencts
+  this.curAT = null; // activation target in use (mostly, it is just the same thing as this.cur)
 
   this.renamer = renamer_incremental;
 }
@@ -15157,6 +15158,13 @@ function(n, isVal) {
 this.rename =
 function(base, i) { return this.renamer(base, i); };
 
+this.setAT =
+function(v) {
+  var at = this.curAT;
+  this.curAT = v;
+  return at;
+};
+
 this.set_activeIfScope = this.setAS =
 function(v) {
   var ais = this.activeIfScope;
@@ -15186,7 +15194,7 @@ function(decl) {
 this.tryMarkActive =
 function(scod) {
   if (this.activeIfScope)
-    this.active1if2(scod, this.cur);
+    this.active1if2(scod, this.curAT);
   else if (this.activeIfNames) {
     var list = this.activeIfNames, len = list.length();
     var e = 0;
@@ -15288,7 +15296,7 @@ function(id, bes, manualActivation) {
 
   var hasTZ = !isB && this.needsTZ(target);
   if (!manualActivation) {
-    if (hasTZ) this.active1if2(target, this.cur);
+    if (hasTZ || target.isGlobal()) this.active1if2(target, this.cur);
     else this.tryMarkActive(target);
   }
 
@@ -15519,7 +15527,11 @@ function(n, isVal, isB) {
       n = this.synth_GlobalUpdate(n, false);
   }
 
-  if (!leftsig) nameNew = this.recAN(rn.target);
+  if (!leftsig) {
+    nameNew = this.recAN(rn.target);
+    nameNew && this.active1if2(this.curAT, rn.target);
+  }
+
   n.right = this.tr(n.right, true);
   if (isB) {
     var target = n.left.target;
@@ -15651,6 +15663,8 @@ function(n, isVal) {
 function(){
 Transformers['CallExpression'] =
 function(n, isVal) {
+  this.incNS();
+  var ais = this.setAS(true);
   var ti = false, l = n.callee;
   if (l.type === 'Super') {
     l['#liq'] = this.cur.findRefU_m(RS_SCALL).getDecl();
@@ -15671,6 +15685,7 @@ function(n, isVal) {
       n.callee = this.tr(n.callee, true );
     this.trList(n.arguments, true );
     if (ti) { this.thisState |= THS_IS_REACHED; this.thisState &= ~THS_NEEDS_CHK; }
+    this.setAS(ais);
     return n;
   }
 
@@ -15696,6 +15711,8 @@ function(n, isVal) {
   this.trList(n.arguments, true );
 
   if (ti) { this.thisState |= THS_IS_REACHED; this.thisState &= ~THS_NEEDS_CHK; }
+
+  this.setAS(ais);
   return this.synth_Call(head, mem, n.arguments);
 };
 
@@ -15773,13 +15790,17 @@ function(n, isVal) {
 //altax && ASSERT.call(this, this.activeIfNames.pop() === altax, 'altax');
 
   var s = this.setScope(conax);
+  var at = this.setAT(this.cur);
   ns = this.setNS(0);
+
   n.consequent = this.tr(n.consequent, false);
+
   conax.ns = this.curNS;
   this.setNS(conax.ns+ns);
 
   if (n.alternate) {
     this.setScope(altax);
+    this.setAT(this.cur);
     ns = this.setNS(0);
     n.alternate = this.tr(n.alternate, false);
     altax.ns = this.curNS;
@@ -15787,6 +15808,8 @@ function(n, isVal) {
   }
 
   this.setScope(s);
+  this.setAT(this.cur);
+
   return n;
 };
 
@@ -16182,6 +16205,7 @@ function(){
 this.transformRawFn =
 function(n, isVal) {
   var s = this.setScope(n['#scope'] );
+  var at = this.setAT(this.cur), ns = this.setNS(0);
   ASSERT.call(this, s.reached, 'not reached');
   var unreach = n.type === 'FunctionDeclaration';
   if (unreach) s.reached = false;
@@ -16199,6 +16223,7 @@ function(n, isVal) {
   this.cur.closureLLINOSA = this.cur.parent.scs.isAnyFn() ?
     createObj(this.cur.parent.scs.closureLLINOSA) : {};
 
+  // for ndeclarations this won't do anything -- as -> false and an -> null||@length==0
   this.tryMarkActive(this.cur);
 
   var _AS = this.setAS(false);
@@ -16240,7 +16265,9 @@ function(n, isVal) {
     ASSERT.call(this, !s.reached, 'reached');
     s.reached = true;
   }
-  this.setScope(s);
+
+  this.setScope(s).ns = this.setNS(ns);
+  this.setAT(at);
 
   this.setCVTZ(cvtz) ;
   this.setTS(ts);
@@ -16442,11 +16469,16 @@ function(n, isVal) {
   this.global = this.script.parent;
   ASSERT.call(this, this.global.isGlobal(), 'script can not have a non-global parent');
   var ps = this.setScope(this.script);
+  var at = this.setAT(this.cur);
   var ts = this.setTS([]);
 
   this.cur.synth_start(this.renamer);
   this.trList(n.body, isVal);
   this.cur.synth_finish();
+
+  this.setScope(ps);
+  this.setAT(at);
+  this.setTS(ts);
 
   return n;
 };

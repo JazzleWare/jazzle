@@ -169,7 +169,11 @@ function(n, isVal, isB) {
       n = this.synth_GlobalUpdate(n, false);
   }
 
-  if (!leftsig) nameNew = this.recAN(rn.target);
+  if (!leftsig) {
+    nameNew = this.recAN(rn.target);
+    nameNew && this.active1if2(this.curAT, rn.target);
+  }
+
   n.right = this.tr(n.right, true);
   if (isB) {
     var target = n.left.target;

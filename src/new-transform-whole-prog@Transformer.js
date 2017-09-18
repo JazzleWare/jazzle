@@ -8,11 +8,16 @@ function(n, isVal) {
   this.global = this.script.parent;
   ASSERT.call(this, this.global.isGlobal(), 'script can not have a non-global parent');
   var ps = this.setScope(this.script);
+  var at = this.setAT(this.cur);
   var ts = this.setTS([]);
 
   this.cur.synth_start(this.renamer);
   this.trList(n.body, isVal);
   this.cur.synth_finish();
+
+  this.setScope(ps);
+  this.setAT(at);
+  this.setTS(ts);
 
   return n;
 };
