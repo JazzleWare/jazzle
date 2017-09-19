@@ -29,6 +29,7 @@ function(n, isVal) {
 
   conax.ns = this.curNS;
   this.setNS(conax.ns+ns);
+  this.active1if2(s, conax);
 
   if (n.alternate) {
     this.setScope(altax);
@@ -37,6 +38,7 @@ function(n, isVal) {
     n.alternate = this.tr(n.alternate, false);
     altax.ns = this.curNS;
     this.setNS(altax.ns+ns);
+    this.active1if2(s, altax);
   }
 
   this.setScope(s);

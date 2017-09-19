@@ -15645,10 +15645,15 @@ function(){
 Transformers['BlockStatement'] =
 function(n, isVal) {
   ASSERT_EQ.call(this, isVal, false);
-  var e = this.setScope(n['#scope']);
+  var s = this.setScope(n['#scope']);
+  var a = this.setAT(this.cur);
+  var l = this.setNS(0);
   this.cur.synth_defs_to(this.cur.scs);
   this.trList(n.body, isVal);
-  this.setScope(e);
+  this.active1if2(s, this.cur);
+  this.setScope(s);
+  this.setAT(a).ns = this.curNS;
+  this.setNS(l+this.curNS);
   return n;
 };
 
@@ -15797,6 +15802,7 @@ function(n, isVal) {
 
   conax.ns = this.curNS;
   this.setNS(conax.ns+ns);
+  this.active1if2(s, conax);
 
   if (n.alternate) {
     this.setScope(altax);
@@ -15805,6 +15811,7 @@ function(n, isVal) {
     n.alternate = this.tr(n.alternate, false);
     altax.ns = this.curNS;
     this.setNS(altax.ns+ns);
+    this.active1if2(s, altax);
   }
 
   this.setScope(s);
@@ -16018,8 +16025,17 @@ function(n, kind) {
 function(){
 Transformers['WhileStatement'] =
 function(n, isVal) {
+  var ais = this.setAS(true); 
+  ASSERT.call(this, !ais, 'activeIfScope');
   n.test = this.tr(n.test, true);
+  this.setAS(ais);
+  var l = this.setScope(n['#scope']);
+  var ns = this.setNS(0);
   n.body = this.tr(n.body, false);
+
+  this.setScope(l).ns = this.curNS;
+  this.setNS(this.curNS + ns);
+
   return n;
 };
 
@@ -16469,16 +16485,18 @@ function(n, isVal) {
   this.global = this.script.parent;
   ASSERT.call(this, this.global.isGlobal(), 'script can not have a non-global parent');
   var ps = this.setScope(this.script);
-  var at = this.setAT(this.cur);
   var ts = this.setTS([]);
+  var ns = this.setNS(0);
+  var at = this.setAT(this.cur);
 
   this.cur.synth_start(this.renamer);
   this.trList(n.body, isVal);
   this.cur.synth_finish();
 
-  this.setScope(ps);
-  this.setAT(at);
+  this.setScope(ps).ns = this.curNS;
   this.setTS(ts);
+  this.setNS(ns+this.curNS);
+  this.setAT(at);
 
   return n;
 };
