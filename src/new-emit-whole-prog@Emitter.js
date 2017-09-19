@@ -1,6 +1,7 @@
 Emitters['Program'] =
 function(n, flags, isStmt) {
   var u = null, o = {v: false}, own = false, em = 0;
+  this.makeActive(n['#scope']);
   if (this.emitSourceHead(n)) {
     em++;
     if (!this.wcb) {

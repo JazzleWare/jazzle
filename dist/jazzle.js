@@ -75,7 +75,7 @@ function Emitter() {
   this.wcb = null;
   this.wcbp = null;
   this.wcbUsed = null;
-  this.allow = { space: true, nl: true, comments: { l: true, m: true } };
+  this.allow = { space: true, nl: true, comments: { l: true, m: true }, elemShake: false };
   this.rll = 0; // real line length; TODO: eliminate need for it
   this.wrapLine = false;
   this.locw = null;
@@ -2632,14 +2632,14 @@ function(funList, allowsDecl, hasPrev) {
     else u = this.wcbUsed;
   }
 
-  var i = 0;
+  var i = 0, em = 0;
   while (i < funList.length) {
-    this.emitSingleFun(funList[i], allowsDecl, i);
+    this.emitSingleFun(funList[i], allowsDecl, i, em) && em++;
     i++;
   }
 
   if (own) u.v || this.clear_onw();
-  return i;
+  return em;
 };
 
 this.emitThisRef =
@@ -2664,16 +2664,20 @@ function(scope, hasPrev) {
 };
 
 this.emitSingleFun =
-function(n, allowsDecl, i) {
+function(n, allowsDecl, i, hasPrev) {
   var scope = n.fun['#scope'];
+  var target = n.target;
+
+  ASSERT.call(this, target, 'n.target' );
+  if (!this.active(target))
+    return 0;
+
   var o = {v: false};
   var own = false;
 
-  var target = n.target;
-  ASSERT.call(this, target, 'n.target' );
   var u = null;
 
-  if (i) {
+  if (hasPrev) {
     if (!this.wcb) { own = true; this.onw(wcb_afterStmt); }
     if (!this.wcbUsed) this.wcbUsed = u = o;
     else u = this.wcbUsed;
@@ -2695,6 +2699,7 @@ function(n, allowsDecl, i) {
   }
 
   if (own) u.v || this.clear_onw();
+  return 1;
 };
 
 this.emitTCheckVar =
@@ -3304,6 +3309,9 @@ function isBLE(n) {
 function(){
 Emitters['BlockStatement'] =
 function(n, flags, isStmt) {
+  if (!this.active(n['#scope']))
+    return;
+
   ASSERT_EQ.call(this, isStmt, true);
   var cb = CB(n);
   this.emc(cb, 'bef');
@@ -3911,6 +3919,7 @@ function(){
 Emitters['Program'] =
 function(n, flags, isStmt) {
   var u = null, o = {v: false}, own = false, em = 0;
+  this.makeActive(n['#scope']);
   if (this.emitSourceHead(n)) {
     em++;
     if (!this.wcb) {
@@ -4395,6 +4404,44 @@ function(n, flags, isStmt) {
   this.emc(cb, 'bef');
   Emitters['ConditionalExpression'].call(this, n, flags, isStmt);
   this.emc(cb, 'aft');
+};
+
+},
+function(){
+this.active =
+function(a) { // actix
+  if (!this.allow.elemShake)
+    return true;
+
+  if (a.activeness === ANESS_CHECKING)
+    return false;
+  if (a.activeness === ANESS_ACTIVE)
+    return true;
+  if (a.activeness === ANESS_INACTIVE)
+    return false;
+
+  ASSERT.call(this, a.activeness === ANESS_UNKNOWN, 'aness' );
+  a.activeness = ANESS_CHECKING;
+  var active = false;
+  if (a.ns) active = a.role != ACT_SCOPE || !a.isAnyFn();
+  if (!active) {
+    var list = a.activeIf, len = list ? list.length() : 0, l = 0;
+    while (l < len) {
+      if (this.active(list.at(l++))) {
+        active = true;
+        break;
+      }
+    }
+  }
+
+  a.activeness = active ? ANESS_ACTIVE : ANESS_INACTIVE;
+  return active;
+};
+
+this.makeActive =
+function(a) {
+  ASSERT.call(this, a.activeness === ANESS_UNKNOWN, 'aness');
+  a.activeness = ANESS_ACTIVE;
 };
 
 },

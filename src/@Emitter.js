@@ -10,7 +10,7 @@ function Emitter() {
   this.wcb = null;
   this.wcbp = null;
   this.wcbUsed = null;
-  this.allow = { space: true, nl: true, comments: { l: true, m: true } };
+  this.allow = { space: true, nl: true, comments: { l: true, m: true }, elemShake: false };
   this.rll = 0; // real line length; TODO: eliminate need for it
   this.wrapLine = false;
   this.locw = null;

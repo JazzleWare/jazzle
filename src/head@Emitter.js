@@ -128,14 +128,14 @@ function(funList, allowsDecl, hasPrev) {
     else u = this.wcbUsed;
   }
 
-  var i = 0;
+  var i = 0, em = 0;
   while (i < funList.length) {
-    this.emitSingleFun(funList[i], allowsDecl, i);
+    this.emitSingleFun(funList[i], allowsDecl, i, em) && em++;
     i++;
   }
 
   if (own) u.v || this.clear_onw();
-  return i;
+  return em;
 };
 
 this.emitThisRef =
@@ -160,16 +160,20 @@ function(scope, hasPrev) {
 };
 
 this.emitSingleFun =
-function(n, allowsDecl, i) {
+function(n, allowsDecl, i, hasPrev) {
   var scope = n.fun['#scope'];
+  var target = n.target;
+
+  ASSERT.call(this, target, 'n.target' );
+  if (!this.active(target))
+    return 0;
+
   var o = {v: false};
   var own = false;
 
-  var target = n.target;
-  ASSERT.call(this, target, 'n.target' );
   var u = null;
 
-  if (i) {
+  if (hasPrev) {
     if (!this.wcb) { own = true; this.onw(wcb_afterStmt); }
     if (!this.wcbUsed) this.wcbUsed = u = o;
     else u = this.wcbUsed;
@@ -191,6 +195,7 @@ function(n, allowsDecl, i) {
   }
 
   if (own) u.v || this.clear_onw();
+  return 1;
 };
 
 this.emitTCheckVar =

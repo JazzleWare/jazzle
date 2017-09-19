@@ -1,5 +1,8 @@
 Emitters['BlockStatement'] =
 function(n, flags, isStmt) {
+  if (!this.active(n['#scope']))
+    return;
+
   ASSERT_EQ.call(this, isStmt, true);
   var cb = CB(n);
   this.emc(cb, 'bef');
