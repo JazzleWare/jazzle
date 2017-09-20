@@ -8,6 +8,8 @@ function(n, flags, isStmt) {
 
   if (isResolvedName(left)) {
     target = left.target;
+    if (!this.active(target))
+      return this.emitAny(n.right, flags, isStmt);
     tz = left.tz;
     cc = left.cv;
     if (!hasParen)
@@ -55,12 +57,17 @@ function(n, flags, isStmt) {
 this.emitAssignment_binding =
 function(n, flags, isStmt) {
   ASSERT.call(this, isResolvedName(n.left), 'name');
+
   var cb = n['#c']; this.emc(cb, 'bef');
-  n.left.target.isLLINOSA() || this.w('var').onw(wcb_afterVar).os();
-  this.emitRName_binding(n.left);
-  n.left.target.isLLINOSA() && this.wm('.','v');
-  this.os().w('=').os();
-  this.eN(n.right, EC_NONE, false);
+  if (!this.active(n.left.target))
+    this.emitAny(n.right, flags, false);
+  else {
+    n.left.target.isLLINOSA() || this.w('var').onw(wcb_afterVar).os();
+    this.emitRName_binding(n.left);
+    n.left.target.isLLINOSA() && this.wm('.','v');
+    this.os().w('=').os();
+    this.eN(n.right, EC_NONE, false);
+  }
   this.w(';');
   this.emc('aft');
   

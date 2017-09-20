@@ -84,7 +84,8 @@ function(id, bes, manualActivation) {
     tz: hasTZ,
     cv: false,
     kind: 'resolved-name',
-    type: '#Untransformed'
+    type: '#Untransformed' ,
+    loc: id.loc
   };
 };
 

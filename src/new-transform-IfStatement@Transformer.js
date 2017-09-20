@@ -12,7 +12,7 @@ function(n, isVal) {
   n.test = this.tr(n.test, true);
   ASSERT.call(this, this.activeIfNames.pop() === tesax, 'tesax');
   tesax.ns = this.curNS;
-  if (tesax.ns) this.active1if2(tesax, this.cur);
+  if (tesax.ns) /* unnecessary */ this.active1if2(tesax, this.cur);
   else {
     altax && this.active1if2(tesax, altax);
     this.active1if2(tesax, conax);

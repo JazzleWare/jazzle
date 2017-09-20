@@ -2550,6 +2550,7 @@ function(scope, hasPrev) {
     var elem = list.at(i++);
     if (!elem.isVar()) continue;
     if (elem.isFn() || elem.isFnArg()) continue;
+    if (!this.active(elem)) continue;
     em ? this.w(',').os() : this.w('var').bs();
     this.w(elem.synthName);
     em++;
@@ -2614,6 +2615,7 @@ function(scope, hasPrev) {
   while (i < len) {
     var elem = list.at(i++);
     if (!elem.isLLINOSA()) continue;
+    if (!this.active(elem)) continue;
     em ? this.w(',').os() : this.w('var').bs();
     this.w(elem.synthName).os().w('=').os().wm('{','v',':','','void').bs().wm('0','}');
     em++;
@@ -3123,6 +3125,8 @@ function(n, flags, isStmt) {
 
   if (isResolvedName(left)) {
     target = left.target;
+    if (!this.active(target))
+      return this.emitAny(n.right, flags, isStmt);
     tz = left.tz;
     cc = left.cv;
     if (!hasParen)
@@ -3170,12 +3174,17 @@ function(n, flags, isStmt) {
 this.emitAssignment_binding =
 function(n, flags, isStmt) {
   ASSERT.call(this, isResolvedName(n.left), 'name');
+
   var cb = n['#c']; this.emc(cb, 'bef');
-  n.left.target.isLLINOSA() || this.w('var').onw(wcb_afterVar).os();
-  this.emitRName_binding(n.left);
-  n.left.target.isLLINOSA() && this.wm('.','v');
-  this.os().w('=').os();
-  this.eN(n.right, EC_NONE, false);
+  if (!this.active(n.left.target))
+    this.emitAny(n.right, flags, false);
+  else {
+    n.left.target.isLLINOSA() || this.w('var').onw(wcb_afterVar).os();
+    this.emitRName_binding(n.left);
+    n.left.target.isLLINOSA() && this.wm('.','v');
+    this.os().w('=').os();
+    this.eN(n.right, EC_NONE, false);
+  }
   this.w(';');
   this.emc('aft');
   
@@ -3360,7 +3369,9 @@ function(n, flags, isStmt) {
   if (e)
     this.wt(c['#liq'].synthName, ETK_ID).wm('.','call');
   else
-    this.emitCallHead(n.callee, flags);
+    this.emitCallHead(c, flags);
+
+  this.lw(c.loc.end);
 
   this.w('(');
   if (e) {
@@ -3438,10 +3449,20 @@ function(){
 Emitters['IfStatement'] =
 function(n, flags, isStmt) {
   ASSERT_EQ.call(this, isStmt, true);
+  var conax = n['#ifScope'], altax = n['#elseScope'];
+  if (!this.active(conax) && !(altax && this.active(altax)))
+    return this.emitAny(n.test, flags|EC_START_STMT, isStmt);
+
   var cb = CB(n); this.emc(cb, 'bef' );
   this.wt('if', ETK_ID).emc(cb, 'aft.if');
-  this.wm('','(').eA(n.test, EC_NONE, false).w(')').emitIfBody(n.consequent);
-  n.alternate && this.l().wt('else', ETK_ID).onw(wcb_afterElse).emitElseBody(n.alternate);
+  this.wm('','(').eA(n.test, EC_NONE, false).w(')');
+
+  if (this.active(conax)) this.emitIfBody(n.consequent);
+  else this.w(';');
+
+  if (n.alternate && this.active(altax))
+    this.l().wt('else', ETK_ID).onw(wcb_afterElse).emitElseBody(n.alternate);
+
   this.emc(cb, 'aft');
 
   return true;
@@ -3514,6 +3535,8 @@ function(n, flags, isStmt) {
   var cb = CB(n); this.emc(cb, 'bef' );
   this.lw(n.loc.start);
   this.eH(n.object, flags, false);
+  var loc = n.object.loc;
+  loc === null || this.lw(loc.end); // TODO: '.'/'[' instead
   if (n.computed)
     this.w('[').eA(n.property, EC_NONE, false).w(']');
   else {
@@ -15362,7 +15385,8 @@ function(id, bes, manualActivation) {
     tz: hasTZ,
     cv: false,
     kind: 'resolved-name',
-    type: '#Untransformed'
+    type: '#Untransformed' ,
+    loc: id.loc
   };
 };
 
@@ -15744,10 +15768,12 @@ function(n, isVal) {
   var head = n.callee, mem = null;
   if ( head.type === 'MemberExpression') {
     head.object = this.tr(head.object, true);
+    var loc = head.object.loc;
     var t = this.allocTemp();
     var h0 = head;
     head = this.synth_TempSave(t, head.object);
     h0.object = t;
+    t.loc = loc;
     this.releaseTemp(t);
     if (h0.computed)
       h0.property = this.tr(h0.property, true );
@@ -15832,7 +15858,7 @@ function(n, isVal) {
   n.test = this.tr(n.test, true);
   ASSERT.call(this, this.activeIfNames.pop() === tesax, 'tesax');
   tesax.ns = this.curNS;
-  if (tesax.ns) this.active1if2(tesax, this.cur);
+  if (tesax.ns) /* unnecessary */ this.active1if2(tesax, this.cur);
   else {
     altax && this.active1if2(tesax, altax);
     this.active1if2(tesax, conax);
@@ -16557,7 +16583,8 @@ function(liq) {
     occupied: 0,
     liq: liq,
     type: '#Untransformed',
-    '#c': {}
+    '#c': {},
+    loc: null
   };
 };
 
@@ -16571,6 +16598,7 @@ function(t, expr) {
     right: expr,
     left: t,
     type: '#Untransformed',
+    loc: expr.loc,
     '#c': {}
   };
 };
@@ -16787,7 +16815,8 @@ function(n, a) {
     argsPrologue: a,
     target: null,
     '#c': {},
-    scall: null, cls: null
+    scall: null, cls: null,
+    loc: n.loc
   };
 };
 
@@ -16832,9 +16861,11 @@ function(src, th, chk) {
     id: src,
     target: th,
     type: '#Untransformed' ,
-    plain: simp,
-    chk: chk
+    chk: chk,
+    loc: src.loc,
+    plain: simp
   };
+
 };
 
 this.synth_BareThis =

@@ -29,10 +29,12 @@ function(n, isVal) {
   var head = n.callee, mem = null;
   if ( head.type === 'MemberExpression') {
     head.object = this.tr(head.object, true);
+    var loc = head.object.loc;
     var t = this.allocTemp();
     var h0 = head;
     head = this.synth_TempSave(t, head.object);
     h0.object = t;
+    t.loc = loc;
     this.releaseTemp(t);
     if (h0.computed)
       h0.property = this.tr(h0.property, true );

@@ -14,7 +14,9 @@ function(n, flags, isStmt) {
   if (e)
     this.wt(c['#liq'].synthName, ETK_ID).wm('.','call');
   else
-    this.emitCallHead(n.callee, flags);
+    this.emitCallHead(c, flags);
+
+  this.lw(c.loc.end);
 
   this.w('(');
   if (e) {

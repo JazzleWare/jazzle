@@ -5,7 +5,8 @@ function(liq) {
     occupied: 0,
     liq: liq,
     type: '#Untransformed',
-    '#c': {}
+    '#c': {},
+    loc: null
   };
 };
 
@@ -19,6 +20,7 @@ function(t, expr) {
     right: expr,
     left: t,
     type: '#Untransformed',
+    loc: expr.loc,
     '#c': {}
   };
 };
@@ -235,7 +237,8 @@ function(n, a) {
     argsPrologue: a,
     target: null,
     '#c': {},
-    scall: null, cls: null
+    scall: null, cls: null,
+    loc: n.loc
   };
 };
 
@@ -280,9 +283,11 @@ function(src, th, chk) {
     id: src,
     target: th,
     type: '#Untransformed' ,
-    plain: simp,
-    chk: chk
+    chk: chk,
+    loc: src.loc,
+    plain: simp
   };
+
 };
 
 this.synth_BareThis =
