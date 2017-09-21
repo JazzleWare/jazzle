@@ -52,5 +52,9 @@ function(n, isVal) {
   if (ti) { this.thisState |= THS_IS_REACHED; this.thisState &= ~THS_NEEDS_CHK; }
 
   this.setAS(ais);
-  return this.synth_Call(head, mem, n.arguments);
+  var synthcall = this.synth_Call(head, mem, n.arguments);
+  synthcall.loc = n.loc;
+  synthcall['#argloc'] = n['#argloc'];
+
+  return synthcall;
 };

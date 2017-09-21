@@ -17,6 +17,7 @@ function(ctx, st) {
   var c0 = this.c0, cb = {}, loc0 = this.loc0();
   this.suc(cb, 'bef');
 
+  var argploc = null;
   if (!isMeth) {
     if (isStmt && isAsync) {
       this.unsatisfiedLabel &&
@@ -92,6 +93,7 @@ function(ctx, st) {
 
   this.suc(cb, 'list.bef' );
   var argList = this.parseParams(argLen);
+  argploc = this.argploc; this.argploc = null;
   cb.inner = this.cb;
 
   this.scope.activateBody();
@@ -112,7 +114,8 @@ function(ctx, st) {
     params: argList,
     expression: false,
     async: (st & ST_ASYNC) !== 0,
-    '#scope': scope, '#y': 0, '#c': cb
+    '#scope': scope, '#y': 0, '#c': cb , 
+    '#argploc': argploc
   };
 
   this.declMode = declMode_;

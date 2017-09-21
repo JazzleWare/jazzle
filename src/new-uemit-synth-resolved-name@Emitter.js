@@ -22,12 +22,15 @@ function(n, flags, isStmt) {
       if (hasZero) hasZero = false;
     }
   }
-  if (n.target.isGlobal() || tz)
+  if (n.target.isGlobal())
     this.lw(n.id.loc.start);
   if (hasParen) { this.w('('); flags = EC_NONE; }
 
   if (hasZero) this.wm('0',',')
-  else if ( tz) { this.emitAccessChk_tz(n.target); this.w(',').os(); }
+  else if ( tz) {
+    this.emitAccessChk_tz(n.target, n.id.loc.start);
+    this.w(',').os();
+  }
 
   var cb = CB(n.id); this.emc(cb, 'bef');
 

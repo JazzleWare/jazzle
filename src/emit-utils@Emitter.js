@@ -185,7 +185,8 @@ function() {
 this.emitSpread =
 function(n) {
   var cb = CB(n); this.emc(cb, 'bef' );
-  this.jz('sp').w('(').eN(n.argument, EC_NONE, false).w(')').emc(cb, 'aft');
+  this.jz('sp').lw(n.loc.start);
+  this.w('(').eN(n.argument, EC_NONE, false).w(')').emc(cb, 'aft');
 };
 
 // a, b, e, ...l -> [a,b,e],sp(l)
@@ -246,19 +247,23 @@ function(list, s, cb) {
 };
 
 this.emitAccessChk_tz =
-function(nd) {
+function(nd, loc) {
   ASSERT.call(this, nd.hasTZCheck, 'unnecessary tz');
   var scope = nd.ref.scope;
   ASSERT.call(this, scope.hasTZCheckPoint, 'could not find any tz');
   var tz = scope.scs.getLG('tz').getL(0);
-  this.wt(tz.synthName,ETK_ID).wm('<',nd.idx,'&&').jz('tz').w('(').writeString(nd.name, "'");
+  this.wt(tz.synthName,ETK_ID).wm('<',nd.idx,'&&').jz('tz');
+  loc && this.lw(loc);
+  this.w('(').writeString(nd.name, "'");
   this.w(')');
   return true;
 };
 
 this.emitAccessChk_invalidSAT =
-function(nd) {
-  this.jz('cc').w('(').writeString(nd.name,"'");
+function(nd, loc) {
+  this.jz('cc');
+  loc && this.lw(loc);
+  this.w('(').writeString(nd.name,"'");
   this.w(')');
   return true;
 };

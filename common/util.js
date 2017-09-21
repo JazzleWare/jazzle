@@ -308,6 +308,9 @@ mex.ej_adjust = function(e, j, name) {
   delete j['#liq'];
   delete j['#this'];
   delete j['#ti'];
+  delete j['#acloc'];
+  delete j['#argploc']  ;
+  delete j['#argloc'];
   delete j.tokens;
   delete j.argumentPrologue;
   delete j['#imports'];

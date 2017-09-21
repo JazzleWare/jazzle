@@ -13,8 +13,8 @@ function(n, flags, isStmt) {
     var obj = this.wcbp;
     this.wt('function',ETK_ID);
     if (n.name) this.wm(' ',n.name.name);
-    this.wm('(',')','','{', s,'.','apply','(',
-      'this',',','arguments',')',';','}');
+    this.wm('(',')','','{','', s,'.','apply','(',
+      'this',',','arguments',')',';','','}');
     obj.hasParen && this.w(')')
     this.wm(';','','}','(').eN(n.heritage).w(')');
 

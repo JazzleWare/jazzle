@@ -11,9 +11,14 @@ function(n, flags, isStmt) {
   } else
     this.emc(cb, 'bef');
 
-  this.emitElems(n.elements, true, cb);
-
-  si >= 0 && this.w(')');
+  var l = n.elements;
+  if (l.length) {
+    this.emitElems(l, true, cb);
+    si >= 0 && this.w(')');
+  } else {
+    this.w('[').emc(cb, 'inner');
+    this.w(']');
+  }
 
   this.emc(cb, 'aft');
   hasParen && this.w(')');

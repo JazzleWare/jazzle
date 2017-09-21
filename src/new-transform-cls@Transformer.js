@@ -6,7 +6,7 @@ function(n, isVal, oBinding) { // o -> outer
 
   var tempsup = null, tempsupSave = null, s = null;
   if (n.superClass) {
-    n.superClass = this.tr(n.superClass, true);
+    n.superClass = this.synth_Heritage(this.tr(n.superClass, true));
     tempsup = this.allocTemp();
     tempsupSave = this.synth_TempSave(tempsup, n.superClass);
     s = ctor && ctor['#scope'].spSuperCall;

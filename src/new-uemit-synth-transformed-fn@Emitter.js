@@ -12,14 +12,18 @@ function(n, flags, isStmt) {
   this.wt('function', ETK_ID );
   this.emc(cb, 'fun.aft');
   var scopeName = raw['#scope'].scopeName;
+
+  var ni = this.namei_cur;
   if (scopeName) {
     this.bs();
     var name_cb = scopeName.site && CB(scopeName.site);
     name_cb && this.emc(name_cb, 'bef' );
+    ni = this.smSetName(scopeName.name);
     this.writeIDName(scopeName.name);
     name_cb && this.emc(name_cb, 'aft');
   }
   this.emc(cb, 'list.bef' );
+  this.lw(raw['#argploc']);
   this.w('(');
 
   if (raw.params) {
@@ -50,5 +54,6 @@ function(n, flags, isStmt) {
   em && this.l();
 
   this.w('}');
+  this.namei_cur = ni;
   this.emc(cb, 'aft');
 };

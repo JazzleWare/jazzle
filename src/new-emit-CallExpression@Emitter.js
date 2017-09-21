@@ -16,7 +16,7 @@ function(n, flags, isStmt) {
   else
     this.emitCallHead(c, flags);
 
-  this.lw(c.loc.end);
+  this.lw(n['#argloc']);
 
   this.w('(');
   if (e) {

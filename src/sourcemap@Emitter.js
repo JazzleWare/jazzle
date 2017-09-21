@@ -17,7 +17,7 @@ this.smSetSrc =
 function(srcName) {
   var sc = this.srci_cur;
   var mname = _m(srcName);
-  if (name.length) {
+  if (srcName.length) {
     this.srci_cur =
       this.smSrcList.has(mname) ?
         this.smSrcList.get(mname) :

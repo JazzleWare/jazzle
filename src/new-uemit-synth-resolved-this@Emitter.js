@@ -8,7 +8,9 @@ function(n, flags, isStmt) {
 
   if (n.chk) { 
     this.w(n.target.ref.scope.scs.getLG('ti').getL(0).synthName)
-      .w('||').jz('tz').w('(').writeString('this',"'");
+      .w('||').jz('tz');
+    this.lw(n.id.loc.start);
+    this.w('(').writeString('this',"'");
     this.wm(')',',');
   }
   this.emc(b, 'bef');

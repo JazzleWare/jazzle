@@ -3,8 +3,7 @@ function(n, flags, isStmt) {
   var cb = CB(n); this.emc(cb, 'bef' );
   this.lw(n.loc.start);
   this.eH(n.object, flags, false);
-  var loc = n.object.loc;
-  loc === null || this.lw(loc.end); // TODO: '.'/'[' instead
+  this.lw(n['#acloc']); // TODO: '.'/'[' instead
   if (n.computed)
     this.w('[').eA(n.property, EC_NONE, false).w(']');
   else {

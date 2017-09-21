@@ -329,6 +329,8 @@ var Parser = function (src, o) {
   this.regNC = -1;
 
   this.regexFlags = this.rf = {};
+
+  this.argploc = null;
 };
 ;
 function PathMan() {}
@@ -2422,7 +2424,8 @@ function() {
 this.emitSpread =
 function(n) {
   var cb = CB(n); this.emc(cb, 'bef' );
-  this.jz('sp').w('(').eN(n.argument, EC_NONE, false).w(')').emc(cb, 'aft');
+  this.jz('sp').lw(n.loc.start);
+  this.w('(').eN(n.argument, EC_NONE, false).w(')').emc(cb, 'aft');
 };
 
 // a, b, e, ...l -> [a,b,e],sp(l)
@@ -2483,19 +2486,23 @@ function(list, s, cb) {
 };
 
 this.emitAccessChk_tz =
-function(nd) {
+function(nd, loc) {
   ASSERT.call(this, nd.hasTZCheck, 'unnecessary tz');
   var scope = nd.ref.scope;
   ASSERT.call(this, scope.hasTZCheckPoint, 'could not find any tz');
   var tz = scope.scs.getLG('tz').getL(0);
-  this.wt(tz.synthName,ETK_ID).wm('<',nd.idx,'&&').jz('tz').w('(').writeString(nd.name, "'");
+  this.wt(tz.synthName,ETK_ID).wm('<',nd.idx,'&&').jz('tz');
+  loc && this.lw(loc);
+  this.w('(').writeString(nd.name, "'");
   this.w(')');
   return true;
 };
 
 this.emitAccessChk_invalidSAT =
-function(nd) {
-  this.jz('cc').w('(').writeString(nd.name,"'");
+function(nd, loc) {
+  this.jz('cc');
+  loc && this.lw(loc);
+  this.w('(').writeString(nd.name,"'");
   this.w(')');
   return true;
 };
@@ -3102,9 +3109,14 @@ function(n, flags, isStmt) {
   } else
     this.emc(cb, 'bef');
 
-  this.emitElems(n.elements, true, cb);
-
-  si >= 0 && this.w(')');
+  var l = n.elements;
+  if (l.length) {
+    this.emitElems(l, true, cb);
+    si >= 0 && this.w(')');
+  } else {
+    this.w('[').emc(cb, 'inner');
+    this.w(']');
+  }
 
   this.emc(cb, 'aft');
   hasParen && this.w(')');
@@ -3135,8 +3147,10 @@ function(n, flags, isStmt) {
   if (hasParen) { this.w('('); flags = EC_NONE; }
 
   this.emc(cb, 'bef');
-  tz && (this.emitAccessChk_tz(target), this.w(',').os());
-  cc && (this.emitAccessChk_invalidSAT(target), this.w(',').os());
+  if (tz)
+    this.emitAccessChk_tz(target, left.id.loc.start), this.w(',').os();
+  if (cc) 
+    this.emitAccessChk_invalidSAT(target, left.id.loc.start), this.w(',').os();
 
   this.emitSAT(left, flags);
 
@@ -3371,7 +3385,7 @@ function(n, flags, isStmt) {
   else
     this.emitCallHead(c, flags);
 
-  this.lw(c.loc.end);
+  this.lw(n['#argloc']);
 
   this.w('(');
   if (e) {
@@ -3535,8 +3549,7 @@ function(n, flags, isStmt) {
   var cb = CB(n); this.emc(cb, 'bef' );
   this.lw(n.loc.start);
   this.eH(n.object, flags, false);
-  var loc = n.object.loc;
-  loc === null || this.lw(loc.end); // TODO: '.'/'[' instead
+  this.lw(n['#acloc']); // TODO: '.'/'[' instead
   if (n.computed)
     this.w('[').eA(n.property, EC_NONE, false).w(']');
   else {
@@ -3639,6 +3652,9 @@ function(n, flags, isStmt) {
 
   var cb = CB(n);
   this.emc(cb, 'bef');
+
+  this.lw(n.loc.start); // TODO: only ctors without supers
+
   this.w('return');
   if (n.argument) {
     var param = {hasParen: false};
@@ -3704,6 +3720,8 @@ Emitters['ThrowStatement'] =
 function(n, flags, isStmt) {
   var r = {hasParen: false}, cb = CB(n);
   this.emc(cb, 'bef');
+
+  this.lw(n.loc.start);
   this.w('throw').onw(wcb_afterRet, r);
   this.eA(n.argument, EC_NONE, false);
   if (r.hasParen) this.w(')');
@@ -4063,12 +4081,16 @@ function(n, flags, isStmt) {
   var cb = CB(n); this.emc(cb, 'bef');
   if (hasParen) { this.w('('); } 
   if (n.mem !== null) {
-    this.jz('cm').w('(').eN(n.head, EC_NONE, false).w(',').os();
+    this.jz('cm');
+    this.lw(n['#argloc']);
+    this.w('(').eN(n.head, EC_NONE, false).w(',').os();
     var m = n.mem;
     m.type === 'Super' ? this.w(m['#liq'].synthName) : this.eN(m, EC_NONE, false) ;
   }
   else {
-    this.jz('c').w('(');
+    this.jz('c');
+    this.lw(n['#argloc']);
+    this.w('(');
     if (n.head.type === 'Super') this.w(n.head['#liq'].synthName);
     else this.eN(n.head, EC_NONE, false);
   }
@@ -4126,8 +4148,8 @@ function(n, flags, isStmt) {
     var obj = this.wcbp;
     this.wt('function',ETK_ID);
     if (n.name) this.wm(' ',n.name.name);
-    this.wm('(',')','','{', s,'.','apply','(',
-      'this',',','arguments',')',';','}');
+    this.wm('(',')','','{','', s,'.','apply','(',
+      'this',',','arguments',')',';','','}');
     obj.hasParen && this.w(')')
     this.wm(';','','}','(').eN(n.heritage).w(')');
 
@@ -4150,6 +4172,16 @@ function(n, flags, isStmt) {
   hasParen && this.w(')');
   isStmt && this.w(';');
   return true;
+};
+
+},
+function(){
+UntransformedEmitters['heritage'] =
+function(n, flags, isStmt) {
+  ASSERT_EQ.call(this, isStmt, false);
+  this.jz('h').lw(n.heritage.loc.start);
+
+  this.w('(').eN(n.heritage, EC_NONE, false).w(')');
 };
 
 },
@@ -4245,12 +4277,15 @@ function(n, flags, isStmt) {
       if (hasZero) hasZero = false;
     }
   }
-  if (n.target.isGlobal() || tz)
+  if (n.target.isGlobal())
     this.lw(n.id.loc.start);
   if (hasParen) { this.w('('); flags = EC_NONE; }
 
   if (hasZero) this.wm('0',',')
-  else if ( tz) { this.emitAccessChk_tz(n.target); this.w(',').os(); }
+  else if ( tz) {
+    this.emitAccessChk_tz(n.target, n.id.loc.start);
+    this.w(',').os();
+  }
 
   var cb = CB(n.id); this.emc(cb, 'bef');
 
@@ -4288,7 +4323,9 @@ function(n, flags, isStmt) {
 
   if (n.chk) { 
     this.w(n.target.ref.scope.scs.getLG('ti').getL(0).synthName)
-      .w('||').jz('tz').w('(').writeString('this',"'");
+      .w('||').jz('tz');
+    this.lw(n.id.loc.start);
+    this.w('(').writeString('this',"'");
     this.wm(')',',');
   }
   this.emc(b, 'bef');
@@ -4356,14 +4393,18 @@ function(n, flags, isStmt) {
   this.wt('function', ETK_ID );
   this.emc(cb, 'fun.aft');
   var scopeName = raw['#scope'].scopeName;
+
+  var ni = this.namei_cur;
   if (scopeName) {
     this.bs();
     var name_cb = scopeName.site && CB(scopeName.site);
     name_cb && this.emc(name_cb, 'bef' );
+    ni = this.smSetName(scopeName.name);
     this.writeIDName(scopeName.name);
     name_cb && this.emc(name_cb, 'aft');
   }
   this.emc(cb, 'list.bef' );
+  this.lw(raw['#argploc']);
   this.w('(');
 
   if (raw.params) {
@@ -4394,6 +4435,7 @@ function(n, flags, isStmt) {
   em && this.l();
 
   this.w('}');
+  this.namei_cur = ni;
   this.emc(cb, 'aft');
 };
 
@@ -4488,7 +4530,7 @@ this.smSetSrc =
 function(srcName) {
   var sc = this.srci_cur;
   var mname = _m(srcName);
-  if (name.length) {
+  if (srcName.length) {
     this.srci_cur =
       this.smSrcList.has(mname) ?
         this.smSrcList.get(mname) :
@@ -7049,6 +7091,7 @@ function(ctx, st) {
   var c0 = this.c0, cb = {}, loc0 = this.loc0();
   this.suc(cb, 'bef');
 
+  var argploc = null;
   if (!isMeth) {
     if (isStmt && isAsync) {
       this.unsatisfiedLabel &&
@@ -7124,6 +7167,7 @@ function(ctx, st) {
 
   this.suc(cb, 'list.bef' );
   var argList = this.parseParams(argLen);
+  argploc = this.argploc; this.argploc = null;
   cb.inner = this.cb;
 
   this.scope.activateBody();
@@ -7144,7 +7188,8 @@ function(ctx, st) {
     params: argList,
     expression: false,
     async: (st & ST_ASYNC) !== 0,
-    '#scope': scope, '#y': 0, '#c': cb
+    '#scope': scope, '#y': 0, '#c': cb , 
+    '#argploc': argploc
   };
 
   this.declMode = declMode_;
@@ -7394,6 +7439,7 @@ function(argLen) {
     list = [],
     gnsa = false;
 
+  var argploc = this.loc0();
   if (!this.expectT(CH_LPAREN))
     this.err('fun.args.no.opening.paren');
 
@@ -7451,6 +7497,8 @@ function(argLen) {
   
   if (!this.expectT(CH_RPAREN))
     this.err('fun.args.no.end.paren');
+
+  this.argploc = argploc;
 
   return list;
 };
@@ -8173,7 +8221,7 @@ function(head) {
     this.st_flush();
   }
 
-  var cb = null;
+  var argloc = null, cb = null;
   var inner = core(head), elem = null;
 
   LOOP:
@@ -8181,6 +8229,7 @@ function(head) {
     switch (this.lttype) {
     case CH_SINGLEDOT:
       this.spc(inner, 'aft');
+      argloc = this.loc0();
       this.next();
       if (this.lttype !== TK_ID)
         this.err('mem.name.not.id');
@@ -8197,12 +8246,13 @@ function(head) {
           start: head.loc.start,
           end: elem.loc.end },
         computed: false,
-        '#y': this.Y(head), '#c': {}
+        '#y': this.Y(head), '#acloc': argloc, '#c': {}
       };
       continue;
 
     case CH_LSQBRACKET:
       this.spc(inner, 'aft');
+      argloc = this.loc0();
       this.next();
       elem = this.parseExpr(PREC_NONE, CTX_NONE);
       head = inner = {
@@ -8215,7 +8265,7 @@ function(head) {
           start: head.loc.start,
           end: this.loc() },
         computed: true,
-        '#y': this.Y(head)+this.Y(elem), '#c': {}
+        '#y': this.Y(head)+this.Y(elem), '#acloc': argloc, '#c': {}
       };
       this.spc(core(elem), 'aft');
       if (!this.expectT(CH_RSQBRACKET))
@@ -8225,6 +8275,7 @@ function(head) {
     case CH_LPAREN:
       this.spc(inner, 'aft');
       elem = this.parseArgList();
+      argloc = this.argploc; this.argploc = null;
       cb = {};
       this.suc(cb, 'inner'); // a(/* inner */); b(e, /* inner */)
       head = inner = {
@@ -8236,7 +8287,7 @@ function(head) {
         loc: {
           start: head.loc.start,
           end: this.loc() },
-        '#y': this.Y(head)+this.y, '#c': cb
+        '#y': this.Y(head)+this.y, '#argloc': argloc, '#c': cb
       };
       if (!this.expectT(CH_RPAREN))
         this.err('call.args.is.unfinished');
@@ -8803,6 +8854,7 @@ this.parseArgList = function () {
 
   var y = 0;
 
+  var argloc = this.loc0();
   do { 
     this.next();
     elem = this.parseNonSeq(PREC_NONE, CTX_NULLABLE|CTX_TOP); 
@@ -8835,6 +8887,7 @@ this.parseArgList = function () {
     this.parenAsync = parenAsync;
 
   this.yc= y;
+  this.argploc = argloc;
 
   return list ;
 };
@@ -15558,6 +15611,7 @@ function(n, isVal, isB) {
     var sm = this.synth_node_MemberExpression(t1,t2);
     sm.computed = mem.computed;
     sm.loc = mem.loc;
+    sm['#acloc'] = mem['#acloc'];
 
     n.right = this.synth_node_BinaryExpression(sm, '**', r);
   } else {
@@ -15791,7 +15845,11 @@ function(n, isVal) {
   if (ti) { this.thisState |= THS_IS_REACHED; this.thisState &= ~THS_NEEDS_CHK; }
 
   this.setAS(ais);
-  return this.synth_Call(head, mem, n.arguments);
+  var synthcall = this.synth_Call(head, mem, n.arguments);
+  synthcall.loc = n.loc;
+  synthcall['#argloc'] = n['#argloc'];
+
+  return synthcall;
 };
 
 },
@@ -16122,7 +16180,7 @@ function(n, isVal, oBinding) { // o -> outer
 
   var tempsup = null, tempsupSave = null, s = null;
   if (n.superClass) {
-    n.superClass = this.tr(n.superClass, true);
+    n.superClass = this.synth_Heritage(this.tr(n.superClass, true));
     tempsup = this.allocTemp();
     tempsupSave = this.synth_TempSave(tempsup, n.superClass);
     s = ctor && ctor['#scope'].spSuperCall;
@@ -16677,7 +16735,9 @@ function(head, mem, list) {
     list: list,
     type: '#Untransformed' ,
     kind: 'call',
-    '#c': {}
+    '#c': {},
+    '#argloc': null,
+    loc: null
   };
 };
 
@@ -16923,6 +16983,14 @@ function(target, ctor) {
     type: '#Untransformed'
   };
 
+};
+this.synth_Heritage =
+function(h) {
+  return {
+    type: '#Untransformed' ,
+    heritage: h,
+    kind: 'heritage',
+  };
 };
 
 },

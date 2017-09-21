@@ -99,7 +99,9 @@ function(head, mem, list) {
     list: list,
     type: '#Untransformed' ,
     kind: 'call',
-    '#c': {}
+    '#c': {},
+    '#argloc': null,
+    loc: null
   };
 };
 
@@ -345,4 +347,12 @@ function(target, ctor) {
     type: '#Untransformed'
   };
 
+};
+this.synth_Heritage =
+function(h) {
+  return {
+    type: '#Untransformed' ,
+    heritage: h,
+    kind: 'heritage',
+  };
 };

@@ -83,4 +83,6 @@ var Parser = function (src, o) {
   this.regNC = -1;
 
   this.regexFlags = this.rf = {};
+
+  this.argploc = null;
 };

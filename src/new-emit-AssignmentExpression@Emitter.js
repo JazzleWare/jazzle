@@ -18,8 +18,10 @@ function(n, flags, isStmt) {
   if (hasParen) { this.w('('); flags = EC_NONE; }
 
   this.emc(cb, 'bef');
-  tz && (this.emitAccessChk_tz(target), this.w(',').os());
-  cc && (this.emitAccessChk_invalidSAT(target), this.w(',').os());
+  if (tz)
+    this.emitAccessChk_tz(target, left.id.loc.start), this.w(',').os();
+  if (cc) 
+    this.emitAccessChk_invalidSAT(target, left.id.loc.start), this.w(',').os();
 
   this.emitSAT(left, flags);
 

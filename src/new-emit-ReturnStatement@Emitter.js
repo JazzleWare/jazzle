@@ -4,6 +4,9 @@ function(n, flags, isStmt) {
 
   var cb = CB(n);
   this.emc(cb, 'bef');
+
+  this.lw(n.loc.start); // TODO: only ctors without supers
+
   this.w('return');
   if (n.argument) {
     var param = {hasParen: false};

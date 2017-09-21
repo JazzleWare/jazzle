@@ -4,6 +4,7 @@ this.parseArgList = function () {
 
   var y = 0;
 
+  var argloc = this.loc0();
   do { 
     this.next();
     elem = this.parseNonSeq(PREC_NONE, CTX_NULLABLE|CTX_TOP); 
@@ -36,6 +37,7 @@ this.parseArgList = function () {
     this.parenAsync = parenAsync;
 
   this.yc= y;
+  this.argploc = argloc;
 
   return list ;
 };

@@ -6,6 +6,7 @@ function(argLen) {
     list = [],
     gnsa = false;
 
+  var argploc = this.loc0();
   if (!this.expectT(CH_LPAREN))
     this.err('fun.args.no.opening.paren');
 
@@ -63,6 +64,8 @@ function(argLen) {
   
   if (!this.expectT(CH_RPAREN))
     this.err('fun.args.no.end.paren');
+
+  this.argploc = argploc;
 
   return list;
 };
