@@ -34,6 +34,7 @@ function(n, flags, isStmt) {
         .w(')');
   }
   else {
+    if (n.operator === '+=') this.lw(n['#o']);
     this.w(n.operator).os();
     this.eN(n.right, flags & EC_IN, false);
   }

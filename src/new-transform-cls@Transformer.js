@@ -70,7 +70,9 @@ function(n, isVal, oBinding) { // o -> outer
   oBinding && this.makeReached(oBinding);
   this.setScope(scope);
 
-  return this.synth_AssigList(list);
+  var cls = this.synth_AssigList(list); // transformed cls
+  cls.raw = n;
+  return cls;
 };
 
 this.transformCtor =

@@ -70,7 +70,7 @@ function(prec, ctx) {
       break;
 
     this.spc(core(head), 'aft');
-    var o = this.ltraw;
+    var o = this.ltraw, oploc = o === '+' ? this.loc0() : null;
     this.next();
     var r = this.parseNonSeq(curPrec, ctx & CTX_FOR);
     head = {
@@ -82,7 +82,7 @@ function(prec, ctx) {
         start: head.loc.start,
         end: r.loc.end },
       left: core(head),
-      right: core(r),
+      right: core(r), '#o': oploc,
       '#y': this.Y(head, r), '#c': {}
     };
 

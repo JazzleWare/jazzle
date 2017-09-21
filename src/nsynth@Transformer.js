@@ -31,7 +31,8 @@ function(list) {
     kind: 'assig-list',
     type: '#Untransformed' ,
     list: list,
-    '#c': {}
+    '#c': {},
+    raw: null // cls-exclusive
   };
 };
 

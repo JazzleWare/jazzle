@@ -14,7 +14,7 @@ this.parseAssignment = function(head, ctx) {
   }
 
   this.spc(core(head), 'aft');
-  var right = null;
+  var right = null, oploc = null;
   if (o === '=') {
     // if this assignment is a pattern
     if (ctx & CTX_PARPAT)
@@ -81,6 +81,8 @@ this.parseAssignment = function(head, ctx) {
     if (ctx & CTX_PARPAT) {
       c0 = this.c0; li0 = this.li0; col0 = this.col0;
     }
+
+    if (o === '+=') oploc = this.loc0();
     this.next(); // <:o:>=
     right = this.parseNonSeq(PREC_NONE, (ctx & CTX_FOR)|CTX_TOP);
 
@@ -106,7 +108,7 @@ this.parseAssignment = function(head, ctx) {
     loc: {
       start: head.loc.start,
       end: right.loc.end
-    },
+    }, '#o': oploc,
     '#y': this.Y(head)+this.Y(right), '#c': {}
   };
 };

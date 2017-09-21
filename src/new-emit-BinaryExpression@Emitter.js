@@ -18,6 +18,7 @@ function(n, flags, isStmt) {
   else
     this.emitBLEP(left, flags);
 
+  o === '+' && this.lw(n['#o']);
   this.wm('',o);
 
   switch (n.operator) {

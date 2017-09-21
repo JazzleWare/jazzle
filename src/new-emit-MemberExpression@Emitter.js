@@ -1,9 +1,9 @@
 Emitters['MemberExpression'] =
 function(n, flags, isStmt) {
   var cb = CB(n); this.emc(cb, 'bef' );
-  this.lw(n.loc.start);
+//this.lw(n.loc.start);
   this.eH(n.object, flags, false);
-  this.lw(n['#acloc']); // TODO: '.'/'[' instead
+  this.lw(n['#acloc']);
   if (n.computed)
     this.w('[').eA(n.property, EC_NONE, false).w(']');
   else {

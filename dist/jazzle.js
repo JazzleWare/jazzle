@@ -3163,6 +3163,7 @@ function(n, flags, isStmt) {
         .w(')');
   }
   else {
+    if (n.operator === '+=') this.lw(n['#o']);
     this.w(n.operator).os();
     this.eN(n.right, flags & EC_IN, false);
   }
@@ -3228,6 +3229,7 @@ function(n, flags, isStmt) {
   else
     this.emitBLEP(left, flags);
 
+  o === '+' && this.lw(n['#o']);
   this.wm('',o);
 
   switch (n.operator) {
@@ -3547,9 +3549,9 @@ function(){
 Emitters['MemberExpression'] =
 function(n, flags, isStmt) {
   var cb = CB(n); this.emc(cb, 'bef' );
-  this.lw(n.loc.start);
+//this.lw(n.loc.start);
   this.eH(n.object, flags, false);
-  this.lw(n['#acloc']); // TODO: '.'/'[' instead
+  this.lw(n['#acloc']);
   if (n.computed)
     this.w('[').eA(n.property, EC_NONE, false).w(']');
   else {
@@ -8109,7 +8111,7 @@ function(prec, ctx) {
       break;
 
     this.spc(core(head), 'aft');
-    var o = this.ltraw;
+    var o = this.ltraw, oploc = o === '+' ? this.loc0() : null;
     this.next();
     var r = this.parseNonSeq(curPrec, ctx & CTX_FOR);
     head = {
@@ -8121,7 +8123,7 @@ function(prec, ctx) {
         start: head.loc.start,
         end: r.loc.end },
       left: core(head),
-      right: core(r),
+      right: core(r), '#o': oploc,
       '#y': this.Y(head, r), '#c': {}
     };
 
@@ -9185,7 +9187,7 @@ this.parseAssignment = function(head, ctx) {
   }
 
   this.spc(core(head), 'aft');
-  var right = null;
+  var right = null, oploc = null;
   if (o === '=') {
     // if this assignment is a pattern
     if (ctx & CTX_PARPAT)
@@ -9252,6 +9254,8 @@ this.parseAssignment = function(head, ctx) {
     if (ctx & CTX_PARPAT) {
       c0 = this.c0; li0 = this.li0; col0 = this.col0;
     }
+
+    if (o === '+=') oploc = this.loc0();
     this.next(); // <:o:>=
     right = this.parseNonSeq(PREC_NONE, (ctx & CTX_FOR)|CTX_TOP);
 
@@ -9277,7 +9281,7 @@ this.parseAssignment = function(head, ctx) {
     loc: {
       start: head.loc.start,
       end: right.loc.end
-    },
+    }, '#o': oploc,
     '#y': this.Y(head)+this.Y(right), '#c': {}
   };
 };
@@ -16244,7 +16248,9 @@ function(n, isVal, oBinding) { // o -> outer
   oBinding && this.makeReached(oBinding);
   this.setScope(scope);
 
-  return this.synth_AssigList(list);
+  var cls = this.synth_AssigList(list); // transformed cls
+  cls.raw = n;
+  return cls;
 };
 
 this.transformCtor =
@@ -16667,7 +16673,8 @@ function(list) {
     kind: 'assig-list',
     type: '#Untransformed' ,
     list: list,
-    '#c': {}
+    '#c': {},
+    raw: null // cls-exclusive
   };
 };
 
