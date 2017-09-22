@@ -95,7 +95,7 @@ function() {
     loc: { start: loc0, end: this.loc() },
     start: c0,
     end: this.c,
-    '#y': y, '#ci': ci, '#c': {}
+    '#y': y, '#ci': ci, '#c': {}, '#rest': -1
   };
 
   if (!this.expectT(CH_RCURLY))

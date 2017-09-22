@@ -1,28 +1,19 @@
 UntransformedEmitters['obj-iter'] =
 function(n, flags, isStmt) {
-  ;
-  this.jz('objIter').w('(').eN(n.iter).w(')');
-  return true;
+  this.eN(n.iter, flags, isStmt);
 };
 
 UntransformedEmitters['obj-iter-end'] =
 function(n, flags, isStmt) {
   ASSERT_EQ.call(this, isStmt, false);
-  ;
-  this.eH(n.iter);
-  this.wm('.','val');
-  return true;
+  this.eN(n.iter, flags, isStmt);
 };
 
 UntransformedEmitters['obj-iter-get'] =
 function(n, flags, isStmt) {
-  ;
-  this.eH(n.iter).wm('.','get','(');
+  this.eH(n.iter);
   if (n.computed)
-    this.eN(n.idx);
+    this.w('[').eA(n.idx, EC_NONE, false).w(']');
   else
-    this.writeMemName(n.idx, true);
-  this.w(')');
-  return true;
-
+    this.w('.').writeMemName(n.idx, false);
 };

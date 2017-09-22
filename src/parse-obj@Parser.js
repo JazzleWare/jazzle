@@ -81,7 +81,7 @@ this.parseObj = function(ctx) {
     loc: { start: loc0, end: this.loc() }, 
     '#c': cb,
     '#ci': ci,
-    '#y': y
+    '#y': y, '#rest': -1 /* rest */, '#t': null
   };
 
   if (errt_perr(ctx,pt)) {

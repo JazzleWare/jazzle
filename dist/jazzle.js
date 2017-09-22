@@ -4216,31 +4216,22 @@ function(n, flags, isStmt) {
 function(){
 UntransformedEmitters['obj-iter'] =
 function(n, flags, isStmt) {
-  ;
-  this.jz('objIter').w('(').eN(n.iter).w(')');
-  return true;
+  this.eN(n.iter, flags, isStmt);
 };
 
 UntransformedEmitters['obj-iter-end'] =
 function(n, flags, isStmt) {
   ASSERT_EQ.call(this, isStmt, false);
-  ;
-  this.eH(n.iter);
-  this.wm('.','val');
-  return true;
+  this.eN(n.iter, flags, isStmt);
 };
 
 UntransformedEmitters['obj-iter-get'] =
 function(n, flags, isStmt) {
-  ;
-  this.eH(n.iter).wm('.','get','(');
+  this.eH(n.iter);
   if (n.computed)
-    this.eN(n.idx);
+    this.w('[').eA(n.idx, EC_NONE, false).w(']');
   else
-    this.writeMemName(n.idx, true);
-  this.w(')');
-  return true;
-
+    this.w('.').writeMemName(n.idx, false);
 };
 
 },
@@ -10130,7 +10121,7 @@ this.parseObj = function(ctx) {
     loc: { start: loc0, end: this.loc() }, 
     '#c': cb,
     '#ci': ci,
-    '#y': y
+    '#y': y, '#rest': -1 /* rest */, '#t': null
   };
 
   if (errt_perr(ctx,pt)) {
@@ -10522,7 +10513,7 @@ function() {
     loc: { start: loc0, end: this.loc() },
     start: c0,
     end: this.c,
-    '#y': y, '#ci': ci, '#c': {}
+    '#y': y, '#ci': ci, '#c': {}, '#rest': -1
   };
 
   if (!this.expectT(CH_RCURLY))
@@ -15990,6 +15981,9 @@ function(n, isVal) {
 function(){
 Transformers['ObjectExpression'] =
 function(n, isVal) {
+  var t = null;
+  if (n['#rest'] >= 0)
+    t = n['#t'] = this.allocTemp();
   var list = n.properties, e = 0;
   while (e < list.length) {
     var elem = list[e++];
@@ -15997,6 +15991,7 @@ function(n, isVal) {
       elem.key = this.tr(elem.key, true);
     elem.value = this.tr(elem.value, true);
   }
+  t && this.releaseTemp(t);
   return n;
 };
 
