@@ -7,6 +7,14 @@ function(n, flags, isStmt) {
 
 UntransformedEmitters['temp-save'] =
 function(n, flags, isStmt) {
+  var rightonly = false;
+  var right = n.right;
+//if (right.type === '#Untransformed' && right.kind === 'assig-list') {
+//  var list = right.list, e = list.length;
+//  if (e && list[ e - 1] === n.left)
+//    return this.emitAny(n.right, flags, isStmt);
+//}
+
   var hasParen = flags & EC_EXPR_HEAD;
   var cb = CB(n); this.emc(cb, 'bef');
   if (hasParen) { this.w('('); flags &= EC_IN; }
