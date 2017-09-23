@@ -16767,6 +16767,7 @@ function(n, isVal) {
 function(){
 Transformers['DoWhileStatement'] =
 function(n, isVal) {
+  this.incNS();
   var w = n['#scope'];
   var s = this.setScope(w);
   var l = this.setAT(this.cur), e = this.setNS(0);
