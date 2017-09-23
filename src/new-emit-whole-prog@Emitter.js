@@ -18,6 +18,7 @@ function(n, flags, isStmt) {
   }
   this.emitStmtList(n.body);
   this.emc(CB(n), 'inner');
+
   if (own) u.v || this.clear_onw();
   return true;
 };

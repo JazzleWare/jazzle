@@ -1,6 +1,7 @@
 this.emitSourceHead =
 function(n) {
   var scope = n['#scope'], em = 0;
+  this.emitJ(scope, em) && em++;
   this.emitTCheckVar(scope, em) && em++;
   this.emitThisRef(scope, em) && em++;
   this.emitFunLists(scope, true, em) && em++;
@@ -298,6 +299,22 @@ function(scope, hasPrev) {
   }
 
   this.wm('var',' ',ti.synthName,'','=','','0',';');
+
+  if (own) u.v || this.clear_onw();
+  return 1;
+};
+
+this.emitJ =
+function(scope, hasPrev) {
+  return 0;
+  var own = false, u = null, o = {v: false};
+  if (hasPrev) {
+    if (!this.wcb) { this.onw(wcb_afterStmt); own = true; }
+    if (!this.wcbUsed) this.wcbUsed = u = o;
+    else u = this.wcbUsed;
+  }
+
+  this.wm('jz','','=','','jz','(',')',';');
 
   if (own) u.v || this.clear_onw();
   return 1;

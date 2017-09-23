@@ -8,6 +8,7 @@ function Actix(role) { // activity ctx
   this.activeness = ANESS_UNKNOWN;
   this.ns = 0;
   this.role = role;
+  this.inactiveIf = null;
 }
 ;
 function BundleScope() {
@@ -107,6 +108,8 @@ function Emitter() {
   this.lm = ""; // sourcemap -- line
   this.sm = ""; // sourcemap -- whole
   // </sourceMapVar>
+
+  this.jzcalls = new SortedObj();
 
   this.out = "";
 }
@@ -350,6 +353,8 @@ function Scope(sParent, type) {
   Actix.call(this, ACT_SCOPE);
   this.parent = sParent;
   this.parent && ASSERT.call(this, this.parent.reached, 'not reached');
+  this.ii(sParent);
+
   this.type = type;
   this.refs = new SortedObj();
   this.defs = new SortedObj();
@@ -389,6 +394,7 @@ function Scope(sParent, type) {
   this.tcTracker = new SortedObj(); // names tracked for tz/cv (const violation)
 
   this.reached = true;
+  this.inUse = false;
 
   if (this.parent && this.parent.isParen())
     this.parent.ch.push(this);
@@ -692,7 +698,8 @@ var EC_NONE = 0,
     EC_EXPR_HEAD = EC_START_STMT << 1,
     EC_CALL_HEAD = EC_EXPR_HEAD << 1,
     EC_NON_SEQ = EC_CALL_HEAD << 1,
-    EC_IN = EC_NON_SEQ << 1;
+    EC_IN = EC_NON_SEQ << 1,
+    EC_ATTACHED = EC_IN << 1;
 
 var EST_BREAKABLE = 1,
     EST_OMITTABLE = EST_BREAKABLE << 1,
@@ -899,6 +906,58 @@ function errt_ssyn(err) { return err & ERR_S_SYN; }
 var Emitters = {};
 var UntransformedEmitters = {};
 var Transformers = {};
+;
+var defaultJZ =
+'\
+function er(str) { throw new Error(err) }\
+function tz(str) { er("\'"+str+"\' is in its tz") }\
+function cv(str) { er("\'"+str+"\' is immutable") }\
+function r(v) { if (v) er("returned without calling super constructor") }\
+function n(b,l) {\
+  var str = "new b(", e = 0;\
+  while (e < l.length) {\
+    if (e) str += ",";\
+    str += "l["+e+"]";\
+    e++\
+  }\
+  return eval(str)\
+}\
+function c(c,l) { return c.apply(void 0, l) }\
+function ex(a,b) { return Math.pow(a,b) }\
+function u(v) { return v === void 0 }\
+function cm(t,m,l) { return m.apply(t, l) }\
+function obj() {\
+   var r = arguments[0], e = 1;\
+   while (e < arguments.length) {\
+     r[arguments[e]] = r[arguments[e+1]];\
+     e += 2\
+   }\
+   return r\
+}\
+function cr(o) { var mkr = (0,function() {}); mkr.prototype = o; return new mkr }\
+var HAS = {}.hasOwnProperty;\
+function has(o,n) { return HAS.call(o,n) }\
+function cls() {\
+  var b = arguments[0], p;\
+  if (arguments.length === 2) {\
+    var h = arguments[1];\
+    b.prototype = p = cr(h.prototype);\
+    for (var name in h)\
+      if (has(h,name)) b[name] = h[name];\
+  } else \
+    p = b.prototype;\
+  p.constructor = b;\
+  return b;\
+}\
+function arrIter0(v) { this.v = v; this.i = 0 } var p = arrIter0.prototype;\
+p.get = function() { return this.v[this.i++] };\
+\
+p.end = function() { return this.v };\
+function arrIter(v) { return new arrIter0(v); }\
+\
+function arr() {}\
+function sp(){ }\
+'
 ;
 var VDT_VOID = 1;
 var VDT_TYPEOF = 2;
@@ -1651,7 +1710,16 @@ function wcb_wrap(rawStr, tt) {
              def[1][e++].call(def[0]);
        }
      }).call([
-null,
+[Actix.prototype, [function(){
+this.ii =
+function(inactiveIf) {
+  ASSERT.call(this, this.inactiveIf === null, 'inactiveIf' );
+  this.inactiveIf = inactiveIf;
+  return this;
+
+};
+
+}]  ],
 null,
 null,
 [ClassScope.prototype, [function(){
@@ -1731,8 +1799,14 @@ this.synth_liquids_to =
 function(targetScope) {
   if (this.spThis !== null && this.spThis.ref.i)
     targetScope.synthLiquid(this.spThis);
-  if (this.isAnyFn() && this.spArguments !== null && this.spArguments.ref.i)
-    targetScope.synthLiquid(this.spArguments);
+  if (this.isAnyFn() && this.spArguments !== null) {
+    if (this.spArguments.ref.i)
+      targetScope.synthLiquid(this.spArguments);
+    else {
+      this.spArguments.synthName = this.spArguments.name;
+      targetScope.insertSynth_m(_m(this.spArguments.name), this.spArguments);
+    }
+  }
 
   var list = this.liquidDefs, e = 0, len = list.length();
   while (e < len)
@@ -2350,7 +2424,11 @@ function(list, flags) {
 };
 
 this.emitStmt =
-function(stmt) {
+function(stmt, isAttached) {
+  var flags = EC_START_STMT;
+  if (isAttached)
+    flags |= EC_ATTACHED;
+
   return this.eA(stmt, EC_START_STMT, true);
 };
 
@@ -2360,7 +2438,7 @@ function(stmt) {
   case 'BlockStatement':
     this.os();
   case 'EmptyStatement':
-    this.emitStmt(stmt);
+    this.emitStmt(stmt, false);
     return true;
   }
   this.i().l();
@@ -2512,6 +2590,7 @@ function(){
 this.emitSourceHead =
 function(n) {
   var scope = n['#scope'], em = 0;
+  this.emitJ(scope, em) && em++;
   this.emitTCheckVar(scope, em) && em++;
   this.emitThisRef(scope, em) && em++;
   this.emitFunLists(scope, true, em) && em++;
@@ -2814,6 +2893,60 @@ function(scope, hasPrev) {
   return 1;
 };
 
+this.emitJ =
+function(scope, hasPrev) {
+  return 0;
+  var own = false, u = null, o = {v: false};
+  if (hasPrev) {
+    if (!this.wcb) { this.onw(wcb_afterStmt); own = true; }
+    if (!this.wcbUsed) this.wcbUsed = u = o;
+    else u = this.wcbUsed;
+  }
+
+  this.wm('jz','','=','','jz','(',')',';');
+
+  if (own) u.v || this.clear_onw();
+  return 1;
+};
+
+},
+function(){
+this.emitJFn =
+function() {
+  var jzcalls = this.jzcalls;
+  var len = jzcalls.length();
+  if (len === 0) return;
+
+  var n = new Parser(defaultJZ).parseProgram();
+  var t = new Transformer();
+  n = t.tr(n, false);
+
+  var l = 0;
+  var scope = n['#scope'];
+  while (l < len) {
+    var nd = scope.findDeclOwn_m(_m(jzcalls.at(l)));
+    ASSERT.call(this, nd, jzcalls.at(l));
+    nd.activeness = ANESS_ACTIVE;
+    l++;
+  }
+
+  var e = new Emitter();
+
+  e.allow.elemShake = true;
+  e.wm('function',' ','jz','(',')','','{').i().onw(wcb_afterStmt).eA(n, EC_NONE, true).l();
+  e.w('return').w('{');
+  l = 0;
+  while (l < len) {
+    l && this.w(',');
+    var name = jzcalls.at(l++);
+    e.wm(name,':','',name);
+  }
+  e.wm('}',';');
+  e.u().l().w('}');
+  e.flush();
+  return e.out ;
+};
+
 },
 function(){
 this.bs =
@@ -2846,6 +2979,8 @@ function(rawStr) {
 this.write =
 function(rawStr) {
   rawStr += "";
+  ASSERT.call(this, rawStr.length, 'writing ""');
+
   var lw = null;
   if (this.locw) { lw = this.locw; this.locw = null; }
   this.hasPendingSpace() && this.effectPendingSpace(rawStr.length);
@@ -2858,7 +2993,7 @@ function(rawStr) {
 
   ASSERT.call(this, arguments.length === 1, 'write must have only one single argument');
 
-  // after a call to .indent (but not to .unindent), no further calls to .write are ever allowed until a .startNewLine call.
+  // after a call to .indent (but not to .unindent), no further calls to .write are ever allowed until calling .startNewLine
   ASSERT.call(this, this.curLineIndent < 0 || this.curLineIndent >= this.indentLevel, 'in' );
 
   var rll = this.rll;
@@ -3080,6 +3215,7 @@ function() {
 
 this.jz =
 function(name) {
+  this.jzcalls.set(_m(name), name);
   return this.wt('jz', ETK_ID).wm('.',name);
 };
 
@@ -3334,8 +3470,13 @@ function isBLE(n) {
 function(){
 Emitters['BlockStatement'] =
 function(n, flags, isStmt) {
-  if (!this.active(n['#scope']))
+  var attached = flags & EC_ATTACHED;
+  if (!this.active(n['#scope'])) {
+    attached && this.w(';');
     return;
+  }
+
+  attached && this.os();
 
   ASSERT_EQ.call(this, isStmt, true);
   var cb = CB(n);
@@ -3826,7 +3967,9 @@ function(n, flags, isStmt) {
   var cb = CB(n); this.emc(cb, 'bef' );
   this.wt('while', ETK_ID);
   this.emc(cb, 'while.aft') || this.os(); 
-  this.w('(').eA(n.test, EC_NONE, false).w(')').emitBody(n.body);
+  this.w('(').eA(n.test, EC_NONE, false).w(')');
+  if (this.active(n['#scope'])) this.emitBody(n.body);
+  else this.w(';');
   this.emc(cb, 'aft');
   return true;
 };
@@ -3979,6 +4122,7 @@ function(n, flags, isStmt) {
   }
   this.emitStmtList(n.body);
   this.emc(CB(n), 'inner');
+
   if (own) u.v || this.clear_onw();
   return true;
 };
@@ -4360,14 +4504,6 @@ function(n, flags, isStmt) {
 
 UntransformedEmitters['temp-save'] =
 function(n, flags, isStmt) {
-  var rightonly = false;
-  var right = n.right;
-  if (right.type === '#Untransformed' && right.kind === 'assig-list') {
-    var list = right.list, e = list.length;
-    if (e && list[ e - 1] === n.left)
-      return this.emitAny(n.right, flags, isStmt);
-  }
-
   var hasParen = flags & EC_EXPR_HEAD;
   var cb = CB(n); this.emc(cb, 'bef');
   if (hasParen) { this.w('('); flags &= EC_IN; }
@@ -4488,14 +4624,19 @@ function(a) { // actix
 
   ASSERT.call(this, a.activeness === ANESS_UNKNOWN, 'aness' );
   a.activeness = ANESS_CHECKING;
+//if (a.role === ACT_SCOPE)
+//  while (a.isParen()) a = a.parent;
+
   var active = false;
-  if (a.ns) active = a.role != ACT_SCOPE || !a.isAnyFn();
-  if (!active) {
-    var list = a.activeIf, len = list ? list.length() : 0, l = 0;
-    while (l < len) {
-      if (this.active(list.at(l++))) {
-        active = true;
-        break;
+  if (a.role !== ACT_SCOPE || !a.parent || a.parent.inUse) {
+    if (a.ns) active = a.role != ACT_SCOPE || !a.isAnyFn();
+    if (!active) {
+      var list = a.activeIf, len = list ? list.length() : 0, l = 0;
+      while (l < len) {
+        if (this.active(list.at(l++))) {
+          active = true;
+          break;
+        }
       }
     }
   }
@@ -9056,6 +9197,8 @@ this.parseArrow = function(arg, ctx)   {
   }
 
   var sc = ST_ARROW;
+  var loc = null;
+
   switch ( arg.type ) {
   case 'Identifier':
     this.scope.findRefAny_m(_m(arg.name)).d--;
@@ -9063,6 +9206,7 @@ this.parseArrow = function(arg, ctx)   {
     this.scope.refDirect_m(_m(arg.name), null);
     this.asArrowFuncArg(arg);
     this.spc(arg, 'aft');
+    loc = arg.loc.start;
     break;
 
   case PAREN_NODE:
@@ -9078,6 +9222,7 @@ this.parseArrow = function(arg, ctx)   {
     cb.bef = cmn(arg['#c'], 'bef' );
     cb.inner = cmn(arg['#c'], 'inner');
     this.suc(cb, 'list.bef' );
+    loc = arg.loc.start;
     break;
 
   case 'CallExpression':
@@ -9099,6 +9244,7 @@ this.parseArrow = function(arg, ctx)   {
     cb['async.aft'] = arg.callee['#c'].aft;
     cb.inner = arg['#c'].inner ;
     this.suc(cb, 'list.bef' );
+    loc = arg['#argloc' ];
     break;
 
   case INTERMEDIATE_ASYNC:
@@ -9109,6 +9255,7 @@ this.parseArrow = function(arg, ctx)   {
     this.asArrowFuncArg(arg.id);
     cb.bef = arg.asyncID['#c'].bef;
     this.spc(arg.id, 'aft');
+    loc = arg.loc.start;
     break;
 
   default: this.err('not.a.valid.arg.list');
@@ -9164,7 +9311,7 @@ this.parseArrow = function(arg, ctx)   {
     generator: false, expression: isExpr,
     body: core(nbody), id : null,
     async: async,
-    '#scope': scope, '#y': 0, '#c': cb
+    '#scope': scope, '#y': 0, '#c': cb, '#argploc': loc
   }; 
 };
 
@@ -15244,6 +15391,7 @@ this.setScope =
 function(scope) {
   var cur = this.cur;
   this.cur = scope ;
+  if (this.cur) this.cur.inUse = true;
   return cur;
 };
 
@@ -15822,6 +15970,8 @@ function(n, isVal) {
     return n;
   }
 
+  this.accessJZ();
+
   var head = n.callee, mem = null;
   if ( head.type === 'MemberExpression') {
     head.object = this.tr(head.object, true);
@@ -15979,9 +16129,10 @@ this.trSAT_mem = Transformers['MemberExpression'];
 function(){
 Transformers['NewExpression'] =
 function(n, isVal) {
+  var ais = this.setAS(true)
   n.callee = this.tr(n.callee, true);
   this.trList(n.arguments, true);
-
+  this.setAS(ais);
   return n;
 };
 
@@ -16167,12 +16318,15 @@ function(n, isVal) {
   ASSERT.call(this, !ais, 'activeIfScope');
   n.test = this.tr(n.test, true);
   this.setAS(ais);
-  var l = this.setScope(n['#scope']);
+  var w = n['#scope'];
+  var l = this.setScope(w), at = this.setAT(this.cur);
   var ns = this.setNS(0);
   n.body = this.tr(n.body, false);
 
   this.setScope(l).ns = this.curNS;
+  this.setAT(at);
   this.setNS(this.curNS + ns);
+  this.active1if2(l, w);
 
   return n;
 };
@@ -16360,7 +16514,12 @@ function(n, isVal) { return null; };
 function(){
 this.transformRawFn =
 function(n, isVal) {
-  var s = this.setScope(n['#scope'] );
+  var s = n['#scope'];
+
+  // for ndeclarations this won't do anything -- as -> false and an -> null||@length==0
+  this.tryMarkActive(s);
+
+  s = this.setScope(s);
   var at = this.setAT(this.cur), ns = this.setNS(0);
   ASSERT.call(this, s.reached, 'not reached');
   var unreach = n.type === 'FunctionDeclaration';
@@ -16379,8 +16538,6 @@ function(n, isVal) {
   this.cur.closureLLINOSA = this.cur.parent.scs.isAnyFn() ?
     createObj(this.cur.parent.scs.closureLLINOSA) : {};
 
-  // for ndeclarations this won't do anything -- as -> false and an -> null||@length==0
-  this.tryMarkActive(this.cur);
 
   var _AS = this.setAS(false);
   var _AN = this.setAN(null);
@@ -16608,8 +16765,20 @@ function(n, isVal) {
 function(){
 Transformers['DoWhileStatement'] =
 function(n, isVal) {
+  var w = n['#scope'];
+  var s = this.setScope(w);
+  var l = this.setAT(this.cur), e = this.setNS(0);
   n.body = this.tr(n.body, false);
+  this.setScope(s).ns = this.curNS;
+  this.setNS(this.curNS+e );
+  this.setAT(l);
+
+  var ais = this.setAS(true);
   n.test = this.tr(n.test, true);
+  this.setAS(ais);
+
+  this.active1if2(l, w);
+
   return n;
 };
 
@@ -17081,8 +17250,7 @@ function(scope) {
 
 this.accessJZ =
 function() {
-  return;
-  var lg = this.scriptScope.gocLG('jz');
+  var lg = this.script.gocLG('jz');
   var l = lg.getL(0);
   if (!l) {
     l = lg.newL();
@@ -17097,6 +17265,7 @@ function(list, isVal) {
 };
 
 }]  ],
+null,
 null,
 null,
 null,

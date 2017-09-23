@@ -43,5 +43,7 @@ function Emitter() {
   this.sm = ""; // sourcemap -- whole
   // </sourceMapVar>
 
+  this.jzcalls = new SortedObj();
+
   this.out = "";
 }

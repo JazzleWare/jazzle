@@ -1,6 +1,11 @@
 this.transformRawFn =
 function(n, isVal) {
-  var s = this.setScope(n['#scope'] );
+  var s = n['#scope'];
+
+  // for ndeclarations this won't do anything -- as -> false and an -> null||@length==0
+  this.tryMarkActive(s);
+
+  s = this.setScope(s);
   var at = this.setAT(this.cur), ns = this.setNS(0);
   ASSERT.call(this, s.reached, 'not reached');
   var unreach = n.type === 'FunctionDeclaration';
@@ -19,8 +24,6 @@ function(n, isVal) {
   this.cur.closureLLINOSA = this.cur.parent.scs.isAnyFn() ?
     createObj(this.cur.parent.scs.closureLLINOSA) : {};
 
-  // for ndeclarations this won't do anything -- as -> false and an -> null||@length==0
-  this.tryMarkActive(this.cur);
 
   var _AS = this.setAS(false);
   var _AN = this.setAN(null);

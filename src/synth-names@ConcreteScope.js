@@ -22,8 +22,14 @@ this.synth_liquids_to =
 function(targetScope) {
   if (this.spThis !== null && this.spThis.ref.i)
     targetScope.synthLiquid(this.spThis);
-  if (this.isAnyFn() && this.spArguments !== null && this.spArguments.ref.i)
-    targetScope.synthLiquid(this.spArguments);
+  if (this.isAnyFn() && this.spArguments !== null) {
+    if (this.spArguments.ref.i)
+      targetScope.synthLiquid(this.spArguments);
+    else {
+      this.spArguments.synthName = this.spArguments.name;
+      targetScope.insertSynth_m(_m(this.spArguments.name), this.spArguments);
+    }
+  }
 
   var list = this.liquidDefs, e = 0, len = list.length();
   while (e < len)

@@ -111,7 +111,11 @@ function(list, flags) {
 };
 
 this.emitStmt =
-function(stmt) {
+function(stmt, isAttached) {
+  var flags = EC_START_STMT;
+  if (isAttached)
+    flags |= EC_ATTACHED;
+
   return this.eA(stmt, EC_START_STMT, true);
 };
 
@@ -121,7 +125,7 @@ function(stmt) {
   case 'BlockStatement':
     this.os();
   case 'EmptyStatement':
-    this.emitStmt(stmt);
+    this.emitStmt(stmt, false);
     return true;
   }
   this.i().l();

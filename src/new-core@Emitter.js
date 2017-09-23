@@ -28,6 +28,8 @@ function(rawStr) {
 this.write =
 function(rawStr) {
   rawStr += "";
+  ASSERT.call(this, rawStr.length, 'writing ""');
+
   var lw = null;
   if (this.locw) { lw = this.locw; this.locw = null; }
   this.hasPendingSpace() && this.effectPendingSpace(rawStr.length);
@@ -40,7 +42,7 @@ function(rawStr) {
 
   ASSERT.call(this, arguments.length === 1, 'write must have only one single argument');
 
-  // after a call to .indent (but not to .unindent), no further calls to .write are ever allowed until a .startNewLine call.
+  // after a call to .indent (but not to .unindent), no further calls to .write are ever allowed until calling .startNewLine
   ASSERT.call(this, this.curLineIndent < 0 || this.curLineIndent >= this.indentLevel, 'in' );
 
   var rll = this.rll;
@@ -262,6 +264,7 @@ function() {
 
 this.jz =
 function(name) {
+  this.jzcalls.set(_m(name), name);
   return this.wt('jz', ETK_ID).wm('.',name);
 };
 

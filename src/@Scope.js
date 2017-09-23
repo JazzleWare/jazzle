@@ -2,6 +2,8 @@ function Scope(sParent, type) {
   Actix.call(this, ACT_SCOPE);
   this.parent = sParent;
   this.parent && ASSERT.call(this, this.parent.reached, 'not reached');
+  this.ii(sParent);
+
   this.type = type;
   this.refs = new SortedObj();
   this.defs = new SortedObj();
@@ -41,6 +43,7 @@ function Scope(sParent, type) {
   this.tcTracker = new SortedObj(); // names tracked for tz/cv (const violation)
 
   this.reached = true;
+  this.inUse = false;
 
   if (this.parent && this.parent.isParen())
     this.parent.ch.push(this);

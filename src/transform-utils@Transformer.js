@@ -32,8 +32,7 @@ function(scope) {
 
 this.accessJZ =
 function() {
-  return;
-  var lg = this.scriptScope.gocLG('jz');
+  var lg = this.script.gocLG('jz');
   var l = lg.getL(0);
   if (!l) {
     l = lg.newL();

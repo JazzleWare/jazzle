@@ -11,6 +11,8 @@ this.parseArrow = function(arg, ctx)   {
   }
 
   var sc = ST_ARROW;
+  var loc = null;
+
   switch ( arg.type ) {
   case 'Identifier':
     this.scope.findRefAny_m(_m(arg.name)).d--;
@@ -18,6 +20,7 @@ this.parseArrow = function(arg, ctx)   {
     this.scope.refDirect_m(_m(arg.name), null);
     this.asArrowFuncArg(arg);
     this.spc(arg, 'aft');
+    loc = arg.loc.start;
     break;
 
   case PAREN_NODE:
@@ -33,6 +36,7 @@ this.parseArrow = function(arg, ctx)   {
     cb.bef = cmn(arg['#c'], 'bef' );
     cb.inner = cmn(arg['#c'], 'inner');
     this.suc(cb, 'list.bef' );
+    loc = arg.loc.start;
     break;
 
   case 'CallExpression':
@@ -54,6 +58,7 @@ this.parseArrow = function(arg, ctx)   {
     cb['async.aft'] = arg.callee['#c'].aft;
     cb.inner = arg['#c'].inner ;
     this.suc(cb, 'list.bef' );
+    loc = arg['#argloc' ];
     break;
 
   case INTERMEDIATE_ASYNC:
@@ -64,6 +69,7 @@ this.parseArrow = function(arg, ctx)   {
     this.asArrowFuncArg(arg.id);
     cb.bef = arg.asyncID['#c'].bef;
     this.spc(arg.id, 'aft');
+    loc = arg.loc.start;
     break;
 
   default: this.err('not.a.valid.arg.list');
@@ -119,6 +125,6 @@ this.parseArrow = function(arg, ctx)   {
     generator: false, expression: isExpr,
     body: core(nbody), id : null,
     async: async,
-    '#scope': scope, '#y': 0, '#c': cb
+    '#scope': scope, '#y': 0, '#c': cb, '#argploc': loc
   }; 
 };

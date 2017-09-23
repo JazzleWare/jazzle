@@ -26,6 +26,8 @@ function(n, isVal) {
     return n;
   }
 
+  this.accessJZ();
+
   var head = n.callee, mem = null;
   if ( head.type === 'MemberExpression') {
     head.object = this.tr(head.object, true);

@@ -1,7 +1,12 @@
 Emitters['BlockStatement'] =
 function(n, flags, isStmt) {
-  if (!this.active(n['#scope']))
+  var attached = flags & EC_ATTACHED;
+  if (!this.active(n['#scope'])) {
+    attached && this.w(';');
     return;
+  }
+
+  attached && this.os();
 
   ASSERT_EQ.call(this, isStmt, true);
   var cb = CB(n);

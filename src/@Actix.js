@@ -5,4 +5,5 @@ function Actix(role) { // activity ctx
   this.activeness = ANESS_UNKNOWN;
   this.ns = 0;
   this.role = role;
+  this.inactiveIf = null;
 }

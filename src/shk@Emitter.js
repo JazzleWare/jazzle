@@ -12,14 +12,19 @@ function(a) { // actix
 
   ASSERT.call(this, a.activeness === ANESS_UNKNOWN, 'aness' );
   a.activeness = ANESS_CHECKING;
+//if (a.role === ACT_SCOPE)
+//  while (a.isParen()) a = a.parent;
+
   var active = false;
-  if (a.ns) active = a.role != ACT_SCOPE || !a.isAnyFn();
-  if (!active) {
-    var list = a.activeIf, len = list ? list.length() : 0, l = 0;
-    while (l < len) {
-      if (this.active(list.at(l++))) {
-        active = true;
-        break;
+  if (a.role !== ACT_SCOPE || !a.parent || a.parent.inUse) {
+    if (a.ns) active = a.role != ACT_SCOPE || !a.isAnyFn();
+    if (!active) {
+      var list = a.activeIf, len = list ? list.length() : 0, l = 0;
+      while (l < len) {
+        if (this.active(list.at(l++))) {
+          active = true;
+          break;
+        }
       }
     }
   }
