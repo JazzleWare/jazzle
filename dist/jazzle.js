@@ -16314,11 +16314,13 @@ function(n, kind) {
 function(){
 Transformers['WhileStatement'] =
 function(n, isVal) {
+  this.incNS();
   var ais = this.setAS(true); 
   ASSERT.call(this, !ais, 'activeIfScope');
   n.test = this.tr(n.test, true);
-  this.setAS(ais);
   var w = n['#scope'];
+//this.tryMarkActive(w);
+  this.setAS(ais);
   var l = this.setScope(w), at = this.setAT(this.cur);
   var ns = this.setNS(0);
   n.body = this.tr(n.body, false);
