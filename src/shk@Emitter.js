@@ -16,8 +16,8 @@ function(a) { // actix
 //  while (a.isParen()) a = a.parent;
 
   var active = false;
-  if (a.role !== ACT_SCOPE || !a.parent || a.parent.inUse) {
-    if (a.ns) active = a.role != ACT_SCOPE || !a.isAnyFn();
+//if (a.role !== ACT_SCOPE || !a.parent || this.active(a.parent.scs)) {
+    if (a.ns) active = a.role != ACT_SCOPE || (!a.isAnyFn() && this.active(a.scs));
     if (!active) {
       var list = a.activeIf, len = list ? list.length() : 0, l = 0;
       while (l < len) {
@@ -27,7 +27,7 @@ function(a) { // actix
         }
       }
     }
-  }
+//}
 
   a.activeness = active ? ANESS_ACTIVE : ANESS_INACTIVE;
   return active;
