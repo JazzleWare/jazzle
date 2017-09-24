@@ -158,7 +158,7 @@ function cmn_erase(cb, name) {
 function cmn(cb, name) {
   return HAS.call(cb, name) ? cb[name] : null;
 }
-
+   
 function cpReg(n) {
   switch (n.type) {
   case '#Regex.Hy':

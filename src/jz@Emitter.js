@@ -9,11 +9,32 @@ function() {
   n = t.tr(n, false);
 
   var l = 0;
-  var scope = n['#scope'];
+  var scope = n['#scope'], nd = null;
+
+  var list = jzcalls;
+  len = list.length();
   while (l < len) {
-    var nd = scope.findDeclOwn_m(_m(jzcalls.at(l)));
-    ASSERT.call(this, nd, jzcalls.at(l));
+    var name = jzcalls.at(l++);
+    nd = scope.findDeclOwn_m(_m(name));
+    ASSERT.call(this, nd, name);
     nd.activeness = ANESS_ACTIVE;
+  }
+
+  list = scope.defs, l = 0, len = list.length();
+  while (l < len) {
+    nd = list.at(l);
+    if (this.active(nd)) {
+      var listA = nd.activeIf, lA = 0, lenA = listA ? listA.length() : 0;
+      while (lA < lenA) {
+        var item = listA.at(lA++);
+
+        // TODO: find a better way
+        if (item.role === ACT_DECL && item.isVar() &&  item.ref.scope.scs === scope)
+          item.activeness = ANESS_ACTIVE;
+      }
+    }
+    else
+      nd.type |= DT_BOMB;
     l++;
   }
 

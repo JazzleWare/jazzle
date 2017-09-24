@@ -39,10 +39,10 @@ function cls() {\
   p.constructor = b;\
   return b;\
 }\
-function arrIter0(v) { this.v = v; this.i = 0 } var p = arrIter0.prototype;\
-p.get = function() { return this.v[this.i++] };\
+function arrIter0(v) { this.v = v; this.i = 0 } var prot = arrIter0.prototype;\
+prot.get = function() { return this.v[this.i++] };\
 \
-p.end = function() { return this.v };\
+prot.end = function() { return this.v };\
 function arrIter(v) { return new arrIter0(v); }\
 \
 function arr() {}\

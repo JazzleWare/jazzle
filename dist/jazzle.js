@@ -949,10 +949,10 @@ function cls() {\
   p.constructor = b;\
   return b;\
 }\
-function arrIter0(v) { this.v = v; this.i = 0 } var p = arrIter0.prototype;\
-p.get = function() { return this.v[this.i++] };\
+function arrIter0(v) { this.v = v; this.i = 0 } var prot = arrIter0.prototype;\
+prot.get = function() { return this.v[this.i++] };\
 \
-p.end = function() { return this.v };\
+prot.end = function() { return this.v };\
 function arrIter(v) { return new arrIter0(v); }\
 \
 function arr() {}\
@@ -1170,6 +1170,7 @@ var DT_CLS = 1,
     DT_EDEFAULT = DT_FNNAME << 1,
     DT_EALIASED = DT_EDEFAULT << 1,
     DT_ESELF = DT_EALIASED << 1,
+    DT_BOMB = DT_ESELF << 1,
     DT_EXPORTED = DT_EDEFAULT|DT_EALIASED|DT_ESELF,
     DT_IMPORTED = DT_IDEFAULT|DT_IALIASED|DT_INAMESPACE,
     DT_NONE = 0;
@@ -1510,7 +1511,7 @@ function cmn_erase(cb, name) {
 function cmn(cb, name) {
   return HAS.call(cb, name) ? cb[name] : null;
 }
-
+   
 function cpReg(n) {
   switch (n.type) {
   case '#Regex.Hy':
@@ -2923,11 +2924,32 @@ function() {
   n = t.tr(n, false);
 
   var l = 0;
-  var scope = n['#scope'];
+  var scope = n['#scope'], nd = null;
+
+  var list = jzcalls;
+  len = list.length();
   while (l < len) {
-    var nd = scope.findDeclOwn_m(_m(jzcalls.at(l)));
-    ASSERT.call(this, nd, jzcalls.at(l));
+    var name = jzcalls.at(l++);
+    nd = scope.findDeclOwn_m(_m(name));
+    ASSERT.call(this, nd, name);
     nd.activeness = ANESS_ACTIVE;
+  }
+
+  list = scope.defs, l = 0, len = list.length();
+  while (l < len) {
+    nd = list.at(l);
+    if (this.active(nd)) {
+      var listA = nd.activeIf, lA = 0, lenA = listA ? listA.length() : 0;
+      while (lA < lenA) {
+        var item = listA.at(lA++);
+
+        // TODO: find a better way
+        if (item.role === ACT_DECL && item.isVar() &&  item.ref.scope.scs === scope)
+          item.activeness = ANESS_ACTIVE;
+      }
+    }
+    else
+      nd.type |= DT_BOMB;
     l++;
   }
 
@@ -3266,6 +3288,8 @@ function(n, flags, isStmt) {
 function(){
 this.emitAssignment_ex =
 function(n, flags, isStmt) {
+  if (this.bomb(n.left))
+    return;
   var hasParen = flags & EC_EXPR_HEAD;
   var cc = false;
   var left = n.left;
@@ -4647,6 +4671,25 @@ function(a) { // actix
 
   a.activeness = active ? ANESS_ACTIVE : ANESS_INACTIVE;
   return active;
+};
+
+this.bomb = function(n) {
+  var chk = null;
+  if (isResolvedName(n))
+    chk = n;
+  else if (n.type === 'MemberExpression') {
+    chk = n.object;
+    while (chk.type === 'MemberExpression')
+      chk = chk.object;
+    if (!isResolvedName(chk))
+      return false;
+  }
+  else { ASSERT.call(this, false, 'l' ); }
+
+  if (this.active(chk.target))
+    return false;
+
+  return chk.target.type & (DT_BOMB);
 };
 
 this.makeActive =

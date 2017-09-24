@@ -33,6 +33,25 @@ function(a) { // actix
   return active;
 };
 
+this.bomb = function(n) {
+  var chk = null;
+  if (isResolvedName(n))
+    chk = n;
+  else if (n.type === 'MemberExpression') {
+    chk = n.object;
+    while (chk.type === 'MemberExpression')
+      chk = chk.object;
+    if (!isResolvedName(chk))
+      return false;
+  }
+  else { ASSERT.call(this, false, 'l' ); }
+
+  if (this.active(chk.target))
+    return false;
+
+  return chk.target.type & (DT_BOMB);
+};
+
 this.makeActive =
 function(a) {
   ASSERT.call(this, a.activeness === ANESS_UNKNOWN, 'aness');

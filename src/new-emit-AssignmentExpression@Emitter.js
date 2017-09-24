@@ -1,5 +1,7 @@
 this.emitAssignment_ex =
 function(n, flags, isStmt) {
+  if (this.bomb(n.left))
+    return;
   var hasParen = flags & EC_EXPR_HEAD;
   var cc = false;
   var left = n.left;
