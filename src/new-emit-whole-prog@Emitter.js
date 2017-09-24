@@ -1,7 +1,10 @@
 Emitters['Program'] =
 function(n, flags, isStmt) {
   var u = null, o = {v: false}, own = false, em = 0;
-  this.makeActive(n['#scope']);
+  var main = n['#scope'];
+  if (flags & EC_JZ) { main.activeness = ANESS_INACTIVE; }
+  else { this.makeActive(main); }
+
   if (this.emitSourceHead(n)) {
     em++;
     if (!this.wcb) {

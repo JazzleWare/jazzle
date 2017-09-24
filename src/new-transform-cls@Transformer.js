@@ -72,6 +72,7 @@ function(n, isVal, oBinding) { // o -> outer
 
   var cls = this.synth_AssigList(list); // transformed cls
   cls.raw = n;
+  cls.loc = n.loc;
   return cls;
 };
 

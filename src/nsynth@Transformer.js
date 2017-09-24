@@ -32,7 +32,8 @@ function(list) {
     type: '#Untransformed' ,
     list: list,
     '#c': {},
-    raw: null // cls-exclusive
+    raw: null, // cls-exclusive
+    loc: null
   };
 };
 

@@ -20,7 +20,7 @@ function() {
   var e = new Emitter();
 
   e.allow.elemShake = true;
-  e.wm('function',' ','jz','(',')','','{').i().onw(wcb_afterStmt).eA(n, EC_NONE, true).l();
+  e.wm('function',' ','jz','(',')','','{').i().onw(wcb_afterStmt).eA(n, EC_JZ, true).l();
   e.w('return').w('{');
   l = 0;
   while (l < len) {

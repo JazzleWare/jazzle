@@ -699,7 +699,8 @@ var EC_NONE = 0,
     EC_CALL_HEAD = EC_EXPR_HEAD << 1,
     EC_NON_SEQ = EC_CALL_HEAD << 1,
     EC_IN = EC_NON_SEQ << 1,
-    EC_ATTACHED = EC_IN << 1;
+    EC_ATTACHED = EC_IN << 1,
+    EC_JZ = EC_ATTACHED << 1;
 
 var EST_BREAKABLE = 1,
     EST_OMITTABLE = EST_BREAKABLE << 1,
@@ -907,8 +908,7 @@ var Emitters = {};
 var UntransformedEmitters = {};
 var Transformers = {};
 ;
-var defaultJZ =
-'\
+var defaultJZ = '\
 function er(str) { throw new Error(err) }\
 function tz(str) { er("\'"+str+"\' is in its tz") }\
 function cv(str) { er("\'"+str+"\' is immutable") }\
@@ -924,16 +924,16 @@ function n(b,l) {\
 }\
 function c(c,l) { return c.apply(void 0, l) }\
 function ex(a,b) { return Math.pow(a,b) }\
+function obj() {\
+  var r = arguments[0], e = 1;\
+  while (e < arguments.length) {\
+    r[arguments[e]] = r[arguments[e+1]];\
+    e += 2\
+  }\
+  return r\
+}\
 function u(v) { return v === void 0 }\
 function cm(t,m,l) { return m.apply(t, l) }\
-function obj() {\
-   var r = arguments[0], e = 1;\
-   while (e < arguments.length) {\
-     r[arguments[e]] = r[arguments[e+1]];\
-     e += 2\
-   }\
-   return r\
-}\
 function cr(o) { var mkr = (0,function() {}); mkr.prototype = o; return new mkr }\
 var HAS = {}.hasOwnProperty;\
 function has(o,n) { return HAS.call(o,n) }\
@@ -957,6 +957,7 @@ function arrIter(v) { return new arrIter0(v); }\
 \
 function arr() {}\
 function sp(){ }\
+function h(cls) {}\
 '
 ;
 var VDT_VOID = 1;
@@ -2933,7 +2934,7 @@ function() {
   var e = new Emitter();
 
   e.allow.elemShake = true;
-  e.wm('function',' ','jz','(',')','','{').i().onw(wcb_afterStmt).eA(n, EC_NONE, true).l();
+  e.wm('function',' ','jz','(',')','','{').i().onw(wcb_afterStmt).eA(n, EC_JZ, true).l();
   e.w('return').w('{');
   l = 0;
   while (l < len) {
@@ -4105,7 +4106,10 @@ function(){
 Emitters['Program'] =
 function(n, flags, isStmt) {
   var u = null, o = {v: false}, own = false, em = 0;
-  this.makeActive(n['#scope']);
+  var main = n['#scope'];
+  if (flags & EC_JZ) { main.activeness = ANESS_INACTIVE; }
+  else { this.makeActive(main); }
+
   if (this.emitSourceHead(n)) {
     em++;
     if (!this.wcb) {
@@ -16275,9 +16279,18 @@ function(n, isVal) {
   n.argument = arg;
   if (isResolvedName(arg)) {
     arg.target.ref.assigned();
-    if (this.needsCVLHS(arg.target)) { arg.cv = true; this.cacheCVLHS(arg.target); }
-    if (arg.target.isRG())
+    var leftsig = false;
+    if (this.needsCVLHS(arg.target)) {
+      this.incNS();
+      this.active1if2(arg.target, this.curAT);
+      arg.cv = true; this.cacheCVLHS(arg.target);
+      leftsig = true;
+    }
+    if (arg.target.isRG()) {
       n = this.synth_GlobalUpdate(n, true);
+      leftsig = true;
+    }
+    leftsig || arg.tz || this.active1if2(this.curAT, arg.target ); 
   }
 
   return n;
@@ -16409,6 +16422,7 @@ function(n, isVal, oBinding) { // o -> outer
 
   var cls = this.synth_AssigList(list); // transformed cls
   cls.raw = n;
+  cls.loc = n.loc;
   return cls;
 };
 
@@ -16849,7 +16863,8 @@ function(list) {
     type: '#Untransformed' ,
     list: list,
     '#c': {},
-    raw: null // cls-exclusive
+    raw: null, // cls-exclusive
+    loc: null
   };
 };
 
