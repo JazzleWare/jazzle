@@ -16,7 +16,6 @@ this.setScope =
 function(scope) {
   var cur = this.cur;
   this.cur = scope ;
-  if (this.cur) this.cur.inUse = true;
   return cur;
 };
 
