@@ -9,11 +9,10 @@ function(n, flags, isStmt) {
   this.wt('if', ETK_ID).emc(cb, 'aft.if');
   this.wm('','(').eA(n.test, EC_NONE, false).w(')');
 
-  if (this.active(conax)) { conax.inUse = true; this.emitIfBody(n.consequent); }
+  if (this.active(conax)) { this.emitIfBody(n.consequent); }
   else this.w(';');
 
   if (n.alternate && this.active(altax)) {
-    altax.inUse = true;
     this.l().wt('else', ETK_ID).onw(wcb_afterElse).emitElseBody(n.alternate);
   }
 

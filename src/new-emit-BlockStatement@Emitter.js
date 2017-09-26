@@ -6,7 +6,6 @@ function(n, flags, isStmt) {
     return;
   }
 
-  n['#scope'].inUse = true;
   attached && this.os();
 
   ASSERT_EQ.call(this, isStmt, true);

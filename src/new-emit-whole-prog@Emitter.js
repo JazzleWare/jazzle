@@ -2,7 +2,6 @@ Emitters['Program'] =
 function(n, flags, isStmt) {
   var u = null, o = {v: false}, own = false, em = 0;
   var main = n['#scope'];
-  main.inUse = true;
   if (flags & EC_JZ) { main.activeness = ANESS_INACTIVE; }
   else { this.makeActive(main); }
 

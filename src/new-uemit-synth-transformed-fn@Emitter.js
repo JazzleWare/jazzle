@@ -11,7 +11,6 @@ function(n, flags, isStmt) {
   this.emc(cb, 'bef');
   this.wt('function', ETK_ID );
   this.emc(cb, 'fun.aft');
-  raw['#scope'].inUse = true;
   var scopeName = raw['#scope'].scopeName;
 
   var ni = this.namei_cur;

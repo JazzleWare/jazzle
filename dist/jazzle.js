@@ -353,8 +353,6 @@ function Scope(sParent, type) {
   Actix.call(this, ACT_SCOPE);
   this.parent = sParent;
   this.parent && ASSERT.call(this, this.parent.reached, 'not reached');
-  this.ii(sParent);
-
   this.type = type;
   this.refs = new SortedObj();
   this.defs = new SortedObj();
@@ -394,8 +392,6 @@ function Scope(sParent, type) {
   this.tcTracker = new SortedObj(); // names tracked for tz/cv (const violation)
 
   this.reached = true;
-  this.inUse = false;
-
   if (this.parent && this.parent.isParen())
     this.parent.ch.push(this);
 }
@@ -3515,7 +3511,6 @@ function(n, flags, isStmt) {
     return;
   }
 
-  n['#scope'].inUse = true;
   attached && this.os();
 
   ASSERT_EQ.call(this, isStmt, true);
@@ -3654,11 +3649,10 @@ function(n, flags, isStmt) {
   this.wt('if', ETK_ID).emc(cb, 'aft.if');
   this.wm('','(').eA(n.test, EC_NONE, false).w(')');
 
-  if (this.active(conax)) { conax.inUse = true; this.emitIfBody(n.consequent); }
+  if (this.active(conax)) { this.emitIfBody(n.consequent); }
   else this.w(';');
 
   if (n.alternate && this.active(altax)) {
-    altax.inUse = true;
     this.l().wt('else', ETK_ID).onw(wcb_afterElse).emitElseBody(n.alternate);
   }
 
@@ -4010,7 +4004,7 @@ function(n, flags, isStmt) {
   this.wt('while', ETK_ID);
   this.emc(cb, 'while.aft') || this.os(); 
   this.w('(').eA(n.test, EC_NONE, false).w(')');
-  if (this.active(n['#scope'])) { n['#scope'].inUse = true; this.emitBody(n.body); }
+  if (this.active(n['#scope'])) { this.emitBody(n.body); }
   else this.w(';');
   this.emc(cb, 'aft');
   return true;
@@ -4148,7 +4142,6 @@ Emitters['Program'] =
 function(n, flags, isStmt) {
   var u = null, o = {v: false}, own = false, em = 0;
   var main = n['#scope'];
-  main.inUse = true;
   if (flags & EC_JZ) { main.activeness = ANESS_INACTIVE; }
   else { this.makeActive(main); }
 
@@ -4575,7 +4568,6 @@ function(n, flags, isStmt) {
   this.emc(cb, 'bef');
   this.wt('function', ETK_ID );
   this.emc(cb, 'fun.aft');
-  raw['#scope'].inUse = true;
   var scopeName = raw['#scope'].scopeName;
 
   var ni = this.namei_cur;
