@@ -1,4 +1,4 @@
-this.registerImports_sl =
+this.regulateImports_sl =
 function(src, list) {
   var sourceImported = this.gocSourceImported(src.value);
   var e = 0;

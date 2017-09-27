@@ -5,6 +5,9 @@
 //       except that it is in total contrast to the one taken in the previous version
 this.track =
 function(scope) {
+  if (this.rsMap === null)
+    this.rsMap = {};
+
   var cur = scope, root = this.ref.scope ;
   this.ref.d++;
   while (true) {

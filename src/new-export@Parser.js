@@ -64,7 +64,7 @@ function(c0,loc0) {
   var cb = this.cb; this.suc(cb, 'list.bef');
   this.next();
   var firstResv = null;
-  var list = [];
+  var list = [], entryMap = {};
   while (this.lttype === TK_ID) {
     var lName = this.id();
     var eName = lName;
@@ -79,7 +79,7 @@ function(c0,loc0) {
     if (!firstResv && this.isResv(lName.name))
       firstResv = lName;
 
-    var entry = this.scope.attachExportedEntry(eName.name);
+    var entry = this.scope.registerExportedEntry(lName.name, eName.name, entryMap);
     entry.site = eName;
 
     list.push({
@@ -121,7 +121,10 @@ function(c0,loc0) {
 
   this.foundStatement = true;
 
-  this.scope.trackExports(src ? src.value : "", list);
+  src ?
+    this.scope.regulateForwards_sl(src, list) :
+    this.scope.regulateExports_sl(list);
+
   return {
     type: 'ExportNamedDeclaration',
     start: c0,
@@ -143,7 +146,7 @@ function(c0,loc0) {
   this.semi(src['#c'], 'aft') || this.err('no.semi');
   
   this.foundStatement = true;
-  this.scope.attachFWNamespace(src.value);
+  this.scope.registerForwardedSource(src);
   return {
     type: 'ExportAllDeclaration',
     start: c0,
@@ -160,7 +163,7 @@ function(c0,loc0) {
   this.next();
   var elem = null, stmt = false;
 
-  var entry = this.scope.attachExportedEntry('*default*');
+  var entry = this.scope.registerExportedEntry('*default*');
   if (this.lttype !== TK_ID)
     elem = entry.value = this.parseNonSeq(PREC_NONE, CTX_TOP);
   else {

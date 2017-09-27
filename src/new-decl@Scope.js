@@ -131,18 +131,17 @@ this.decl_m = function(mname, dt) {
 
   decl.idx = decl.ref.scope.di_ref.v++;
 
+  // lexport {e as E}; lexport var e = 12
+
   var entry = null;
   if (decl.isExported()) {
-    entry = this.attachExportedEntry(decl.name);
+    entry = this.registerExportedEntry(decl.name);
     entry.target = decl;
-  } else if (decl.ref.scope.isSourceLevel()) {
+    this.refreshUnresolvedExportsWith(decl);
+  }
+  else {
     var sourceScope = decl.ref.scope ;
-    entry = sourceScope.findUnresolvedExportedEntry_m(mname);
-    if (entry) {
-      entry.target = decl;
-      sourceScope.insertUnresolvedExportedEntry_m(mname, null);
-      sourceScope.unresolvedExports.count--;
-    }
+    sourceScope.isSourceLevel() && sourceScope.refreshUnresolvedExportsWith(decl);
   }
 
   return decl;

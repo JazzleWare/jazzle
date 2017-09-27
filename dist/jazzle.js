@@ -421,8 +421,8 @@ function SourceScope(parent, st) {
   this.allNamesExported = this.ane = new SortedObj();
   this.allSourcesForwarded = this.asf = new SortedObj();
 
-  this.unresolvedExportsNum = 0;
-  this.allUnresovedExports = this.aue = new SortedObj();
+  this.latestUnresolvedExport = null;
+  this.allUnresolvedExports = this.aue = new SortedObj();
 }
 ;
 function Template(idxList) {
@@ -1174,7 +1174,8 @@ var DT_CLS = 1,
     DT_EDEFAULT = DT_FNNAME << 1,
     DT_EALIASED = DT_EDEFAULT << 1,
     DT_ESELF = DT_EALIASED << 1,
-    DT_BOMB = DT_ESELF << 1,
+    DT_EFW = DT_ESELF << 1,
+    DT_BOMB = DT_EFW << 1 ,
     DT_EXPORTED = DT_EDEFAULT|DT_EALIASED|DT_ESELF,
     DT_IMPORTED = DT_IDEFAULT|DT_IALIASED|DT_INAMESPACE,
     DT_NONE = 0;
@@ -5245,6 +5246,9 @@ this.newSynthLabelName = function(baseLabelName) {
 //       except that it is in total contrast to the one taken in the previous version
 this.track =
 function(scope) {
+  if (this.rsMap === null)
+    this.rsMap = {};
+
   var cur = scope, root = this.ref.scope ;
   this.ref.d++;
   while (true) {
@@ -6544,7 +6548,7 @@ function(c0,loc0) {
     if (!firstResv && this.isResv(lName.name))
       firstResv = lName;
 
-    var entry = this.scope.attachExportedEntry(eName.name);
+    var entry = this.scope.registerExportedEntry(eName.name);
     entry.site = eName;
 
     list.push({
@@ -6586,7 +6590,10 @@ function(c0,loc0) {
 
   this.foundStatement = true;
 
-  this.scope.trackExports(src ? src.value : "", list);
+  src ?
+    this.scope.regulateForwards_sl(src, list) :
+    this.scope.regulateExports_sl(list);
+
   return {
     type: 'ExportNamedDeclaration',
     start: c0,
@@ -6608,7 +6615,7 @@ function(c0,loc0) {
   this.semi(src['#c'], 'aft') || this.err('no.semi');
   
   this.foundStatement = true;
-  this.scope.attachFWNamespace(src.value);
+  this.scope.registerForwardedSource(src);
   return {
     type: 'ExportAllDeclaration',
     start: c0,
@@ -6625,7 +6632,7 @@ function(c0,loc0) {
   this.next();
   var elem = null, stmt = false;
 
-  var entry = this.scope.attachExportedEntry('*default*');
+  var entry = this.scope.registerExportedEntry('*default*');
   if (this.lttype !== TK_ID)
     elem = entry.value = this.parseNonSeq(PREC_NONE, CTX_TOP);
   else {
@@ -6840,7 +6847,7 @@ function() {
   var ec = this.semiC || src.end, eloc = this.semiLoc || src.loc.end;
   this.foundStatement = true;
 
-  this.scope.registerImports_sl(src, list);
+  this.scope.regulateImports_sl(src, list);
   return {
     type: 'ImportDeclaration',
     start: c0,
@@ -14849,18 +14856,17 @@ this.decl_m = function(mname, dt) {
 
   decl.idx = decl.ref.scope.di_ref.v++;
 
+  // lexport {e as E}; lexport var e = 12
+
   var entry = null;
   if (decl.isExported()) {
-    entry = this.attachExportedEntry(decl.name);
+    entry = this.registerExportedEntry(decl.name);
     entry.target = decl;
-  } else if (decl.ref.scope.isSourceLevel()) {
+    this.refreshUnresolvedExportsWith(decl);
+  }
+  else {
     var sourceScope = decl.ref.scope ;
-    entry = sourceScope.findUnresolvedExportedEntry_m(mname);
-    if (entry) {
-      entry.target = decl;
-      sourceScope.insertUnresolvedExportedEntry_m(mname, null);
-      sourceScope.unresolvedExports.count--;
-    }
+    sourceScope.isSourceLevel() && sourceScope.refreshUnresolvedExportsWith(decl);
   }
 
   return decl;
@@ -15168,7 +15174,83 @@ this.pop = function(out) {
 
 }]  ],
 [SourceScope.prototype, [function(){
-this.registerImports_sl =
+this.regulateExports_sl =
+function(list) {
+  var l = 0;
+  while (l < list.length) {
+    var entry = list[l++]['#entry'], mname = _m(entry.name);
+    var n = this.findDeclAny_m(mname);
+    if (n === null)
+      this.registerUnresolvedExportedEntry_m(mname, entry);
+    else
+      entry.target = n;
+  }
+};
+
+this.registerForwardedSource =
+function(src) {
+  var mname = _m(src.value);
+  if (this.allSourcesForwarded.has(mname))
+    return;
+  this.allSourcesForwarded.set(mname, null);
+  this.asi.has(mname) || this.asi.set(mname, null);
+};
+
+this.regulateForwards_sl =
+function(src, list) {
+  var sourceImported = this.gocSourceImported(src.value), l = 0;
+  while (l < list.length) {
+    var item = list[l++], entry = item['#entry'];
+    entry.target = this.createImportedBinding(item.exported, DT_EFW).r(new Ref(this)); 
+    this.addImportedAlias_ios(entry.target, item.local.name, sourceImported );
+  }
+};
+
+this.registerExportedEntry = 
+function(name) {
+  var mname = _m(name);
+  var existing = this.ane.has(mname) ? this.ane.get(mname) : null;
+  existing && this.err('existing.export');
+
+  return this.allNamesExported.set(
+    mname, { id: null, target: null, next: null, prev: null, name: name });
+};
+
+this.registerUnresolvedExportedEntry_m =
+function(mname, entry) {
+  ASSERT.call(this, !this.allUnresolvedExports.has(mname), 'existing unresolved');
+  this.allUnresolvedExports.set(mname, entry);
+  var lue = this.lastUnresolvedExport;
+  this.lastUnresolvedExport = entry;
+  if (lue) { lue.next = entry; entry.prev = lue; }
+};
+
+this.refreshUnresolvedExportsWith =
+function(nd) {
+  var mname = _m(nd.name);
+  var entry = this.allUnresolvedExports.has(mname) ?
+    this.allUnresolvedExports.get(mname) : null;
+  if (entry === null)
+    return;
+  ASSERT.call(this, entry.target === null, 'entry');
+
+  this.allUnresolvedExports.set(mname, null);
+  entry.target = nd;
+
+  var en = entry.next, ep = entry.prev;
+
+  if (entry === this.latestUnresolvedExport)
+    this.latestUnresolvedExport = ep;
+
+  if(ep) 
+    ep.next = en;
+  if(en)
+    en.prev = ep;
+};
+
+},
+function(){
+this.regulateImports_sl =
 function(src, list) {
   var sourceImported = this.gocSourceImported(src.value);
   var e = 0;
