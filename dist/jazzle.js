@@ -421,7 +421,7 @@ function SourceScope(parent, st) {
   this.allNamesExported = this.ane = new SortedObj();
   this.allSourcesForwarded = this.asf = new SortedObj();
 
-  this.latestUnresolvedExport = null;
+  this.latestUnresolvedExportTarget = null;
   this.allUnresolvedExports = this.aue = new SortedObj();
 }
 ;
@@ -6548,8 +6548,7 @@ function(c0,loc0) {
     if (!firstResv && this.isResv(lName.name))
       firstResv = lName;
 
-    var entry = this.scope.registerExportedEntry(eName.name);
-    entry.site = eName;
+    var entry = this.scope.registerExportedEntry_oi(eName.name, eName, lName.name);
 
     list.push({
       type: 'ExportSpecifier',
@@ -6591,8 +6590,8 @@ function(c0,loc0) {
   this.foundStatement = true;
 
   src ?
-    this.scope.regulateForwards_sl(src, list) :
-    this.scope.regulateExports_sl(list);
+    this.scope.regulateForwardExportList(list, src) :
+    this.scope.regulateOwnExportList(list);
 
   return {
     type: 'ExportNamedDeclaration',
@@ -6629,10 +6628,10 @@ function(c0,loc0) {
 this.parseExport_elemDefault =
 function(c0,loc0) {
   var cb = this.cb; this.suc(cb, 'default.bef' );
-  this.next();
+  var defaultID = this.id();
   var elem = null, stmt = false;
 
-  var entry = this.scope.registerExportedEntry('*default*');
+  var entry = this.scope.registerExportedEntry_oi('*default*', defaultID, '*default*');
   if (this.lttype !== TK_ID)
     elem = entry.value = this.parseNonSeq(PREC_NONE, CTX_TOP);
   else {
@@ -13846,14 +13845,27 @@ function(rc, rli, rcol, regLast, nump, flags,
 },
 function(){
 this.declare = function(id) {
-   ASSERT.call(this, this.declMode !== DT_NONE, 'Unknown declMode');
-   if (this.declMode & (DT_LET|DT_CONST)) {
-     if (id.name === 'let')
-       this.err('lexical.name.is.let');
-   }
+  ASSERT.call(this, this.declMode !== DT_NONE, 'Unknown declMode');
+  if (this.declMode & (DT_LET|DT_CONST)) {
+    if (id.name === 'let')
+      this.err('lexical.name.is.let');
+  }
 
-   var decl = this.scope.decl_m(_m(id.name), this.declMode);
-   !decl.site && decl.s(id);
+  var decl = this.scope.decl_m(_m(id.name), this.declMode);
+  !decl.site && decl.s(id);
+
+  // lexport {e as E}; lexport var e = 12
+  var entry = null;
+
+  if (decl.isExported()) {
+    entry = this.scope.registerExportedEntry_oi(id.name, id, id.name);
+    this.scope.regulateOwnExport(entry);
+    this.scope.refreshUnresolvedExportsWith(decl);
+  }
+  else {
+    var sourceScope = decl.ref.scope;
+    sourceScope.isSourceLevel() && sourceScope.refreshUnresolvedExportsWith(decl);
+  }
 };
 
 this.enterScope = function(scope) {
@@ -14856,19 +14868,6 @@ this.decl_m = function(mname, dt) {
 
   decl.idx = decl.ref.scope.di_ref.v++;
 
-  // lexport {e as E}; lexport var e = 12
-
-  var entry = null;
-  if (decl.isExported()) {
-    entry = this.registerExportedEntry(decl.name);
-    entry.target = decl;
-    this.refreshUnresolvedExportsWith(decl);
-  }
-  else {
-    var sourceScope = decl.ref.scope ;
-    sourceScope.isSourceLevel() && sourceScope.refreshUnresolvedExportsWith(decl);
-  }
-
   return decl;
 };
 
@@ -15174,78 +15173,95 @@ this.pop = function(out) {
 
 }]  ],
 [SourceScope.prototype, [function(){
-this.regulateExports_sl =
+this.regulateForwardExportList =
+function(list, src) {
+  var sourceImported = this.gocSourceImported(src.value);
+  var l = 0;
+  while (l < list.length)
+    this.regulateForwardExport(list[l++]['#entry'], sourceImported );
+};
+
+this.regulateForwardExport =
+function(entry, sourceImported) {
+  var nd = this.createImportedBinding(entry.innerName, DT_EFW);
+  this.addImportedAlias_ios(nd, entry.innerName /* or outerName */, sourceImported );
+  ASSERT.call(this, entry.target === null, 'entry');
+  entry.target = entry.target || { prev: null, v: nd, next: null };
+};
+
+this.regulateOwnExportList =
 function(list) {
   var l = 0;
-  while (l < list.length) {
-    var entry = list[l++]['#entry'], mname = _m(entry.name);
-    var n = this.findDeclAny_m(mname);
-    if (n === null)
-      this.registerUnresolvedExportedEntry_m(mname, entry);
-    else
-      entry.target = n;
-  }
+  while (l < list.length)
+    this.regulateOwnExport(list[l++]['#entry']);
+};
+
+this.regulateOwnExport =
+function(entry) {
+  var mname = _m(entry.innerName), nd = this.findDeclAny_m(mname);
+  entry.target = nd ?
+    {p: null, v: nd, n: null} :
+    this.focUnresolvedExportedTarget(entry.innerName);
 };
 
 this.registerForwardedSource =
 function(src) {
   var mname = _m(src.value);
-  if (this.allSourcesForwarded.has(mname))
+  if (this.allSourcesForwarded.has(mname));
     return;
+
   this.allSourcesForwarded.set(mname, null);
-  this.asi.has(mname) || this.asi.set(mname, null);
-};
 
-this.regulateForwards_sl =
-function(src, list) {
-  var sourceImported = this.gocSourceImported(src.value), l = 0;
-  while (l < list.length) {
-    var item = list[l++], entry = item['#entry'];
-    entry.target = this.createImportedBinding(item.exported, DT_EFW).r(new Ref(this)); 
-    this.addImportedAlias_ios(entry.target, item.local.name, sourceImported );
-  }
-};
-
-this.registerExportedEntry = 
-function(name) {
-  var mname = _m(name);
-  var existing = this.ane.has(mname) ? this.ane.get(mname) : null;
-  existing && this.err('existing.export');
-
-  return this.allNamesExported.set(
-    mname, { id: null, target: null, next: null, prev: null, name: name });
-};
-
-this.registerUnresolvedExportedEntry_m =
-function(mname, entry) {
-  ASSERT.call(this, !this.allUnresolvedExports.has(mname), 'existing unresolved');
-  this.allUnresolvedExports.set(mname, entry);
-  var lue = this.lastUnresolvedExport;
-  this.lastUnresolvedExport = entry;
-  if (lue) { lue.next = entry; entry.prev = lue; }
+  this.allSourcesImported.has(mname) ||
+  this.allSourcesImported.set(mname, null);
 };
 
 this.refreshUnresolvedExportsWith =
-function(nd) {
-  var mname = _m(nd.name);
-  var entry = this.allUnresolvedExports.has(mname) ?
+function(n) {
+  var mname = _m(n.name);
+  var target = this.allUnresolvedExports.has(mname) ?
     this.allUnresolvedExports.get(mname) : null;
-  if (entry === null)
+  if (target === null)
     return;
-  ASSERT.call(this, entry.target === null, 'entry');
 
+  ASSERT.call(this, target.v === null, 'target' );
   this.allUnresolvedExports.set(mname, null);
-  entry.target = nd;
 
-  var en = entry.next, ep = entry.prev;
+  target.v = n;
+  var tp = target.prev, tn = target.next;
+  if (target === this.latestUnresolvedExportTarget)
+    this.latestUnresolvedExportTarget = tp;
 
-  if (entry === this.latestUnresolvedExport)
-    this.latestUnresolvedExport = ep;
+  tp && (tp.next = tn);
+  tn && (tn.prev = tp);
 
-  if(ep) 
-    ep.next = en;
-  if(en)
-    en.prev = ep;
+  target.next = target.prev = null;
+};
+
+this.registerExportedEntry_oi =
+function(outerName, outerID, innerName) {
+  var mname = _m(outerName);
+  var entry = this.allNamesExported.has(mname) ?
+    this.allNamesExported.get(mname) : null;
+  entry && this.err('existing.export');
+  return this.allNamesExported.set(
+    mname, {innerName: innerName, outerName: outerName, target: null, outerID: outerID});
+};
+
+this.focUnresolvedExportedTarget =
+function(name) {
+  var mname = _m(name);
+  if (this.allUnresolvedExports.has(mname))
+    return this.allUnresolvedExports.get(mname);
+
+  var target = null;
+  target = { prev: null, v: null, next: null };
+
+  var luet = this.latestUnresolvedExportTarget;
+  this.latestUnresolvedExportTarget = target;
+  if (luet) { luet.next = target; target.prev = luet; }
+
+  return this.allUnresolvedExports.set(mname, target  );
 };
 
 },

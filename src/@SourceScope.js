@@ -7,6 +7,6 @@ function SourceScope(parent, st) {
   this.allNamesExported = this.ane = new SortedObj();
   this.allSourcesForwarded = this.asf = new SortedObj();
 
-  this.latestUnresolvedExport = null;
+  this.latestUnresolvedExportTarget = null;
   this.allUnresolvedExports = this.aue = new SortedObj();
 }

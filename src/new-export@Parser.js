@@ -64,7 +64,7 @@ function(c0,loc0) {
   var cb = this.cb; this.suc(cb, 'list.bef');
   this.next();
   var firstResv = null;
-  var list = [], entryMap = {};
+  var list = [];
   while (this.lttype === TK_ID) {
     var lName = this.id();
     var eName = lName;
@@ -79,8 +79,7 @@ function(c0,loc0) {
     if (!firstResv && this.isResv(lName.name))
       firstResv = lName;
 
-    var entry = this.scope.registerExportedEntry(lName.name, eName.name, entryMap);
-    entry.site = eName;
+    var entry = this.scope.registerExportedEntry_oi(eName.name, eName, lName.name);
 
     list.push({
       type: 'ExportSpecifier',
@@ -122,8 +121,8 @@ function(c0,loc0) {
   this.foundStatement = true;
 
   src ?
-    this.scope.regulateForwards_sl(src, list) :
-    this.scope.regulateExports_sl(list);
+    this.scope.regulateForwardExportList(list, src) :
+    this.scope.regulateOwnExportList(list);
 
   return {
     type: 'ExportNamedDeclaration',
@@ -160,10 +159,10 @@ function(c0,loc0) {
 this.parseExport_elemDefault =
 function(c0,loc0) {
   var cb = this.cb; this.suc(cb, 'default.bef' );
-  this.next();
+  var defaultID = this.id();
   var elem = null, stmt = false;
 
-  var entry = this.scope.registerExportedEntry('*default*');
+  var entry = this.scope.registerExportedEntry_oi('*default*', defaultID, '*default*');
   if (this.lttype !== TK_ID)
     elem = entry.value = this.parseNonSeq(PREC_NONE, CTX_TOP);
   else {
