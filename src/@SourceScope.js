@@ -1,7 +1,12 @@
 function SourceScope(parent, st) {
   ConcreteScope.call(this, parent, st);
-  this.asMod = { mex: new SortedObj(), mim: new SortedObj(), mns: new SortedObj() };
-  this.unresolvedExports = { entries: new SortedObj(), count: 0 };
   this.spThis = null;
   this.globals = new SortedObj();
+
+  this.allSourcesImported = this.asi = new SortedObj();
+  this.allNamesExported = this.ane = new SortedObj();
+  this.allSourcesForwarded = this.asf = new SortedObj();
+
+  this.unresolvedExportsNum = 0;
+  this.allUnresovedExports = this.aue = new SortedObj();
 }

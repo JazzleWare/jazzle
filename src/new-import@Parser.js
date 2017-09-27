@@ -75,7 +75,7 @@ function() {
   var ec = this.semiC || src.end, eloc = this.semiLoc || src.loc.end;
   this.foundStatement = true;
 
-  this.scope.trackImports(src.value, list);
+  this.scope.registerImports_sl(src, list);
   return {
     type: 'ImportDeclaration',
     start: c0,

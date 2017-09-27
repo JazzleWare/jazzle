@@ -9,4 +9,5 @@ function Decl() {
   this.reached = null;
   this.type = DT_NONE;
   this.synthName = "";
+  this.rsMap = null;
 }

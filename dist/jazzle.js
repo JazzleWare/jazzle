@@ -62,6 +62,7 @@ function Decl() {
   this.reached = null;
   this.type = DT_NONE;
   this.synthName = "";
+  this.rsMap = null;
 }
 ;
 function Emitter() {
@@ -221,7 +222,6 @@ function LabelTracker(parent) {
 function Liquid(category) {
   Decl.call(this);
   this.type |= DT_LIQUID;
-  this.rsMap = {};
   this.category = category;
 }
 ;
@@ -414,10 +414,15 @@ SortedObj.from = function(parent) {
 ;
 function SourceScope(parent, st) {
   ConcreteScope.call(this, parent, st);
-  this.asMod = { mex: new SortedObj(), mim: new SortedObj(), mns: new SortedObj() };
-  this.unresolvedExports = { entries: new SortedObj(), count: 0 };
   this.spThis = null;
   this.globals = new SortedObj();
+
+  this.allSourcesImported = this.asi = new SortedObj();
+  this.allNamesExported = this.ane = new SortedObj();
+  this.allSourcesForwarded = this.asf = new SortedObj();
+
+  this.unresolvedExportsNum = 0;
+  this.allUnresovedExports = this.aue = new SortedObj();
 }
 ;
 function Template(idxList) {
@@ -6835,7 +6840,7 @@ function() {
   var ec = this.semiC || src.end, eloc = this.semiLoc || src.loc.end;
   this.foundStatement = true;
 
-  this.scope.trackImports(src.value, list);
+  this.scope.registerImports_sl(src, list);
   return {
     type: 'ImportDeclaration',
     start: c0,
@@ -15163,196 +15168,59 @@ this.pop = function(out) {
 
 }]  ],
 [SourceScope.prototype, [function(){
+this.registerImports_sl =
+function(src, list) {
+  var sourceImported = this.gocSourceImported(src.value);
+  var e = 0;
+  while (e < list.length) {
+    var item = list[e++], target = item['#decl'];
+    this.addImportedAlias_ios(
+      target,
+      target.isIAliased() ? item.imported.name :
+      target.isIDefault() ? '*default*' : '*', sourceImported
+    );
+  }
+};
+
+this.addImportedAlias_ios =
+function(inner, outer, sourceImported) {
+  var aliases = this.gocAliasesImported(sourceImported, outer);
+  aliases.push(inner);
+};
+
+this.gocSourceImported =
+function(src) {
+  var mname = _m(src);
+  return this.allSourcesImported.has(mname) ?
+    this.allSourcesImported.get(mname) :
+    this.allSourcesImported.set(mname, new SortedObj());
+};
+
 this.declareImportedName =
 function(id, t) {
-  ASSERT.call(this, (t & DT_IMPORTED), 'not im');
   var mname = _m(id.name);
-  var decl = this.declareLexical_m(mname, t);
-  return decl.s(id );
+  var existing = this.findDeclAny_m(mname);
+  existing && this.err('existing.binding.for.import');
+
+  var nd = this.createImportedBinding(id, t);
+  nd.r(this.rocRefU_m(mname));
+  this.insertDecl_m(mname, nd);
+  return nd;
 };
 
-this.trackImports =
-function(src, list) {
-  // TODO: src might have to get a normalization
-  var mname = _m(src);
-  var im = this.asMod.mim.has(mname) ?
-    this.asMod.mim.get(mname) : null;
-
-  if (im === null)
-    im = this.asMod.mim.set(mname, new SortedObj());
-
-  var e = 0;
-
-  while (e < list.length) {
-    var sp = list[e++], decl = sp['#decl'];
-    mname = _m(
-      decl.isIDefault() ? '*default*' :
-      decl.isIAliased() ? sp.imported.name :
-      (ASSERT.call(this, decl.isINamespace(), 'namespace'), '*')
-    ); 
-
-    if (!im.has(mname))
-      im.set(mname, decl);
-    else if (im.get(mname) !== null) { // if it is not just a forwarded name (i.e., an `export ... from ...`)
-      ASSERT.call(this, decl.ref.scope === this, 'scope');
-      // a;
-      // import {a} from 'e'
-      // b;
-      // import {a as b} from 'e'
-      var existing = im.get(mname);
-      decl.referTo(existing);
-    }
-  }
+this.gocAliasesImported =
+function(sourceImported, outerName) {
+  var mname = _m(outerName);
+  return sourceImported.has(mname) ? 
+    sourceImported.get(mname) :
+    sourceImported.set(mname, []);
 };
 
-this.attachExportedEntry =
-function(name) {
-  var mname = _m(name);
-  var entry = this.findExportedEntry_m(mname);
-  if (entry)
-    this.parser.err('existing.export');
-  entry = {site: null, target: null, value: null};
-  this.insertExportedEntry_m(mname, entry);
-  return entry;
-};
-
-this.insertExportedEntry_m =
-function(mname, entry) {
-  return this.asMod.mex.set(mname, entry);
-};
-
-this.findExportedEntry_m =
-function(mname) {
-  var ex = this.asMod.mex;
-  return ex.has(mname) ? ex.get(mname) : null;
-};
-
-this.attachFWNamespace =
-function(src) {
-  var mns = this.asMod.mns;
-  var mname = _m(src);
-  mns.has(mname) || mns.set(mname, null);
-  if (!this.asMod.mim.has(mname))
-    this.asMod.mim.set(mname, null);
-};
-
-this.trackExports = 
-function(src, list) {
-  var isFW = src.length > 0, e = 0;
-  while (e < list.length) {
-    var sp = list[e++], mname = _m(sp.local.name), entry = sp['#entry'];
-    var target = isFW ?
-      this.gocImportedName(src, sp.local) :
-      this.findDeclAny_m(mname);
-    if (target === null)
-      this.insertUnresolvedExportedEntry_m(mname, entry);
-    else
-      entry.target = target;
-  }
-};
-
-this.gocImportedName =
-function(src, id) {
-  var mname = _m(src), im = this.asMod.mim;
-  im = im.has(mname) ? im.get(mname) : im.set(mname, new SortedObj());
-  mname = _m(id.name);
-  if (im.has(mname))
-    return im.get(mname);
-  var nd = new Decl().t(DT_EALIASED).n(id.name).s(id).r(new Ref(this));
-  return im.set(mname, nd );
-};
-
-this.insertUnresolvedExportedEntry_m =
-function(mname, entry) {
-  this.unresolvedExports.entries.set(mname, entry);
-  this.unresolvedExports.count++;
-};
-
-this.findUnresolvedExportedEntry_m =
-function(mname) {
-  var uentries = this.unresolvedExports.entries;
-  return uentries.has(mname) ? uentries.get(mname) : null;
-};
-
-},
-function(){
-this.satisfyWith =
-function(bundler) {
-  var loni = [], e = 0; // list of new imports
-  var mim = this.asMod.mim, m = null;
-  var len = mim.length(), name = "";
-  while (e < len) {
-    name = _u(mim.keys[e]);
-    var oPath = bundler.cd(pathFor(name));
-    var curName = tailFor(name);
-    if (bundler.has(curName))
-      m = bundler.get(curName);
-    else {
-      m = bundler.load(curName);
-      loni.push(m);
-    }
-
-    if (this.asMod.mns.has(_m(name)))
-      this.asMod.mns.set(_m(name), m['#scope']);
-
-    var im = mim.at(e);
-    if (im === null)
-      ASSERT.call(this, this.asMod.mns.has(_m(name)), 'if im is null there has to be an entry for it in mns');
-    else
-      m['#scope'].satisfyAll(this, mim.at(e), loni, bundler);
-
-    bundler.path = oPath;
-    e++;
-  }
-
-  return loni;
-};
-
-this.satisfyAll =
-function(origin, list, loni, bundler) {
-  var mns = this.asMod.mns, e = 0, len = list.length();
-  while (e < len) {
-    var mname = list.keys[e];
-    var entry = this.findExportedEntry_m(mname);
-    if (entry === null)
-      entry = this.findInForwardEntries_m(origin, mname, loni, bundler);
-    if (entry === null)
-      this.err('unsatisfied.import');
-    var im = list.at(e);
-    im === entry.target /* a.js: import {e as a} from './a.js'; export let e = 5; */ || im.referTo(entry.target);
-    e++;
-  }
-};
-
-this.findInForwardEntries_m =
-function(origin, mname, loni, bundler) {
-  var mns = this.asMod.mns, e = 0, len = mns.length();
-  while (e < len) {
-    var satisfierNamespace = mns.at(e);
-    if (satisfierNamespace === null) {
-      var name = _u(mns.keys[e]);
-      var oPath = bundler.cd(pathFor(name));
-      var curName = tailFor(name)
-      if (bundler.has(curName))
-        satisfierNamespace = bundler.get(curName);
-      else {
-        satisfierNamespace = bundler.load(curName);
-        loni.push(satisfierNamespace);
-      }
-      satisfierNamespace = satisfierNamespace['#scope'];
-      mns.set(mns.keys[e], satisfierNamespace );
-    }
-    var entry = satisfierNamespace.findExportedEntry_m(mname);
-
-    // a.js: export * from './a.js'; import {l} // will blow the stack if the satisfier scope is the same as the origin
-    // TODO: what about this? a.js: import {l} from './b'; b.js: export * from './b';
-    if (entry === null && origin !== satisfierNamespace)
-      entry = satisfierNamespace.findInForwardEntries_m(origin, mname, loni, bundler);
-    if (entry)
-      return entry;
-    e++;
-  }
-  return null;
+this.createImportedBinding =
+function(id, t) {
+  var nd = new Decl()
+  nd.t(t).s(id).n(id.name);
+  return nd;
 };
 
 },
