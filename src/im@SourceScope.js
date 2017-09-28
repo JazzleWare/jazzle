@@ -21,9 +21,10 @@ function(inner, outer, sourceImported) {
 this.gocSourceImported =
 function(src) {
   var mname = _m(src);
-  return this.allSourcesImported.has(mname) ?
-    this.allSourcesImported.get(mname) :
-    this.allSourcesImported.set(mname, new SortedObj());
+  var im = this.allSourcesImported.has(mname) ?
+    this.allSourcesImported.get(mname) : null;
+
+  return im || this.allSourcesImported.set(mname, new SortedObj());
 };
 
 this.declareImportedName =

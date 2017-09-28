@@ -16,6 +16,14 @@ function BundleScope() {
   this.globals = new SortedObj();
 }
 ;
+function Bundler(pathMan) {
+  this.pathMan = pathMan;
+  this.curDir = "";
+  this.curURI = "";
+  this.resolver = null;
+  this.freshSources = [];
+}
+;
 function CatchScope(sParent) {
   Scope.call(this, sParent, ST_CATCH);
 
@@ -347,6 +355,11 @@ function Ref(scope) {
   this.hasTarget = false;
   this.parentRef = null;
   this.lhs = 0;
+}
+;
+function ResourceResolver() {
+  this.savedNodes = {}; 
+  // this.URItoID = {};
 }
 ;
 function Scope(sParent, type) {
@@ -1728,6 +1741,45 @@ function(inactiveIf) {
 
 }]  ],
 null,
+[Bundler.prototype, [function(){
+this.enter = 
+function(relPath) {
+  var ll = { uri: this.curURI, dir: this.curDir };
+  var man = this.pathMan;
+
+  this.curURI = man.joinRaw(this.curDir, relPath);
+  this.curDir = man.head(this.curURI);
+
+  return ll;
+};
+
+this.setURIAndDir =
+function(uri, dir) {
+  this.curURI = uri;
+  this.curDir = dir;
+};
+
+this.save =
+function(n) {
+  this.resolver.save(this.curURI, n);
+};
+
+this.getExistingSourceNode =
+function() {
+  return this.resolver.loadCached(this.curURI);
+};
+
+this.loadNewSource =
+function() {
+  ASSERT.call(this, !this.resolver.hasInCache(this.curURI), 'incache');
+  var n = this.resolver.loadNew(this.curURI);
+  this.resolver.cache(this.curURI, n);
+  n['#imports'] = n['#scope'].satisfyWithBundler(this);
+  this.freshSources.push(n);
+  return n;
+};
+
+}]  ],
 null,
 [ClassScope.prototype, [function(){
 this.hasHeritage =
@@ -14281,6 +14333,26 @@ function(rsList) {
 };
 
 }]  ],
+[ResourceResolver.prototype, [function(){
+// TODO: fetch nodes based on id's, such that, in case the uri's 'a/b' and 'l/e' both point to the same file on a disk, and we have only saved 'a/b', this.get('l/e') returns the 
+// same node saved under 'a/b' (by the way, this is more of a bundler's job than a resource loader's)
+
+this.save =
+function(uri, n) {
+  var mname = _m(uri);
+  ASSERT.call(this, !HAS.call(this.savedNodes, mname), 'existing');
+
+  this.savedNodes[mname] = n;
+};
+
+this.get =
+function(uri) {
+  var mname = _m(uri);
+  return HAS.call(this.savedNodes, mname) ?
+    this.savedNodes[mname] : null;
+};
+
+}]  ],
 [Scope.prototype, [function(){
 this.canSmem =
 function() { return this.actions & SA_MEMSUPER; };
@@ -15290,9 +15362,10 @@ function(inner, outer, sourceImported) {
 this.gocSourceImported =
 function(src) {
   var mname = _m(src);
-  return this.allSourcesImported.has(mname) ?
-    this.allSourcesImported.get(mname) :
-    this.allSourcesImported.set(mname, new SortedObj());
+  var im = this.allSourcesImported.has(mname) ?
+    this.allSourcesImported.get(mname) : null;
+
+  return im || this.allSourcesImported.set(mname, new SortedObj());
 };
 
 this.declareImportedName =
