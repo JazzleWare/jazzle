@@ -3,12 +3,13 @@ function(list, src) {
   var sourceImported = this.gocSourceImported(src.value);
   var l = 0;
   while (l < list.length)
-    this.regulateForwardExport(list[l++]['#entry'], sourceImported );
+    this.regulateForwardExport(list[l++], sourceImported );
 };
 
 this.regulateForwardExport =
-function(entry, sourceImported) {
-  var nd = this.createImportedBinding(entry.innerName, DT_EFW);
+function(ex, sourceImported) {
+  var entry = ex['#entry'];
+  var nd = this.createImportedBinding(ex.local, DT_EFW);
   this.addImportedAlias_ios(nd, entry.innerName /* or outerName */, sourceImported );
   ASSERT.call(this, entry.target === null, 'entry');
   entry.target = entry.target || { prev: null, v: nd, next: null };
