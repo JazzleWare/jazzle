@@ -35,6 +35,8 @@ function(id, t) {
   var nd = this.createImportedBinding(id, t);
   nd.r(this.rocRefU_m(mname));
   this.insertDecl_m(mname, nd);
+  this.refreshUnresolvedExportsWith(nd );
+
   return nd;
 };
 

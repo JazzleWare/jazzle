@@ -32,7 +32,7 @@ function(entry) {
 this.registerForwardedSource =
 function(src) {
   var mname = _m(src.value);
-  if (this.allSourcesForwarded.has(mname));
+  if (this.allSourcesForwarded.has(mname))
     return;
 
   this.allSourcesForwarded.set(mname, null);

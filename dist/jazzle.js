@@ -15207,7 +15207,7 @@ function(entry) {
 this.registerForwardedSource =
 function(src) {
   var mname = _m(src.value);
-  if (this.allSourcesForwarded.has(mname));
+  if (this.allSourcesForwarded.has(mname))
     return;
 
   this.allSourcesForwarded.set(mname, null);
@@ -15303,6 +15303,8 @@ function(id, t) {
   var nd = this.createImportedBinding(id, t);
   nd.r(this.rocRefU_m(mname));
   this.insertDecl_m(mname, nd);
+  this.refreshUnresolvedExportsWith(nd );
+
   return nd;
 };
 
