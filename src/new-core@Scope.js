@@ -66,7 +66,7 @@ function(name, transformedFn) {
 
 this.owns =
 function(nd) {
-  return nd.ref.scope === this && (!nd.isImported());
+  return nd.ref.scope === this /* && (!nd.isImported()) */;
 };
 
 this.determineFlags =

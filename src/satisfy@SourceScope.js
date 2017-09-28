@@ -14,7 +14,7 @@ function(bundler) {
 
     var satisfierScope = src['#scope'];
     if (this.forwardsSource(sourcePath))
-      this.fillForwardedSourceEntry(sourcePath, satisfierScope);
+      this.fillForwardedSourceEntryWith(sourcePath, satisfierScope);
 
     var entriesImported = allSourcesImported.at(e);
     entriesImported && satisfierScope.satisfyEntries(entriesImported );
@@ -24,7 +24,7 @@ function(bundler) {
   }
 
   var im = bundler.freshSources;
-  bundler.freshSource = bundlerSources;
+  bundler.freshSources = bundlerSources;
 
   return im;
 };

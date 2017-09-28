@@ -14800,7 +14800,7 @@ function(name, transformedFn) {
 
 this.owns =
 function(nd) {
-  return nd.ref.scope === this && (!nd.isImported());
+  return nd.ref.scope === this /* && (!nd.isImported()) */;
 };
 
 this.determineFlags =
@@ -15475,7 +15475,7 @@ function(bundler) {
 
     var satisfierScope = src['#scope'];
     if (this.forwardsSource(sourcePath))
-      this.fillForwardedSourceEntry(sourcePath, satisfierScope);
+      this.fillForwardedSourceEntryWith(sourcePath, satisfierScope);
 
     var entriesImported = allSourcesImported.at(e);
     entriesImported && satisfierScope.satisfyEntries(entriesImported );
@@ -15485,7 +15485,7 @@ function(bundler) {
   }
 
   var im = bundler.freshSources;
-  bundler.freshSource = bundlerSources;
+  bundler.freshSources = bundlerSources;
 
   return im;
 };
@@ -17642,7 +17642,7 @@ this.ST_CATCH = ST_BARE << 1,
 this.ST_PAREN = ST_CATCH << 1,
 this.ST_NONE = 0; 
 
-this. VirtualReourceResolver = VirtualResourceResolver;
+this. VirtualResourceResolver = VirtualResourceResolver;
 this. Bundler = Bundler;
 
 this. makeAcceptor = makeAcceptor;
