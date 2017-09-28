@@ -55,8 +55,9 @@ this.ST_CATCH = ST_BARE << 1,
 this.ST_PAREN = ST_CATCH << 1,
 this.ST_NONE = 0; 
 
-// this. VirtualSourceLoader = VirtualSourceLoader;
-// this. Bundler = Bundler;
+this. VirtualReourceResolver = VirtualResourceResolver;
+this. Bundler = Bundler;
+
 this. makeAcceptor = makeAcceptor;
 
 // this.cd = cd;

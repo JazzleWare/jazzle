@@ -11,3 +11,4 @@
  Liquid.prototype = createObj(Decl.prototype);
  SourceScope.prototype = createObj(ConcreteScope.prototype);
  BundleScope.prototype = createObj(ConcreteScope.prototype);
+ VirtualResourceResolver.prototype = createObj(ResourceResolver.prototype);

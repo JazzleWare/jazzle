@@ -12,13 +12,14 @@ function(bundler) {
     var src = bundler.getExistingSourceNode() || bundler.loadNewSource();
     ASSERT.call(this, src, 'source not found: "'+sourcePath+'"' );
 
-    var satisfierScope = scr['#scope'];
+    var satisfierScope = src['#scope'];
     if (this.forwardsSource(sourcePath))
       this.fillForwardedSourceEntry(sourcePath, satisfierScope);
 
     var entriesImported = allSourcesImported.at(e);
     entriesImported && satisfierScope.satisfyEntries(entriesImported );
 
+    bundler.setURIAndDir(exitPath.uri, exitPath.dir);
     e++;
   }
 
@@ -45,14 +46,14 @@ function(binding, name) {
   var ex = this.searchExports(name, null);
 
   ex || this.err('unresolved.name');
-  this.resolve1to2(binding, ex.getDecl());
+  this.resolve1to2(binding, ex.ref.getDecl());
 };
 
 this.searchInOwnExports =
 function(name) {
   var mname = _m(name);
   var entry = this.allNamesExported.has(mname) ?
-    this.allNamesExported(mname) : null;
+    this.allNamesExported.get(mname) : null;
   if (entry) {
     ASSERT.call(this, entry.target.v, 'entry' );
     return entry.target.v;
@@ -83,4 +84,24 @@ function(name, soFar) {
     }
   }
   return entry;
+};
+
+this.resolve1to2 =
+function(slave, master) {
+  ASSERT.call(this, master === master.ref.getDecl(), 'master');
+  ASSERT.call(this, master !== slave, 'same');
+
+  var slaveRef = slave.ref;
+  slaveRef.hasTarget = false;
+  slaveRef.targetDecl = null;
+
+  var slaveRSList = slaveRef.rsList, l = 0;
+  if (master.rsMap === null)
+    master.refreshRSListWithList(master.ref.rsList);
+
+  master.refreshRSListWithList(slaveRef.rsList);
+  master.refreshRSListWith(slaveRef.scope);
+
+  ASSERT.call(this, slaveRef.parentRef === null, 'slaveRef');
+  slaveRef.parentRef = master.ref;
 };

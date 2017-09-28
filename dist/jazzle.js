@@ -543,6 +543,11 @@ function Transformer() {
   this.renamer = renamer_incremental;
 }
 ;
+function VirtualResourceResolver(pathMan) {
+  ResourceResolver.call(this, pathMan);
+  this.fsMap = {};
+}
+;
  Scope.prototype = createObj(Actix.prototype);
  ConcreteScope.prototype = createObj(Scope.prototype);
  GlobalScope.prototype = createObj(Scope.prototype);
@@ -556,6 +561,7 @@ function Transformer() {
  Liquid.prototype = createObj(Decl.prototype);
  SourceScope.prototype = createObj(ConcreteScope.prototype);
  BundleScope.prototype = createObj(ConcreteScope.prototype);
+ VirtualResourceResolver.prototype = createObj(ResourceResolver.prototype);
 ;
 var CH_1 = char2int('1'),
     CH_2 = char2int('2'),
@@ -1742,12 +1748,33 @@ function(inactiveIf) {
 }]  ],
 null,
 [Bundler.prototype, [function(){
+// 
+// a
+// |__ b.js: import './l.js'
+// |__ l.js: console.log('l.js in a')
+//
+// e
+// |__ u.js -> a link to 'a/b.js'
+// |__ l.js -> console.log('l.js in b')
+//
+// with above, consider:
+// limport 'a/b.js'; limport 'e/u.js'
+// 
+// what is its output supposed to be?
+
 this.enter = 
 function(relPath) {
   var ll = { uri: this.curURI, dir: this.curDir };
   var man = this.pathMan;
 
-  this.curURI = man.joinRaw(this.curDir, relPath);
+  var at = 0, len = -1, n = this.curDir;
+  while (at < relPath.length) {
+    len = man.len(relPath, at);
+    var elem = relPath.substr(at, len);
+    n = man.joinRaw(n, man.trimAll(elem), true );
+    at += len;
+  }
+  this.curURI = n;
   this.curDir = man.head(this.curURI);
 
   return ll;
@@ -1761,7 +1788,7 @@ function(uri, dir) {
 
 this.save =
 function(n) {
-  this.resolver.save(this.curURI, n);
+  this.resolver.cache(this.curURI, n);
 };
 
 this.getExistingSourceNode =
@@ -2156,21 +2183,6 @@ function(t) {
   return this;
 };
 
-this.referTo =
-function(target) {
-  var ref = this.ref;
-  ASSERT.call(this, this.ref.scope.isSourceLevel(), 'source level');
-  ASSERT.call(this, this !== target.ref.getDecl(), 'not itself');
-  ref.cut();
-  target.ref.updateRSList(ref.rsList);
-  target.ref.updateStats(ref.i, ref.d );
-  target.ref.rsList.push(ref.scope);
-  ref.hasTarget = false;
-  ref.targetDecl = null;
-  this.ref.parentRef = target.ref;
-  return this;
-};
-
 this.activateTZ =
 function() {
   if (this.hasTZCheck)
@@ -2183,6 +2195,26 @@ function() {
 this.isReached =
 function() {
   return this.reached && this.reached.v;
+};
+
+this.refreshRSListWithList =
+function(list) {
+  var l = 0;
+  while (l < list.length)
+    this.refreshRSListWith(list[l++]);
+};
+
+this.refreshRSListWith =
+function(scope) {
+  if (this.rsMap === null)
+    this.rsMap = {};
+  var id = scope.scopeID;
+  if (HAS.call(this.rsMap, id)) {
+    ASSERT.call(this, this.rsMap[id] === scope, 'scope' );
+    return false;
+  }
+  this.rsMap[id] = scope ;
+  return true;
 };
 
 },
@@ -14337,19 +14369,29 @@ function(rsList) {
 // TODO: fetch nodes based on id's, such that, in case the uri's 'a/b' and 'l/e' both point to the same file on a disk, and we have only saved 'a/b', this.get('l/e') returns the 
 // same node saved under 'a/b' (by the way, this is more of a bundler's job than a resource loader's)
 
-this.save =
-function(uri, n) {
-  var mname = _m(uri);
-  ASSERT.call(this, !HAS.call(this.savedNodes, mname), 'existing');
-
-  this.savedNodes[mname] = n;
+this.hasInCache =
+function(uri) {
+  return HAS.call(this.savedNodes, _m(uri));
 };
 
-this.get =
+this.loadCached =
 function(uri) {
   var mname = _m(uri);
   return HAS.call(this.savedNodes, mname) ?
     this.savedNodes[mname] : null;
+};
+
+this.cache =
+function(uri, n) {
+  var mname = _m(uri);
+  ASSERT.call(this, !this.hasInCache(uri), 'existing');
+  this.savedNodes[mname] = n;
+};
+
+this.loadNew =
+function(uri) {
+  ASSERT.call(this, !this.hasInCache(uri), 'existing');
+  return this.asNode(uri);
 };
 
 }]  ],
@@ -15431,13 +15473,14 @@ function(bundler) {
     var src = bundler.getExistingSourceNode() || bundler.loadNewSource();
     ASSERT.call(this, src, 'source not found: "'+sourcePath+'"' );
 
-    var satisfierScope = scr['#scope'];
+    var satisfierScope = src['#scope'];
     if (this.forwardsSource(sourcePath))
       this.fillForwardedSourceEntry(sourcePath, satisfierScope);
 
     var entriesImported = allSourcesImported.at(e);
     entriesImported && satisfierScope.satisfyEntries(entriesImported );
 
+    bundler.setURIAndDir(exitPath.uri, exitPath.dir);
     e++;
   }
 
@@ -15464,14 +15507,14 @@ function(binding, name) {
   var ex = this.searchExports(name, null);
 
   ex || this.err('unresolved.name');
-  this.resolve1to2(binding, ex.getDecl());
+  this.resolve1to2(binding, ex.ref.getDecl());
 };
 
 this.searchInOwnExports =
 function(name) {
   var mname = _m(name);
   var entry = this.allNamesExported.has(mname) ?
-    this.allNamesExported(mname) : null;
+    this.allNamesExported.get(mname) : null;
   if (entry) {
     ASSERT.call(this, entry.target.v, 'entry' );
     return entry.target.v;
@@ -15502,6 +15545,26 @@ function(name, soFar) {
     }
   }
   return entry;
+};
+
+this.resolve1to2 =
+function(slave, master) {
+  ASSERT.call(this, master === master.ref.getDecl(), 'master');
+  ASSERT.call(this, master !== slave, 'same');
+
+  var slaveRef = slave.ref;
+  slaveRef.hasTarget = false;
+  slaveRef.targetDecl = null;
+
+  var slaveRSList = slaveRef.rsList, l = 0;
+  if (master.rsMap === null)
+    master.refreshRSListWithList(master.ref.rsList);
+
+  master.refreshRSListWithList(slaveRef.rsList);
+  master.refreshRSListWith(slaveRef.scope);
+
+  ASSERT.call(this, slaveRef.parentRef === null, 'slaveRef');
+  slaveRef.parentRef = master.ref;
 };
 
 },
@@ -17485,6 +17548,26 @@ function(list, isVal) {
 };
 
 }]  ],
+[VirtualResourceResolver.prototype, [function(){
+this.asNode =
+function(uri) {
+  ASSERT.call(this, this.has(uri), 'resource not found ('+uri+')');
+  var e = new Parser(this.fsMap[_m(uri)], {sourceType: 'module'}).parseProgram();
+  return e;
+};
+
+this.has =
+function(uri) { return HAS.call(this.fsMap, _m(uri)); };
+
+this.set =
+function(uri, value) {
+  ASSERT.call(this, !this.has(uri), 'has' );
+  this.fsMap[_m(uri)] = value;
+};
+
+
+
+}]  ],
 null,
 null,
 null,
@@ -17559,8 +17642,9 @@ this.ST_CATCH = ST_BARE << 1,
 this.ST_PAREN = ST_CATCH << 1,
 this.ST_NONE = 0; 
 
-// this. VirtualSourceLoader = VirtualSourceLoader;
-// this. Bundler = Bundler;
+this. VirtualReourceResolver = VirtualResourceResolver;
+this. Bundler = Bundler;
+
 this. makeAcceptor = makeAcceptor;
 
 // this.cd = cd;

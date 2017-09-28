@@ -30,21 +30,6 @@ function(t) {
   return this;
 };
 
-this.referTo =
-function(target) {
-  var ref = this.ref;
-  ASSERT.call(this, this.ref.scope.isSourceLevel(), 'source level');
-  ASSERT.call(this, this !== target.ref.getDecl(), 'not itself');
-  ref.cut();
-  target.ref.updateRSList(ref.rsList);
-  target.ref.updateStats(ref.i, ref.d );
-  target.ref.rsList.push(ref.scope);
-  ref.hasTarget = false;
-  ref.targetDecl = null;
-  this.ref.parentRef = target.ref;
-  return this;
-};
-
 this.activateTZ =
 function() {
   if (this.hasTZCheck)
@@ -57,4 +42,24 @@ function() {
 this.isReached =
 function() {
   return this.reached && this.reached.v;
+};
+
+this.refreshRSListWithList =
+function(list) {
+  var l = 0;
+  while (l < list.length)
+    this.refreshRSListWith(list[l++]);
+};
+
+this.refreshRSListWith =
+function(scope) {
+  if (this.rsMap === null)
+    this.rsMap = {};
+  var id = scope.scopeID;
+  if (HAS.call(this.rsMap, id)) {
+    ASSERT.call(this, this.rsMap[id] === scope, 'scope' );
+    return false;
+  }
+  this.rsMap[id] = scope ;
+  return true;
 };
