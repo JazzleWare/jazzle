@@ -15553,18 +15553,24 @@ function(slave, master) {
   ASSERT.call(this, master !== slave, 'same');
 
   var slaveRef = slave.ref;
-  slaveRef.hasTarget = false;
-  slaveRef.targetDecl = null;
+  if (slaveRef) {
+    slaveRef.hasTarget = false;
+    slaveRef.targetDecl = null;
 
-  var slaveRSList = slaveRef.rsList, l = 0;
-  if (master.rsMap === null)
-    master.refreshRSListWithList(master.ref.rsList);
+    var slaveRSList = slaveRef.rsList, l = 0;
+    if (master.rsMap === null)
+      master.refreshRSListWithList(master.ref.rsList);
 
-  master.refreshRSListWithList(slaveRef.rsList);
-  master.refreshRSListWith(slaveRef.scope);
+    master.refreshRSListWithList(slaveRef.rsList);
+    master.refreshRSListWith(slaveRef.scope);
 
-  ASSERT.call(this, slaveRef.parentRef === null, 'slaveRef');
-  slaveRef.parentRef = master.ref;
+    ASSERT.call(this, slaveRef.parentRef === null, 'slaveRef');
+    slaveRef.parentRef = master.ref;
+  }
+  else {
+    ASSERT.call(this, slave.type & DT_EFW, 'slave' );
+    slave.ref = master.ref;
+  }
 };
 
 },
