@@ -1,14 +1,13 @@
 Transformers['BlockStatement'] =
 function(n, isVal) {
   ASSERT_EQ.call(this, isVal, false);
-  var s = this.setScope(n['#scope']);
-  var a = this.setAT(this.cur);
-  var l = this.setNS(0);
-  this.cur.synth_defs_to(this.cur.scs);
+  var bs = n['#scope'];
+  var s = null;
+  if (bs !== null) {
+    s = this.setScope(bs);
+    this.cur.synth_defs_to(this.cur.scs);
+  }
   this.trList(n.body, isVal);
-  this.active1if2(s, this.cur);
-  this.setScope(s);
-  this.setAT(a).ns = this.curNS;
-  this.setNS(l+this.curNS);
+  if (bs !== null) this.setScope(s);
   return n;
 };

@@ -18,6 +18,9 @@ this. parseCatchClause = function () {
    if (catParam === null)
      this.err('catch.has.no.param',{c0:startc,loc0:startLoc});
 
+   if (catParam.type === 'Identifier')
+     this.scope.argIsSimple = true;
+
    this.spc(catParam, 'aft');
    if (!this.expectT(CH_RPAREN))
      this.err('catch.has.no.end.paren',{c0:startc,loc0:startLoc,extra:catParam});

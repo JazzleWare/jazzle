@@ -97,7 +97,7 @@ function(mname) {
 
 this.insertSynth_m =
 function(mname, synth) {
-  var sn = this.synthNamesUntilNow || (this.synthNamesUntilNow = new SortedObj());
+  var sn = this.synthNamesUntilNow;
   ASSERT.call(this, !sn.has(mname), '"'+mname+'" exists');
   return sn.set(mname, synth);
 };

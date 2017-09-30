@@ -36,6 +36,7 @@ function(r) {
   this.synth_externals();
 };
 
+// TODO: save extenals on hand-over to obviate the chore below
 this.synth_externals =
 function() {
   ASSERT.call(this, !this.inBody, 'inBody');

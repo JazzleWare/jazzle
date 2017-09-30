@@ -15,7 +15,7 @@ function(name) {
     loc: {
       start: loc0,
       end: this.loc() },
-    '#y': this.yc, '#c': cb
+    '#y': this.yc, '#scope': null, '#c': cb
   };
 
   this.suc(cb, 'inner');
