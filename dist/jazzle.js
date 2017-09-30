@@ -1807,7 +1807,77 @@ function() {
 };
 
 }]  ],
-null,
+[CatchScope.prototype, [function(){
+this.synth_boot =
+function(r) {
+  ASSERT.call(this, !this.isBooted, 'boot' );
+  if (this.renamer === null) this.renamer = r;
+  this.synth_boot_init();
+  if (this.argIsSignificant)
+    this.synthRealCatchVar();
+  else
+    this.catchVar = new Liquid('catchname').n('t');
+  this.synth_defs_to(this.scs);
+};
+
+this.synth_boot_init =
+function() {
+  ASSERT.call(this, !this.isBooted, 'boot' );
+  ASSERT.call(this, this.synthNamesUntilNow === null, 'sn' );
+  this.synthNamesUntilNow = new SortedObj();
+  this.isBooted = true;
+};
+
+this.synth_start =
+function(r) {
+  this.isBooted || this.synth_boot(r);
+
+  FunScope.prototype.synth_externals.call(this);
+};
+
+this.synth_ref_may_escape_m =
+function(mname) { return true; };
+
+this.insertSynth_m = ConcreteScope.prototype.insertSynth_m;
+this.rename = ConcreteScope.prototype.rename;
+
+this.synth_ref_find_homonym_m =
+function(mname, r) {
+  this.isBooted || this.synth_boot(r);
+  return this.findSynth_m(mname);
+};
+
+this.findSynth_m = ConcreteScope.prototype.findSynth_m;
+
+this.synth_rcv =
+function() {
+  ASSERT.call(this, cv.isCatchArg(), 'catch' );
+  var cv = this.defs.at(0), list = cv.ref.rsList, num = 0;
+  var baseName = c.name, synthName = this.rename(baseName, num);
+
+  RENAME:
+  do {
+    mname = _m(synthName);
+    var synth = null;
+    var l = 0;
+    while (l < list.length) {
+      var scope = list[l++];
+      if (!scope.synth_ref_may_escape_m(mname, this.renamer))
+        continue RENAME;
+      synth = scope.synth_ref_find_homonym_m(mname, this.renamer);
+      if (synth && synth !== c)
+        continue RENAME;
+    }
+    break;
+  } while (synthName = this.rename(baseName, ++num), true );
+
+  c.synthName = synthName;
+  this.insertSynth_m(mname, c);
+};
+
+
+
+}]  ],
 [ClassScope.prototype, [function(){
 this.hasHeritage =
 function() { return this.flags & SF_HERITAGE; };
@@ -1960,7 +2030,7 @@ function(mname) {
 
 this.insertSynth_m =
 function(mname, synth) {
-  var sn = this.synthNamesUntilNow || (this.synthNamesUntilNow = new SortedObj());
+  var sn = this.synthNamesUntilNow;
   ASSERT.call(this, !sn.has(mname), '"'+mname+'" exists');
   return sn.set(mname, synth);
 };
@@ -5164,6 +5234,7 @@ function(r) {
   this.synth_externals();
 };
 
+// TODO: save extenals on hand-over to obviate the chore below
 this.synth_externals =
 function() {
   ASSERT.call(this, !this.inBody, 'inBody');
@@ -9641,6 +9712,9 @@ this. parseCatchClause = function () {
    if (catParam === null)
      this.err('catch.has.no.param',{c0:startc,loc0:startLoc});
 
+   if (catParam.type === 'Identifier')
+     this.scope.argIsSimple = true;
+
    this.spc(catParam, 'aft');
    if (!this.expectT(CH_RPAREN))
      this.err('catch.has.no.end.paren',{c0:startc,loc0:startLoc,extra:catParam});
@@ -9897,7 +9971,7 @@ function(name) {
     loc: {
       start: loc0,
       end: this.loc() },
-    '#y': this.yc, '#c': cb
+    '#y': this.yc, '#scope': null, '#c': cb
   };
 
   this.suc(cb, 'inner');
@@ -16196,15 +16270,14 @@ function(){
 Transformers['BlockStatement'] =
 function(n, isVal) {
   ASSERT_EQ.call(this, isVal, false);
-  var s = this.setScope(n['#scope']);
-  var a = this.setAT(this.cur);
-  var l = this.setNS(0);
-  this.cur.synth_defs_to(this.cur.scs);
+  var bs = n['#scope'];
+  var s = null;
+  if (bs !== null) {
+    s = this.setScope(bs);
+    this.cur.synth_defs_to(this.cur.scs);
+  }
   this.trList(n.body, isVal);
-  this.active1if2(s, this.cur);
-  this.setScope(s);
-  this.setAT(a).ns = this.curNS;
-  this.setNS(l+this.curNS);
+  if (bs !== null) this.setScope(s);
   return n;
 };
 
@@ -16531,7 +16604,95 @@ function(n, isVal) {
 function(){
 Transformers['TryStatement'] =
 function(n, isVal) {
+  var s = this.setScope(n['#tryScope']);
+  this.cur.synth_defs_to(this.cur.scs);
+  n.block = this.tr(n.block, false);
+  this.setScope(s);
+
+  if (n.handler)
+    n.handler = this.transformCatch(n.handler);
+
+  if (n.finalizer) {
+    s = this.setScope(n['#finScope']);
+    n.finalizer = this.tr(n.finalizer, false);
+    this.setScope(s);
+  }
+ 
   return n;
+};
+
+this.transformCatch =
+function(n) {
+  var a = null, s = this.setScope(n['#scope']);
+  ASSERT.call(this, !this.inBody, 'inside catch' );
+
+  if (this.cur.argIsSimple) {
+    this.cur.argIsSignificant = true;
+    this.cur.synth_start(this.renamer);
+    this.synthRealCatchVar(this.cur.findDeclAny_m(_m(n.param.name)) );
+  }
+  else {
+    this.synth_start(this.renamer);
+    a = this.transformCatchArgs(n);
+  }
+
+  this.activateBody();
+  n.body = this.tr(n.body, false);
+  this.deactivateBody();
+  this.cur.argIsSignificant || this.synthLiquidCatchVar(this.cur.catchVar);
+  n['#argPrologue'] = a;
+  return n;
+};
+
+this.transformCatchArgs =
+function(n) {
+  ASSERT.call(this, !this.cur.argIsSimple, 'catch' );
+  ASSERT.call(this, this.cur.catchVar === null, 'catchname');
+
+  var l = this.synth_Assig(n.param, this.synth_SynthName(this.cur.catchVar), true);
+
+  return this.tr(l, false);
+};
+
+this.synthRealCatchVar =
+function(c) {
+  ASSERT.call(this, cv.isCatchArg(), 'catch' );
+  var list = cv.ref.rsList, num = 0;
+  var baseName = c.name, synthName = this.rename(baseName, num);
+
+  RENAME:
+  do {
+    mname = _m(synthName);
+    var synth = null;
+    var l = 0;
+    while (l < list.length) {
+      var scope = list[l++];
+      if (!scope.synth_ref_may_escape_m(mname, this.renamer))
+        continue RENAME;
+      synth = scope.synth_ref_find_homonym_m(mname, this.renamer);
+      if (synth && synth !== c)
+        continue RENAME;
+    }
+    break;
+  } while (synthName = this.rename(baseName, ++num), true );
+
+  c.synthName = synthName;
+  this.cur.insertSynth_m(mname, c);
+};
+
+this.synthLiquidCatchVar =
+function(liq) {
+  var baseName = liq.name, mname = "";
+  var num = 0, synthName = this.rename(baseName, num);
+  do {
+    mname = _m(synthName);
+    if (this.cur.findSynth_m(mname) === null)
+      break;
+    synthName = this.rename(baseName, ++num);
+  } while (true);
+
+  liq.synthName = synthName;
+  this.cur.insertSynth_m(mname, liq);
 };
 
 },
