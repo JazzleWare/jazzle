@@ -35,6 +35,12 @@ function CatchScope(sParent) {
   this.bodyRefs = new SortedObj();
 
   this.refs = this.argRefs;
+
+  this.catchVar = null;
+  this.isBooted = false;
+  
+  this.synthNamesUntilNow = null;
+  this.renamer = null;
 }
 ;
 function ClassScope(sParent, sType) {
@@ -1814,7 +1820,7 @@ function(r) {
   if (this.renamer === null) this.renamer = r;
   this.synth_boot_init();
   if (this.argIsSignificant)
-    this.synthRealCatchVar();
+    this.synth_rcv();
   else
     this.catchVar = new Liquid('catchname').n('t');
   this.synth_defs_to(this.scs);
@@ -1838,8 +1844,13 @@ function(r) {
 this.synth_ref_may_escape_m =
 function(mname) { return true; };
 
-this.insertSynth_m = ConcreteScope.prototype.insertSynth_m;
-this.rename = ConcreteScope.prototype.rename;
+this.insertSynth_m = 
+function(mname, synth) {
+  return ConcreteScope.prototype.insertSynth_m.call(this, mname, synth);
+};
+
+this.rename =
+function(base, n) { return ConcreteScope.prototype.rename.call(this, base, n); };
 
 this.synth_ref_find_homonym_m =
 function(mname, r) {
@@ -1847,17 +1858,20 @@ function(mname, r) {
   return this.findSynth_m(mname);
 };
 
-this.findSynth_m = ConcreteScope.prototype.findSynth_m;
+this.findSynth_m =
+function(mname) {
+  return ConcreteScope.prototype.findSynth_m.call(this, mname);
+};
 
 this.synth_rcv =
 function() {
-  ASSERT.call(this, cv.isCatchArg(), 'catch' );
-  var cv = this.defs.at(0), list = cv.ref.rsList, num = 0;
+  var c = this.defs.at(0), list = c.ref.rsList, num = 0;
+  ASSERT.call(this, c.isCatchArg(), 'catch' );
   var baseName = c.name, synthName = this.rename(baseName, num);
 
   RENAME:
   do {
-    mname = _m(synthName);
+    var mname = _m(synthName);
     var synth = null;
     var l = 0;
     while (l < list.length) {
@@ -1875,7 +1889,23 @@ function() {
   this.insertSynth_m(mname, c);
 };
 
+this.synth_lcv =
+function() {
+  var liq = this.catchVar;
+  var baseName = liq.name;
+  var num = 0;
 
+  var mname = 0, synthName = this.rename(baseName, num);
+  do {
+    mname = _m(synthName);
+    if (this.findSynth_m(mname) === null)
+      break;
+    synthName = this.rename(baseName, ++num);
+  } while (true);
+
+  liq.synthName = synthName;
+  this.insertSynth_m(mname, liq);
+};
 
 }]  ],
 [ClassScope.prototype, [function(){
@@ -14972,9 +15002,9 @@ function(mname) {
   if (this.isAnyFn() && !this.inBody )
     return this.findParam_m(mname);
 
-  if (this.isCatch() && !this.inBody )
-    return this.args.has(mname) ?
-      this.args.get(mname) : null;
+//if (this.isCatch() && !this.inBody )
+//  return this.args.has(mname) ?
+//    this.args.get(mname) : null;
 
   return this.defs.has(mname) ?
     this.defs.get(mname) : null;
@@ -15270,10 +15300,13 @@ function() {
 function(){
 this.synth_defs_to =
 function(targetScope) {
-  var list = this.defs, e = 0, len = list.length();
+  var list = this.defs, e = 0, len = list.length(), insertSelf = this.isCatch() && !this.argIsSimple;
   while (e < len) {
     var tdclr = list.at(e++);
-    this.owns(tdclr) && !tdclr.isFnArg() && targetScope.synthDecl(tdclr);
+    if (this.owns(tdclr) && !tdclr.isFnArg() && !tdclr.isCatchArg()) {
+      targetScope.synthDecl(tdclr);
+      insertSelf && this.insertSynth_m(_m(tdclr.synthName), tdclr);
+    }
   }
 };
 
@@ -16629,70 +16662,26 @@ function(n) {
   if (this.cur.argIsSimple) {
     this.cur.argIsSignificant = true;
     this.cur.synth_start(this.renamer);
-    this.synthRealCatchVar(this.cur.findDeclAny_m(_m(n.param.name)) );
   }
   else {
-    this.synth_start(this.renamer);
+    this.cur.synth_start(this.renamer);
     a = this.transformCatchArgs(n);
   }
-
-  this.activateBody();
+  this.cur.activateBody();
   n.body = this.tr(n.body, false);
-  this.deactivateBody();
-  this.cur.argIsSignificant || this.synthLiquidCatchVar(this.cur.catchVar);
+  this.cur.deactivateBody();
+  this.cur.argIsSignificant || this.cur.synth_lcv();
   n['#argPrologue'] = a;
+  this.setScope(s);
   return n;
 };
 
 this.transformCatchArgs =
 function(n) {
   ASSERT.call(this, !this.cur.argIsSimple, 'catch' );
-  ASSERT.call(this, this.cur.catchVar === null, 'catchname');
-
-  var l = this.synth_Assig(n.param, this.synth_SynthName(this.cur.catchVar), true);
+  var l = this.synth_SynthAssig(n.param, this.synth_SynthName(this.cur.catchVar), true);
 
   return this.tr(l, false);
-};
-
-this.synthRealCatchVar =
-function(c) {
-  ASSERT.call(this, cv.isCatchArg(), 'catch' );
-  var list = cv.ref.rsList, num = 0;
-  var baseName = c.name, synthName = this.rename(baseName, num);
-
-  RENAME:
-  do {
-    mname = _m(synthName);
-    var synth = null;
-    var l = 0;
-    while (l < list.length) {
-      var scope = list[l++];
-      if (!scope.synth_ref_may_escape_m(mname, this.renamer))
-        continue RENAME;
-      synth = scope.synth_ref_find_homonym_m(mname, this.renamer);
-      if (synth && synth !== c)
-        continue RENAME;
-    }
-    break;
-  } while (synthName = this.rename(baseName, ++num), true );
-
-  c.synthName = synthName;
-  this.cur.insertSynth_m(mname, c);
-};
-
-this.synthLiquidCatchVar =
-function(liq) {
-  var baseName = liq.name, mname = "";
-  var num = 0, synthName = this.rename(baseName, num);
-  do {
-    mname = _m(synthName);
-    if (this.cur.findSynth_m(mname) === null)
-      break;
-    synthName = this.rename(baseName, ++num);
-  } while (true);
-
-  liq.synthName = synthName;
-  this.cur.insertSynth_m(mname, liq);
 };
 
 },

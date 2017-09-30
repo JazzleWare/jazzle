@@ -9,4 +9,10 @@ function CatchScope(sParent) {
   this.bodyRefs = new SortedObj();
 
   this.refs = this.argRefs;
+
+  this.catchVar = null;
+  this.isBooted = false;
+  
+  this.synthNamesUntilNow = null;
+  this.renamer = null;
 }
