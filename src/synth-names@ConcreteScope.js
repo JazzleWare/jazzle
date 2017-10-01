@@ -112,7 +112,8 @@ function(decl) {
     decl.isConst() ||
     decl.isVar() ||
     decl.isCls() ||
-    decl.isFn(),
+    decl.isFn() ||
+    (decl.isCatchArg() && decl.ref.scope.argIsSimple === false),
     'fun/let/const/var/fnarg'
   );
 

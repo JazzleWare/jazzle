@@ -318,6 +318,7 @@ mex.ej_adjust = function(e, j, name) {
   delete j['#entry'];
   delete j['#decl'];
   delete j['#ci'];
+  delete j['#lead'];
   delete j['#o'];
   delete j['#rest'];
   delete j['#t'];

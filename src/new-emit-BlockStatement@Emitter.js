@@ -12,11 +12,18 @@ function(n, flags, isStmt) {
   var cb = CB(n);
   this.emc(cb, 'bef');
   this.w('{');
-  this.i().onw(wcb_afterStmt);
-  var wcbu = this.wcbUsed = {v: false, name: 'fromBlock'};
-  var own = true;
-
+  this.i();
+  var lead = n['#lead'];
   var em = 0;
+  if (lead) {
+    this.l().emitStmt(lead, false);
+    em++;
+  }
+
+  this.onw(wcb_afterStmt)
+  var wcbu = this.wcbUsed = {v: false, name: 'fromBlock'};
+  var own = true;  
+
   if (this.emitSimpleHead(n)) {
     em++;
     if (!this.wcb) {

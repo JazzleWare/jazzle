@@ -34,7 +34,7 @@ function(n) {
   n.body = this.tr(n.body, false);
   this.cur.deactivateBody();
   this.cur.argIsSignificant || this.cur.synth_lcv();
-  n['#argPrologue'] = a;
+  n.body['#lead'] = a;
   this.setScope(s);
   return n;
 };

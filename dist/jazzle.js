@@ -2077,7 +2077,8 @@ function(decl) {
     decl.isConst() ||
     decl.isVar() ||
     decl.isCls() ||
-    decl.isFn(),
+    decl.isFn() ||
+    (decl.isCatchArg() && decl.ref.scope.argIsSimple === false),
     'fun/let/const/var/fnarg'
   );
 
@@ -3711,11 +3712,18 @@ function(n, flags, isStmt) {
   var cb = CB(n);
   this.emc(cb, 'bef');
   this.w('{');
-  this.i().onw(wcb_afterStmt);
-  var wcbu = this.wcbUsed = {v: false, name: 'fromBlock'};
-  var own = true;
-
+  this.i();
+  var lead = n['#lead'];
   var em = 0;
+  if (lead) {
+    this.l().emitStmt(lead, false);
+    em++;
+  }
+
+  this.onw(wcb_afterStmt)
+  var wcbu = this.wcbUsed = {v: false, name: 'fromBlock'};
+  var own = true;  
+
   if (this.emitSimpleHead(n)) {
     em++;
     if (!this.wcb) {
@@ -9754,8 +9762,10 @@ this.parseBlock = function () {
     loc: {
       start: loc0, 
       end: this.loc() }, 
+    '#y': this.yc,
     '#scope': scope, 
-    '#y': this.yc, '#c': cb
+    '#c': cb,
+    '#lead': null
   };
 
   this.suc(cb, 'inner');
@@ -10049,7 +10059,7 @@ function(name) {
     loc: {
       start: loc0,
       end: this.loc() },
-    '#y': this.yc, '#scope': null, '#c': cb
+    '#y': this.yc, '#scope': null, '#c': cb, '#lead': null
   };
 
   this.suc(cb, 'inner');
@@ -15355,7 +15365,8 @@ function(targetScope) {
   var list = this.defs, e = 0, len = list.length(), insertSelf = this.isCatch() && !this.argIsSimple;
   while (e < len) {
     var tdclr = list.at(e++);
-    if (this.owns(tdclr) && !tdclr.isFnArg() && !tdclr.isCatchArg()) {
+    if (this.owns(tdclr) && !tdclr.isFnArg() &&
+      !(tdclr.isCatchArg() && this.argIsSimple)) {
       targetScope.synthDecl(tdclr);
       insertSelf && this.insertSynth_m(_m(tdclr.synthName), tdclr);
     }
@@ -16724,7 +16735,7 @@ function(n) {
   n.body = this.tr(n.body, false);
   this.cur.deactivateBody();
   this.cur.argIsSignificant || this.cur.synth_lcv();
-  n['#argPrologue'] = a;
+  n.body['#lead'] = a;
   this.setScope(s);
   return n;
 };

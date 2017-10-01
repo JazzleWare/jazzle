@@ -17,8 +17,10 @@ this.parseBlock = function () {
     loc: {
       start: loc0, 
       end: this.loc() }, 
+    '#y': this.yc,
     '#scope': scope, 
-    '#y': this.yc, '#c': cb
+    '#c': cb,
+    '#lead': null
   };
 
   this.suc(cb, 'inner');
