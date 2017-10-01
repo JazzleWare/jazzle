@@ -8,22 +8,22 @@ function(n, flags, isStmt) {
   var tz = false;
   var target = null, cb = n['#c'];
 
-  if (isResolvedName(left)) {
-    target = left.target;
-    if (!this.active(target))
-      return this.emitAny(n.right, flags, isStmt);
-    tz = left.tz;
-    cc = left.cv;
-    if (!hasParen)
-      hasParen = tz || cc;
-  }
+//if (isResolvedName(left)) {
+//  target = left.target;
+//  if (!this.active(target))
+//    return this.emitAny(n.right, flags, isStmt);
+//  tz = left.tz;
+//  cc = left.cv;
+//  if (!hasParen)
+//    hasParen = tz || cc;
+//}
   if (hasParen) { this.w('('); flags = EC_NONE; }
 
   this.emc(cb, 'bef');
-  if (tz)
-    this.emitAccessChk_tz(target, left.id.loc.start), this.w(',').os();
-  if (cc) 
-    this.emitAccessChk_invalidSAT(target, left.id.loc.start), this.w(',').os();
+//if (tz)
+//  this.emitAccessChk_tz(target, left.id.loc.start), this.w(',').os();
+//if (cc) 
+//  this.emitAccessChk_invalidSAT(target, left.id.loc.start), this.w(',').os();
 
   this.emitSAT(left, flags);
 

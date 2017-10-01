@@ -358,3 +358,15 @@ function(h) {
     kind: 'heritage',
   };
 };
+
+this.synth_TC =
+function(right, rn) {
+  this.accessJZ(); // jz  o
+  return {
+    value: right,
+    kind: 'cvtz',
+    rn: rn,
+    type: '#Untransformed' ,
+  };
+
+};

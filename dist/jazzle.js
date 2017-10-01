@@ -214,25 +214,6 @@ function Hitmap() {
   this.names = new SortedObj({});
 }
 ;
-function LabelTracker(parent) {
-  // the parent label tracker, or null if it is a top-level label tracker
-  this.parent = parent || null;
-
-  // the labels the label tracker has been given
-  // before reaching a non-Labeledstatement node
-  this.activeLabels = [];
-
-  // the labels contained in this label tracker; it initially contains the active labels,
-  // but each time a descendant label tracker finishes, that descendant label tracker concatenates
-  // the array given below with its own contained labels
-  this.containedLabels = [];
-
-  // when the label tracker exits, it synthesizes a label name for a container it has been given
-  this.synthAtExit = false;
-
-  this.target = null;
-}
-;
 function Liquid(category) {
   Decl.call(this);
   this.type |= DT_LIQUID;
@@ -3501,22 +3482,22 @@ function(n, flags, isStmt) {
   var tz = false;
   var target = null, cb = n['#c'];
 
-  if (isResolvedName(left)) {
-    target = left.target;
-    if (!this.active(target))
-      return this.emitAny(n.right, flags, isStmt);
-    tz = left.tz;
-    cc = left.cv;
-    if (!hasParen)
-      hasParen = tz || cc;
-  }
+//if (isResolvedName(left)) {
+//  target = left.target;
+//  if (!this.active(target))
+//    return this.emitAny(n.right, flags, isStmt);
+//  tz = left.tz;
+//  cc = left.cv;
+//  if (!hasParen)
+//    hasParen = tz || cc;
+//}
   if (hasParen) { this.w('('); flags = EC_NONE; }
 
   this.emc(cb, 'bef');
-  if (tz)
-    this.emitAccessChk_tz(target, left.id.loc.start), this.w(',').os();
-  if (cc) 
-    this.emitAccessChk_invalidSAT(target, left.id.loc.start), this.w(',').os();
+//if (tz)
+//  this.emitAccessChk_tz(target, left.id.loc.start), this.w(',').os();
+//if (cc) 
+//  this.emitAccessChk_invalidSAT(target, left.id.loc.start), this.w(',').os();
 
   this.emitSAT(left, flags);
 
@@ -3749,7 +3730,8 @@ function(n, flags, isStmt) {
 function(){
 Emitters['BreakStatement'] =
 function(n, flags, isStmt) {
-  this.w('break').hs().writeIDName(n.label.name);
+  this.w('break');
+  n.label && this.hs().writeIDName(n.label.name);
   this.w(';');
 };
 
@@ -3825,7 +3807,8 @@ this.emitCondTest = function(n, prec, flags) {
 function(){
 Emitters['ContinueStatement'] =
 function(n, flags, isStmt) {
-  this.w('continue').hs().writeIDName(n.label.name);
+  this.w('continue');
+  n.label && this.hs().writeIDName(n.label.name);
   this.w(';');
 };
 
@@ -4779,6 +4762,19 @@ function(n, flags, isStmt) {
 
 },
 function(){
+UntransformedEmitters['cvtz'] =
+function(n, flags, isStmt) {
+  ASSERT_EQ.call(this, isStmt, false);
+  this.jz('o').w('(').eN(n.value);
+  if (n.rn.tz)
+    this.w(',').emitAccessChk_tz(n.rn.target, n.rn.id.loc.start);
+  if (n.rn.cv)
+    this.w(',').emitAccessChk_invalidSAT(n.rn.target, n.rn.id.loc.start);
+  this.w(')');
+};
+
+},
+function(){
 UntransformedEmitters['temp'] =
 function(n, flags, isStmt) {
 //this.wt(n.liq.name+n.liq.idx, ETK_ID );
@@ -5404,77 +5400,6 @@ this.getOrCreate_m = this.getoc_m = function(mname) {
   var entry = this.names.get(mname);
   entry.gets++;
   return entry;
-};
-
-}]  ],
-[LabelTracker.prototype, [function(){
-this.addLabel = function(labelName) {
-  ASSERT.call(
-    this,
-    this.target === null,
-    'the current label tracker '+
-    'has got a target (of type'+this.target.type+'.) '+
-    'the label that it has been given should probably be '+
-    'tracked by another label tracker.');
-
-  this.activeLabels.push(labelName);
-};
-
-this.takeChildLabels = function(chlt) {
-  this.containedLabels =
-    this.containedLabels.concat(chlt.containedLabels);
-};
-
-this.setLabelTarget = function(target) {
-  if (target.type !== 'YieldContainer')
-    return;
-  this.target = target;
-  target.setLabels(this.activeLabels);
-  this.containedLabels.push(this.activeLabels);
-  this.activeLabels = null;
-};
-
-this.exit = function() {
-  if (this.synthAtExit) {
-    ASSERT.call(this, this.target !== null,
-      'there must be a target to synthesize a label for.');
-    ASSERT.call(this, this.target.type === 'YieldContainer',
-      'target must be a container if a label is going to'+
-      'get a label synthesized for.');
-    ASSERT.call(this, this.target.label.length === 0,
-      'target has got a label; label synthesis is'+
-      'unnecessary');
-    var synthName = this.newSynthLabelName(
-      'synthLabelFor'+target.kind);
-    target.synthLabel = synthName;
-    this.containedLabels[0].push([synthName]);
-  }
- 
-  this.parent && this.parent.takeChildLabels();
-};
-
-this.newSynthLabelName = function(baseLabelName) {
-  baseLabelName = baseLabelName || 
-    (baseLabelName === "" ? 'label' : baseLabelName);
-  var synthName = baseLabelName, num = 0;
-
-  RENAME:
-  for (;;num++, synthName = baseLabelName+""+num) {
-    var listOfLists = this.containedLabels, loli = 0;
-    while (loli < listOfLabels.length) {
-      var labels = listOfLists[loli], i = 0;
-      while (i < labels.length) {
-        if (labels[i] === synthName)
-          continue RENAME;
-        i++;
-      }
-      loli++;
-    }
-
-    break;
-  }
-
-  return synthName;
 };
 
 }]  ],
@@ -16221,47 +16146,26 @@ function(n, isVal, isB) {
 TransformByLeft['Identifier'] =
 function(n, isVal, isB) {
   var rn = n.left = this.toResolvedName(n.left, isB ? 'binding' : 'sat', true); // target
-  var ais = this.activeIfScope, nameNew = false, leftsig = false; // significant
-  if (rn.target.isGlobal()) {
-    leftsig = true;
-    this.active1if2(rn.target, this.cur);
-    this.incNS();
-    this.setAS(true);
-  }
-  else if (rn.tz) {
-    leftsig = true;
-    this.incNS();
-    this.active1if2(rn.target, this.cur);
-  }
-
   if (!isB) {
     var l = n.left.target;
     l.ref.assigned();
     if (this.needsCVLHS(l)) {
       n.left.cv = true;
-      leftsig = true;
-      this.incNS();
-      this.active1if2(rn.target, this.cur);
       this.cacheCVLHS(l);
     }
     else if (l.isRG())
       n = this.synth_GlobalUpdate(n, false);
   }
 
-  if (!leftsig) {
-    nameNew = this.recAN(rn.target);
-    nameNew && this.active1if2(this.curAT, rn.target);
-  }
-
   n.right = this.tr(n.right, true);
+  if (rn.tz || rn.cv)
+    n.right = this.synth_TC(n.right, n.left)
+
   if (isB) {
     var target = n.left.target;
     if (!target.isReached())
       this.makeReached(target);
   } 
-
-  this.setAS(ais);
-  nameNew && this.activeIfNames.pop();
 
   return n;
 };
@@ -16482,6 +16386,23 @@ function(n, isVal) {
   ASSERT_EQ.call(this, isVal, false);
   n.expression = this.tr(n.expression, false);
   return n;
+};
+
+},
+function(){
+Transformers['ForOfStatement'] =
+function(n, isVal) {
+  var s = this.setScope(n['#scope']), t = null;
+
+  switch (n.left.type) {
+  case 'MemberExpression':
+  case 'Identifier':
+    break;
+
+  case 'VariableDeclaration':
+    var l = n.left;
+    if (false);
+  }
 };
 
 },
@@ -17673,6 +17594,18 @@ function(h) {
     heritage: h,
     kind: 'heritage',
   };
+};
+
+this.synth_TC =
+function(right, rn) {
+  this.accessJZ(); // jz  o
+  return {
+    value: right,
+    kind: 'cvtz',
+    rn: rn,
+    type: '#Untransformed' ,
+  };
+
 };
 
 },
