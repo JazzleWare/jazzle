@@ -1,17 +1,17 @@
 Transformers['TryStatement'] =
 function(n, isVal) {
-  var s = this.setScope(n['#tryScope']);
-  this.cur.synth_defs_to(this.cur.scs);
+//var s = this.setScope(n['#tryScope']);
+//this.cur.synth_defs_to(this.cur.scs);
   n.block = this.tr(n.block, false);
-  this.setScope(s);
+//this.setScope(s);
 
   if (n.handler)
     n.handler = this.transformCatch(n.handler);
 
   if (n.finalizer) {
-    s = this.setScope(n['#finScope']);
+//  s = this.setScope(n['#finScope']);
     n.finalizer = this.tr(n.finalizer, false);
-    this.setScope(s);
+//  this.setScope(s);
   }
  
   return n;

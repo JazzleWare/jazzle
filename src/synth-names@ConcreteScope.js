@@ -97,7 +97,9 @@ function(mname) {
 
 this.insertSynth_m =
 function(mname, synth) {
-  var sn = this.synthNamesUntilNow;
+  var sn = this.synthNamesUntilNow || 
+    (this.synthNamesUntilNow = new SortedObj()); // for msynth which uses it before the scope is booted
+
   ASSERT.call(this, !sn.has(mname), '"'+mname+'" exists');
   return sn.set(mname, synth);
 };

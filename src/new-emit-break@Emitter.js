@@ -1,7 +1,7 @@
 Emitters['ForOfStatement'] =
 Emitters['ForInStatement'] =
 Emitters['ForStatement'] =
-Emitters['TryStatement'] =
+// Emitters['TryStatement'] =
 Emitters['LabeledStatement'] =
 Emitters['ContinueStatement'] =
 Emitters['BreakStatement'] =

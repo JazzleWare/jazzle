@@ -1829,8 +1829,8 @@ function(r) {
 this.synth_boot_init =
 function() {
   ASSERT.call(this, !this.isBooted, 'boot' );
-  ASSERT.call(this, this.synthNamesUntilNow === null, 'sn' );
-  this.synthNamesUntilNow = new SortedObj();
+  if (this.synthNamesUntilNow === null)
+    this.synthNamesUntilNow = new SortedObj();
   this.isBooted = true;
 };
 
@@ -1868,6 +1868,8 @@ function() {
   var c = this.defs.at(0), list = c.ref.rsList, num = 0;
   ASSERT.call(this, c.isCatchArg(), 'catch' );
   var baseName = c.name, synthName = this.rename(baseName, num);
+
+  this.catchVar = c;
 
   RENAME:
   do {
@@ -2060,7 +2062,9 @@ function(mname) {
 
 this.insertSynth_m =
 function(mname, synth) {
-  var sn = this.synthNamesUntilNow;
+  var sn = this.synthNamesUntilNow || 
+    (this.synthNamesUntilNow = new SortedObj()); // for msynth which uses it before the scope is booted
+
   ASSERT.call(this, !sn.has(mname), '"'+mname+'" exists');
   return sn.set(mname, synth);
 };
@@ -4099,6 +4103,21 @@ function(n, flags, isStmt) {
 
 },
 function(){
+Emitters['TryStatement'] =
+function(n, flags, isStmt) {
+  this.w('try').os().emitStmt(n.block, true);
+  var l = n.handler;
+  if (l) {
+    this.l().wm('catch','','(',l['#scope'].catchVar.synthName,')','');
+    this.emitStmt(l.body, true);
+  }
+
+  l = n.finalizer;
+  if (l) this.l().w('finally').os().emitStmt(l, true);
+};
+
+},
+function(){
 Emitters['UnaryExpression'] = 
 function(n, flags, isStmt) {
   var cb = CB(n); this.emc(cb, 'bef' );
@@ -4205,7 +4224,7 @@ function(){
 Emitters['ForOfStatement'] =
 Emitters['ForInStatement'] =
 Emitters['ForStatement'] =
-Emitters['TryStatement'] =
+// Emitters['TryStatement'] =
 Emitters['LabeledStatement'] =
 Emitters['ContinueStatement'] =
 Emitters['BreakStatement'] =
@@ -9751,6 +9770,7 @@ this. parseCatchClause = function () {
 
    this.scope.activateBody();
    var catBlock = this.parseDependent('catch');
+   catBlock['#scope'] = this.scope ; 
    var scope = this.exitScope();
 
    return {
@@ -11482,6 +11502,7 @@ this.parseTryStatement = function () {
   this.enterScope(this.scope.spawnBlock()); 
 
   var tryBlock = this.parseDependent('try');
+  tryBlock['#scope'] = this.scope;
   var tryScope = this.scope; 
 
   this.exitScope(); 
@@ -11495,9 +11516,10 @@ this.parseTryStatement = function () {
     this.resvchk();
     this.suc(cb, 'finally.bef') ;
     this.next();
-    this.enterScope(this.scope.spawnBare()); 
+    this.enterScope(this.scope.spawnBlock()); 
     finScope = this.scope;
     finBlock = this.parseDependent('finally');
+    finBlock['#scope'] = this.scope;
     this.exitScope(); 
   }
 
@@ -16304,9 +16326,10 @@ Transformers['BlockStatement'] =
 function(n, isVal) {
   ASSERT_EQ.call(this, isVal, false);
   var bs = n['#scope'];
-  var s = null;
+  if (bs.isCatch())
+    bs = null;
   if (bs !== null) {
-    s = this.setScope(bs);
+    var s = this.setScope(bs);
     this.cur.synth_defs_to(this.cur.scs);
   }
   this.trList(n.body, isVal);
@@ -16637,18 +16660,18 @@ function(n, isVal) {
 function(){
 Transformers['TryStatement'] =
 function(n, isVal) {
-  var s = this.setScope(n['#tryScope']);
-  this.cur.synth_defs_to(this.cur.scs);
+//var s = this.setScope(n['#tryScope']);
+//this.cur.synth_defs_to(this.cur.scs);
   n.block = this.tr(n.block, false);
-  this.setScope(s);
+//this.setScope(s);
 
   if (n.handler)
     n.handler = this.transformCatch(n.handler);
 
   if (n.finalizer) {
-    s = this.setScope(n['#finScope']);
+//  s = this.setScope(n['#finScope']);
     n.finalizer = this.tr(n.finalizer, false);
-    this.setScope(s);
+//  this.setScope(s);
   }
  
   return n;

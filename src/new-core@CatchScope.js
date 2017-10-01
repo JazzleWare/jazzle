@@ -13,8 +13,8 @@ function(r) {
 this.synth_boot_init =
 function() {
   ASSERT.call(this, !this.isBooted, 'boot' );
-  ASSERT.call(this, this.synthNamesUntilNow === null, 'sn' );
-  this.synthNamesUntilNow = new SortedObj();
+  if (this.synthNamesUntilNow === null)
+    this.synthNamesUntilNow = new SortedObj();
   this.isBooted = true;
 };
 
@@ -52,6 +52,8 @@ function() {
   var c = this.defs.at(0), list = c.ref.rsList, num = 0;
   ASSERT.call(this, c.isCatchArg(), 'catch' );
   var baseName = c.name, synthName = this.rename(baseName, num);
+
+  this.catchVar = c;
 
   RENAME:
   do {

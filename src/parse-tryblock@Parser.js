@@ -11,6 +11,7 @@ this.parseTryStatement = function () {
   this.enterScope(this.scope.spawnBlock()); 
 
   var tryBlock = this.parseDependent('try');
+  tryBlock['#scope'] = this.scope;
   var tryScope = this.scope; 
 
   this.exitScope(); 
@@ -24,9 +25,10 @@ this.parseTryStatement = function () {
     this.resvchk();
     this.suc(cb, 'finally.bef') ;
     this.next();
-    this.enterScope(this.scope.spawnBare()); 
+    this.enterScope(this.scope.spawnBlock()); 
     finScope = this.scope;
     finBlock = this.parseDependent('finally');
+    finBlock['#scope'] = this.scope;
     this.exitScope(); 
   }
 

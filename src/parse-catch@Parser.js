@@ -27,6 +27,7 @@ this. parseCatchClause = function () {
 
    this.scope.activateBody();
    var catBlock = this.parseDependent('catch');
+   catBlock['#scope'] = this.scope ; 
    var scope = this.exitScope();
 
    return {
