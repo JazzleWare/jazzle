@@ -10357,6 +10357,8 @@ this.parseIf = function () {
 },
 function(){
 this.parseLabel = function(label, allowNull) {
+  var ref = this.scope.findRefAny_m(_m(label.name));
+  ref.d--;
   this.spc(label, 'aft');
   this.next();
   var mname = _m(label.name);
