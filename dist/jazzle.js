@@ -3739,6 +3739,14 @@ function(n, flags, isStmt) {
 
 },
 function(){
+Emitters['BreakStatement'] =
+function(n, flags, isStmt) {
+  this.w('break').hs().writeIDName(n.label.name);
+  this.w(';');
+};
+
+},
+function(){
 Emitters['CallExpression'] =
 function(n, flags, isStmt) {
   var cb = CB(n);
@@ -3803,6 +3811,14 @@ this.emitCondTest = function(n, prec, flags) {
   if (hasParen) { this.w('('); flags = EC_NONE; }
   this.eN(n, false, flags);
   if (hasParen) this.w(')');
+};
+
+},
+function(){
+Emitters['ContinueStatement'] =
+function(n, flags, isStmt) {
+  this.w('continue').hs().writeIDName(n.label.name);
+  this.w(';');
 };
 
 },
@@ -3882,6 +3898,18 @@ function(stmt) {
   if (stmt.type === 'IfStatement')
     return this.emitStmt(stmt);
   return this.emitBody(stmt);
+};
+
+},
+function(){
+Emitters['LabeledStatement'] =
+function(n, flags, isStmt) {
+  this.writeIDName(n.label.name);
+  this.w(':').onw(wcb_afterStmt);
+  var u = {v: false};
+  this.wcbUsed = u;
+  if (n.body) this.emitStmt(n.body, false);
+  u.v || this.clear_onw();
 };
 
 },
@@ -4225,9 +4253,9 @@ Emitters['ForOfStatement'] =
 Emitters['ForInStatement'] =
 Emitters['ForStatement'] =
 // Emitters['TryStatement'] =
-Emitters['LabeledStatement'] =
-Emitters['ContinueStatement'] =
-Emitters['BreakStatement'] =
+// Emitters['LabeledStatement'] =
+// Emitters['ContinueStatement'] =
+// Emitters['BreakStatement'] =
 function(n, flags, isStmt) {
   console.log('SKIPPING', n.type, 'LEN', n.end - n.start);
 };
