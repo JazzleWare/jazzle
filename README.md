@@ -1,4 +1,4 @@
-** THIS IS THE ACTIVE BRANCH UNTIL ~~THINGS ARE MIGRATED TO ROLLUP~~ THE BUNDLER GETS WORKING; ADAPTING CODE TO USE IMPORT/EXPORT STARTS AFTER GETTING THE SCRIPT-LEVEL EMITTER TO WORK **
+**THIS IS THE ACTIVE BRANCH UNTIL ~~THINGS ARE MIGRATED TO ROLLUP~~ THE BUNDLER GETS WORKING; ADAPTING CODE TO USE IMPORT/EXPORT STARTS AFTER GETTING THE SCRIPT-LEVEL EMITTER TO WORK**
 
 # Basic Usage:
 ```js
@@ -23,7 +23,11 @@ console.log(emitter.out);
 
 // along with the produced sourcemap:
 console.error(emitter.sm);
+
+// helpers
+// console.log(emitter.emitJFn());
 ```
 
-** N.A.F.O.S [^1^]: this still work in progress; please check back in a month or so **
-[1]: notice for the aliens from the outer space
+**N.A.F.T.O.S [1]: this still work in progress; please check back in a month or so**
+
+[1]: notice aimed at aliens from the outer space (mostly)
