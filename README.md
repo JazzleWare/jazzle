@@ -28,6 +28,6 @@ console.error(emitter.sm);
 // console.log(emitter.emitJFn());
 ```
 
-**N.A.F.T.O.S [1]: this still work in progress; please check back in a month or so**
+**N.A.F.T.O.S [1]: this is still more of a work in progress; please check back in a month or so**
 
 [1]: notice aimed at aliens from the outer space (mostly)
