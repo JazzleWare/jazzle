@@ -23,6 +23,7 @@ console.log(emitter.out);
 
 // along with the produced sourcemap:
 console.error(emitter.sm);
+```
 
 ** N.A.F.O.S [^1] : this still work in progress; please check back in a month or so **
 [^1]: notice for the aliens from the outer space
