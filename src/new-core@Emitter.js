@@ -274,6 +274,7 @@ function(mustNL) {
   this.curtt === ETK_NONE || this.rtt();
 //console.log('----------------------------- LINE ------------------------------');
   this.sm += ';';
+  this.emline_cur++;
   this.wcb && this.call_onw('\n', ETK_NL);
   this.out += '\n';
   this.lineIsLn = true; // TODO: somewhere else

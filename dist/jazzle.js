@@ -106,6 +106,9 @@ function Emitter() {
   this.emcol_cur = 0; // rll?
   this.emcol_latestRec = 0;
 
+  this.emline_cur = 0;
+  this.emline_latestRec = 0;
+
   this.srci_cur = 0;
   this.srci_latestRec = 0;
 
@@ -3434,6 +3437,7 @@ function(mustNL) {
   this.curtt === ETK_NONE || this.rtt();
 //console.log('----------------------------- LINE ------------------------------');
   this.sm += ';';
+  this.emline_cur++;
   this.wcb && this.call_onw('\n', ETK_NL);
   this.out += '\n';
   this.lineIsLn = true; // TODO: somewhere else
@@ -4982,16 +4986,21 @@ function(srcName) {
   return sc;
 };
 
+var hit = 0;
 this.smRefresh = this.sr =
 function(loc) {
-  if (loc === this.loc_latestRec)
-    return;
-
+  if (loc === this.loc_latestRec) {
+    if (this.emcol_cur === this.emcol_latestRec && this.emline_cur === this.emline_latestRec)
+      return;
+    ++hit; console.log(loc.line, loc.column, 'n', (hit));
+  }
   var l = 0;
   if (this.lineIsLn) {
 //  console.log('<ln>', this.emcol_cur);
     this.ln_emcol_cur = this.emcol_cur;
     this.emcol_latestRec = this.emcol_cur;
+
+    this.emline_latestRec = this.emline_cur;
 
     l = this.srci_latestRec;
     this.ln_srci_vlq = vlq(this.srci_cur-(l<0?0:l));
@@ -5017,6 +5026,8 @@ function(loc) {
     this.lm += vlq(this.emcol_cur-this.emcol_latestRec);
 //  console.log('src@('+loc.line+','+loc.column+') -> (col:'+this.emcol_cur+')@em');
     this.emcol_latestRec = this.emcol_cur;
+
+    this.emline_latestRec = this.emline_cur;
 
     l = this.srci_latestRec;
     this.lm += vlq(this.srci_cur-(l<0?0:l));

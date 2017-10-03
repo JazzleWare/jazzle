@@ -25,6 +25,9 @@ function Emitter() {
   this.emcol_cur = 0; // rll?
   this.emcol_latestRec = 0;
 
+  this.emline_cur = 0;
+  this.emline_latestRec = 0;
+
   this.srci_cur = 0;
   this.srci_latestRec = 0;
 
