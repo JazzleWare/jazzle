@@ -4,7 +4,7 @@
 ```js
 // assuming you are in repo's root
 var j = require('./dist/jazzle.js');
-var src = 'var a, b, l ={a, [b]} = l';
+var src = 'var a, b, l = {a, [b]: {l}} = ({A}=a) => a = ({B=b}) => b = ({L=l}=40) => l';
 
 // parse it
 var syntaxNode = new j.Parser(src).parseProgram();
@@ -25,5 +25,5 @@ console.log(emitter.out);
 console.error(emitter.sm);
 ```
 
-** N.A.F.O.S [^1] : this still work in progress; please check back in a month or so **
-[^1]: notice for the aliens from the outer space
+** N.A.F.O.S [^1^]: this still work in progress; please check back in a month or so **
+[1]: notice for the aliens from the outer space
