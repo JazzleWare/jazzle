@@ -1,15 +1,13 @@
 Transformers['ForOfStatement'] =
 function(n, isVal) {
   var s = this.setScope(n['#scope']);
+  this.cur.synth_defs_to(this.cur.scs);
+
   var t = null;
   n.right = this.tr(n.right, true);
   t = this.allocTemp();
   var l = n.left; 
   n.left = t;
-
-  var releaseAfter = n.type === 'MemberExpression'; // because mem might need temps when getting transformed
-
-  releaseAfter || this.releaseTemp(t);
 
   var lead = null;
   var tval = this.synth_TVal(t);
@@ -20,13 +18,13 @@ function(n, isVal) {
   else
     lead = this.tr(this.synth_SynthAssig(l, tval, false), false);
 
-  releaseAfter && this.releaseTemp(t);
-
   n.body = this.tr(n.body, false);
   if (n.body.type === 'BlockStatement')
     n.body['#lead'] = lead;
   else
     n.body = this.synth_AssigList([lead, n.body]);
+
+  this.releaseTemp(t);
 
   n.type = '#ForOfStatement';
 

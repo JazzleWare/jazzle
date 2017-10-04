@@ -30,13 +30,17 @@ function(stmt) {
     return this.emitStmt(stmt);
   }
   if (stmt.type === 'ExpressionStatement') {
-    this.i();
-    var em = this.l().emitStmt(stmt);
-    this.u();
-    return em;
+    if (isAssigList(stmt.expression))
+      this.os().emitAny(stmt.expression, EC_START_STMT|EC_ATTACHED, true);
+    else {
+      this.i();
+      this.l().emitStmt(stmt, true);
+      this.u();
+    }
+    return true;
   }
   this.os().w('{').i().onw(wcb_afterStmt);
-  this.emitStmt(stmt);
+  this.emitStmt(stmt, true);
   this.wcb ? this.clear_onw() : this.onw(wcb_afterStmt);
   this.u().w('}');
 

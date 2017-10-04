@@ -3883,13 +3883,17 @@ function(stmt) {
     return this.emitStmt(stmt);
   }
   if (stmt.type === 'ExpressionStatement') {
-    this.i();
-    var em = this.l().emitStmt(stmt);
-    this.u();
-    return em;
+    if (isAssigList(stmt.expression))
+      this.os().emitAny(stmt.expression, EC_START_STMT|EC_ATTACHED, true);
+    else {
+      this.i();
+      this.l().emitStmt(stmt, true);
+      this.u();
+    }
+    return true;
   }
   this.os().w('{').i().onw(wcb_afterStmt);
-  this.emitStmt(stmt);
+  this.emitStmt(stmt, true);
   this.wcb ? this.clear_onw() : this.onw(wcb_afterStmt);
   this.u().w('}');
 
@@ -4414,7 +4418,13 @@ function(n, flags, isStmt) {
   this.eH(n.left, EC_NONE, false).os().w('=').os().jz('of').w('(');
   this.eN(n.right, EC_NONE, false).w(')');
 
-  this.w(';').os().eH(n.left, EC_NONE, false).w('.').wm('next','(',')',';',')');
+  this.w(';').os();
+  var scope = n['#scope'];
+  if (scope.hasTZCheckPoint) {
+    var tz = scope.scs.getLG('tz').getL(0);
+    this.wm(tz.synthName,' ','=',' ',scope.di0+"",',','');
+  }
+  this.eH(n.left, EC_NONE, false).w('.').wm('next','(',')',';',')');
   this.emitBody(n.body);
 };
 
@@ -4512,7 +4522,7 @@ function(n, flags, isStmt) {
     hasParen && this.w(')');
   }
 
-  attached && this.u().w('}');
+  attached && this.u().l().w('}');
 };
 
 },
@@ -16190,6 +16200,7 @@ function(n, isVal, isB) {
 
 TransformByLeft['Identifier'] =
 function(n, isVal, isB) {
+  n.right = this.tr(n.right, true);
   var rn = n.left = this.toResolvedName(n.left, isB ? 'binding' : 'sat', true); // target
   if (!isB) {
     var l = n.left.target;
@@ -16202,7 +16213,6 @@ function(n, isVal, isB) {
       n = this.synth_GlobalUpdate(n, false);
   }
 
-  n.right = this.tr(n.right, true);
   if (rn.tz || rn.cv)
     n.right = this.synth_TC(n.right, n.left)
 
@@ -16438,15 +16448,13 @@ function(){
 Transformers['ForOfStatement'] =
 function(n, isVal) {
   var s = this.setScope(n['#scope']);
+  this.cur.synth_defs_to(this.cur.scs);
+
   var t = null;
   n.right = this.tr(n.right, true);
   t = this.allocTemp();
   var l = n.left; 
   n.left = t;
-
-  var releaseAfter = n.type === 'MemberExpression'; // because mem might need temps when getting transformed
-
-  releaseAfter || this.releaseTemp(t);
 
   var lead = null;
   var tval = this.synth_TVal(t);
@@ -16457,13 +16465,13 @@ function(n, isVal) {
   else
     lead = this.tr(this.synth_SynthAssig(l, tval, false), false);
 
-  releaseAfter && this.releaseTemp(t);
-
   n.body = this.tr(n.body, false);
   if (n.body.type === 'BlockStatement')
     n.body['#lead'] = lead;
   else
     n.body = this.synth_AssigList([lead, n.body]);
+
+  this.releaseTemp(t);
 
   n.type = '#ForOfStatement';
 

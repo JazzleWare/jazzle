@@ -142,6 +142,7 @@ function(n, isVal, isB) {
 
 TransformByLeft['Identifier'] =
 function(n, isVal, isB) {
+  n.right = this.tr(n.right, true);
   var rn = n.left = this.toResolvedName(n.left, isB ? 'binding' : 'sat', true); // target
   if (!isB) {
     var l = n.left.target;
@@ -154,7 +155,6 @@ function(n, isVal, isB) {
       n = this.synth_GlobalUpdate(n, false);
   }
 
-  n.right = this.tr(n.right, true);
   if (rn.tz || rn.cv)
     n.right = this.synth_TC(n.right, n.left)
 
