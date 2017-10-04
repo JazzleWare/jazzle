@@ -7,7 +7,7 @@ function(n, isVal) {
     tr = this.transformDtor(list[l++], kind );
     tr && s.push(tr);
   }
-  return this.synth_AssigList(s);
+  return s.length === 1 ? s[0] : this.synth_AssigList(s);
 };
 
 this.transformDtor =

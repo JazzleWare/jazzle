@@ -1,4 +1,4 @@
-Emitters['ForOfStatement'] =
+// Emitters['ForOfStatement'] =
 Emitters['ForInStatement'] =
 Emitters['ForStatement'] =
 // Emitters['TryStatement'] =

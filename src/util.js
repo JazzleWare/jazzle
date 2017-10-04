@@ -159,6 +159,10 @@ function cmn(cb, name) {
   return HAS.call(cb, name) ? cb[name] : null;
 }
    
+function isAssigList(n) {
+  return n.type === '#Untransformed' && n.kind === 'assig-list';
+}
+
 function cpReg(n) {
   switch (n.type) {
   case '#Regex.Hy':

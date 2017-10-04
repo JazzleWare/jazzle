@@ -128,6 +128,10 @@ function(stmt) {
     this.emitStmt(stmt, false);
     return true;
   }
+  if (isAssigList(stmt)) {
+    this.os().emitAny(stmt, EC_START_STMT|EC_ATTACHED, true);
+    return true;
+  }
   this.i().l();
   var em = this.emitAny(stmt, EC_START_STMT, true);
   this.u();

@@ -370,3 +370,12 @@ function(right, rn) {
   };
 
 };
+
+this.synth_TVal =
+function(ex) {
+  return {
+    type: '#Untransformed' ,
+    kind: 'tval',
+    ex: ex
+  };
+};

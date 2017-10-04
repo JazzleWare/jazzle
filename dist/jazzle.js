@@ -1526,6 +1526,10 @@ function cmn(cb, name) {
   return HAS.call(cb, name) ? cb[name] : null;
 }
    
+function isAssigList(n) {
+  return n.type === '#Untransformed' && n.kind === 'assig-list';
+}
+
 function cpReg(n) {
   switch (n.type) {
   case '#Regex.Hy':
@@ -2619,6 +2623,10 @@ function(stmt) {
     this.os();
   case 'EmptyStatement':
     this.emitStmt(stmt, false);
+    return true;
+  }
+  if (isAssigList(stmt)) {
+    this.os().emitAny(stmt, EC_START_STMT|EC_ATTACHED, true);
     return true;
   }
   this.i().l();
@@ -4244,7 +4252,7 @@ function(n, flags, isStmt) {
 
 },
 function(){
-Emitters['ForOfStatement'] =
+// Emitters['ForOfStatement'] =
 Emitters['ForInStatement'] =
 Emitters['ForStatement'] =
 // Emitters['TryStatement'] =
@@ -4400,6 +4408,18 @@ function(n, flags, isStmt) {
 
 },
 function(){
+Emitters['#ForOfStatement'] =
+function(n, flags, isStmt) {
+  this.w('for').os().w('(');
+  this.eH(n.left, EC_NONE, false).os().w('=').os().jz('of').w('(');
+  this.eN(n.right, EC_NONE, false).w(')');
+
+  this.w(';').os().eH(n.left, EC_NONE, false).w('.').wm('next','(',')',';',')');
+  this.emitBody(n.body);
+};
+
+},
+function(){
 UntransformedEmitters['arg-at'] =
 function(n, flags, isStmt) {
   ASSERT_EQ.call(this, isStmt, false);
@@ -4470,6 +4490,9 @@ function(){
 UntransformedEmitters['assig-list'] =
 function(n, flags, isStmt) {
   var cb = CB(n);
+  var attached = flags & EC_ATTACHED;
+  attached && this.w('{').i().onw(wcb_afterStmt);
+
   if (isStmt) {
     this.emc(cb, 'bef');
     this.wcb || this.onw(wcb_startStmtList);
@@ -4488,6 +4511,8 @@ function(n, flags, isStmt) {
     this.emc(cb, 'aft');
     hasParen && this.w(')');
   }
+
+  attached && this.u().w('}');
 };
 
 },
@@ -4771,9 +4796,9 @@ function(n, flags, isStmt) {
   ASSERT_EQ.call(this, isStmt, false);
   this.jz('o').w('(').eN(n.value);
   if (n.rn.tz)
-    this.w(',').emitAccessChk_tz(n.rn.target, n.rn.id.loc.start);
+    this.w(',').os().emitAccessChk_tz(n.rn.target, n.rn.id.loc.start);
   if (n.rn.cv)
-    this.w(',').emitAccessChk_invalidSAT(n.rn.target, n.rn.id.loc.start);
+    this.w(',').os().emitAccessChk_invalidSAT(n.rn.target, n.rn.id.loc.start);
   this.w(')');
 };
 
@@ -4858,6 +4883,15 @@ function(n, flags, isStmt) {
   this.w('}');
   this.namei_cur = ni;
   this.emc(cb, 'aft');
+};
+
+},
+function(){
+UntransformedEmitters['tval'] =
+function(n, flags, isStmt) {
+  var ex = n.ex;
+  ASSERT.call(this, ex.type === '#Untransformed' && ex.kind === 'temp', 't');
+  this.eN(ex, EC_NONE, false).wm('.','val');
 };
 
 },
@@ -16403,17 +16437,39 @@ function(n, isVal) {
 function(){
 Transformers['ForOfStatement'] =
 function(n, isVal) {
-  var s = this.setScope(n['#scope']), t = null;
+  var s = this.setScope(n['#scope']);
+  var t = null;
+  n.right = this.tr(n.right, true);
+  t = this.allocTemp();
+  var l = n.left; 
+  n.left = t;
 
-  switch (n.left.type) {
-  case 'MemberExpression':
-  case 'Identifier':
-    break;
+  var releaseAfter = n.type === 'MemberExpression'; // because mem might need temps when getting transformed
 
-  case 'VariableDeclaration':
-    var l = n.left;
-    if (false);
+  releaseAfter || this.releaseTemp(t);
+
+  var lead = null;
+  var tval = this.synth_TVal(t);
+  if (l.type === 'VariableDeclaration') {
+    l.declarations[0].init = tval;
+    lead = this.tr(l, false);
   }
+  else
+    lead = this.tr(this.synth_SynthAssig(l, tval, false), false);
+
+  releaseAfter && this.releaseTemp(t);
+
+  n.body = this.tr(n.body, false);
+  if (n.body.type === 'BlockStatement')
+    n.body['#lead'] = lead;
+  else
+    n.body = this.synth_AssigList([lead, n.body]);
+
+  n.type = '#ForOfStatement';
+
+  this.setScope(s);
+
+  return n;
 };
 
 },
@@ -16724,7 +16780,7 @@ function(n, isVal) {
     tr = this.transformDtor(list[l++], kind );
     tr && s.push(tr);
   }
-  return this.synth_AssigList(s);
+  return s.length === 1 ? s[0] : this.synth_AssigList(s);
 };
 
 this.transformDtor =
@@ -17180,7 +17236,7 @@ function(ex) {
 
 },
 function(){
-Transformers['ForOfStatement'] = function(n, isVal) { return n; };
+// Transformers['ForOfStatement'] = function(n, isVal) { return n; };
 Transformers['ForInStatement'] = function(n, isVal) { return n; };
 Transformers['ForStatement'] = function(n, isVal) { return n; };
 
@@ -17617,6 +17673,15 @@ function(right, rn) {
     type: '#Untransformed' ,
   };
 
+};
+
+this.synth_TVal =
+function(ex) {
+  return {
+    type: '#Untransformed' ,
+    kind: 'tval',
+    ex: ex
+  };
 };
 
 },
