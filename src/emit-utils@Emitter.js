@@ -128,7 +128,8 @@ function(stmt) {
     this.emitStmt(stmt, false);
     return true;
   }
-  if (isAssigList(stmt)) {
+  if (isAssigList(stmt) || 
+    (stmt.type === 'ExpressionStatement' && isAssigList(stmt.expression))) {
     this.os().emitAny(stmt, EC_START_STMT|EC_ATTACHED, true);
     return true;
   }

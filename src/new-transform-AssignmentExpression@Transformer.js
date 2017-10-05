@@ -1,4 +1,3 @@
-var TransformByLeft = {};
 TransformByLeft['ArrayPattern'] =
 function(n, isVal, isB) {
   this.incNS();
@@ -81,7 +80,7 @@ function(n, isVal, isB) {
 
   var t = this.allocTemp();
 
-  var test = this.synth_U(this.synth_TempSave(t, r));
+  var test = this.synth_U(this.synth_TempSave(t, r) || t);
   this.releaseTemp(t);
 
 //var cvtz = this.setCVTZ(createObj(this.cvtz));
@@ -104,8 +103,6 @@ function(n, isVal, isB) {
 TransformByLeft['MemberExpression'] =
 function(n, isVal, isB) {
   ASSERT_EQ.call(this, isB, false);
-  this.incNS();
-  var ais = this.setAS(true);
   if (n.operator === '**=') {
     var mem = n.left;
     mem.object = this.tr(mem.object, true );
@@ -136,7 +133,6 @@ function(n, isVal, isB) {
     n.left = this.trSAT(n.left);
     n.right = this.tr(n.right, true);
   }
-  this.setAS(ais);
   return n;
 };
 

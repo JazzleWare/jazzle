@@ -915,8 +915,9 @@ function errt_asyn(err) { return err & ERR_A_SYN; }
 function errt_ssyn(err) { return err & ERR_S_SYN; }
 ;
 var Emitters = {};
+var TransformByLeft = {};
+var Transformers = {}; 
 var UntransformedEmitters = {};
-var Transformers = {};
 ;
 var defaultJZ = '\
 function er(str) { throw new Error(err) }\n\
@@ -2625,7 +2626,8 @@ function(stmt) {
     this.emitStmt(stmt, false);
     return true;
   }
-  if (isAssigList(stmt)) {
+  if (isAssigList(stmt) || 
+    (stmt.type === 'ExpressionStatement' && isAssigList(stmt.expression))) {
     this.os().emitAny(stmt, EC_START_STMT|EC_ATTACHED, true);
     return true;
   }
@@ -4248,8 +4250,7 @@ function(n, flags, isStmt) {
   this.wt('while', ETK_ID);
   this.emc(cb, 'while.aft') || this.os(); 
   this.w('(').eA(n.test, EC_NONE, false).w(')');
-  if (this.active(n['#scope'])) { this.emitBody(n.body); }
-  else this.w(';');
+  this.emitBody(n.body);
   this.emc(cb, 'aft');
   return true;
 };
@@ -4408,6 +4409,58 @@ function(n, flags, isStmt) {
 
   if (own) u.v || this.clear_onw();
   return true;
+};
+
+},
+function(){
+Emitters['#ForInStatementWithDeclarationHead' ] =
+function(n, flags, isStmt) {
+  ASSERT_EQ.call(this, isStmt, true);
+  return this.emitEnumeration(n, flags, 'dh');
+};
+
+
+Emitters['#ForInStatementWithExHead' ] =  
+function(n, flags, isStmt) {
+  ASSERT_EQ.call(this, isStmt, true);
+  return this.emitEnumeration(n, flags, 'eh');
+};
+
+
+this.emitEnumeration =
+function(n, flags, t) {
+  var b = t === 'dh';
+  var l = n.left;
+  this.w('for').os().w('(');
+
+  if (b) {
+    if (l.target.isLLINOSA()) {
+      this.w('(').emitRName_binding(l);
+      this.wm('','=','','{','v');
+      this.os().wm(':','void',' ','0','}',')','.','v').bs();
+    }
+    else {
+      this.w('var').bs().emitRName_binding(l);
+      this.bs();
+    }
+  }
+  else if (l.type === 'MemberExpression') {
+    this.emitSAT(l, EC_NONE);
+    this.os();
+  }
+  else {
+    this.emitAny(l, EC_NONE, false);
+    this.bs();
+  }
+
+  this.wt('in',ETK_ID );
+  this.onw(wcb_idNumGuard );
+  this.os();
+
+  this.emitAny(n.right, EC_NONE, false);
+  this.w(')');
+
+  this.emitBody(n.body);
 };
 
 },
@@ -16056,7 +16109,6 @@ function(n, isVal) {
 
 },
 function(){
-var TransformByLeft = {};
 TransformByLeft['ArrayPattern'] =
 function(n, isVal, isB) {
   this.incNS();
@@ -16139,7 +16191,7 @@ function(n, isVal, isB) {
 
   var t = this.allocTemp();
 
-  var test = this.synth_U(this.synth_TempSave(t, r));
+  var test = this.synth_U(this.synth_TempSave(t, r) || t);
   this.releaseTemp(t);
 
 //var cvtz = this.setCVTZ(createObj(this.cvtz));
@@ -16162,8 +16214,6 @@ function(n, isVal, isB) {
 TransformByLeft['MemberExpression'] =
 function(n, isVal, isB) {
   ASSERT_EQ.call(this, isB, false);
-  this.incNS();
-  var ais = this.setAS(true);
   if (n.operator === '**=') {
     var mem = n.left;
     mem.object = this.tr(mem.object, true );
@@ -16194,7 +16244,6 @@ function(n, isVal, isB) {
     n.left = this.trSAT(n.left);
     n.right = this.tr(n.right, true);
   }
-  this.setAS(ais);
   return n;
 };
 
@@ -16477,6 +16526,60 @@ function(n, isVal) {
 
   this.setScope(s);
 
+  return n;
+};
+
+Transformers['ForInStatement'] =
+function(n, isVal) {
+  var left = n.left;
+  var b = false;
+
+  var s = this.setScope(n['#scope']);
+
+  this.cur.synth_defs_to(this.cur.scs );
+
+  if (left.type === 'VariableDeclaration') {
+    b = true;
+    var elem = left.declarations[0];
+    left = elem.init === null ? elem.id : { // TODO: ugh
+      type: 'AssignmentPattern',
+      right: elem.init,
+      left: elem.id,
+      end: elem.init.end,
+      loc: { start: elem.id.loc.start, end: elem.init.loc.end },
+      start: elem.id.start,
+      '#c': {}
+    };
+    n.left = left;
+  }
+
+  var lead = null, t = left.type ;
+
+  if (t === 'Identifier') // TODO: must also handle renamedGlobals
+    TransformByLeft['Identifier'].call(this, n, false, b);
+  else if (t === 'MemberExpression') {
+    n.right = this.tr(n.right, true);
+    n.left = this.trSAT(n.left);
+  }
+  else {
+    n.right = this.tr(n.right, true);
+    var t = this.allocTemp(); this.releaseTemp(t);
+    var assig = this.synth_SynthAssig(n.left, t, b);
+    lead = this.tr(assig, false );
+    b = false; // because binding becomes t below
+    n.left = t;
+  }
+
+  n.body = this.tr(n.body,false);
+  if (n.body.type === 'BlockStatement')
+    n.body['#lead'] = lead;
+  else if (lead)
+    n.body = this.synth_AssigList([lead, n.body]);
+
+  n.type = b ? '#ForInStatementWithDeclarationHead' : 
+    '#ForInStatementWithExHead';
+
+  this.setScope(s);
   return n;
 };
 
@@ -17245,7 +17348,7 @@ function(ex) {
 },
 function(){
 // Transformers['ForOfStatement'] = function(n, isVal) { return n; };
-Transformers['ForInStatement'] = function(n, isVal) { return n; };
+// Transformers['ForInStatement'] = function(n, isVal) { return n; };
 Transformers['ForStatement'] = function(n, isVal) { return n; };
 
 },
