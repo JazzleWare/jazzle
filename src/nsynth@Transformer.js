@@ -379,3 +379,14 @@ function(ex) {
     ex: ex
   };
 };
+
+this.synth_NameList =
+function(scope, vinit) {
+  return {
+    type: '#Untransformed' ,
+    kind: 'llinosa-names',
+    scope: scope ,
+    withV: vinit
+  };
+
+};

@@ -133,11 +133,23 @@ function(stmt) {
     this.os().emitAny(stmt, EC_START_STMT|EC_ATTACHED, true);
     return true;
   }
+
   this.i().l();
-  var em = this.emitAny(stmt, EC_START_STMT, true);
+  var own = false, u = null;
+  if (this.wcbUsed) u = this.wcbUsed;
+  else {
+    if (this.wcb === null) { this.onw(wcb_listenEmit); own = true; } 
+    this.wcbUsed = u = {v: false};
+  }
+
+  this.emitAny(stmt, EC_START_STMT, true);
   this.u();
-  if (em)
+
+  if (u.v)
     return true;
+  else if (own)
+    this.clear_onw();
+
   this.w(';'); // TODO: else; rather than else[:newline:]  ;
   return false;
 };

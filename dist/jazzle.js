@@ -1836,6 +1836,8 @@ function wcb_wrap(rawStr, tt) {
   if (tt & ETK_NL) return;
   this.insertLineBreak(true);
 }
+
+function wcb_listenEmit(rawStr, tt) {}
 ;
  (function(){
        var i = 0;
@@ -2747,11 +2749,23 @@ function(stmt) {
     this.os().emitAny(stmt, EC_START_STMT|EC_ATTACHED, true);
     return true;
   }
+
   this.i().l();
-  var em = this.emitAny(stmt, EC_START_STMT, true);
+  var own = false, u = null;
+  if (this.wcbUsed) u = this.wcbUsed;
+  else {
+    if (this.wcb === null) { this.onw(wcb_listenEmit); own = true; } 
+    this.wcbUsed = u = {v: false};
+  }
+
+  this.emitAny(stmt, EC_START_STMT, true);
   this.u();
-  if (em)
+
+  if (u.v)
     return true;
+  else if (own)
+    this.clear_onw();
+
   this.w(';'); // TODO: else; rather than else[:newline:]  ;
   return false;
 };
@@ -4809,6 +4823,27 @@ function(n, flags, isStmt) {
 function(){
 UntransformedEmitters['synth-literal'] =
 Emitters['Literal'];
+
+},
+function(){
+UntransformedEmitters['llinosa-names'] =
+function(n, flags, isStmt) {
+  ASSERT_EQ.call(this, isStmt, true);
+  var scope = n.scope, hasV = n.withV, list = scope.defs, em = 0;
+  var l = 0, len = list.length();
+
+  while (l < len) {
+    var item = list.at(l++);
+    if (item.isLLINOSA()) {
+      em ? this.w(',').os() : this.w('var').bs();
+      this.w(item.synthName);
+      hasV && this.os().wm('=','','{','v',':','','void',' ','0','}');
+      ++ em;
+    }
+  }
+
+  em && this.w(';').l(); // TODO onw(wcb_afterStmt) rather than l
+};
 
 },
 function(){
@@ -16624,13 +16659,18 @@ function(n, isVal) {
   n.left = t;
 
   var lead = null;
-  var tval = this.synth_TVal(t);
+  var tval = this.synth_TVal(t), isVar = false, simp = true;
   if (l.type === 'VariableDeclaration') {
+    isVar = true;
+    simp = l.declarations[0].id.type === 'Identifier'; 
     l.declarations[0].init = tval;
     lead = this.tr(l, false);
   }
   else
     lead = this.tr(this.synth_SynthAssig(l, tval, false), false);
+
+  if (isVar)
+    lead = this.synth_AssigList([this.synth_NameList(this.cur, true), lead]);
 
   n.body = this.tr(n.body, false);
   if (n.body.type === 'BlockStatement')
@@ -16641,6 +16681,8 @@ function(n, isVal) {
   this.releaseTemp(t);
 
   n.type = '#ForOfStatement';
+//if (isVar && simp)
+//  n = this.synth_AssigList([this.synth_NameList(this.cur, false), n]);
 
   this.setScope(s);
 
@@ -16650,14 +16692,13 @@ function(n, isVal) {
 Transformers['ForInStatement'] =
 function(n, isVal) {
   var left = n.left;
-  var b = false;
-
+  var simp = true;
   var s = this.setScope(n['#scope']);
 
   this.cur.synth_defs_to(this.cur.scs );
-
+  var isVar = false;
   if (left.type === 'VariableDeclaration') {
-    b = true;
+    isVar = true;
     var elem = left.declarations[0];
     left = elem.init === null ? elem.id : { // TODO: ugh
       type: 'AssignmentPattern',
@@ -16668,13 +16709,15 @@ function(n, isVal) {
       start: elem.id.start,
       '#c': {}
     };
+
     n.left = left;
+    simp = left.type === 'Identifier';
   }
 
   var lead = null, t = left.type ;
 
   if (t === 'Identifier') // TODO: must also handle renamedGlobals
-    TransformByLeft['Identifier'].call(this, n, false, b);
+    TransformByLeft['Identifier'].call(this, n, false, isVar);
   else if (t === 'MemberExpression') {
     n.right = this.tr(n.right, true);
     n.left = this.trSAT(n.left);
@@ -16682,10 +16725,15 @@ function(n, isVal) {
   else {
     n.right = this.tr(n.right, true);
     var t = this.allocTemp(); this.releaseTemp(t);
-    var assig = this.synth_SynthAssig(n.left, t, b);
+    var assig = this.synth_SynthAssig(n.left, t, isVar);
     lead = this.tr(assig, false );
-    b = false; // because binding becomes t below
     n.left = t;
+  }
+
+  if (isVar) {
+    var a = [this.synth_NameList(this.cur, true)];
+    if (lead) a. push(lead );
+    lead = this.synth_AssigList(a);
   }
 
   n.body = this.tr(n.body,false);
@@ -16694,8 +16742,11 @@ function(n, isVal) {
   else if (lead)
     n.body = this.synth_AssigList([lead, n.body]);
 
-  n.type = b ? '#ForInStatementWithDeclarationHead' : 
+  n.type = (isVar && simp) ? '#ForInStatementWithDeclarationHead' : 
     '#ForInStatementWithExHead';
+
+  if (isVar && simp)
+    n = this.synth_AssigList([this.synth_NameList(this.cur, false), n]);
 
   this.setScope(s);
   return n;
@@ -17911,6 +17962,17 @@ function(ex) {
     kind: 'tval',
     ex: ex
   };
+};
+
+this.synth_NameList =
+function(scope, vinit) {
+  return {
+    type: '#Untransformed' ,
+    kind: 'llinosa-names',
+    scope: scope ,
+    withV: vinit
+  };
+
 };
 
 },

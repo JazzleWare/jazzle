@@ -86,3 +86,5 @@ function wcb_wrap(rawStr, tt) {
   if (tt & ETK_NL) return;
   this.insertLineBreak(true);
 }
+
+function wcb_listenEmit(rawStr, tt) {}
