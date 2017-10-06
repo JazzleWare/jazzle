@@ -10,7 +10,7 @@ function() {
       var sn = scope.scopeName;
       if (sn.getAS() !== ATS_DISTINCT)
         sn = sn.source;
-      if (this !== sn) {
+      if (this.name === sn.name && this !== sn) {
         msynth = 1;
         break;
       }

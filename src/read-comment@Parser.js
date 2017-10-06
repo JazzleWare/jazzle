@@ -59,16 +59,18 @@ function(c0,li0,col0,t) {
   var c = this.c, li = this.li, col = this.col;
   if (this.commentBuf === null)
     this.commentBuf = new Comments();
-  this.commentBuf.push(
-    {
-      type: t,
-      value: this.src.substring(c0, t === 'Line' ? c : c-2),
-      start: c0,
-      end: c,
-      loc: {
-        start: { line: li0, column: col0 },
-        end: { line: li, column: col }
-      }
+
+  var comment = {
+    type: t,
+    value: this.src.substring(c0, t === 'Line' ? c : c-2),
+    start: c0,
+    end: c,
+    loc: {
+      start: { line: li0, column: col0 },
+      end: { line: li, column: col }
     }
-  );
+  };
+
+  this.commentBuf.push(comment);
+  this.commentCallback && this.commentCallback(comment);
 };

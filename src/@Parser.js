@@ -84,5 +84,9 @@ var Parser = function (src, o) {
 
   this.regexFlags = this.rf = {};
 
+  this.commentCallback = null;
+
   this.argploc = null;
+
+  this.pure = false; // pure-ness
 };

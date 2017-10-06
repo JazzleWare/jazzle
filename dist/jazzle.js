@@ -331,7 +331,11 @@ var Parser = function (src, o) {
 
   this.regexFlags = this.rf = {};
 
+  this.commentCallback = null;
+
   this.argploc = null;
+
+  this.pure = false; // pure-ness
 };
 ;
 function PathMan() {}
@@ -1106,11 +1110,17 @@ function renamer_minify(base, i) {
   if (base.length === 1 && i === 0)
     return base;
   var tail = false, name = "";
-  do {
-    var m = -1;
-    if (tail) { m = i % TAILLEN; name += TAIL.charAt(m); i =  (i-m)/TAILLEN; }
-    else { m = i % HEADLEN; name += HEAD.charAt(m); i = (i-m)/HEADLEN; }
-  } while (i > 0);
+
+  while (true) {
+    do {
+      var m = -1;
+      if (tail) { m = i % TAILLEN; name += TAIL.charAt(m); i =  (i-m)/TAILLEN; }
+      else { m = i % HEADLEN; name += HEAD.charAt(m); i = (i-m)/HEADLEN; }
+    } while (i > 0);
+    if (iskw(name)) { name = ""; i++; continue; }
+    break;
+  }
+
   return name;
 }
 ;
@@ -1566,6 +1576,112 @@ function vlq1sh31() {
   return str;
 }
 
+function iskw(name, v, s) {
+  switch (name.length) {
+  case 1: return false;
+  case 2:
+    switch (name) {
+    case 'do': case 'if': case 'in':
+      return true;
+    }
+    return false;
+  case 3:
+    switch (name) {
+    case 'new': case 'for': case 'try':
+    case 'let': case 'var':
+      return true;
+    case 'int':
+      return v <= 5;
+    }
+    return false;
+
+  case 4:
+    switch (name) {
+    case 'null': case 'void': case 'this':
+    case 'true': case 'case': case 'else':
+    case 'with': case 'enum':
+      return true;
+    case 'byte': case 'char':
+    case 'goto': case 'long':
+      return v <= 5;
+    }
+    return false;
+
+  case 5:
+    switch (name) {
+    case 'super': case 'break':  case 'catch':
+      return true;
+    case 'class': case 'const': case 'throw':
+    case 'while':
+      return true;
+    case 'yield': 
+      return s;
+    case 'false':
+      return true;
+    case 'await':
+    case 'async':
+      return false;
+    case 'final': case 'float': case 'short':
+      return v <= 5;
+    }
+    return false;
+
+  case 6:
+    switch (name) {
+    case 'static':
+      return s || v <= 5;
+    case 'delete': case 'typeof': case 'export':
+    case 'import': case 'return': case 'switch':
+      return true;
+    case 'public':
+      return s;
+    case 'double': case 'native': case 'throws':
+      return v <= 5;
+    }
+    return false;
+
+  case 7:
+    switch (name) {
+    case 'default': case 'extends': case 'finally':
+      return true;
+    case 'package': case 'private':
+      return s;
+    case 'boolean':
+      return v <= 5;
+    }
+    return false;
+
+  case 8:
+    switch (name) {
+    case 'function': case 'debugger': case 'continue':
+      return true;
+    case 'abstract': case 'volatile':
+      return v <= 5;
+    }
+    return false;
+
+  case 9:
+    switch (name) {
+    case 'interface': case 'protected':
+      return s;
+    case 'transient':
+      return v <= 5;
+    }
+    return false;
+
+  case 10:
+    switch (name) {
+    case 'instanceof': return true;
+    case 'implements': return s || v <= 5;
+    }
+    return false;
+
+  case 12:
+    return v <= 5 && name === 'synchronized' ;
+  }
+  return false;
+};
+ 
 function vlq(num) {
   var hexet = 0;
   var ro = 0; // right offset (0 <= ro <= lastRo)
@@ -2226,7 +2342,7 @@ function() {
       var sn = scope.scopeName;
       if (sn.getAS() !== ATS_DISTINCT)
         sn = sn.source;
-      if (this !== sn) {
+      if (this.name === sn.name && this !== sn) {
         msynth = 1;
         break;
       }
@@ -12031,18 +12147,20 @@ function(c0,li0,col0,t) {
   var c = this.c, li = this.li, col = this.col;
   if (this.commentBuf === null)
     this.commentBuf = new Comments();
-  this.commentBuf.push(
-    {
-      type: t,
-      value: this.src.substring(c0, t === 'Line' ? c : c-2),
-      start: c0,
-      end: c,
-      loc: {
-        start: { line: li0, column: col0 },
-        end: { line: li, column: col }
-      }
+
+  var comment = {
+    type: t,
+    value: this.src.substring(c0, t === 'Line' ? c : c-2),
+    start: c0,
+    end: c,
+    loc: {
+      start: { line: li0, column: col0 },
+      end: { line: li, column: col }
     }
-  );
+  };
+
+  this.commentBuf.push(comment);
+  this.commentCallback && this.commentCallback(comment);
 };
 
 },
