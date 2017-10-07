@@ -81,7 +81,7 @@ function(n, isVal) {
     n.left = t;
   }
 
-  if (isVar) {
+  if (isVar && !simp) {
     var a = [this.synth_NameList(this.cur, true)];
     if (lead) a. push(lead );
     lead = this.synth_AssigList(a);
