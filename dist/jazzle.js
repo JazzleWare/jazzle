@@ -4256,6 +4256,40 @@ function(n, flags, isStmt) {
 
 },
 function(){
+Emitters['TemplateLiteral'] =
+function(n, flags, isStmt) {
+  var strList = n.quasis;
+  var eList = n.expressions;
+  var s = 0, writeEx = false, e = 0;
+
+  if (strList[0].value.cooked.length === 0 && !strList[0].tail) {
+    s++;
+    writeEx = true;
+  }
+
+  this.w('('); // TODO: eliminate when the TemplateLiteral gets treated like an actual ex + str + ... + ex + str
+  while (true) {
+    if (writeEx) {
+      this.w('(').eA(eList[e++], EC_NONE, false).w(')');
+      this.wm('', '+').os();
+      writeEx = false;
+    } 
+    else {
+      var item = strList[s++ ];
+      this.writeString(item.value.cooked, "'");
+      if (!item.tail)
+        this.wm('','+','');
+      else
+        break;
+      writeEx = true;
+    }
+  }
+
+  this.w(')');
+};
+
+},
+function(){
 Emitters['ThrowStatement'] =
 function(n, flags, isStmt) {
   var r = {hasParen: false}, cb = CB(n);
@@ -16927,6 +16961,19 @@ function(n, isVal) {
   this.trList(n.consequent, false);
   rr = this.setRR(rr);
   rr .v = false;
+  return n;
+};
+
+},
+function(){
+Transformers['TemplateLiteral'] =
+function(n, isVal) {
+  var list = n.expressions, l = 0;
+  while (l < list.length) {
+    var item = list[l];
+    list[l] = this.tr(item, true);
+    l++;
+  }
   return n;
 };
 
