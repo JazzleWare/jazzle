@@ -28,4 +28,6 @@ function(n, flags, isStmt) {
   }
 
   this.w(')');
+
+  isStmt && this.w(';');
 };
