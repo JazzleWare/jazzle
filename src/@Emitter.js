@@ -7,9 +7,9 @@ function Emitter() {
   this.curLineIndent = this.indentLevel;
   this.curtt = ETK_NONE;
   this.pendingSpace = EST_NONE;
-  this.guard = null;
-  this.guardArg = null;
-  this.guardListener = null;
+  this.wcb = null;
+  this.wcbParam = null;
+  this.wcbUsed = null;
   this.allow = { space: true, nl: true, comments: { l: true, m: true }, elemShake: false };
   this.rll = 0; // real line length; TODO: eliminate need for it
   this.wrapLine = false;

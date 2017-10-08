@@ -14,6 +14,8 @@ this.Transformer = Transformer;
 // this.GlobalScope = GlobalScope;
  this. PathMan = PathMan;
 
+this.Emitter2 = Emitter2;
+
 this.transpile = function(src, options) {
   var p = new Parser(src, options);
   return new Emitter().eA(

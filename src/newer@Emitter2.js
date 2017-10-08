@@ -12,7 +12,7 @@ function(rawStr) {
     this.effectPendingSpace(rawStr.length);
 
   if (this.guard) {
-    var tt = this.curtt;
+    var tt = this.tt;
     tt === ETK_NONE || this.nott();
     this.runGuard(rawStr, tt);
     if (this.hasPendingSpace())
@@ -24,7 +24,7 @@ function(rawStr) {
 
   var curEmCol = this.emcol_cur;
   if (curEmCol && this.ol(rawStr.length) > 0)
-    this.wrapLine();
+    this.wrapCurrentLine();
 
   srcLoc && this.refreshTheSourceMapWith(srcLoc);
 
@@ -60,7 +60,7 @@ function() {
   this.useOut(true);
   this.writeToOutput_lineBreak();
   this.useOut(false);
-  this.leadingNL = true;
+  this.hasLeading = true;
 };
 
 this.writeToOut_nonLineBreak =
@@ -98,6 +98,9 @@ function() {
 this.ensureNoSpace =
 function() { ASSERT.call(this, !this.hasPendingSpace(), 'hasPendingSpace' ); };
 
+this.hasPendingSpace =
+function() { return this.pendingSpace !== SP_NONE; };
+
 this.ensureOutActive =
 function() { ASSERT.call(this, this.outActive, 'out is not in use' ); };
 
@@ -114,6 +117,7 @@ function() {
 };
 
 this.overflowLength =
+this.ol =
 function(len) {
   return this.wrapLimit > 0 ?
     len - this.wrapLimit : 0;
@@ -196,6 +200,8 @@ function() {
   this.writeToOut_raw(optimalIndentString);
   this.writeToOut_raw(this.curLine);
 
+  this.useOut(false);
+
   if (this.ln) {
     var lm0 =
       vlq(this.ln_emcol_cur + optimalIndentString.length) +
@@ -211,6 +217,9 @@ function() {
   this.curLineIndent = this.nextLineIndent;
 };
 
+this.writeToOut_raw =
+function(str) { this.out += str; };
+
 this.lineOverflow =
 function(len) {
   var wl = this.wrapLimit;
@@ -223,14 +232,18 @@ function(idealLength) {
   ASSERT.call(this, idealLength % INLEN === 0, 'len'); // TODO: eliminate
   var level = idealLength / INLEN;
 
-  var cache = this.indentCache, l = cache.length, str = "";
+  var cache = this.indentCache, l = cache.length;
+  if (level < l)
+    return cache[level];
+
+  var str = cache[l-1];
   ASSERT.call(this, l > 0, 'l');
   while (l <= level) {
     cache[l] = str = str + this.indentString;
     l++;
   }
 
-  return cache;
+  return str;
 };
 
 this.insertGuard =
@@ -243,12 +256,11 @@ function(guard) {
 };
 
 this.monitorGuard =
-function(listener, own) {
+function(listener) {
   ASSERT.call(this, this.guard !== null, 'no');
   ASSERT.call(this, this.guardListener === null, 'listener');
 
   this.guardListener = listener;
-  this.guardListener.own = own;
 };
 
 this.runGuard =
@@ -271,12 +283,13 @@ function(fallbackListener) {
   if (this.guard === null) {
     l = fallbackListener;
     this.insertGuard(guard_simpleListener);
-    this.monitorGuard(l, true);
+    this.monitorGuard(l);
   } else {
     l = this.guardListener;
     if (l === null) {
-      l = fallbackListener;
-      this.monitorGuard(l, false);
+      l = this.defaultGuardListener;
+      l.v = false;
+      this.monitorGuard(l);
     }
   }
   return l;
@@ -297,11 +310,7 @@ function(listener) {
   if (listener !== guardListener)
     return false;
 
-  this.guardListener = null;
-  if (!listener.own) // if we had it listen for another guard
-    return false;
-
-  ASSERT_EQ.call(this, !listener.v, 'used' );
+  ASSERT_EQ.call(this, listener.v, false);
   this.removeGuard_any();
 
   return true;
