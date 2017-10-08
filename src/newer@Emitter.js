@@ -13,8 +13,8 @@ function(rawStr) {
 
   if (this.guard) {
     var tt = this.curtt;
-    tt === ETK_NONE || this.clearTT();
-    this.callGuard(rawStr, tt);
+    tt === ETK_NONE || this.nott();
+    this.runGuard(rawStr, tt);
     if (this.hasPendingSpace())
       this.effectPendingSpace(rawStr.length);
   } 
@@ -46,14 +46,17 @@ function() {
 this.writeToCurrentLine_virtualLineBreak =
 function() {
   this.ensureNoSpace();
-  this.guard && this.callGuard('\n', ETK_NL);
+  this.guard && this.runGuard('\n', ETK_NL);
 };
 
 this.wrapCurrentLine =
 function() {
   this.hasPendingSpace() && this.removePendingSpace();
   this.writeToCurrentLine_virtualLineBreak();
-  this.finishCurrentLine();
+  if (this.lineBlank())
+    this.needsLeading = true;
+  else
+    this.finishCurrentLine();
   this.useOut(true);
   this.writeToOutput_lineBreak();
   this.useOut(false);
@@ -72,8 +75,17 @@ function(use) {
   this.outActive = use;
 };
 
-this.flush =
-function() { this.curLine.length && this.finishCurrentLine(); };
+this.flushCurrentLine =
+function() {
+  if (this.curLine.length) {
+    this.finishCurrentLine(); 
+    return true;
+  }
+  return false;
+};
+
+this.lineBlank =
+function() { return this.curLine.length === 0; };
 
 this.writeToOut_lineBreak =
 function() {
@@ -107,6 +119,13 @@ function(len) {
     len - this.wrapLimit : 0;
 };
 
+this.removePendingSpace =
+function() {
+  var sp = this.pendingSpace;
+  this.pendingSpace = SP_NONE;
+  return sp;
+};
+
 this.effectPendingSpace =
 function(len) {
   ASSERT.call(this, this.curLine.length, 'leading');
@@ -128,6 +147,12 @@ function(len) {
   }
 };
 
+this.removePendingSpace_try =
+function() {
+  return this.hasPendingSpace() ? 
+    this.removePendingSpace() : SP_NONE;
+};
+
 this.indentNextLine =
 function() { this.nextLineIndent++; };
 
@@ -146,13 +171,12 @@ function() {
 
   var optimalIndentLevel = this.allow.space ? this.curLineIndent : 0;
   var tailLineBreak = false, optimalIndentString = "", optimalIndentStrLength = 0;
-  optimalIndentStringLength = optimalIndentLevel * this.indentString.length;
+  optimalIndentStrLength = optimalIndentLevel * this.indentString.length;
 
   if (optimalIndentStrLength >= 0) {
     var overflow = this.ol(optimalIndentStrLength);
-    if (overflow >= 0) {
+    if (overflow > 0) {
       optimalIndentStrLength -= overflow;
-      tailLineBreak = true;
     }
   }
 
@@ -160,10 +184,14 @@ function() {
 
   this.useOut(true);
 
-  if (this.leadingNL)
-    this.leadingNL = false;
-  else if (this.allow.nl)
+  if (this.hasLeading)
+    this.hasLeading = false;
+  else switch (true) {
+  case this.needsLeading:
+    this.needsLeading = false;
+  case this.allow.nl:
     this.writeToOut_lineBreak();
+  }
 
   this.writeToOut_raw(optimalIndentString);
   this.writeToOut_raw(this.curLine);
@@ -179,11 +207,130 @@ function() {
   }
   this.sm += this.lm;
 
-  if (tailLineBreak) {
-    this.writeToOut_lineBreak();
-    this.leadingNL = true;
-  }
-
   this.curLine = this.lm = "";
   this.curLineIndent = this.nextLineIndent;
+};
+
+this.lineOverflow =
+function(len) {
+  var wl = this.wrapLimit;
+  return wl < 0 ? 0 : this.emcol_cur + len - wl;
+};
+
+this.findIndentStringWithIdealLength =
+function(idealLength) {
+  var INLEN = this.indentString.length;
+  ASSERT.call(this, idealLength % INLEN === 0, 'len'); // TODO: eliminate
+  var level = idealLength / INLEN;
+
+  var cache = this.indentCache, l = cache.length, str = "";
+  ASSERT.call(this, l > 0, 'l');
+  while (l <= level) {
+    cache[l] = str = str + this.indentString;
+    l++;
+  }
+
+  return cache;
+};
+
+this.insertGuard =
+function(guard) {
+  ASSERT.call(this, this.guard === null, 'existing guard');
+  ASSERT.call(this, this.guardArg === null, 'existing guardArg');
+  ASSERT.call(this, this.guardListener === null, 'existing guardListener');
+
+  this.guard = guard;
+};
+
+this.monitorGuard =
+function(listener, own) {
+  ASSERT.call(this, this.guard !== null, 'no');
+  ASSERT.call(this, this.guardListener === null, 'listener');
+
+  this.guardListener = listener;
+  this.guardListener.own = own;
+};
+
+this.runGuard =
+function(str, t) {
+  var guard = this.guard, guardListener = this.guardListener;
+  this.removeGuard_any();
+
+  this.runningGuard = true;
+  guard.call(this, str, t);
+  if (guardListener) {
+    ASSERT_EQ.call(this, guardListener.v, false);
+    guardListener.v = true;
+  }
+  this.runningGuard = false;
+};
+
+this.listenForEmits =
+function(fallbackListener) {
+  var l = null;
+  if (this.guard === null) {
+    l = fallbackListener;
+    this.insertGuard(guard_simpleListener);
+    this.monitorGuard(l, true);
+  } else {
+    l = this.guardListener;
+    if (l === null) {
+      l = fallbackListener;
+      this.monitorGuard(l, false);
+    }
+  }
+  return l;
+};
+
+this.removeGuard_any =
+function() {
+  ASSERT.call(this, this.guard !== null, 'no');
+  this.guard = this.guardListener = null;
+};
+
+this.removeGuard_if =
+function(listener) {
+  ASSERT.call(this, this.guard !== null, 'no');
+  var guardListener = this.guardListener;
+  ASSERT.call(this, this.guardListener !== null, 'listener');
+
+  if (listener !== guardListener)
+    return false;
+
+  this.guardListener = null;
+  if (!listener.own) // if we had it listen for another guard
+    return false;
+
+  ASSERT_EQ.call(this, !listener.v, 'used' );
+  this.removeGuard_any();
+
+  return true;
+};
+
+this.setGuardArg =
+function(arg) {
+  ASSERT.call(this, this.guard !== null, 'no');
+  ASSERT.call(this, this.guardArg === null, 'n');
+
+  this.guardArg = arg;
+};
+
+this.tt =
+function(tt) {
+  ASSERT.call(this, this.tt === ETK_NONE, 'none');
+  this.tt = tt;
+};
+
+this.nott =
+function() {
+  ASSERT.call(this, this.tt !== ETK_NONE, 'none');
+  this.tt = ETK_NONE;
+};
+
+this.nott_ifAny =
+function() {
+  if (this.tt === ETK_NONE)
+    return false;
+  this.nott();
+  return true;
 };

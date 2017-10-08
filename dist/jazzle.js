@@ -88,9 +88,9 @@ function Emitter() {
   this.curLineIndent = this.indentLevel;
   this.curtt = ETK_NONE;
   this.pendingSpace = EST_NONE;
-  this.wcb = null;
-  this.wcbp = null;
-  this.wcbUsed = null;
+  this.guard = null;
+  this.guardArg = null;
+  this.guardListener = null;
   this.allow = { space: true, nl: true, comments: { l: true, m: true }, elemShake: false };
   this.rll = 0; // real line length; TODO: eliminate need for it
   this.wrapLine = false;
@@ -5217,6 +5217,208 @@ function(n, flags, isStmt) {
   this.emc(cb, 'bef');
   Emitters['ConditionalExpression'].call(this, n, flags, isStmt);
   this.emc(cb, 'aft');
+};
+
+},
+function(){
+this.writeToCurrentLine_checked =
+function(rawStr) {
+  ASSERT.call(this, arguments.length === 1, 'write must have only one single argument');
+
+  ASSERT.call(this, typeof rawStr === STRING_TYPE, 'str' );
+  ASSERT.call(this, rawStr.length, 'writing ""' );
+
+  var srcLoc = this.locw;
+  if (srcLoc) { this.locw = null; }
+
+  if (this.hasPendingSpace())
+    this.effectPendingSpace(rawStr.length);
+
+  if (this.guard) {
+    var tt = this.curtt;
+    tt === ETK_NONE || this.clearTT();
+    this.callGuard(rawStr, tt);
+    if (this.hasPendingSpace())
+      this.effectPendingSpace(rawStr.length);
+  } 
+
+  ASSERT.call(this, this.guard === null, 'guard' );
+  this.ensureNoSpace();
+
+  var curEmCol = this.emcol_cur;
+  if (curEmCol && this.ol(rawStr.length) > 0)
+    this.wrapLine();
+
+  srcLoc && this.refreshTheSourceMapWith(srcLoc);
+
+  this.writeToCurrentLine_raw(rawStr);
+};
+
+this.writeToCurrentLine_raw =
+function(rawStr) {
+  this.emcol_cur += rawStr.length;
+  this.curLine += rawStr;
+};
+
+this.writeToCurrentLine_space =
+function() {
+  this.ensureNoSpace();
+  this.writeToCurrentLine_checked(' ');
+};
+
+this.writeToCurrentLine_virtualLineBreak =
+function() {
+  this.ensureNoSpace();
+  this.guard && this.callGuard('\n', ETK_NL);
+};
+
+this.wrapCurrentLine =
+function() {
+  this.hasPendingSpace() && this.removePendingSpace();
+  this.writeToCurrentLine_virtualLineBreak();
+  if (this.lineBlank())
+    this.needsLeading = true;
+  else
+    this.finishCurrentLine();
+  this.useOut(true);
+  this.writeToOutput_lineBreak();
+  this.useOut(false);
+  this.leadingNL = true;
+};
+
+this.writeToOut_nonLineBreak =
+function(str) {
+  this.ensureOutActive();
+  this.writeToOut_raw(str);
+};
+
+this.useOut =
+function(use) {
+  ASSERT_EQ.call(this, !this.outActive, use);
+  this.outActive = use;
+};
+
+this.flush =
+function() {
+  if (this.curLine.length) {
+    this.finishCurrentLine(); 
+    return true;
+  }
+  return false;
+};
+
+this.lineBlank =
+function() { return this.curLine.length === 0; };
+
+this.writeToOut_lineBreak =
+function() {
+  this.ensureOutActive();
+  this.emline_cur++;
+  this.sm += ';';
+  this.writeToOut_raw('\n');
+}; 
+
+this.ensureNoSpace =
+function() { ASSERT.call(this, !this.hasPendingSpace(), 'hasPendingSpace' ); };
+
+this.ensureOutActive =
+function() { ASSERT.call(this, this.outActive, 'out is not in use' ); };
+
+this.enqueueOmittableSpace =
+function() {
+  this.ensureNoSpace(); ASSERT.call(this, this.curLine.length, 'leading');
+  this.pendingSpace = SP_OMITTABLE;
+};
+
+this.enqueueBreakingSpace =
+function() {
+  this.ensureNoSpace(); ASSERT.call(this, this.curLine.length, 'leading');
+  this.pendingSpace = SP_BREAKABLE;
+};
+
+this.overflowLength =
+function(len) {
+  return this.wrapLimit > 0 ?
+    len - this.wrapLimit : 0;
+};
+
+this.effectPendingSpace =
+function(len) {
+  ASSERT.call(this, this.curLine.length, 'leading');
+  var pendingSpace = this.removePendingSpace();
+  switch (pendingSpace) {
+  case SP_OMITTABLE:
+    if (this.ol(len+1) <= 0)
+      this.writeToCurrentLine_space();
+    break;
+  case SP_BREAKABLE:
+    if (this.ol(len+1) <= 0)
+      this.writeToCurrentLine_space();
+    else
+      this.wrapCurrentLine();
+    break;
+  default:
+    ASSERT.call(this, false, 'invalid type for pending space' );
+    break;
+  }
+};
+
+this.indentNextLine =
+function() { this.nextLineIndent++; };
+
+this.unindentNextLine =
+function() {
+  ASSERT.call(this, this.nextLineIndent > 0, 'line has a <1 indent');
+  this.nextLineIndent--;
+};
+
+this.finishCurrentLine =
+function() {
+  var line = this.curLine;
+  ASSERT.call(this, line.length, 'line');
+
+  this.ensureNoSpace();
+
+  var optimalIndentLevel = this.allow.space ? this.curLineIndent : 0;
+  var tailLineBreak = false, optimalIndentString = "", optimalIndentStrLength = 0;
+  optimalIndentStringLength = optimalIndentLevel * this.indentString.length;
+
+  if (optimalIndentStrLength >= 0) {
+    var overflow = this.ol(optimalIndentStrLength);
+    if (overflow > 0) {
+      optimalIndentStrLength -= overflow;
+    }
+  }
+
+  optimalIndentString = this.findIndentStringWithIdealLength(optimalIndentStrLength);
+
+  this.useOut(true);
+
+  if (this.leadingNL)
+    this.leadingNL = false;
+  else switch (true) {
+  case this.needsLeadingNL:
+    this.needsLeadingNL = false;
+  case this.allow.nl:
+    this.writeToOut_lineBreak();
+  }
+
+  this.writeToOut_raw(optimalIndentString);
+  this.writeToOut_raw(this.curLine);
+
+  if (this.ln) {
+    var lm0 =
+      vlq(this.ln_emcol_cur + optimalIndentString.length) +
+      this.ln_srci_vlq + this.ln_loc_vlq + this.ln_namei_vlq;
+    this.ln_srci_vlq = this.ln_namei_vlq = this.ln_loc_vlq = "";
+    if (this.lm.length) lm0 = lm0 + ',';
+    this.lm = lm0 + this.lm;
+    this.ln = false;
+  }
+  this.sm += this.lm;
+
+  this.curLine = this.lm = "";
+  this.curLineIndent = this.nextLineIndent;
 };
 
 },
