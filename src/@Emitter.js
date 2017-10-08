@@ -19,8 +19,8 @@ function Emitter() {
   this.smNameList = new SortedObj();
   this.smSrcList = new SortedObj();
 
-  this.lineIsLn = false;
-  this.ln = false;
+  this.lineNeedsSourcemapLink = false;
+  this.lineHasSourcemapLink = false;
 
   this.emcol_cur = 0; // rll?
   this.emcol_latestRec = 0;

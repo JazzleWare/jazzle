@@ -47,8 +47,9 @@ function Emitter2() {
 
   this.pendingSrcLoc = null;
 
-  this.ln = false;
-  this.lineIsLn = false;
+//this.lineSMState = SM_LINE_NEEDS_NO_LINKPOINT;
+  this.mustHaveLinkpoint = false;
+  this.hasRecordedLinkpoint = false;
 
   this.smNameList = new SortedObj();
   this.smSrcList = new SortedObj();

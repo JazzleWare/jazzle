@@ -10,6 +10,7 @@ function() {
   this.emline_cur++;
   this.emcol_cur = 0;
   this.sm += ';';
+  this.lineSMState = SM_LINE_REQUIRES_SM_LINKPOINT;
   this.writeToOut_raw('\n');
 }; 
 
