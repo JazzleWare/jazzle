@@ -60,7 +60,7 @@ BINP['>>>'] = BINP['>>'] = BINP['<<'] =
 nextl(PREC_COMP); // >>>, >>, <<
 
 var PREC_ADD = BINP['+'] = BINP['-'] = nextl(PREC_SH); // +, -
-var PREC_MUL = BINP['*'] = BINP['/'] = nextl(PREC_ADD); // *, /
+var PREC_MUL = BINP['/'] = BINP['%'] = BINP['*'] =  nextl(PREC_ADD); // *, /
 var PREC_EX = BINP['**'] = nextl(PREC_MUL); // **
 
 var PREC_UNARY = nextr(PREC_EX); // delete, void, -, +, typeof; not really a right-associative thing

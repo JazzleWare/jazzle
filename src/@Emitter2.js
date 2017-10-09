@@ -29,8 +29,8 @@ function Emitter2() {
   this.emline_cur = 0;
   this.emline_latestRec = 0;
 
-  this.srci_cur = -1;
-  this.srci_latestRec = -1;
+  this.srci_cur = 0; // -1;
+  this.srci_latestRec = 0; // -1;
 
   this.namei_cur = -1;
   this.namei_latestRec = -1;
@@ -40,16 +40,15 @@ function Emitter2() {
   this.sm = "";
   this.lm = "";
 
-  this.ln_srci_vlq = "";
-  this.ln_loc_vlq = "";
-  this.ln_namei_vlq = "";
+  this.ln_vlq_tail = "";
   this.ln_emcol_cur = 0;
 
   this.pendingSrcLoc = null;
 
 //this.lineSMState = SM_LINE_NEEDS_NO_LINKPOINT;
-  this.mustHaveLinkpoint = false;
-  this.hasRecordedLinkpoint = false;
+
+  this.mustHaveSMLinkpoint = false;
+  this.hasRecordedSMLinkpoint = false;
 
   this.smNameList = new SortedObj();
   this.smSrcList = new SortedObj();

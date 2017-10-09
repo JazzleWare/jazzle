@@ -45,23 +45,25 @@ function() {
     this.writeToOut_lineBreak();
   }
 
+  if (this.hasRecordedSMLinkpoint) {
+    var lm0 = vlq(this.ln_emcol_cur + optimalIndentStrLength) + this.ln_vlq_tail;
+    this.ln_vlq_tail = "";
+    var lm = this.lm;
+    if (lm.length) lm0 += ',';
+//  this.smOutActive = true;
+    this.writeToSMout(lm0);
+    this.writeToSMout(lm);
+    this.hasRecordedSMLinkpoint = false;
+    this.lm = "";
+  }
+
   this.writeToOut_raw(optimalIndentString);
   this.writeToOut_raw(this.curLine);
 
   this.useOut(false);
 
-  if (this.ln) {
-    var lm0 =
-      vlq(this.ln_emcol_cur + optimalIndentString.length) +
-      this.ln_srci_vlq + this.ln_loc_vlq + this.ln_namei_vlq;
-    this.ln_srci_vlq = this.ln_namei_vlq = this.ln_loc_vlq = "";
-    if (this.lm.length) lm0 = lm0 + ',';
-    this.lm = lm0 + this.lm;
-    this.ln = false;
-  }
-  this.sm += this.lm;
 
-  this.curLine = this.lm = "";
+  this.curLine = "";
   this.curLineIndent = this.nextLineIndent;
 
   this.finishingLine = false;

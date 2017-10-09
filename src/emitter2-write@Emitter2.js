@@ -5,8 +5,8 @@ function(rawStr) {
   ASSERT.call(this, typeof rawStr === STRING_TYPE, 'str' );
   ASSERT.call(this, rawStr.length, 'writing ""' );
 
-  var srcLoc = this.locw;
-  if (srcLoc) { this.locw = null; }
+  var srcLoc = this.pendingSrcLoc;
+  if (srcLoc) { this.pendingSrcLoc = null; }
 
   if (this.hasPendingSpace())
     this.effectPendingSpace(rawStr.length);

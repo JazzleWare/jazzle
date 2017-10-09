@@ -100,8 +100,8 @@ function Emitter() {
   this.smNameList = new SortedObj();
   this.smSrcList = new SortedObj();
 
-  this.lineIsLn = false;
-  this.ln = false;
+  this.lineNeedsSourcemapLink = false;
+  this.lineHasSourcemapLink = false;
 
   this.emcol_cur = 0; // rll?
   this.emcol_latestRec = 0;
@@ -163,8 +163,8 @@ function Emitter2() {
   this.emline_cur = 0;
   this.emline_latestRec = 0;
 
-  this.srci_cur = -1;
-  this.srci_latestRec = -1;
+  this.srci_cur = 0; // -1;
+  this.srci_latestRec = 0; // -1;
 
   this.namei_cur = -1;
   this.namei_latestRec = -1;
@@ -174,15 +174,15 @@ function Emitter2() {
   this.sm = "";
   this.lm = "";
 
-  this.ln_srci_vlq = "";
-  this.ln_loc_vlq = "";
-  this.ln_namei_vlq = "";
+  this.ln_vlq_tail = "";
   this.ln_emcol_cur = 0;
 
   this.pendingSrcLoc = null;
 
-  this.ln = false;
-  this.lineIsLn = false;
+//this.lineSMState = SM_LINE_NEEDS_NO_LINKPOINT;
+
+  this.mustHaveSMLinkpoint = false;
+  this.hasRecordedSMLinkpoint = false;
 
   this.smNameList = new SortedObj();
   this.smSrcList = new SortedObj();
@@ -1105,7 +1105,7 @@ BINP['>>>'] = BINP['>>'] = BINP['<<'] =
 nextl(PREC_COMP); // >>>, >>, <<
 
 var PREC_ADD = BINP['+'] = BINP['-'] = nextl(PREC_SH); // +, -
-var PREC_MUL = BINP['*'] = BINP['/'] = nextl(PREC_ADD); // *, /
+var PREC_MUL = BINP['/'] = BINP['%'] = BINP['*'] =  nextl(PREC_ADD); // *, /
 var PREC_EX = BINP['**'] = nextl(PREC_MUL); // **
 
 var PREC_UNARY = nextr(PREC_EX); // delete, void, -, +, typeof; not really a right-associative thing
@@ -1273,6 +1273,12 @@ var ATS_DISTINCT = 1,
     ATS_UNSURE = ATS_DISTINCT << 1,
     ATS_SAME = ATS_UNSURE << 1;
 
+//   line sourcemap
+//var LSM_NEED_NO_LINKPOINT = 1,
+//    LSM_MUST_HAVE_LINKPOINT = LSM_MUST_HAVE_LINKPOINT << 1,
+//    LSM_RECORDED_LINKPOINT = LSM_MUST_HAVE_LINKPOINT << 1,
+//    LSM_NONE = 0;
+ 
 ;
 function _m(name) { return name+'%'; }
 function _u(name) {
@@ -2968,6 +2974,85 @@ function(nd, loc) {
   this.w('(').writeString(nd.name,"'");
   this.w(')');
   return true;
+};
+
+},
+function(){
+this.smSetName_str =
+function(name) {
+  var nc = -1;
+  if (name.length) {
+    var mname = _m(name), list = this.smNameList;
+    nc = list.has(mname) ? list.get(mname) : list.set(mname, list.length());
+  }
+  return this.smSetName_i(nc);
+};
+
+this.smSetName_i =
+function(i) {
+  var list = this.smNameList;
+  ASSERT.call(this, i >= 0 ? i <= list.length() : i === -1, 'namei' );
+  var nc = this.namei_cur;
+
+  this.namei_cur = i;
+  return nc;
+};
+
+this.smSetSrc_str =
+function(srcName) {
+  var sc = -1;
+  if (srcName.length) {
+    var mname = _m(srcName), list = this.smSrcList;
+    sc = list.has(mname) ? list.get(mname) : list.set(mname, list.length());
+  }
+  return this.smSetSrc_i(sc);
+};
+
+this.smSetSrc_i =
+function(i) {
+  var list = this.smSrcList;
+  ASSERT.call(this, i >= 0 ? i <= list.length() : i === -1, 'srci' );
+  var sc = this.srci_cur;
+
+  this.srci_cur = i;
+  return sc;
+};
+
+this.writeToSMout =
+function(lm) { this.sm += lm; };
+
+this.refreshCurrentLineLevelSourceMapWith =
+function(srcLoc) {
+  var l = 0, vlqTail = "";
+
+  l = this.srci_cur;
+  vlqTail += vlq(l - this.srci_latestRec);
+  this.srci_latestRec = l;
+
+  var ll = this.loc_latestRec; // latest loc
+  vlqTail += vlq(srcLoc.line - ll.line) + vlq(srcLoc.column - ll.column);
+  this.loc_latestRec = loc;
+
+  if ((l=this.namei_cur) >= 0) {
+    vlqTail += vlq(l - this.namei_latestRec);
+    this.namei_latestRec = l;
+  }
+
+  l = this.emcol_cur;
+  if (this.mustHaveSMLinkpoint) {
+    this.ln_emcol_cur = l;
+    this.ln_vlq_tail = vlqTail;
+    this.mustHaveSMLinkpoint = false;
+    this.hasRecordedSMLinkpoint = true;
+  }
+  else {
+    var lm = this.lm;
+    if (lm.length) lm += ',';
+    this.lm = lm + vlq(l - this.emcol_latestRec) + vlqTail;
+  }
+
+  this.emcol_latestRec = l;
+  this.emline_latestRec = this.emline_cur;
 };
 
 },
@@ -5693,23 +5778,25 @@ function() {
     this.writeToOut_lineBreak();
   }
 
+  if (this.hasRecordedSMLinkpoint) {
+    var lm0 = vlq(this.ln_emcol_cur + optimalIndentStrLength) + this.ln_vlq_tail;
+    this.ln_vlq_tail = "";
+    var lm = this.lm;
+    if (lm.length) lm0 += ',';
+//  this.smOutActive = true;
+    this.writeToSMout(lm0);
+    this.writeToSMout(lm);
+    this.hasRecordedSMLinkpoint = false;
+    this.lm = "";
+  }
+
   this.writeToOut_raw(optimalIndentString);
   this.writeToOut_raw(this.curLine);
 
   this.useOut(false);
 
-  if (this.ln) {
-    var lm0 =
-      vlq(this.ln_emcol_cur + optimalIndentString.length) +
-      this.ln_srci_vlq + this.ln_loc_vlq + this.ln_namei_vlq;
-    this.ln_srci_vlq = this.ln_namei_vlq = this.ln_loc_vlq = "";
-    if (this.lm.length) lm0 = lm0 + ',';
-    this.lm = lm0 + this.lm;
-    this.ln = false;
-  }
-  this.sm += this.lm;
 
-  this.curLine = this.lm = "";
+  this.curLine = "";
   this.curLineIndent = this.nextLineIndent;
 
   this.finishingLine = false;
@@ -5728,12 +5815,13 @@ function() {
   this.ensureOutActive();
   this.emline_cur++;
   this.emcol_cur = 0;
-  this.sm += ';';
+  this.writeToSMout(';'); // TODO: ensure we are allowed to actually write to SM; we must have actually committed anything in lm beforehands
+  this.mustHaveSMLinkpoint = true;
   this.writeToOut_raw('\n');
 }; 
 
 this.writeToOut_raw =
-function(str) { this.out += str; };
+function(str) { var o = this.out; this.out = o.concat(o, str); };
 
 this.useOut =
 function(use) {
@@ -5826,10 +5914,9 @@ this.wrapCurrentLine =
 function() {
   this.hasPendingSpace() && this.removePendingSpace();
   this.writeToCurrentLine_virtualLineBreak();
-  if (this.lineBlank())
-    this.needsLeading = true;
-  else
-    this.finishCurrentLine();
+  this.lineBlank() || this.finishCurrentLine();
+
+  ASSERT_EQ.call(this, this.hasLeading, false);
   this.useOut(true);
   this.writeToOut_lineBreak();
   this.useOut(false);

@@ -9,13 +9,13 @@ function() {
   this.ensureOutActive();
   this.emline_cur++;
   this.emcol_cur = 0;
-  this.sm += ';';
-  this.lineSMState = SM_LINE_REQUIRES_SM_LINKPOINT;
+  this.writeToSMout(';'); // TODO: ensure we are allowed to actually write to SM; we must have actually committed anything in lm beforehands
+  this.mustHaveSMLinkpoint = true;
   this.writeToOut_raw('\n');
 }; 
 
 this.writeToOut_raw =
-function(str) { this.out += str; };
+function(str) { var o = this.out; this.out = o.concat(o, str); };
 
 this.useOut =
 function(use) {

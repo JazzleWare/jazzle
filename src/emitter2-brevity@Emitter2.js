@@ -70,3 +70,9 @@ function(guard, listener) {
   }
   return false;
 };
+
+this.sl =
+function(srcLoc) {
+  this.setSourceLocTo(srcLoc);
+  return this;
+};
