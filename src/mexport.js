@@ -6,7 +6,7 @@ this.parse = function(src, isModule ) {
 this.Parser = Parser;  
 // this.ErrorString = ErrorString;
 // this.Template = Template;
-// this.Emitter = Emitter;
+this.Emitter = Emitter;
 
 this.Transformer = Transformer;
 // this.Scope = Scope;
@@ -14,7 +14,7 @@ this.Transformer = Transformer;
 // this.GlobalScope = GlobalScope;
  this. PathMan = PathMan;
 
-this.Emitter2 = Emitter2;
+// this.Emitter2 = Emitter2;
 
 this.transpile = function(src, options) {
   var p = new Parser(src, options);

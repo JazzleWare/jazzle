@@ -7,7 +7,7 @@ function(n, flags, isStmt) {
   switch (typeof n.value) {
   case STRING_TYPE: 
     this.writeString(n.value,"'");
-    this.curtt = ETK_NONE;
+    this.tt = ETK_NONE;
     break;
   case BOOL_TYPE: 
     this.wt(n.value ? 'true' : 'false', ETK_ID);
@@ -15,7 +15,7 @@ function(n, flags, isStmt) {
   case NUMBER_TYPE:
     this.wt(n.value+"", ETK_NUM);
     if (isInteger(n.value))
-      this.onw(wcb_intDotGuard );
+      this.gu(wcb_intDotGuard );
     break;
   default:
     ASSERT.call(this, false, 'unknown value');

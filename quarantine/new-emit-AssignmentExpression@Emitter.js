@@ -1,33 +1,15 @@
 this.emitAssignment_ex =
 function(n, flags, isStmt) {
-  if (this.bomb(n.left))
-    return;
   var hasParen = flags & EC_EXPR_HEAD;
-  var cc = false;
   var left = n.left;
-  var tz = false;
   var target = null, cb = n['#c'];
 
-//if (isResolvedName(left)) {
-//  target = left.target;
-//  if (!this.active(target))
-//    return this.emitAny(n.right, flags, isStmt);
-//  tz = left.tz;
-//  cc = left.cv;
-//  if (!hasParen)
-//    hasParen = tz || cc;
-//}
   if (hasParen) { this.w('('); flags = EC_NONE; }
 
   this.emc(cb, 'bef');
-//if (tz)
-//  this.emitAccessChk_tz(target, left.id.loc.start), this.w(',').os();
-//if (cc) 
-//  this.emitAccessChk_invalidSAT(target, left.id.loc.start), this.w(',').os();
-
   this.emitSAT(left, flags);
-
   this.os();
+
   if (n.operator === '**=') {
     ASSERT.call(this, isResolvedName(n.left), 'not rn');
     this.w('=').os().jz('ex')
@@ -36,7 +18,7 @@ function(n, flags, isStmt) {
         .w(')');
   }
   else {
-    if (n.operator === '+=') this.lw(n['#o']);
+    if (n.operator === '+=') this.sl(n['#o']);
     this.w(n.operator).os();
     this.eN(n.right, flags & EC_IN, false);
   }

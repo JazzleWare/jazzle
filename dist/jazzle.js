@@ -79,7 +79,7 @@ function Decl() {
   this.rsMap = null;
 }
 ;
-function Emitter2() {
+function Emitter() {
   this.indentCache = [""];
   this.indentString = ' ';
   this.indentLevel = 0;
@@ -135,6 +135,7 @@ function Emitter2() {
   this.smSrcList = new SortedObj();
   // </sourcemap-related>
 
+  this.emitters = createObj(Emitters);
   this.allow = { space: true, nl: true, comments: { l: true, m: true }, elemShake: false };
   this.out = "";
   this.outActive = false;
@@ -2576,7 +2577,34 @@ function() {
 };
 
 }]  ],
-[Emitter2.prototype, [function(){
+[Emitter.prototype, [function(){
+this.emitAny =
+function(n, flags, isStmt) {
+  var emitters = this.emitters, t = n.type;
+  if (t in emitters)
+    return emitters[t].call(this, n, flags, isStmt );
+
+  this.err('unknown.node');
+};
+
+this.emitHead =
+function(n, flags, isStmt) { return this.emitAny(n, flags|EC_EXPR_HEAD|EC_NON_SEQ, isStmt); };
+
+this.emitNonSeq =
+function(n, flags, isStmt) { return this.emitAny(n, flags|EC_NON_SEQ, isStmt); };
+
+this.emitNewHead =
+function(n, flags, isStmt) {
+  return this.emitHead(n, EC_NEW_HEAD, false);
+};
+
+this.emitCallHead =
+function(n, flags, isStmt) {
+  return this.emitHead(n, flags|EC_CALL_HEAD, false);
+};
+
+},
+function(){
 this.w =
 function(str) {
   this.writeToCurrentLine_checked(rawStr);
@@ -2653,6 +2681,24 @@ function(guard, listener) {
 this.sl =
 function(srcLoc) {
   this.setSourceLocTo(srcLoc);
+  return this;
+};
+
+this.eA =
+function(n, flags, isStmt) {
+  this.emitAny(n, flags, isStmt);
+  return this;
+};
+
+this.eH =
+function(n, flags, isStmt) {
+  this.emitHead(n, flags, isStmt);
+  return this;
+};
+
+this.eN =
+function(n, flags, isStmt) {
+  this.emitNonSeq(n, flags, isStmt);
   return this;
 };
 
@@ -15954,7 +16000,7 @@ this.parse = function(src, isModule ) {
 this.Parser = Parser;  
 // this.ErrorString = ErrorString;
 // this.Template = Template;
-// this.Emitter = Emitter;
+this.Emitter = Emitter;
 
 this.Transformer = Transformer;
 // this.Scope = Scope;
@@ -15962,7 +16008,7 @@ this.Transformer = Transformer;
 // this.GlobalScope = GlobalScope;
  this. PathMan = PathMan;
 
-this.Emitter2 = Emitter2;
+// this.Emitter2 = Emitter2;
 
 this.transpile = function(src, options) {
   var p = new Parser(src, options);

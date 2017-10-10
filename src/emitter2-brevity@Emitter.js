@@ -76,3 +76,21 @@ function(srcLoc) {
   this.setSourceLocTo(srcLoc);
   return this;
 };
+
+this.eA =
+function(n, flags, isStmt) {
+  this.emitAny(n, flags, isStmt);
+  return this;
+};
+
+this.eH =
+function(n, flags, isStmt) {
+  this.emitHead(n, flags, isStmt);
+  return this;
+};
+
+this.eN =
+function(n, flags, isStmt) {
+  this.emitNonSeq(n, flags, isStmt);
+  return this;
+};

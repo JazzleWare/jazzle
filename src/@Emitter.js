@@ -1,4 +1,4 @@
-function Emitter2() {
+function Emitter() {
   this.indentCache = [""];
   this.indentString = ' ';
   this.indentLevel = 0;
@@ -54,6 +54,7 @@ function Emitter2() {
   this.smSrcList = new SortedObj();
   // </sourcemap-related>
 
+  this.emitters = createObj(Emitters);
   this.allow = { space: true, nl: true, comments: { l: true, m: true }, elemShake: false };
   this.out = "";
   this.outActive = false;

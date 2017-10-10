@@ -37,16 +37,16 @@ function(comments) { // emc -- immediate
       wflag |= ETK_NL;
 
     if (elem.type === 'Line') {
-      this.wt('//', wflag).rwr(elem.value);
+      this.wt('//', wflag).writeToCurrentLine_raw(elem.value);
     }
     else {
       this.wt('/*', wflag);
-      this.rwr(elem.value);
-      this.rwr('*/');
+      this.writeToCurrentLine_raw(elem.value);
+      this.writeToCurrentLine_raw('*/');
     }
     e++;
   }
 
-  l && l.type === 'Line' && this.onw(wcb_afterLineComment);
+  l && l.type === 'Line' && this.gu(wcb_afterLineComment);
   return true;
 };
