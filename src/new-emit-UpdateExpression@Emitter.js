@@ -24,7 +24,7 @@ function(n, flags, isStmt) {
   }
   else {
     this.emitSAT(n.argument, flags, o.length);
-    this.rwr(o); // hard-write because the wrapping affairs have been take care of when calling emitSAT
+    this.writeToCurrentLine_raw(o); // hard-write because the wrapping affairs have been take care of when calling emitSAT
   }
   hasParen && this.w(')');
   this.emc(cb, 'aft');

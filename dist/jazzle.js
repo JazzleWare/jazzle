@@ -1856,7 +1856,7 @@ function wcb_wrap(rawStr, tt) {
   this.insertLineBreak(true);
 }
 
-function wcb_listenEmit(rawStr, tt) {}
+function guard_simpleListener(rawStr, tt) {}
 ;
  (function(){
        var i = 0;
@@ -2923,6 +2923,9 @@ function() {
 
   optimalIndentString = this.findIndentStringWithIdealLength(optimalIndentStrLength);
 
+  // TODO: `allow.nl may change (for example by a guard; but that is rare enough to be safely ignorable)
+  this.writeToCurrentLine_virtualLineBreak();
+
   this.useOut(true);
 
   if (this.hasLeading)
@@ -2934,20 +2937,21 @@ function() {
     this.writeToOut_lineBreak();
   }
 
+  var lm = this.lm;
   if (this.hasRecordedSMLinkpoint) {
     var lm0 = vlq(this.ln_emcol_cur + optimalIndentStrLength) + this.ln_vlq_tail;
     this.ln_vlq_tail = "";
-    var lm = this.lm;
     if (lm.length) lm0 += ',';
 //  this.smOutActive = true;
     this.writeToSMout(lm0);
-    this.writeToSMout(lm);
     this.hasRecordedSMLinkpoint = false;
-    this.lm = "";
   }
 
   this.writeToOut_raw(optimalIndentString);
   this.writeToOut_raw(this.curLine);
+
+  this.writeToSMout(lm);
+  this.lm = "";
 
   this.useOut(false);
 
@@ -3033,7 +3037,7 @@ function(i) {
 this.writeToSMout =
 function(lm) { this.sm += lm; };
 
-this.refreshCurrentLineLevelSourceMapWith =
+this.refreshTheCurrentLineLevelSourceMapWith =
 function(srcLoc) {
   var l = 0, vlqTail = "";
 
@@ -3043,7 +3047,7 @@ function(srcLoc) {
 
   var ll = this.loc_latestRec; // latest loc
   vlqTail += vlq(srcLoc.line - ll.line) + vlq(srcLoc.column - ll.column);
-  this.loc_latestRec = loc;
+  this.loc_latestRec = srcLoc;
 
   if ((l=this.namei_cur) >= 0) {
     vlqTail += vlq(l - this.namei_latestRec);
@@ -3249,6 +3253,118 @@ function(list) {
 this.emitStmt =
 function(stmt) { return this.emitAny(stmt, EC_START_STMT, true); };
 
+this.emitAttached =
+function(stmt) {
+  switch (stmt.type) {
+  case 'BlockStatement':
+    this.os();
+  case 'EmptyStatement':
+    return this.emitStmt(stmt);
+  }
+
+  // TODO: eliminate
+  if (stmt.type === 'ExpressionStatement') {
+    var ex = stmt.expression;
+    if (isAssigList(ex))
+      return this.os().emitAny(ex, EC_START_STMT|EC_ATTACHED, true);
+  }
+
+  this.i();
+  this.l(); // TODO: unnecessary when the body has nothing in it (like as in #Skip nodes)
+
+  var own = {used: false};
+  this.listenForEmits(own);
+  this.emitStmt(stmt);
+  this.u();
+  if (!own.used) { this.grmif(own); this.w(';'); }
+};
+
+// a, b, e, ...l -> [a,b,e],sp(l)
+// a, b, e, l -> a,b,e,l
+this.emitElems =
+function(list, selem /* i.e., it contains a spread element */, cb) {
+  var e = 0, em = 0;
+  while (e < list.length) {
+    em && this.w(',').os();
+    var elem = list[e];
+    if (elem && elem.type === 'SpreadElement') {
+      this.emitSpread(elem);
+      e >= list.length - 1 && this.emc(cb, 'inner');
+      e++;
+    }
+    else {
+      var br = selem || em;
+      br && this.w('[');
+      e = this.emitElems_toRest(list, e, cb);
+      e >= list.length && this.emc(cb, 'inner');
+      br && this.w(']');
+    }
+    ++em;
+  }
+};
+
+this.emitSpread =
+function(n) {
+  var cb = CB(n); this.emc(cb, 'bef' );
+  this.jz('sp').sl(n.loc.start);
+  this.w('(').eN(n.argument, EC_NONE, false).w(')').emc(cb, 'aft');
+};
+
+this.emitElems_toRest =
+function(list, s, cb) {
+  var e = s;
+  while (e < list.length) {
+    var elem = list[e];
+    if (elem && elem.type === 'SpreadElement')
+        break;
+    e > s && this.w(',').os();
+    if (elem)
+      this.eN(elem, EC_NONE, false);
+    else {
+      if (cb.h < cb.holes.length) {
+        var holeComments = cb.holes[cb.h];
+        if (holeComments[0] === e)
+          this.emcim(holeComments[1]);
+        cb.h++;
+      }
+          
+      this.w('void').bs().w('0');
+    }
+    ++e; 
+  }
+  return e;
+};
+
+this.writeMemName =
+function(memName, asStr) {
+  switch (memName.type) {
+  case 'Literal':
+    this.eA(memName, EC_NONE, false);
+    return this;
+  case 'Identifier':
+    var cb = CB(memName); this.emc(cb, 'bef' );
+    asStr ?
+      this.writeString(memName.name,"'") :
+      this.writeIDName(memName.name);
+    this.emc(cb, 'aft');
+    return this;
+  }
+  ASSERT.call(this, false, 'unknown name');
+};
+
+this.writeIDName =
+function(nameStr) { return this.writeToCurrentLine_checked(nameStr); };
+
+this.emitSAT =
+function(n, flags, olen) {
+  if (n.type === 'MemberExpression')
+    return this.emitSAT_mem(n, flags, olen);
+  if (isResolvedName(n))
+    return this.emitRName_SAT(n, flags);
+
+  ASSERT.call(this, false, 'got <'+n.type+'>');
+};
+
 },
 function(){
 this.wrapCurrentLine =
@@ -3303,7 +3419,7 @@ function(rawStr) {
   if (curEmCol && this.ol(rawStr.length) > 0)
     this.wrapCurrentLine();
 
-  srcLoc && this.refreshTheSourceMapWith(srcLoc);
+  srcLoc && this.refreshTheCurrentLineLevelSourceMapWith(srcLoc);
 
   this.writeToCurrentLine_raw(rawStr);
 };
@@ -3666,15 +3782,11 @@ function(n, flags, isStmt) {
   ASSERT.call(this, isResolvedName(n.left), 'name');
 
   var cb = n['#c']; this.emc(cb, 'bef');
-  if (!this.active(n.left.target))
-    this.emitAny(n.right, flags, false);
-  else {
-    n.left.target.isLLINOSA() || this.w('var').onw(wcb_afterVar).os();
-    this.emitRName_binding(n.left);
-    n.left.target.isLLINOSA() && this.wm('.','v');
-    this.os().w('=').os();
-    this.eN(n.right, EC_NONE, false);
-  }
+  n.left.target.isLLINOSA() || this.w('var').gu(wcb_afterVar).os();
+  this.emitRName_binding(n.left);
+  n.left.target.isLLINOSA() && this.wm('.','v');
+  this.os().w('=').os();
+  this.eN(n.right, EC_NONE, false);
   this.w(';');
   this.emc('aft');
   
@@ -3877,7 +3989,7 @@ function(n, flags, isStmt) {
   else
     this.emitCallHead(c, flags);
 
-  this.lw(n['#argloc']);
+  this.sl(n['#argloc']);
 
   this.w('(');
   if (e) {
@@ -3964,20 +4076,13 @@ function(){
 Emitters['IfStatement'] =
 function(n, flags, isStmt) {
   ASSERT_EQ.call(this, isStmt, true);
-  var conax = n['#ifScope'], altax = n['#elseScope'];
-  if (!this.active(conax) && !(altax && this.active(altax)))
-    return this.emitAny(n.test, flags|EC_START_STMT, isStmt);
-
   var cb = CB(n); this.emc(cb, 'bef' );
   this.wt('if', ETK_ID).emc(cb, 'aft.if');
   this.wm('','(').eA(n.test, EC_NONE, false).w(')');
 
-  if (this.active(conax)) { this.emitIfBody(n.consequent); }
-  else this.w(';');
-
-  if (n.alternate && this.active(altax)) {
-    this.l().wt('else', ETK_ID).onw(wcb_afterElse).emitElseBody(n.alternate);
-  }
+  this.emitIfBody(n.consequent);
+  if (n.alternate)
+    this.l().wt('else', ETK_ID).gu(wcb_afterElse).emitElseBody(n.alternate);
 
   this.emc(cb, 'aft');
 
@@ -3997,24 +4102,24 @@ function(stmt) {
       this.os().emitAny(stmt.expression, EC_START_STMT|EC_ATTACHED, true);
     else {
       this.i();
-      this.l().emitStmt(stmt, true);
+      this.l().emitStmt(stmt);
       this.u();
     }
     return true;
   }
-  this.os().w('{').i().onw(wcb_afterStmt);
-  this.emitStmt(stmt, true);
-  this.wcb ? this.clear_onw() : this.onw(wcb_afterStmt);
+  var own = {used: false};
+  this.os().w('{').i().gu(wcb_afterStmt).gmon(own);
+  this.emitStmt(stmt); // not attached -- the '{' block is, instead.
+  if (this.guard) this.grmif(own);
+  else { this.gu(wcb_afterStmt); }
   this.u().w('}');
-
-  return true;
 };
 
 this.emitElseBody =
 function(stmt) {
-  if (stmt.type === 'IfStatement')
-    return this.emitStmt(stmt);
-  return this.emitBody(stmt);
+  return stmt.type === 'IfStatement' ?
+    this.emitStmt(stmt) :
+    this.emitAttached(stmt);
 };
 
 },
@@ -4031,16 +4136,19 @@ function(n, flags, isStmt) {
 
 },
 function(){
-Emitters['MemberExpression'] =
-function(n, flags, isStmt) {
+this.emitMemex =
+function(n, flags, isStmt, len) {
   var cb = CB(n); this.emc(cb, 'bef' );
-//this.lw(n.loc.start);
+//this.sl(n.loc.start);
   this.eH(n.object, flags, false);
-  this.lw(n['#acloc']);
-  if (n.computed)
-    this.w('[').eA(n.property, EC_NONE, false).w(']');
+  this.sl(n['#acloc']);
+  if (n.computed) {
+    this.w('[').eA(n.property, EC_NONE, false);
+    if (len > 0 && this.ol(1+len) > 0) this.wrapCurrentLine();
+    this.w(']');
+  }
   else {
-    this.dot().emc(CB(n.property), 'bef');
+    this.w('.').emc(CB(n.property), 'bef');
     this.writeIDName(n.property.name); // TODO: node itself rather than its name's string value
   }
   this.emc(cb, 'aft');
@@ -4048,7 +4156,11 @@ function(n, flags, isStmt) {
   return true;
 };
 
-this.emitSAT_mem = Emitters['MemberExpression'];
+this.emitSAT_mem = 
+function(n, flags, len) { return this.emitMemex(n, flags, false, len); };
+
+Emitters['MemberExpression'] =
+function(n, flags, isStmt, len) { return this.emitMemex(n, flags, isStmt, 0); };
 
 },
 function(){
@@ -4141,7 +4253,7 @@ function(n, flags, isStmt) {
   var cb = CB(n);
   this.emc(cb, 'bef');
 
-  this.lw(n.loc.start); // TODO: only ctors without supers
+  this.sl(n.loc.start); // TODO: only ctors without supers
 
   this.w('return');
   if (n.argument) {
@@ -4178,9 +4290,11 @@ function(n, flags, isStmt) {
   this.wm('','(').eA(n.discriminant, EC_NONE, false).w(')');
   this.emc(cb, 'cases.bef') || this.os();
   this.w('{');
-  this.onw(wcb_afterStmt);
-  this.emitStmtList(n.cases);
-  this.wcb ? this.clear_onw() : this.l();
+
+  var own = {used: false};
+  this.gu(wcb_afterStmt).gmon(own);
+  this.emitStmtList(n.cases); // TODO: emitCases(cases []SwitchCase), to make less use of new `{used: false}` objects
+  own.used ? this.l() : this.grmif(own);
   this.emc(cb, 'inner');
   this.w('}').emc(cb, 'aft');
   return true;
@@ -4191,12 +4305,12 @@ function(n, flags, isStmt) {
   var cb = CB(n); this.emc(cb, 'bef' );
   n.test === null ?
     this.wt('default', ETK_ID).emc(cb, 'default.aft') :
-    this.wt('case', ETK_ID).onw(wcb_afterCase).eA(n.test, EC_NONE, false);
+    this.wt('case', ETK_ID).gu(wcb_afterCase).eA(n.test, EC_NONE, false);
 
-  this.w(':').i().onw(wcb_afterStmt);
+  var own = {used: false};
+  this.w(':').i().gu(wcb_afterStmt).gmon(own);
   this.emitStmtList(n.consequent);
-  this.u();
-  this.wcb && this.clear_onw();
+  this.u().grmif(own);
   this.emc(cb, 'aft');
   this.emc(cb, 'inner');
   return true;
@@ -4288,7 +4402,7 @@ function(n, flags, isStmt) {
   var r = {hasParen: false}, cb = CB(n);
   this.emc(cb, 'bef');
 
-  this.lw(n.loc.start);
+  this.sl(n.loc.start);
   this.w('throw').onw(wcb_afterRet, r);
   this.eA(n.argument, EC_NONE, false);
   if (r.hasParen) this.w(')');
@@ -4390,7 +4504,7 @@ function(n, flags, isStmt) {
   }
   else {
     this.emitSAT(n.argument, flags, o.length);
-    this.rwr(o); // hard-write because the wrapping affairs have been take care of when calling emitSAT
+    this.writeToCurrentLine_raw(o); // hard-write because the wrapping affairs have been take care of when calling emitSAT
   }
   hasParen && this.w(')');
   this.emc(cb, 'aft');
@@ -4407,7 +4521,7 @@ function(n, flags, isStmt) {
   this.wt('while', ETK_ID);
   this.emc(cb, 'while.aft') || this.os(); 
   this.w('(').eA(n.test, EC_NONE, false).w(')');
-  this.emitBody(n.body);
+  this.emitAttached(n.body);
   this.emc(cb, 'aft');
   return true;
 };
@@ -4523,14 +4637,25 @@ function(n, flags, isStmt) {
   var cb = CB(n); this.emc(cb, 'bef' );
   ASSERT_EQ.call(this, isStmt, true);
   this.wt('do',ETK_ID).os();
-  if (n.body.type !== 'BlockStatement')
-    this.w('{').i().onw(wcb_afterStmt);
+
+  var nbody = n.body, notBlock = nbody.type !== 'BlockStatement';
+
+  var own = null;
+  if (notBlock) {
+    own = {used: false};
+    this.w('{').i().gu(wcb_afterStmt).gmon(own);
+  }
+
   this.emitStmt(n.body);
-  if (n.body.type !== 'BlockStatement') {
+
+  if (notBlock) {
     this.u();
-    this.wcb ? this.clear_onw() : this.l();
+    if (own.used) this.l();
+    else
+      this.grmif(own);
     this.w('}');
   }
+
   this.os().w('while');
   this.emc(cb, 'while.aft') || this.os();
   this.w('(').eA(n.test, EC_NONE, false).w(')').emc(cb, 'cond.aft');
@@ -4542,28 +4667,17 @@ function(n, flags, isStmt) {
 function(){
 Emitters['Program'] =
 function(n, flags, isStmt) {
-  var u = null, o = {v: false}, own = false, em = 0;
   var main = n['#scope'];
 
-  if (this.emitSourceHead(n)) {
-    em++;
-    if (!this.wcb) {
-      this.onw(wcb_afterStmt);
-      this.wcbUsed = u = o;
-      own = true;
-    }
-  }
-  else {
-    ASSERT.call(this, this.wcb === null, 'wcb');
-    this.onw(wcb_startStmtList);
-    this.wcbUsed = u = o;
-    own = true;
-  }
+  var lsn = null, own = {used: false};
+  lsn = this.listenForEmits(own);
+  this.emitSourceHead(n);
+  if (lsn.used) this.trygu(wcb_afterStmt, own);
+
   this.emitStmtList(n.body);
   this.emc(CB(n), 'inner');
 
-  if (own) u.v || this.clear_onw();
-  return true;
+  own.used || this.grmif(own);
 };
 
 },
@@ -4740,11 +4854,10 @@ UntransformedEmitters['assig-list'] =
 function(n, flags, isStmt) {
   var cb = CB(n);
   var attached = flags & EC_ATTACHED;
-  attached && this.w('{').i().onw(wcb_afterStmt);
+  attached && this.w('{').i().gu(wcb_afterStmt);
 
   if (isStmt) {
     this.emc(cb, 'bef');
-    this.wcb || this.onw(wcb_startStmtList);
     this.emitStmtList(n.list);
     this.emc(cb, 'inner');
     this.emc(cb, 'left.aft');
@@ -4773,14 +4886,14 @@ function(n, flags, isStmt) {
   if (hasParen) { this.w('('); } 
   if (n.mem !== null) {
     this.jz('cm');
-    this.lw(n['#argloc']);
+    this.sl(n['#argloc']);
     this.w('(').eN(n.head, EC_NONE, false).w(',').os();
     var m = n.mem;
     m.type === 'Super' ? this.w(m['#liq'].synthName) : this.eN(m, EC_NONE, false) ;
   }
   else {
     this.jz('c');
-    this.lw(n['#argloc']);
+    this.sl(n['#argloc']);
     this.w('(');
     if (n.head.type === 'Super') this.w(n.head['#liq'].synthName);
     else this.eN(n.head, EC_NONE, false);
@@ -4870,7 +4983,7 @@ function(){
 UntransformedEmitters['heritage'] =
 function(n, flags, isStmt) {
   ASSERT_EQ.call(this, isStmt, false);
-  this.jz('h').lw(n.heritage.loc.start);
+  this.jz('h').sl(n.heritage.loc.start);
 
   this.w('(').eN(n.heritage, EC_NONE, false).w(')');
 };
@@ -4981,7 +5094,7 @@ function(n, flags, isStmt) {
     }
   }
   if (n.target.isGlobal())
-    this.lw(n.id.loc.start);
+    this.sl(n.id.loc.start);
   if (hasParen) { this.w('('); flags = EC_NONE; }
 
   if (hasZero) this.wm('0',',')
@@ -4995,12 +5108,12 @@ function(n, flags, isStmt) {
 //var ni = this.smSetName(n.id.name);
   this.wt(n.target.synthName, ETK_ID );
   tv && this.v();
-//this.lw(n.id.loc.end);
+//this.sl(n.id.loc.end);
 //this.namei_cur = ni;
 
   this.emc(cb, 'aft');
   hasParen && this.w(')');
-//tz && this.lw(n.id.loc.end);
+//tz && this.sl(n.id.loc.end);
   isStmt && this.w(';');
   return true;
 };
@@ -5027,7 +5140,7 @@ function(n, flags, isStmt) {
   if (n.chk) { 
     this.w(n.target.ref.scope.scs.getLG('ti').getL(0).synthName)
       .w('||').jz('tz');
-    this.lw(n.id.loc.start);
+    this.sl(n.id.loc.start);
     this.w('(').writeString('this',"'");
     this.wm(')',',');
   }
@@ -5120,7 +5233,7 @@ function(n, flags, isStmt) {
     name_cb && this.emc(name_cb, 'aft');
   }
   this.emc(cb, 'list.bef' );
-  this.lw(raw['#argploc']);
+  this.sl(raw['#argploc']);
   this.w('(');
 
   if (raw.params) {

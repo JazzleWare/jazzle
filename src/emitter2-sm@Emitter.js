@@ -41,7 +41,7 @@ function(i) {
 this.writeToSMout =
 function(lm) { this.sm += lm; };
 
-this.refreshCurrentLineLevelSourceMapWith =
+this.refreshTheCurrentLineLevelSourceMapWith =
 function(srcLoc) {
   var l = 0, vlqTail = "";
 
@@ -51,7 +51,7 @@ function(srcLoc) {
 
   var ll = this.loc_latestRec; // latest loc
   vlqTail += vlq(srcLoc.line - ll.line) + vlq(srcLoc.column - ll.column);
-  this.loc_latestRec = loc;
+  this.loc_latestRec = srcLoc;
 
   if ((l=this.namei_cur) >= 0) {
     vlqTail += vlq(l - this.namei_latestRec);

@@ -1,13 +1,16 @@
-Emitters['MemberExpression'] =
-function(n, flags, isStmt) {
+this.emitMemex =
+function(n, flags, isStmt, len) {
   var cb = CB(n); this.emc(cb, 'bef' );
-//this.lw(n.loc.start);
+//this.sl(n.loc.start);
   this.eH(n.object, flags, false);
-  this.lw(n['#acloc']);
-  if (n.computed)
-    this.w('[').eA(n.property, EC_NONE, false).w(']');
+  this.sl(n['#acloc']);
+  if (n.computed) {
+    this.w('[').eA(n.property, EC_NONE, false);
+    if (len > 0 && this.ol(1+len) > 0) this.wrapCurrentLine();
+    this.w(']');
+  }
   else {
-    this.dot().emc(CB(n.property), 'bef');
+    this.w('.').emc(CB(n.property), 'bef');
     this.writeIDName(n.property.name); // TODO: node itself rather than its name's string value
   }
   this.emc(cb, 'aft');
@@ -15,4 +18,8 @@ function(n, flags, isStmt) {
   return true;
 };
 
-this.emitSAT_mem = Emitters['MemberExpression'];
+this.emitSAT_mem = 
+function(n, flags, len) { return this.emitMemex(n, flags, false, len); };
+
+Emitters['MemberExpression'] =
+function(n, flags, isStmt, len) { return this.emitMemex(n, flags, isStmt, 0); };

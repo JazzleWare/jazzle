@@ -23,7 +23,7 @@ function(n, flags, isStmt) {
     name_cb && this.emc(name_cb, 'aft');
   }
   this.emc(cb, 'list.bef' );
-  this.lw(raw['#argploc']);
+  this.sl(raw['#argploc']);
   this.w('(');
 
   if (raw.params) {

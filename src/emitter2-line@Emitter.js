@@ -34,6 +34,9 @@ function() {
 
   optimalIndentString = this.findIndentStringWithIdealLength(optimalIndentStrLength);
 
+  // TODO: `allow.nl may change (for example by a guard; but that is rare enough to be safely ignorable)
+  this.writeToCurrentLine_virtualLineBreak();
+
   this.useOut(true);
 
   if (this.hasLeading)
@@ -45,20 +48,21 @@ function() {
     this.writeToOut_lineBreak();
   }
 
+  var lm = this.lm;
   if (this.hasRecordedSMLinkpoint) {
     var lm0 = vlq(this.ln_emcol_cur + optimalIndentStrLength) + this.ln_vlq_tail;
     this.ln_vlq_tail = "";
-    var lm = this.lm;
     if (lm.length) lm0 += ',';
 //  this.smOutActive = true;
     this.writeToSMout(lm0);
-    this.writeToSMout(lm);
     this.hasRecordedSMLinkpoint = false;
-    this.lm = "";
   }
 
   this.writeToOut_raw(optimalIndentString);
   this.writeToOut_raw(this.curLine);
+
+  this.writeToSMout(lm);
+  this.lm = "";
 
   this.useOut(false);
 

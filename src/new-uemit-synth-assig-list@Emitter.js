@@ -2,11 +2,10 @@ UntransformedEmitters['assig-list'] =
 function(n, flags, isStmt) {
   var cb = CB(n);
   var attached = flags & EC_ATTACHED;
-  attached && this.w('{').i().onw(wcb_afterStmt);
+  attached && this.w('{').i().gu(wcb_afterStmt);
 
   if (isStmt) {
     this.emc(cb, 'bef');
-    this.wcb || this.onw(wcb_startStmtList);
     this.emitStmtList(n.list);
     this.emc(cb, 'inner');
     this.emc(cb, 'left.aft');

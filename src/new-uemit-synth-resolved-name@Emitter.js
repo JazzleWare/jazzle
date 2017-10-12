@@ -23,7 +23,7 @@ function(n, flags, isStmt) {
     }
   }
   if (n.target.isGlobal())
-    this.lw(n.id.loc.start);
+    this.sl(n.id.loc.start);
   if (hasParen) { this.w('('); flags = EC_NONE; }
 
   if (hasZero) this.wm('0',',')
@@ -37,12 +37,12 @@ function(n, flags, isStmt) {
 //var ni = this.smSetName(n.id.name);
   this.wt(n.target.synthName, ETK_ID );
   tv && this.v();
-//this.lw(n.id.loc.end);
+//this.sl(n.id.loc.end);
 //this.namei_cur = ni;
 
   this.emc(cb, 'aft');
   hasParen && this.w(')');
-//tz && this.lw(n.id.loc.end);
+//tz && this.sl(n.id.loc.end);
   isStmt && this.w(';');
   return true;
 };

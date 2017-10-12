@@ -87,4 +87,4 @@ function wcb_wrap(rawStr, tt) {
   this.insertLineBreak(true);
 }
 
-function wcb_listenEmit(rawStr, tt) {}
+function guard_simpleListener(rawStr, tt) {}

@@ -5,14 +5,14 @@ function(n, flags, isStmt) {
   if (hasParen) { this.w('('); } 
   if (n.mem !== null) {
     this.jz('cm');
-    this.lw(n['#argloc']);
+    this.sl(n['#argloc']);
     this.w('(').eN(n.head, EC_NONE, false).w(',').os();
     var m = n.mem;
     m.type === 'Super' ? this.w(m['#liq'].synthName) : this.eN(m, EC_NONE, false) ;
   }
   else {
     this.jz('c');
-    this.lw(n['#argloc']);
+    this.sl(n['#argloc']);
     this.w('(');
     if (n.head.type === 'Super') this.w(n.head['#liq'].synthName);
     else this.eN(n.head, EC_NONE, false);

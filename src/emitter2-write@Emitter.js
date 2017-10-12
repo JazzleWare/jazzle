@@ -28,7 +28,7 @@ function(rawStr) {
   if (curEmCol && this.ol(rawStr.length) > 0)
     this.wrapCurrentLine();
 
-  srcLoc && this.refreshTheSourceMapWith(srcLoc);
+  srcLoc && this.refreshTheCurrentLineLevelSourceMapWith(srcLoc);
 
   this.writeToCurrentLine_raw(rawStr);
 };

@@ -4,7 +4,7 @@ function(n, flags, isStmt) {
   this.wt('while', ETK_ID);
   this.emc(cb, 'while.aft') || this.os(); 
   this.w('(').eA(n.test, EC_NONE, false).w(')');
-  this.emitBody(n.body);
+  this.emitAttached(n.body);
   this.emc(cb, 'aft');
   return true;
 };

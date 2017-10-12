@@ -46,15 +46,11 @@ function(n, flags, isStmt) {
   ASSERT.call(this, isResolvedName(n.left), 'name');
 
   var cb = n['#c']; this.emc(cb, 'bef');
-  if (!this.active(n.left.target))
-    this.emitAny(n.right, flags, false);
-  else {
-    n.left.target.isLLINOSA() || this.w('var').onw(wcb_afterVar).os();
-    this.emitRName_binding(n.left);
-    n.left.target.isLLINOSA() && this.wm('.','v');
-    this.os().w('=').os();
-    this.eN(n.right, EC_NONE, false);
-  }
+  n.left.target.isLLINOSA() || this.w('var').gu(wcb_afterVar).os();
+  this.emitRName_binding(n.left);
+  n.left.target.isLLINOSA() && this.wm('.','v');
+  this.os().w('=').os();
+  this.eN(n.right, EC_NONE, false);
   this.w(';');
   this.emc('aft');
   
