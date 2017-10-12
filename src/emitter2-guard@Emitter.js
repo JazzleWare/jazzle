@@ -25,8 +25,8 @@ function(str, t) {
   this.runningGuard = true;
   guard.call(this, str, t);
   if (guardListener) {
-    ASSERT_EQ.call(this, guardListener.v, false);
-    guardListener.v = true;
+    ASSERT_EQ.call(this, guardListener.used, false);
+    guardListener.used = true;
   }
   this.runningGuard = false;
 };
@@ -42,7 +42,7 @@ function(fallbackListener) {
     l = this.guardListener;
     if (l === null) {
       l = this.defaultGuardListener;
-      l.v = false;
+      l.used = false;
       this.monitorGuard(l);
     }
   }
@@ -57,14 +57,21 @@ function() {
 
 this.removeGuard_if =
 function(listener) {
-  ASSERT.call(this, this.guard !== null, 'no');
+  // TODO: uncomment below
+  // ASSERT.call(this, this.guard !== null, 'no');
+  if (this.guard === null)
+    return false;
   var guardListener = this.guardListener;
-  ASSERT.call(this, this.guardListener !== null, 'listener');
+
+  // TODO: uncomment below
+  // ASSERT.call(this, guardListener !== null, 'listener');
+  if (guardListener === null)
+    return false;
 
   if (listener !== guardListener)
     return false;
 
-  ASSERT_EQ.call(this, listener.v, false);
+  ASSERT_EQ.call(this, listener.used, false);
   this.removeGuard_any();
 
   return true;

@@ -1,40 +1,34 @@
 Emitters['BlockStatement'] =
 function(n, flags, isStmt) {
   var attached = flags & EC_ATTACHED;
-  if (!this.active(n['#scope'])) {
-    attached && this.w(';');
-    return;
-  }
-
   attached && this.os();
 
   ASSERT_EQ.call(this, isStmt, true);
   var cb = CB(n);
   this.emc(cb, 'bef');
-  this.w('{');
-  this.i();
+  this.w('{').i();
   var lead = n['#lead'];
+
+  var own = {used: false}, lsn = null;
+
+  this.gu(wcb_afterStmt).gmon(own);
+
   var em = 0;
   if (lead) {
-    this.l().emitStmt(lead, false);
-    em++;
+    this.emitStmt(lead, false);
+    if (own.used) { em++; this.trygu(wcb_afterStmt, own); }
   }
 
-  this.onw(wcb_afterStmt)
-  var wcbu = this.wcbUsed = {v: false, name: 'fromBlock'};
-  var own = true;  
+  var lsn = this.listenForEmits(own);
+  this.emitSimpleHead(n);
+  if (lsn.used) { em++; this.trygu(wcb_afterStmt, own); }
 
-  if (this.emitSimpleHead(n)) {
-    em++;
-    if (!this.wcb) {
-      this.onw(wcb_afterStmt);
-      wcbu.v = false;
-      this.wcbUsed = wcbu;
-    }
-  }
-
+  lsn = this.listenForEmits(own);
   this.emitStmtList(n.body);
-  wcbu.v ? em++ : this.clear_onw();
+  lsn.used && em++;
+
+  this.grmif(own);
+
   this.u();
   em && this.l();
 

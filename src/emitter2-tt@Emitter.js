@@ -1,18 +1,18 @@
 this.tt =
 function(tt) {
-  ASSERT.call(this, this.tt === ETK_NONE, 'none');
-  this.tt = tt;
+  ASSERT.call(this, this.ttype === ETK_NONE, 'none');
+  this.ttype = tt;
 };
 
 this.nott =
 function() {
-  ASSERT.call(this, this.tt !== ETK_NONE, 'none');
-  this.tt = ETK_NONE;
+  ASSERT.call(this, this.ttype !== ETK_NONE, 'none');
+  this.ttype = ETK_NONE;
 };
 
 this.nott_ifAny =
 function() {
-  if (this.tt === ETK_NONE)
+  if (this.ttype === ETK_NONE)
     return false;
   this.nott();
   return true;

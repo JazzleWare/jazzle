@@ -7,7 +7,7 @@ function(n, flags, isStmt) {
   switch (typeof n.value) {
   case STRING_TYPE: 
     this.writeString(n.value,"'");
-    this.tt = ETK_NONE;
+    this.ttype = ETK_NONE;
     break;
   case BOOL_TYPE: 
     this.wt(n.value ? 'true' : 'false', ETK_ID);

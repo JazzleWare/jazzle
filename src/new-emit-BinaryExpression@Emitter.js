@@ -18,18 +18,18 @@ function(n, flags, isStmt) {
   else
     this.emitBLEP(left, flags);
 
-  o === '+' && this.lw(n['#o']);
+  o === '+' && this.sl(n['#o']);
   this.wm('',o);
 
   switch (n.operator) {
   case '/':
-    this.onw(wcb_DIV_b);
+    this.gu(wcb_DIV_b);
     break;
   case '+':
-    this.onw(wcb_ADD_b);
+    this.gu(wcb_ADD_b);
     break;
   case '-':
-    this.onw(wcb_MIN_b);
+    this.gu(wcb_MIN_b);
     break;
   default:
     this.os();
@@ -101,7 +101,7 @@ this.emitPow =
 function(n, flags, isStmt) {
   var hasParen = flags & EC_NEW_HEAD;
   if (hasParen) { this.w('('); flags = EC_NONE; }
-  this.jz('ex').w('(').eN(n.left).w(',').os().eN(n.right).w(')');
+  this.jz('ex').w('(').eN(n.left, EC_NONE, false).w(',').os().eN(n.right, EC_NONE, false).w(')');
   hasParen && this.w(')');
 
   this.emc(CB(n), 'aft');

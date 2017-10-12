@@ -12,14 +12,14 @@ function(rawStr) {
     this.effectPendingSpace(rawStr.length);
 
   if (this.guard) {
-    var tt = this.tt;
+    var tt = this.ttype;
     tt === ETK_NONE || this.nott();
     this.runGuard(rawStr, tt);
     if (this.hasPendingSpace())
       this.effectPendingSpace(rawStr.length);
   }
   else 
-    this.tt === ETK_NONE || this.nott();
+    this.ttype === ETK_NONE || this.nott();
 
   ASSERT.call(this, this.guard === null, 'guard' );
   this.ensureNoSpace();
@@ -42,7 +42,12 @@ function(rawStr) {
 this.writeToCurrentLine_space =
 function() {
   this.ensureNoSpace();
-  this.writeToCurrentLine_checked(' ');
+  if (this.guard) this.runGuard(' ', ETK_NONE);
+
+  ASSERT.call(this, this.guard === null, 'no');
+  this.ensureNoSpace();
+
+  this.writeToCurrentLine_raw(' ');
 };
 
 this.writeToCurrentLine_virtualLineBreak =

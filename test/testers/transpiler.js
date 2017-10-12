@@ -33,7 +33,7 @@ function createTranspilerTester(Parser, Transformer, Emitter) {
     var n = tester.n, e = tester.e, t = tester.t;
     t.tr(tester.prog, false);
     e.emitAny(n, test.get('stmt') ? 2 : 0, test.get('stmt') || false);
-    return e.flush(), e.out;
+    return e.flushCurrentLine(), e.out;
   };
 
   ts.comp.fail =

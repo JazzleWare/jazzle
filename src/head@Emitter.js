@@ -36,13 +36,9 @@ function(n) {
 this.emitVarList =
 function(scope, hasPrev) {
   ASSERT.call(this, scope.isSourceLevel() || scope.isAnyFn(), 'source/fn');
-  var u = null, own = false, o = {v: false};
-  if (hasPrev) {
-    if (!this.wcb) { own = true; this.onw(wcb_afterStmt); }
-    if (!this.wcbUsed) this.wcbUsed = u = o;
-    else u = this.wcbUsed;
-  }
   var list = scope.defs, i = 0, len = list.length(), em = 0;
+  var own = {used: false};
+  hasPrev && this.trygu(wcb_afterStmt, own);
   while (i < len) {
     var elem = list.at(i++);
     if (!elem.isVar()) continue;
@@ -53,62 +49,46 @@ function(scope, hasPrev) {
     em++;
   }
   em && this.w(';');
-  if (own) u.v || this.clear_onw();
+  own.used || this.grmif(own);
   return em;
 };
 
 this.emitTempList =
 function(scope, hasPrev) {
   ASSERT.call(this, scope.isSourceLevel() || scope.isAnyFn(), 'source/fn');
-  var u = null, own = false, o = {v: false};
-  if (hasPrev) {
-    if (!this.wcb) { own = true; this.onw(wcb_afterStmt); }
-    if (!this.wcbUsed) this.wcbUsed = u = o;
-    else u = this.wcbUsed;
-  }
   var list = scope.getLG('<t>'), i = 0, len = list ? list.length : 0;
+  var own = {used: false};
+  hasPrev && this.trygu(wcb_afterStmt, own);
   while (i < len) {
     var elem = list.getL(i);
     i ? this.w(',').os() : this.w('var').bs();
     this.w(elem.synthName);
     i++;
   }
+
   i && this.w(';');
-  if (own) u.v || this.clear_onw();
+  own.used || this.grmif(own);
   return i;
 };
 
 this.emitFunLists =
 function(scope, allowsDecl, hasPrev) {
-  var u = null;
-  var o = {v: false};
-  var own = false;
-
-  if (hasPrev) {
-    if (!this.wcb) { own = true; this.onw(wcb_afterStmt); }
-    if (!this.wcbUsed) this.wcbUsed = u = o;
-    else u = this.wcbUsed;
-  }
-
   var list = scope.funLists, i = 0, len = list.length(), em = 0;
+  var own = {used: false};
+  hasPrev && this.trygu(wcb_afterStmt, own);
   while (i < len)
     this.emitFunList_subList(list.at(i++), allowsDecl, em) && em++;
 
-  if (own) u.v || this.clear_onw();
+  own.used || this.grmif(own);
   return em;
 };
 
 this.emitLLINOSAList =
 function(scope, hasPrev) {
   ASSERT.call(this, !scope.isSourceLevel() && !scope.isAnyFn(), 'scope/fn');
-  var u = null, own = false, o = {v: false};
-  if (hasPrev) {
-    if (!this.wcb) { own = true; this.onw(wcb_afterStmt); }
-    if (!this.wcbUsed) this.wcbUsed = u = o;
-    else u = this.wcbUsed;
-  }
-
   var list = scope.defs, i = 0, len = list.length(), em = 0;
+  var own = {used: false};
+  hasPrev && this.trygu(wcb_afterStmt, own);
   while (i < len) {
     var elem = list.at(i++);
     if (!elem.isLLINOSA()) continue;
@@ -117,27 +97,22 @@ function(scope, hasPrev) {
     this.w(elem.synthName).os().w('=').os().wm('{','v',':','','void').bs().wm('0','}');
     em++;
   }
+
   em && this.w(';');
-  if (own) u.v || this.clear_onw();
+  own.used || this.grmif(own);
   return em;
 };
 
 this.emitFunList_subList =
 function(funList, allowsDecl, hasPrev) {
-  var u = null, own = false, o = {v: false};
-  if (hasPrev) {
-    if (!this.wcb) { own = true; this.onw(wcb_afterStmt); }
-    if (!this.wcbUsed) this.wcbUsed = u = o;
-    else u = this.wcbUsed;
-  }
-
   var i = 0, em = 0;
+  var own = {used: false}, lsn = null; 
+  hasPrev && this.trygu(wcb_afterStmt, own);
   while (i < funList.length) {
     this.emitSingleFun(funList[i], allowsDecl, i, em) && em++;
     i++;
   }
-
-  if (own) u.v || this.clear_onw();
+  own.used || this.grmif(own);
   return em;
 };
 
@@ -147,18 +122,12 @@ function(scope, hasPrev) {
   if (th === null) return 0;
   if (th.ref.i === 0) return 0;
 
-  var u = null;
-  var own = false, o = {v: false};
-
-  if (hasPrev) {
-    if (!this.wcb) { own = true; this.onw(wcb_afterStmt); }
-    if (!this.wcbUsed) this.wcbUsed = u = o;
-    else u = this.wcbUsed;
-  }
+  var own = {used: false};
+  hasPrev && this.trygu(wcb_afterStmt, own);
 
   this.w('var').bs().w(th.synthName).os().w('=').os().w('this').w(';');
-  if (own) u.v || this.clear_onw();
 
+  own.used || this.grmif(own);
   return 1;
 };
 
@@ -168,19 +137,9 @@ function(n, allowsDecl, i, hasPrev) {
   var target = n.target;
 
   ASSERT.call(this, target, 'n.target' );
-  if (!this.active(target))
-    return 0;
 
-  var o = {v: false};
-  var own = false;
-
-  var u = null;
-
-  if (hasPrev) {
-    if (!this.wcb) { own = true; this.onw(wcb_afterStmt); }
-    if (!this.wcbUsed) this.wcbUsed = u = o;
-    else u = this.wcbUsed;
-  }
+  var own = {used: false};
+  hasPrev && this.trygu(wcb_afterStmt, own);
 
   if (allowsDecl && scope.scopeName.getAS() === ATS_SAME)
     this.emitTransformedFn(n, EC_NONE, true);
@@ -197,7 +156,7 @@ function(n, allowsDecl, i, hasPrev) {
     this.w(';'); // could have been done above, with true instead of false
   }
 
-  if (own) u.v || this.clear_onw();
+  own.used || this.grmif(own);
   return 1;
 };
 
@@ -206,13 +165,10 @@ function(scope, hasPrev) {
   var tg = scope.getLG('tz');
   if (tg === null) return 0;
   tg = tg.getL(0);
-  var u = null, own = false, o = {v: false};
-  if (hasPrev) {
-    if (!this.wcb) { this.onw(wcb_afterStmt); own = true; }
-    if (!this.wcbUsed) this.wcbUsed = u = o;
-    else u = this.wcbUsed;
-  }
+  var own = {used: false};
+  hasPrev && this.trygu(wcb_afterStmt, own);
   this.w('var').bs().w(tg.synthName).os().w('=').os().w(scope.di0+"").w(';');
+  own.used || this.grmif(own);
   return 1;
 };
 
@@ -221,21 +177,15 @@ function(n, hasPrev) {
   var ta = n.argsPrologue;
   if (ta === null)
     return 0;
-  var own = false;
-  var o = {v: false};
-  var u = null;
   var b = CB(n.fun);
 
-  if (hasPrev) {
-    if (!this.wcb) { this.onw(wcb_afterStmt); own = true; }
-    if (!this.wcbUsed) this.wcbUsed = u = o;
-    else u = this.wcbUsed;
-  }
-  
+  var own = {used: false};
+  hasPrev && this.trygu(wcb_afterStmt, own);
+ 
   this.emitStmt(ta);
   this.emc(b, 'inner');
 
-  if (own) u.v || this.clear_onw();
+  own.used || this.grmif(own);
   return 1;
 };
 
@@ -244,19 +194,13 @@ function(scope, hasPrev) {
   var tg = scope.scs.getLG('tz').getL(0);
   if (tg === null)
     return 0;
-  var own = false;
-  var o = {v: false};
 
-  var u = null;
-  if (hasPrev) {
-    if (!this.wcb) { this.onw(wcb_afterStmt); own = true; }
-    if (!this.wcbUsed) this.wcbUsed = u = o;
-    else u = this.wcbUsed;
-  }
+  var own = {used: false};
+  hasPrev && this.trygu(wcb_afterStmt, own);
 
   this.wm(tg.synthName,'=',scope.di0+"",';');
 
-  if (own) u.v || this.clear_onw();
+  own.used || this.grmif(own);
   return 1;
 };
 
@@ -265,19 +209,13 @@ function(scope, hasPrev) {
   var ar = scope.spArguments;
   if (ar === null) return 0;
   if (ar.ref.i === 0) return 0;
-  var own = false;
-  var o = {v: false};
 
-  var u = null;
-  if (hasPrev) {
-    if (!this.wcb) { this.onw(wcb_afterStmt); own = true; }
-    if (!this.wcbUsed) this.wcbUsed = u = o;
-    else u = this.wcbUsed;
-  }
+  var own = {used: false};
+  hasPrev && this.trygu(wcb_afterStmt, own);
 
   this.wm('var',' ',ar.synthName,'','=','','arguments',';');
 
-  if (own) u.v || this.clear_onw();
+  own.used || this.grmif(own);
   return 1;
 };
 
@@ -288,19 +226,11 @@ function(scope, hasPrev) {
   ti = ti.getL(0);
   if (ti === null || ti.ref.d <= 0) return 0;
 
-  var own = false;
-  var o = {v: false};
-
-  var u = null;
-  if (hasPrev) {
-    if (!this.wcb) { this.onw(wcb_afterStmt); own = true; }
-    if (!this.wcbUsed) this.wcbUsed = u = o;
-    else u = this.wcbUsed;
-  }
-
+  var own = {used: false};
+  hasPrev && this.trygu(wcb_afterStmt, own);
   this.wm('var',' ',ti.synthName,'','=','','0',';');
 
-  if (own) u.v || this.clear_onw();
+  own.used || this.grmif(own);
   return 1;
 };
 

@@ -62,7 +62,7 @@ function() {
 
   this.useOut(false);
 
-
+  this.emcol_cur += optimalIndentStrLength; // allow.nl -> false but allow.space -> true
   this.curLine = "";
   this.curLineIndent = this.nextLineIndent;
 

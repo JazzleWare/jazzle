@@ -15,7 +15,7 @@ function() {
 }; 
 
 this.writeToOut_raw =
-function(str) { var o = this.out; this.out = o.concat(o, str); };
+function(str) { this.out = this.out.concat(str); };
 
 this.useOut =
 function(use) {

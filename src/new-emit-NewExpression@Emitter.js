@@ -3,8 +3,9 @@ function(n, flags, isStmt) {
   var cb = CB(n); this.emc(cb, 'bef' );
   var si = findElem(n.arguments, 'SpreadElement');
   if (si === -1) {
-    this.wt('new', ETK_ID).onw(wcb_afterNew).os().emitNewHead(n.callee);
-    this.w('(').emitCommaList(n.arguments).emc(cb, 'inner');
+    this.wt('new', ETK_ID).gu(wcb_afterNew).os().emitNewHead(n.callee);
+    this.w('(').emitCommaList(n.arguments);
+    this.emc(cb, 'inner');
     this.w(')');
   } else {
     var hasParen = flags & EC_NEW_HEAD;

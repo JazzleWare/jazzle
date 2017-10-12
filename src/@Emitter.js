@@ -1,13 +1,13 @@
 function Emitter() {
   this.indentCache = [""];
-  this.indentString = ' ';
+  this.indentString = '  ';
   this.indentLevel = 0;
 
   this.wrapLimit = 0;
 
   this.curLineIndent = 0;
+  this.hasLeading = true;
   this.curLine = "";
-  this.hasLeading = false;
   this.needsLeading = false;
   this.finishingLine = false;
 
@@ -20,7 +20,7 @@ function Emitter() {
   this.defaultGuardListener = {v: false};
   this.runningGuard = false;
 
-  this.tt = ETK_NONE;
+  this.ttype = ETK_NONE;
 
   // <sourcemap-related>
   this.emcol_cur = 0;

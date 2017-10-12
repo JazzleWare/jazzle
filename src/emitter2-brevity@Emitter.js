@@ -1,6 +1,6 @@
 this.w =
 function(str) {
-  this.writeToCurrentLine_checked(rawStr);
+  this.writeToCurrentLine_checked(str);
   return this;
 };
 
@@ -42,7 +42,7 @@ this.os =
 function() { this.enqueueOmittableSpace(); return this; };
 
 this.bs =
-function() { this.enqueueBreakableSpace(); return this; };
+function() { this.enqueueBreakingSpace(); return this; };
 
 this.u =
 function() { this.unindentNextLine(); return this; };

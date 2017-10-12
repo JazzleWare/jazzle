@@ -11,13 +11,13 @@ function(n, flags, isStmt) {
     this.w(o);
     break;
   case '-':
-    this.wt(o, ETK_MIN).onw(wcb_MIN_u);
+    this.wt(o, ETK_MIN).gu(wcb_MIN_u);
     break;
   case '+':
-    this.wt(o, ETK_ADD).onw(wcb_ADD_u);
+    this.wt(o, ETK_ADD).gu(wcb_ADD_u);
     break;
   case 'void': case 'delete': case 'typeof':
-    this.wt(o, ETK_ID).onw(wcb_afterVDT);
+    this.wt(o, ETK_ID).gu(wcb_afterVDT);
     break;
   default:
     ASSERT.call(this, false, 'unary [:'+o+':]');
