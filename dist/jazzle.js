@@ -16100,75 +16100,6 @@ function(n, isVal) {
 this.rename =
 function(base, i) { return this.renamer(base, i); };
 
-this.setAT =
-function(v) {
-  var at = this.curAT;
-  this.curAT = v;
-  return at;
-};
-
-this.set_activeIfScope = this.setAS =
-function(v) {
-  var ais = this.activeIfScope;
-  this.activeIfScope = v;
-  return ais;
-};
-
-this.set_activeIfNames = this.setAN =
-function(v) {
-  var names = this.activeIfNames;
-  this.activeIfNames = v;
-  return names;
-};
-
-this.rec_activeIfName = this.recAN =
-function(decl) {
-  var list = this.activeIfNames;
-  if (list === null)
-    list = this.activeIfNames = new SortedObj();
-  else if (list.has(decl.ai))
-    return false;
-
-  list.set(decl.ai, decl );
-  return true;
-};
-
-this.tryMarkActive =
-function(scod) {
-  if (this.activeIfScope)
-    this.active1if2(scod, this.curAT);
-  else if (this.activeIfNames) {
-    var list = this.activeIfNames, len = list.length();
-    var e = 0;
-    while (e < len) 
-      this.active1if2(scod, list.at(e++));
-  }
-};
-
-this.active1if2 =
-function(a,b) {
-  var aIf = a.activeIf;
-  if (aIf === null)
-    aIf = a.activeIf = new SortedObj();
-  else if (aIf.has(b.ai)) {
-    ASSERT.call(this, b === aIf.get(b.ai), 'not' );
-    return false;
-  }
-
-  aIf.set(b.ai, b);
-  return true;
-};
-
-this.setNS =
-function(v) {
-  var ns = this.curNS;
-  this.curNS = v;
-  return ns;
-};
-
-this.incNS =
-function() { return ++this.curNS; };
-
 },
 function(){
 this.getTCCache =
@@ -16237,10 +16168,6 @@ function(id, bes, manualActivation) {
   ASSERT.call(this, target, 'unresolved <'+name+'>');
 
   var hasTZ = !isB && this.needsTZ(target);
-  if (!manualActivation) {
-    if (hasTZ || target.isGlobal()) this.active1if2(target, this.cur);
-    else this.tryMarkActive(target);
-  }
 
   if (hasTZ) {
     if (target.isClassName())
@@ -16301,10 +16228,7 @@ function(n, isVal) {
 function(){
 TransformByLeft['ArrayPattern'] =
 function(n, isVal, isB) {
-  this.incNS();
-  var ais = this.setAS(true);
   n.right = this.tr(n.right, true);
-  this.setAS(ais);
 
   var s = [],
       t = this.saveInTemp(this.synth_ArrIter(n.right), s),
@@ -16338,10 +16262,7 @@ function(n, isVal, isB) {
 
 TransformByLeft['ObjectPattern'] =
 function(n, isVal, isB) {
-  this.incNS();
-  var ais = this.setAS(true);
   n.right = this.tr(n.right, true);
-  this.setAS(ais);
 
   var s = [],
       t = this.saveInTemp(this.synth_ObjIter(n.right), s),
@@ -16587,8 +16508,6 @@ function(n, isVal) {
 function(){
 Transformers['CallExpression'] =
 function(n, isVal) {
-  this.incNS();
-  var ais = this.setAS(true);
   var ti = false, l = n.callee;
   if (l.type === 'Super') {
     l['#liq'] = this.cur.findRefU_m(RS_SCALL).getDecl();
@@ -16609,7 +16528,6 @@ function(n, isVal) {
       n.callee = this.tr(n.callee, true );
     this.trList(n.arguments, true );
     if (ti) { this.thisState |= THS_IS_REACHED; this.thisState &= ~THS_NEEDS_CHK; }
-    this.setAS(ais);
     return n;
   }
 
@@ -16640,7 +16558,6 @@ function(n, isVal) {
 
   if (ti) { this.thisState |= THS_IS_REACHED; this.thisState &= ~THS_NEEDS_CHK; }
 
-  this.setAS(ais);
   var synthcall = this.synth_Call(head, mem, n.arguments);
   synthcall.loc = n.loc;
   synthcall['#argloc'] = n['#argloc'];
@@ -16810,46 +16727,17 @@ function(n, isVal) {
   ASSERT_EQ.call(this, isVal, false);
   var altax = n['#elseScope'], conax = n['#ifScope'];
 
-//altax && ASSERT.call(this, this.recAN(altax), 'altax');
-//ASSERT.call(this, this.recAN(conax), 'conax');
-
-  var ns = this.setNS(0);
-  var tesax = new Actix(ACT_BARE);
-  ASSERT.call(this, this.recAN(tesax), 'tesax');
   n.test = this.tr(n.test, true);
-  ASSERT.call(this, this.activeIfNames.pop() === tesax, 'tesax');
-  tesax.ns = this.curNS;
-  if (tesax.ns) /* unnecessary */ this.active1if2(tesax, this.cur);
-  else {
-    altax && this.active1if2(tesax, altax);
-    this.active1if2(tesax, conax);
-  }
-  this.setNS(tesax.ns+ns);
-//ASSERT.call(this, this.activeIfNames.pop() === conax, 'conax');
-//altax && ASSERT.call(this, this.activeIfNames.pop() === altax, 'altax');
 
   var s = this.setScope(conax);
-  var at = this.setAT(this.cur);
-  ns = this.setNS(0);
-
   n.consequent = this.tr(n.consequent, false);
-
-  conax.ns = this.curNS;
-  this.setNS(conax.ns+ns);
-  this.active1if2(s, conax);
 
   if (n.alternate) {
     this.setScope(altax);
-    this.setAT(this.cur);
-    ns = this.setNS(0);
     n.alternate = this.tr(n.alternate, false);
-    altax.ns = this.curNS;
-    this.setNS(altax.ns+ns);
-    this.active1if2(s, altax);
   }
 
   this.setScope(s);
-  this.setAT(this.cur);
 
   return n;
 };
@@ -16866,10 +16754,8 @@ function(n, isVal) {
 function(){
 Transformers['MemberExpression'] =
 function(n, isVal) {
-  var ais = this.setAS(true);
   n.object = this.tr(n.object, true);
   if (n.computed) n.property = this.tr(n.property, true);
-  this.setAS(ais);
   return n;
 };
 
@@ -16879,10 +16765,8 @@ this.trSAT_mem = Transformers['MemberExpression'];
 function(){
 Transformers['NewExpression'] =
 function(n, isVal) {
-  var ais = this.setAS(true)
   n.callee = this.tr(n.callee, true);
   this.trList(n.arguments, true);
-  this.setAS(ais);
   return n;
 };
 
@@ -16909,8 +16793,6 @@ function(){
 Transformers['ReturnStatement'] =
 function(n, isVal) {
   // TODO: try { return 'a' /* <-- this */ } finally { yield 'b' }
-  var ais = this.setAS(true);
-  this.incNS();
   if (n.argument)
     n.argument = this.tr(n.argument, true);
   var retRoot = this.cur.scs;
@@ -16922,7 +16804,6 @@ function(n, isVal) {
     l.track(this.cur);
     n.argument = this.synth_RCheck(n.argument, l);
   }
-  this.setAS(ais);
   return n;
 };
 
@@ -17018,10 +16899,7 @@ function(n, isVal) {
 function(){
 Transformers['ThrowStatement'] =
 function(n, isVal) {
-  var ais = this.setAS(true);
-  this.incNS();
   n.argument = this.tr(n.argument, true);
-  this.setAS(ais);
   return n;
 };
 
@@ -17093,17 +16971,10 @@ function(n, isVal) {
   if (isResolvedName(arg)) {
     arg.target.ref.assigned();
     var leftsig = false;
-    if (this.needsCVLHS(arg.target)) {
-      this.incNS();
-      this.active1if2(arg.target, this.curAT);
+    if (this.needsCVLHS(arg.target))
       arg.cv = true; this.cacheCVLHS(arg.target);
-      leftsig = true;
-    }
-    if (arg.target.isRG()) {
+    if (arg.target.isRG())
       n = this.synth_GlobalUpdate(n, true);
-      leftsig = true;
-    }
-    leftsig || arg.tz || this.active1if2(this.curAT, arg.target ); 
   }
 
   return n;
@@ -17140,21 +17011,12 @@ function(n, kind) {
 function(){
 Transformers['WhileStatement'] =
 function(n, isVal) {
-  this.incNS();
-  var ais = this.setAS(true); 
-  ASSERT.call(this, !ais, 'activeIfScope');
   n.test = this.tr(n.test, true);
   var w = n['#scope'];
-//this.tryMarkActive(w);
-  this.setAS(ais);
-  var l = this.setScope(w), at = this.setAT(this.cur);
-  var ns = this.setNS(0);
+  var l = this.setScope(w);
   n.body = this.tr(n.body, false);
 
-  this.setScope(l).ns = this.curNS;
-  this.setAT(at);
-  this.setNS(this.curNS + ns);
-  this.active1if2(l, w);
+  this.setScope(l);
 
   return n;
 };
@@ -17344,12 +17206,7 @@ function(){
 this.transformRawFn =
 function(n, isVal) {
   var s = n['#scope'];
-
-  // for ndeclarations this won't do anything -- as -> false and an -> null||@length==0
-  this.tryMarkActive(s);
-
   s = this.setScope(s);
-  var at = this.setAT(this.cur), ns = this.setNS(0);
   ASSERT.call(this, s.reached, 'not reached');
   var unreach = n.type === 'FunctionDeclaration';
   if (unreach) s.reached = false;
@@ -17366,10 +17223,6 @@ function(n, isVal) {
 
   this.cur.closureLLINOSA = this.cur.parent.scs.isAnyFn() ?
     createObj(this.cur.parent.scs.closureLLINOSA) : {};
-
-
-  var _AS = this.setAS(false);
-  var _AN = this.setAN(null);
 
   this.cur.synth_start(this.renamer);
   ASSERT.call(this, !this.cur.inBody, 'inBody');
@@ -17408,25 +17261,18 @@ function(n, isVal) {
     s.reached = true;
   }
 
-  this.setScope(s).ns = this.setNS(ns);
-  this.setAT(at);
+  this.setScope(s);
 
   this.setCVTZ(cvtz) ;
-  this.setTS(ts);
   this.thisState = th;
-
-  this.setAS(_AS);
-  this.setAN(_AN);
 
   return this.synth_TransformedFn(n, argsPrologue);
 };
 
 this.transformDeclFn =
 function(n) {
-  ASSERT.call(this, !this.activeIfScope && (!this.activeIfNames || !this.activeIfNames.length()), 'activeness');
   var target = this.cur.findDeclOwn_m(_m(n.id.name));
   ASSERT.call(this, target, 'unresolved ('+n.id.name+')');
-  this.active1if2(n['#scope'], target);
   n = this.transformRawFn(n, false);
   n.target = target;
   return n;
@@ -17594,20 +17440,11 @@ function(n, isVal) {
 function(){
 Transformers['DoWhileStatement'] =
 function(n, isVal) {
-  this.incNS();
   var w = n['#scope'];
   var s = this.setScope(w);
-  var l = this.setAT(this.cur), e = this.setNS(0);
   n.body = this.tr(n.body, false);
-  this.setScope(s).ns = this.curNS;
-  this.setNS(this.curNS+e );
-  this.setAT(l);
-
-  var ais = this.setAS(true);
+  this.setScope(s);
   n.test = this.tr(n.test, true);
-  this.setAS(ais);
-
-  this.active1if2(l, w);
 
   return n;
 };
@@ -17625,17 +17462,13 @@ function(n, isVal) {
   ASSERT.call(this, this.global.isGlobal(), 'script can not have a non-global parent');
   var ps = this.setScope(this.script);
   var ts = this.setTS([]);
-  var ns = this.setNS(0);
-  var at = this.setAT(this.cur);
 
   this.cur.synth_start(this.renamer);
   this.trList(n.body, isVal);
   this.cur.synth_finish();
 
-  this.setScope(ps).ns = this.curNS;
+  this.setScope(ps);
   this.setTS(ts);
-  this.setNS(ns+this.curNS);
-  this.setAT(at);
 
   return n;
 };

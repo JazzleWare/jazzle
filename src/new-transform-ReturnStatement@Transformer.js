@@ -1,8 +1,6 @@
 Transformers['ReturnStatement'] =
 function(n, isVal) {
   // TODO: try { return 'a' /* <-- this */ } finally { yield 'b' }
-  var ais = this.setAS(true);
-  this.incNS();
   if (n.argument)
     n.argument = this.tr(n.argument, true);
   var retRoot = this.cur.scs;
@@ -14,6 +12,5 @@ function(n, isVal) {
     l.track(this.cur);
     n.argument = this.synth_RCheck(n.argument, l);
   }
-  this.setAS(ais);
   return n;
 };

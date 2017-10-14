@@ -1,12 +1,7 @@
 this.transformRawFn =
 function(n, isVal) {
   var s = n['#scope'];
-
-  // for ndeclarations this won't do anything -- as -> false and an -> null||@length==0
-  this.tryMarkActive(s);
-
   s = this.setScope(s);
-  var at = this.setAT(this.cur), ns = this.setNS(0);
   ASSERT.call(this, s.reached, 'not reached');
   var unreach = n.type === 'FunctionDeclaration';
   if (unreach) s.reached = false;
@@ -23,10 +18,6 @@ function(n, isVal) {
 
   this.cur.closureLLINOSA = this.cur.parent.scs.isAnyFn() ?
     createObj(this.cur.parent.scs.closureLLINOSA) : {};
-
-
-  var _AS = this.setAS(false);
-  var _AN = this.setAN(null);
 
   this.cur.synth_start(this.renamer);
   ASSERT.call(this, !this.cur.inBody, 'inBody');
@@ -65,25 +56,18 @@ function(n, isVal) {
     s.reached = true;
   }
 
-  this.setScope(s).ns = this.setNS(ns);
-  this.setAT(at);
+  this.setScope(s);
 
   this.setCVTZ(cvtz) ;
-  this.setTS(ts);
   this.thisState = th;
-
-  this.setAS(_AS);
-  this.setAN(_AN);
 
   return this.synth_TransformedFn(n, argsPrologue);
 };
 
 this.transformDeclFn =
 function(n) {
-  ASSERT.call(this, !this.activeIfScope && (!this.activeIfNames || !this.activeIfNames.length()), 'activeness');
   var target = this.cur.findDeclOwn_m(_m(n.id.name));
   ASSERT.call(this, target, 'unresolved ('+n.id.name+')');
-  this.active1if2(n['#scope'], target);
   n = this.transformRawFn(n, false);
   n.target = target;
   return n;

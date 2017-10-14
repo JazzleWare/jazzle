@@ -64,10 +64,6 @@ function(id, bes, manualActivation) {
   ASSERT.call(this, target, 'unresolved <'+name+'>');
 
   var hasTZ = !isB && this.needsTZ(target);
-  if (!manualActivation) {
-    if (hasTZ || target.isGlobal()) this.active1if2(target, this.cur);
-    else this.tryMarkActive(target);
-  }
 
   if (hasTZ) {
     if (target.isClassName())

@@ -1,9 +1,6 @@
 TransformByLeft['ArrayPattern'] =
 function(n, isVal, isB) {
-  this.incNS();
-  var ais = this.setAS(true);
   n.right = this.tr(n.right, true);
-  this.setAS(ais);
 
   var s = [],
       t = this.saveInTemp(this.synth_ArrIter(n.right), s),
@@ -37,10 +34,7 @@ function(n, isVal, isB) {
 
 TransformByLeft['ObjectPattern'] =
 function(n, isVal, isB) {
-  this.incNS();
-  var ais = this.setAS(true);
   n.right = this.tr(n.right, true);
-  this.setAS(ais);
 
   var s = [],
       t = this.saveInTemp(this.synth_ObjIter(n.right), s),
