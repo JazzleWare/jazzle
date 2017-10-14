@@ -5,8 +5,10 @@ function(n, isVal) {
   if (isResolvedName(arg)) {
     arg.target.ref.assigned();
     var leftsig = false;
-    if (this.needsCVLHS(arg.target))
-      arg.cv = true; this.cacheCVLHS(arg.target);
+    if (this.needsCVLHS(arg.target)) {
+      arg.cv = true;
+      this.cacheCVLHS(arg.target);
+    }
     if (arg.target.isRG())
       n = this.synth_GlobalUpdate(n, true);
   }

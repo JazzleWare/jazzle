@@ -28,6 +28,7 @@ function(str, t) {
     ASSERT_EQ.call(this, guardListener.used, false);
     guardListener.used = true;
   }
+  this.guardArg = null;
   this.runningGuard = false;
 };
 

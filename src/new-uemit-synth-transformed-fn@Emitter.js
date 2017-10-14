@@ -18,7 +18,7 @@ function(n, flags, isStmt) {
     this.bs();
     var name_cb = scopeName.site && CB(scopeName.site);
     name_cb && this.emc(name_cb, 'bef' );
-    ni = this.smSetName(scopeName.name);
+    ni = this.smSetName_str(scopeName.name);
     this.writeIDName(scopeName.name);
     name_cb && this.emc(name_cb, 'aft');
   }
@@ -31,24 +31,22 @@ function(n, flags, isStmt) {
     this.emc(cb, 'inner');
   }
 
-  var u = null, own = false, o = {v: false}, em = 0;
+  var own = {used: false}, lsn = null, em = 0;
   this.wm(')','','{').i();
 
-  this.onw(wcb_afterStmt);
-  own = true;
-  u = this.wcbUsed = o;
-
-  if (this.emitFnHead(n)) {
+  this.gu(wcb_afterStmt).gmon(own);
+  this.emitFnHead(n);
+  if (own.used) {
     em++;
-    if (!this.wcb) {
-      this.onw(wcb_afterStmt);
-      u.v = false;
-      this.wcbUsed = u;
-    }
+    own.used = false;
+    this.trygu(wcb_afterStmt, own);
   }
 
   this.emitStmtList(raw.body.body);
-  u.v ? em++ : this.clear_onw();
+
+  if (own.used) em++;
+  else { this.grmif(own); }
+
   this.u();
 
   em && this.l();

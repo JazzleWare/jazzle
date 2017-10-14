@@ -23,16 +23,16 @@ function(n, flags, isStmt) {
     if (lonll) { em && this.w(',').os(); this.wsndl(lonll); }
     this.w(')').os().w('{').i().l();
     if (isRenamed)
-      this.w('var').onw(wcb_afterVar).wt(scopeName.synthName, ETK_ID).wm('','=','');
+      this.w('var').gu(wcb_afterVar).wt(scopeName.synthName, ETK_ID).wm('','=','');
     else
-      this.w('return').onw(wcb_afterRet, l);
+      this.w('return').gu(wcb_afterRet).gar(l);
   }
   this.emitTransformedFn(n);
   if (l.hasParen) this.w(')');
   if (hasWrapper) {
     this.w(';');
     if (isRenamed) {
-      this.l().w('return').onw(wcb_afterRet, l).wt(scopeName.synthName, ETK_ID);
+      this.l().w('return').gu(wcb_afterRet).gar(l).wt(scopeName.synthName, ETK_ID);
       if (l.hasParen) this.w(')');
       this.w(';');
     }

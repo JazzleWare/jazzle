@@ -1,9 +1,10 @@
 Emitters['LabeledStatement'] =
 function(n, flags, isStmt) {
   this.writeIDName(n.label.name);
-  this.w(':').onw(wcb_afterStmt);
-  var u = {v: false};
-  this.wcbUsed = u;
-  if (n.body) this.emitStmt(n.body, false);
-  u.v || this.clear_onw();
+  this.w(':').gu(wcb_afterStmt);
+  var own = {used: false};
+  this.gmon(own);
+  if (n.body) this.emitStmt(n.body);
+
+  own.used || this.grmif(own);
 };

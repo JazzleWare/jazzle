@@ -43,7 +43,6 @@ function(scope, hasPrev) {
     var elem = list.at(i++);
     if (!elem.isVar()) continue;
     if (elem.isFn() || elem.isFnArg()) continue;
-    if (!this.active(elem)) continue;
     em ? this.w(',').os() : this.w('var').bs();
     this.w(elem.synthName);
     em++;
@@ -92,7 +91,6 @@ function(scope, hasPrev) {
   while (i < len) {
     var elem = list.at(i++);
     if (!elem.isLLINOSA()) continue;
-    if (!this.active(elem)) continue;
     em ? this.w(',').os() : this.w('var').bs();
     this.w(elem.synthName).os().w('=').os().wm('{','v',':','','void').bs().wm('0','}');
     em++;

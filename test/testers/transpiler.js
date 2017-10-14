@@ -45,6 +45,7 @@ function createTranspilerTester(Parser, Transformer, Emitter) {
 
   ts.comp.pass =
   function(e,a) {
+//  console.error('E', e, 'A', a);
     return { value: "", compatible: e === a, state: 'complete' };
   };
 

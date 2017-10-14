@@ -39,11 +39,11 @@ function(n, flags, t) {
   }
 
   this.wt('in',ETK_ID );
-  this.onw(wcb_idNumGuard );
+  this.gu(wcb_idNumGuard );
   this.os();
 
   this.emitAny(n.right, EC_NONE, false);
   this.w(')');
 
-  this.emitBody(n.body);
+  this.emitAttached(n.body);
 };

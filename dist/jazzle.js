@@ -1837,8 +1837,8 @@ function wcb_afterRet(rawStr, tt) {
   var lineLen = this.curLine.length;
   if (tt & (ETK_NUM|ETK_ID)) {
     if (this.ol(1+rawStr.length) > 0) {
-      this.rwr('(');
-      this.wcbp.hasParen = true;
+      this.writeToCurrentLine_raw('(');
+      this.guardArg.hasParen = true;
       this.l();
     }
     else this.hs();
@@ -1846,8 +1846,8 @@ function wcb_afterRet(rawStr, tt) {
   }
   if (this.ol(rawStr.length) > 0) {
     if (this.ol(rawStr.length) > 0) {
-      this.rwr('(');
-      this.wcbp.hasParen = true;
+      this.writeToCurrentLine_raw('(');
+      this.guardArg.hasParen = true;
       this.l();
     }
     return;
@@ -2793,6 +2793,7 @@ function(str, t) {
     ASSERT_EQ.call(this, guardListener.used, false);
     guardListener.used = true;
   }
+  this.guardArg = null;
   this.runningGuard = false;
 };
 
@@ -3522,7 +3523,6 @@ function(scope, hasPrev) {
     var elem = list.at(i++);
     if (!elem.isVar()) continue;
     if (elem.isFn() || elem.isFnArg()) continue;
-    if (!this.active(elem)) continue;
     em ? this.w(',').os() : this.w('var').bs();
     this.w(elem.synthName);
     em++;
@@ -3571,7 +3571,6 @@ function(scope, hasPrev) {
   while (i < len) {
     var elem = list.at(i++);
     if (!elem.isLLINOSA()) continue;
-    if (!this.active(elem)) continue;
     em ? this.w(',').os() : this.w('var').bs();
     this.w(elem.synthName).os().w('=').os().wm('{','v',':','','void').bs().wm('0','}');
     em++;
@@ -4155,11 +4154,12 @@ function(){
 Emitters['LabeledStatement'] =
 function(n, flags, isStmt) {
   this.writeIDName(n.label.name);
-  this.w(':').onw(wcb_afterStmt);
-  var u = {v: false};
-  this.wcbUsed = u;
-  if (n.body) this.emitStmt(n.body, false);
-  u.v || this.clear_onw();
+  this.w(':').gu(wcb_afterStmt);
+  var own = {used: false};
+  this.gmon(own);
+  if (n.body) this.emitStmt(n.body);
+
+  own.used || this.grmif(own);
 };
 
 },
@@ -4285,10 +4285,10 @@ function(n, flags, isStmt) {
 
   this.w('return');
   if (n.argument) {
-    var param = {hasParen: false};
-    this.onw(wcb_afterRet, param);
+    var l = {hasParen: false};
+    this.gu(wcb_afterRet).gar(l);
     this.emitAny(n.argument, EC_NONE, false);
-    if (param.hasParen) this.w(')');
+    if (l.hasParen) this.w(')');
   } else
     this.emc(cb, 'ret.aft');
   this.w(';');
@@ -4431,7 +4431,7 @@ function(n, flags, isStmt) {
   this.emc(cb, 'bef');
 
   this.sl(n.loc.start);
-  this.w('throw').onw(wcb_afterRet, r);
+  this.w('throw').gu(wcb_afterRet).gar(r);
   this.eA(n.argument, EC_NONE, false);
   if (r.hasParen) this.w(')');
   this.w(';').emc(cb, 'aft');
@@ -4594,16 +4594,16 @@ function(n, flags, isStmt) {
     if (lonll) { em && this.w(',').os(); this.wsndl(lonll); }
     this.w(')').os().w('{').i().l();
     if (isRenamed)
-      this.w('var').onw(wcb_afterVar).wt(scopeName.synthName, ETK_ID).wm('','=','');
+      this.w('var').gu(wcb_afterVar).wt(scopeName.synthName, ETK_ID).wm('','=','');
     else
-      this.w('return').onw(wcb_afterRet, l);
+      this.w('return').gu(wcb_afterRet).gar(l);
   }
   this.emitTransformedFn(n);
   if (l.hasParen) this.w(')');
   if (hasWrapper) {
     this.w(';');
     if (isRenamed) {
-      this.l().w('return').onw(wcb_afterRet, l).wt(scopeName.synthName, ETK_ID);
+      this.l().w('return').gu(wcb_afterRet).gar(l).wt(scopeName.synthName, ETK_ID);
       if (l.hasParen) this.w(')');
       this.w(';');
     }
@@ -4782,13 +4782,13 @@ function(n, flags, t) {
   }
 
   this.wt('in',ETK_ID );
-  this.onw(wcb_idNumGuard );
+  this.gu(wcb_idNumGuard );
   this.os();
 
   this.emitAny(n.right, EC_NONE, false);
   this.w(')');
 
-  this.emitBody(n.body);
+  this.emitAttached(n.body);
 };
 
 },
@@ -5256,7 +5256,7 @@ function(n, flags, isStmt) {
     this.bs();
     var name_cb = scopeName.site && CB(scopeName.site);
     name_cb && this.emc(name_cb, 'bef' );
-    ni = this.smSetName(scopeName.name);
+    ni = this.smSetName_str(scopeName.name);
     this.writeIDName(scopeName.name);
     name_cb && this.emc(name_cb, 'aft');
   }
@@ -5269,24 +5269,22 @@ function(n, flags, isStmt) {
     this.emc(cb, 'inner');
   }
 
-  var u = null, own = false, o = {v: false}, em = 0;
+  var own = {used: false}, lsn = null, em = 0;
   this.wm(')','','{').i();
 
-  this.onw(wcb_afterStmt);
-  own = true;
-  u = this.wcbUsed = o;
-
-  if (this.emitFnHead(n)) {
+  this.gu(wcb_afterStmt).gmon(own);
+  this.emitFnHead(n);
+  if (own.used) {
     em++;
-    if (!this.wcb) {
-      this.onw(wcb_afterStmt);
-      u.v = false;
-      this.wcbUsed = u;
-    }
+    own.used = false;
+    this.trygu(wcb_afterStmt, own);
   }
 
   this.emitStmtList(raw.body.body);
-  u.v ? em++ : this.clear_onw();
+
+  if (own.used) em++;
+  else { this.grmif(own); }
+
   this.u();
 
   em && this.l();
@@ -16971,8 +16969,10 @@ function(n, isVal) {
   if (isResolvedName(arg)) {
     arg.target.ref.assigned();
     var leftsig = false;
-    if (this.needsCVLHS(arg.target))
-      arg.cv = true; this.cacheCVLHS(arg.target);
+    if (this.needsCVLHS(arg.target)) {
+      arg.cv = true;
+      this.cacheCVLHS(arg.target);
+    }
     if (arg.target.isRG())
       n = this.synth_GlobalUpdate(n, true);
   }

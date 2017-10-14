@@ -9,10 +9,10 @@ function(n, flags, isStmt) {
 
   this.w('return');
   if (n.argument) {
-    var param = {hasParen: false};
-    this.onw(wcb_afterRet, param);
+    var l = {hasParen: false};
+    this.gu(wcb_afterRet).gar(l);
     this.emitAny(n.argument, EC_NONE, false);
-    if (param.hasParen) this.w(')');
+    if (l.hasParen) this.w(')');
   } else
     this.emc(cb, 'ret.aft');
   this.w(';');
