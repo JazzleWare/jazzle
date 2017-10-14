@@ -6,13 +6,15 @@ function Emitter() {
   this.wrapLimit = 0;
 
   this.curLineIndent = 0;
-  this.hasLeading = true;
+  this.curLineHasLineBreakBefore = false;
   this.curLine = "";
-  this.needsLeading = false;
-  this.finishingLine = false;
 
   this.pendingSpace = SP_NONE;
+
   this.nextLineIndent = 0;
+  this.nextLineHasLineBreakBefore = false;
+
+  this.finishingLine = false;
 
   this.guard = null;
   this.guardArg = null;
@@ -42,17 +44,19 @@ function Emitter() {
 
   this.ln_vlq_tail = "";
   this.ln_emcol_cur = 0;
+  this.ln_emcol_latestRec = 0;
 
   this.pendingSrcLoc = null;
 
-//this.lineSMState = SM_LINE_NEEDS_NO_LINKPOINT;
-
-  this.mustHaveSMLinkpoint = false;
-  this.hasRecordedSMLinkpoint = false;
+  this.hasRecorded_SMLinkpoint = false;
+  this.hasRecorded_emcol_latestRec = false;
 
   this.smNameList = new SortedObj();
   this.smSrcList = new SortedObj();
   // </sourcemap-related>
+
+  this.smLen = 0;
+  this.outLen = 0;
 
   this.emitters = createObj(Emitters);
   this.allow = { space: true, nl: true, comments: { l: true, m: true }, elemShake: false };

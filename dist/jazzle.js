@@ -87,13 +87,15 @@ function Emitter() {
   this.wrapLimit = 0;
 
   this.curLineIndent = 0;
-  this.hasLeading = true;
+  this.curLineHasLineBreakBefore = false;
   this.curLine = "";
-  this.needsLeading = false;
-  this.finishingLine = false;
 
   this.pendingSpace = SP_NONE;
+
   this.nextLineIndent = 0;
+  this.nextLineHasLineBreakBefore = false;
+
+  this.finishingLine = false;
 
   this.guard = null;
   this.guardArg = null;
@@ -123,17 +125,19 @@ function Emitter() {
 
   this.ln_vlq_tail = "";
   this.ln_emcol_cur = 0;
+  this.ln_emcol_latestRec = 0;
 
   this.pendingSrcLoc = null;
 
-//this.lineSMState = SM_LINE_NEEDS_NO_LINKPOINT;
-
-  this.mustHaveSMLinkpoint = false;
-  this.hasRecordedSMLinkpoint = false;
+  this.hasRecorded_SMLinkpoint = false;
+  this.hasRecorded_emcol_latestRec = false;
 
   this.smNameList = new SortedObj();
   this.smSrcList = new SortedObj();
   // </sourcemap-related>
+
+  this.smLen = 0;
+  this.outLen = 0;
 
   this.emitters = createObj(Emitters);
   this.allow = { space: true, nl: true, comments: { l: true, m: true }, elemShake: false };
@@ -2923,43 +2927,71 @@ function() {
 
   optimalIndentString = this.findIndentStringWithIdealLength(optimalIndentStrLength);
 
-  // TODO: `allow.nl may change (for example by a guard; but that is rare enough to be safely ignorable)
-  this.writeToCurrentLine_virtualLineBreak();
+  if (this.nextLineHasLineBreakBefore)
+    this.writeToCurrentLine_virtualLineBreak();
 
   this.useOut(true);
 
-  if (this.hasLeading)
-    this.hasLeading = false;
-  else switch (true) {
-  case this.needsLeading:
-    this.needsLeading = false;
-  case this.allow.nl:
+  if (this.curLineHasLineBreakBefore)
     this.writeToOut_lineBreak();
-  }
-
-  var lm = this.lm;
-  if (this.hasRecordedSMLinkpoint) {
-    var lm0 = vlq(this.ln_emcol_cur + optimalIndentStrLength) + this.ln_vlq_tail;
-    this.ln_vlq_tail = "";
-    if (lm.length) lm0 += ',';
-//  this.smOutActive = true;
-    this.writeToSMout(lm0);
-    this.hasRecordedSMLinkpoint = false;
-  }
 
   this.writeToOut_raw(optimalIndentString);
   this.writeToOut_raw(this.curLine);
 
-  this.writeToSMout(lm);
-  this.lm = "";
+  this.adjustColumns(optimalIndentStrLength);
+  this.refreshSMOutWithLM();
 
   this.useOut(false);
 
-  this.emcol_cur += optimalIndentStrLength; // allow.nl -> false but allow.space -> true
-  this.curLine = "";
-  this.curLineIndent = this.nextLineIndent;
+  this.startFreshLine();
 
   this.finishingLine = false;
+};
+
+this.adjustColumns =
+function(lindLen) { // line indentation length
+  if (this.hasRecorded_SMLinkpoint)
+    this.ln_emcol_cur += lindLen;
+  if (this.hasRecorded_emcol_latestRec)
+    this.emcol_latestRec += lindLen;
+  if (this.curLineHasLineBreakBefore)
+    this.ln_emcol_latestRec = 0; // i.e., absolute
+  else
+    this.emcol_cur += lindLen;
+};
+
+this.startFreshLine =
+function() {
+  this.curLineHasLineBreakBefore = this.nextLineHasLineBreakBefore;
+  this.curLineIndent = this.nextLineIndent;
+  this.curLine = "";
+
+  if (this.curLineHasLineBreakBefore)
+    this.emcol_cur = 0;
+
+  this.hasRecorded_SMLinkpoint = false;
+  this.hasRecorded_emcol_latestRec = false;
+
+  this.ln_emcol_latestRec = this.emcol_latestRec;
+  this.lm = "";
+
+  this.ln_vlq_tail = "";
+  this.nextLineHasLineBreakBefore = this.allow.nl;
+};
+
+this.refreshSMOutWithLM =
+function() {
+  var lm0 = "", lm = this.lm;
+  if (this.hasRecorded_SMLinkpoint) {
+    var lm0 = vlq(this.ln_emcol_cur - this.ln_emcol_latestRec) + this.ln_vlq_tail;
+    if (lm.length) lm0 += ',';
+  }
+  if (!this.curLineHasLineBreakBefore) {
+    if (lm.length || lm0.length)
+      this.smLen && this.writeToSMout(',');
+  }
+  lm0.length && this.writeToSMout(lm0);
+  lm.length && this.writeToSMout(lm);
 };
 
 },
@@ -2981,7 +3013,7 @@ function() {
 }; 
 
 this.writeToOut_raw =
-function(str) { this.out = this.out.concat(str); };
+function(str) { this.out = this.out.concat(str); this.outLen += str.length; };
 
 this.useOut =
 function(use) {
@@ -3035,7 +3067,7 @@ function(i) {
 };
 
 this.writeToSMout =
-function(lm) { this.sm += lm; };
+function(lm) { this.sm = this.sm.concat(lm); this.smLen += lm.length; };
 
 this.refreshTheCurrentLineLevelSourceMapWith =
 function(srcLoc) {
@@ -3055,19 +3087,19 @@ function(srcLoc) {
   }
 
   l = this.emcol_cur;
-  if (this.mustHaveSMLinkpoint) {
-    this.ln_emcol_cur = l;
-    this.ln_vlq_tail = vlqTail;
-    this.mustHaveSMLinkpoint = false;
-    this.hasRecordedSMLinkpoint = true;
-  }
-  else {
+  if (this.hasRecorded_SMLinkpoint) {
     var lm = this.lm;
     if (lm.length) lm += ',';
     this.lm = lm + vlq(l - this.emcol_latestRec) + vlqTail;
   }
-
+  else {
+    this.ln_emcol_cur = l;
+    this.ln_vlq_tail = vlqTail;
+    this.hasRecorded_SMLinkpoint = true;
+  }
   this.emcol_latestRec = l;
+  if (!this.hasRecorded_emcol_latestRec)
+    this.hasRecorded_emcol_latestRec = true;
   this.emline_latestRec = this.emline_cur;
 };
 
@@ -3370,14 +3402,10 @@ function(){
 this.wrapCurrentLine =
 function() {
   this.hasPendingSpace() && this.removePendingSpace();
-  this.writeToCurrentLine_virtualLineBreak();
-  this.lineBlank() || this.finishCurrentLine();
+  this.nextLineHasLineBreakBefore = true;
 
-  ASSERT_EQ.call(this, this.hasLeading, false);
-  this.useOut(true);
-  this.writeToOut_lineBreak();
-  this.useOut(false);
-  this.hasLeading = true;
+  if (this.lineBlank()) this.startFreshLine();
+  else this.finishCurrentLine();
 };
 
 this.overflowLength =
@@ -4672,7 +4700,7 @@ function(n, flags, isStmt) {
   var lsn = null, own = {used: false};
   lsn = this.listenForEmits(own);
   this.emitSourceHead(n);
-  if (lsn.used) this.trygu(wcb_afterStmt, own);
+  if (lsn.used) { own.used = false; this.trygu(wcb_afterStmt, own); }
 
   this.emitStmtList(n.body);
   this.emc(CB(n), 'inner');

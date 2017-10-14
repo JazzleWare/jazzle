@@ -39,7 +39,7 @@ function(i) {
 };
 
 this.writeToSMout =
-function(lm) { this.sm += lm; };
+function(lm) { this.sm = this.sm.concat(lm); this.smLen += lm.length; };
 
 this.refreshTheCurrentLineLevelSourceMapWith =
 function(srcLoc) {
@@ -59,19 +59,19 @@ function(srcLoc) {
   }
 
   l = this.emcol_cur;
-  if (this.mustHaveSMLinkpoint) {
-    this.ln_emcol_cur = l;
-    this.ln_vlq_tail = vlqTail;
-    this.mustHaveSMLinkpoint = false;
-    this.hasRecordedSMLinkpoint = true;
-  }
-  else {
+  if (this.hasRecorded_SMLinkpoint) {
     var lm = this.lm;
     if (lm.length) lm += ',';
     this.lm = lm + vlq(l - this.emcol_latestRec) + vlqTail;
   }
-
+  else {
+    this.ln_emcol_cur = l;
+    this.ln_vlq_tail = vlqTail;
+    this.hasRecorded_SMLinkpoint = true;
+  }
   this.emcol_latestRec = l;
+  if (!this.hasRecorded_emcol_latestRec)
+    this.hasRecorded_emcol_latestRec = true;
   this.emline_latestRec = this.emline_cur;
 };
 

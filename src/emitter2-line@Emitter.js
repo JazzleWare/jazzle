@@ -34,41 +34,69 @@ function() {
 
   optimalIndentString = this.findIndentStringWithIdealLength(optimalIndentStrLength);
 
-  // TODO: `allow.nl may change (for example by a guard; but that is rare enough to be safely ignorable)
-  this.writeToCurrentLine_virtualLineBreak();
+  if (this.nextLineHasLineBreakBefore)
+    this.writeToCurrentLine_virtualLineBreak();
 
   this.useOut(true);
 
-  if (this.hasLeading)
-    this.hasLeading = false;
-  else switch (true) {
-  case this.needsLeading:
-    this.needsLeading = false;
-  case this.allow.nl:
+  if (this.curLineHasLineBreakBefore)
     this.writeToOut_lineBreak();
-  }
-
-  var lm = this.lm;
-  if (this.hasRecordedSMLinkpoint) {
-    var lm0 = vlq(this.ln_emcol_cur + optimalIndentStrLength) + this.ln_vlq_tail;
-    this.ln_vlq_tail = "";
-    if (lm.length) lm0 += ',';
-//  this.smOutActive = true;
-    this.writeToSMout(lm0);
-    this.hasRecordedSMLinkpoint = false;
-  }
 
   this.writeToOut_raw(optimalIndentString);
   this.writeToOut_raw(this.curLine);
 
-  this.writeToSMout(lm);
-  this.lm = "";
+  this.adjustColumns(optimalIndentStrLength);
+  this.refreshSMOutWithLM();
 
   this.useOut(false);
 
-  this.emcol_cur += optimalIndentStrLength; // allow.nl -> false but allow.space -> true
-  this.curLine = "";
-  this.curLineIndent = this.nextLineIndent;
+  this.startFreshLine();
 
   this.finishingLine = false;
+};
+
+this.adjustColumns =
+function(lindLen) { // line indentation length
+  if (this.hasRecorded_SMLinkpoint)
+    this.ln_emcol_cur += lindLen;
+  if (this.hasRecorded_emcol_latestRec)
+    this.emcol_latestRec += lindLen;
+  if (this.curLineHasLineBreakBefore)
+    this.ln_emcol_latestRec = 0; // i.e., absolute
+  else
+    this.emcol_cur += lindLen;
+};
+
+this.startFreshLine =
+function() {
+  this.curLineHasLineBreakBefore = this.nextLineHasLineBreakBefore;
+  this.curLineIndent = this.nextLineIndent;
+  this.curLine = "";
+
+  if (this.curLineHasLineBreakBefore)
+    this.emcol_cur = 0;
+
+  this.hasRecorded_SMLinkpoint = false;
+  this.hasRecorded_emcol_latestRec = false;
+
+  this.ln_emcol_latestRec = this.emcol_latestRec;
+  this.lm = "";
+
+  this.ln_vlq_tail = "";
+  this.nextLineHasLineBreakBefore = this.allow.nl;
+};
+
+this.refreshSMOutWithLM =
+function() {
+  var lm0 = "", lm = this.lm;
+  if (this.hasRecorded_SMLinkpoint) {
+    var lm0 = vlq(this.ln_emcol_cur - this.ln_emcol_latestRec) + this.ln_vlq_tail;
+    if (lm.length) lm0 += ',';
+  }
+  if (!this.curLineHasLineBreakBefore) {
+    if (lm.length || lm0.length)
+      this.smLen && this.writeToSMout(',');
+  }
+  lm0.length && this.writeToSMout(lm0);
+  lm.length && this.writeToSMout(lm);
 };

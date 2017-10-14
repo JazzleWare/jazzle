@@ -1,14 +1,10 @@
 this.wrapCurrentLine =
 function() {
   this.hasPendingSpace() && this.removePendingSpace();
-  this.writeToCurrentLine_virtualLineBreak();
-  this.lineBlank() || this.finishCurrentLine();
+  this.nextLineHasLineBreakBefore = true;
 
-  ASSERT_EQ.call(this, this.hasLeading, false);
-  this.useOut(true);
-  this.writeToOut_lineBreak();
-  this.useOut(false);
-  this.hasLeading = true;
+  if (this.lineBlank()) this.startFreshLine();
+  else this.finishCurrentLine();
 };
 
 this.overflowLength =

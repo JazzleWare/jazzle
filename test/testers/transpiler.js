@@ -32,6 +32,7 @@ function createTranspilerTester(Parser, Transformer, Emitter) {
   function(tester, test) {
     var n = tester.n, e = tester.e, t = tester.t;
     t.tr(tester.prog, false);
+    e.startFreshLine();
     e.emitAny(n, test.get('stmt') ? 2 : 0, test.get('stmt') || false);
     return e.flushCurrentLine(), e.out;
   };
