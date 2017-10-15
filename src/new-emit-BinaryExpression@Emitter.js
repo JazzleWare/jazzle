@@ -31,6 +31,10 @@ function(n, flags, isStmt) {
   case '-':
     this.gu(wcb_MIN_b);
     break;
+  case 'in':
+  case 'instanceof':
+    this.gu(wcb_idNumGuard);
+    break;
   default:
     this.os();
     break;

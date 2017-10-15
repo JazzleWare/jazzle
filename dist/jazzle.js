@@ -2864,19 +2864,27 @@ function(){
 this.findIndentStringWithIdealLength =
 function(idealLength) {
   var INLEN = this.indentString.length;
-  ASSERT.call(this, idealLength % INLEN === 0, 'len'); // TODO: eliminate
+//ASSERT.call(this, idealLength % INLEN === 0, 'len'); // TODO: eliminate
+  var remaining = idealLength % INLEN;
+  idealLength -= remaining;
   var level = idealLength / INLEN;
 
   var cache = this.indentCache, l = cache.length;
+  var str = "";
   if (level < l)
-    return cache[level];
+    str = cache[level];
 
-  var str = cache[l-1];
-  ASSERT.call(this, l > 0, 'l');
-  while (l <= level) {
-    cache[l] = str = str + this.indentString;
-    l++;
+  else {
+    str = cache[l-1];
+    ASSERT.call(this, l > 0, 'l');
+    while (l <= level) {
+      cache[l] = str = str + this.indentString;
+      l++;
+    }
   }
+
+  if (remaining)
+    str += this.indentString.substring(0, remaining);
 
   return str;
 };
@@ -3856,6 +3864,10 @@ function(n, flags, isStmt) {
   case '-':
     this.gu(wcb_MIN_b);
     break;
+  case 'in':
+  case 'instanceof':
+    this.gu(wcb_idNumGuard);
+    break;
   default:
     this.os();
     break;
@@ -3992,7 +4004,10 @@ function(){
 Emitters['BreakStatement'] =
 function(n, flags, isStmt) {
   this.w('break');
-  n.label && this.hs().writeIDName(n.label.name);
+  var wl = this.wrapLimit;
+  this.wrapLimit = 0;
+  n.label && this.hs().writeToCurrentLine_raw(n.label.name);
+  this.wrapLimit = wl;
   this.w(';');
 };
 
@@ -4069,7 +4084,10 @@ function(){
 Emitters['ContinueStatement'] =
 function(n, flags, isStmt) {
   this.w('continue');
+  var wl = this.wrapLimit;
+  this.wrapLimit = 0;
   n.label && this.hs().writeIDName(n.label.name);
+  this.wrapLimit = wl;
   this.w(';');
 };
 
