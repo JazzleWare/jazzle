@@ -13,8 +13,8 @@ function(n, flags, isStmt) {
 
   if (hasParen) { this.w('('); flags = EC_NONE; }
 
-  if (t) { this.emitAccessChk_tz(l.target); this.w(',').os(); }
-  if (v) { this.emitAccessChk_invalidSAT(l.target); this.w(',').os(); }
+  if (t) { this.emitAccessChk_tz(tg(l)); this.w(',').os(); }
+  if (v) { this.emitAccessChk_invalidSAT(tg(l)); this.w(',').os(); }
 
   var o = n.operator;
   if (n.prefix) {

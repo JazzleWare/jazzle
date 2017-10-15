@@ -4,7 +4,7 @@ function(n, flags, isStmt) {
   this.emc(cb, 'bef');
 
   this.sl(n.loc.start);
-  this.w('throw').gu(wcb_afterRet).gar(r);
+  this.wt('throw',ETK_ID).gu(wcb_afterRet).gar(r);
   this.eA(n.argument, EC_NONE, false);
   if (r.hasParen) this.w(')');
   this.w(';').emc(cb, 'aft');

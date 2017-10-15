@@ -33,7 +33,9 @@ function wcb_idNumGuard(rawStr, tt) {
 function wcb_afterStmt(rawStr, tt) { this.l(); }
 
 function wcb_afterLineComment(rawStr, tt) {
-  tt === ETK_NL || this.l();
+  if (tt === ETK_NL)
+    return;
+  this.finishCurrentLine();
 }
 
 function wcb_afterNew(rawStr, tt) {

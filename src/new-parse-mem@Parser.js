@@ -226,7 +226,7 @@ function(memName, ctx) {
       this.err('obj.prop.assig.not.allowed');
 
     this.validate(memName.name);
-    this.scope.refDirect_m(_m(memName.name), null);
+    memName['#ref'] = this.scope.refDirect_m(_m(memName.name), null);
     val = this.parseAssignment(memName, ctx);
     if (errt_strack(ctx) && this.st === ERR_NONE_YET) {
       this.st = ERR_SHORTHAND_UNASSIGNED;
@@ -241,7 +241,7 @@ function(memName, ctx) {
     if (memName.type !== 'Identifier')
       this.err('obj.prop.assig.not.id',{tn:memName});
     this.validate(memName.name);
-    this.scope.refDirect_m(_m(memName.name), null);
+    memName['#ref'] = this.scope.refDirect_m(_m(memName.name), null);
     val = memName;
     if (!HAS.call(cb, 'bef') || cb.bef === null)
       cb.bef = new Comments();

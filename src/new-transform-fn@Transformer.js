@@ -66,7 +66,7 @@ function(n, isVal) {
 
 this.transformDeclFn =
 function(n) {
-  var target = this.cur.findDeclOwn_m(_m(n.id.name));
+  var target = tg(n.id);
   ASSERT.call(this, target, 'unresolved ('+n.id.name+')');
   n = this.transformRawFn(n, false);
   n.target = target;

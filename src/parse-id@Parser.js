@@ -7,7 +7,10 @@ this.id = function() {
     loc: {
       start: this.loc0(),
       end: this.loc() },
-    raw: this.ltraw, '#c': {}
+    raw: this.ltraw,
+    '#ref': null,
+    '#cvtz': CVTZ_NONE,
+    '#c': {},
   };
   this.spc(id, 'bef');
   this.next() ;

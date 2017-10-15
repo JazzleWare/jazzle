@@ -19,24 +19,24 @@ function(n, flags, isStmt) {
     this.emitBLEP(left, flags);
 
   o === '+' && this.sl(n['#o']);
-  this.wm('',o);
 
-  switch (n.operator) {
+  switch (o) {
   case '/':
-    this.gu(wcb_DIV_b);
+    this.os().w(o).gu(wcb_DIV_b);
     break;
   case '+':
-    this.gu(wcb_ADD_b);
+    this.os().w(o).gu(wcb_ADD_b);
     break;
   case '-':
-    this.gu(wcb_MIN_b);
+    this.os().w(o).gu(wcb_MIN_b);
     break;
   case 'in':
   case 'instanceof':
-    this.gu(wcb_idNumGuard);
+    this.bs(); // TODO: if writeToCurrentLine_checked keeps tt intact, we could know what the latest written token has been which helps us decide whether a bs is really necessary
+    this.wt(o,ETK_ID).gu(wcb_idNumGuard);
     break;
   default:
-    this.os();
+    this.wm('',o).os();
     break;
   }
 

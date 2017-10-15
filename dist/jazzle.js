@@ -769,6 +769,10 @@ var ACT_BARE = 0,
     ACT_DECL = 1,
     ACT_SCOPE = 2;
 
+var CVTZ_T = 1,
+    CVTZ_C = CVTZ_T << 1,
+    CVTZ_NONE = 0;
+
 ;
 function isNum(c) {
   return (c >= CH_0 && c <= CH_9);
@@ -1584,9 +1588,12 @@ function isTemp(n) {
 
 function isInteger(n) { return (n|0) === n; }
 
+function belongs1to2(t1, t2) {
+  return t1.indexOf(t2+'.') === 0 || t1 === t2;
+}
+
 function isResolvedName(n) {
-  return n.type === '#Untransformed' &&
-    n.kind === 'resolved-name';
+  return belongs1to2(n.type, '#-ResolvedName');
 }
 
 // vlq(-(2 ** 31))
@@ -1597,6 +1604,18 @@ function vlq1sh31() {
     else { str += B[1 << (len-1)]; break }
   }
   return str;
+}
+
+function tzc(resolvedName) {
+  return (resolvedName.cvtz & CVTZ_T) !== 0;
+}
+
+function cvc(resolvedName) {
+  return (resolvedName.cvtz & CVTZ_C) !== 0;
+}
+
+function tg(resolvedName) {
+  return resolvedName['#ref'].getDecl();
 }
 
 function iskw(name, v, s) {
@@ -1806,7 +1825,9 @@ function wcb_idNumGuard(rawStr, tt) {
 function wcb_afterStmt(rawStr, tt) { this.l(); }
 
 function wcb_afterLineComment(rawStr, tt) {
-  tt === ETK_NL || this.l();
+  if (tt === ETK_NL)
+    return;
+  this.finishCurrentLine();
 }
 
 function wcb_afterNew(rawStr, tt) {
@@ -2607,7 +2628,6 @@ function(comments) { // emc -- immediate
     return false;
 
   var list = comments.c, nl = comments.n, e = 0, l = null;
-
   while (e < list.length) {
     var elem = list[e];
     if (l) {
@@ -2631,7 +2651,11 @@ function(comments) { // emc -- immediate
     e++;
   }
 
-  l && l.type === 'Line' && this.gu(wcb_afterLineComment);
+  if (l && l.type === 'Line') {
+    this.nextLineHasLineBreakBefore = true;
+    this.gu(wcb_afterLineComment);
+  }
+
   return true;
 };
 
@@ -3128,13 +3152,13 @@ function() { return this.pendingSpace !== SP_NONE; };
 
 this.enqueueOmittableSpace =
 function() {
-  this.ensureNoSpace(); ASSERT.call(this, this.curLine.length, 'leading');
+  this.ensureNoSpace(); ASSERT.call(this, this.notJustAfterLineBreak(), 'leading');
   this.pendingSpace = SP_OMITTABLE;
 };
 
 this.enqueueBreakingSpace =
 function() {
-  this.ensureNoSpace(); ASSERT.call(this, this.curLine.length, 'leading');
+  this.ensureNoSpace(); ASSERT.call(this, this.notJustAfterLineBreak(), 'leading');
   this.pendingSpace = SP_BREAKABLE;
 };
 
@@ -3147,7 +3171,7 @@ function() {
 
 this.effectPendingSpace =
 function(len) {
-  ASSERT.call(this, this.curLine.length, 'leading');
+  ASSERT.call(this, this.notJustAfterLineBreak(), 'leading');
   var pendingSpace = this.removePendingSpace();
   switch (pendingSpace) {
   case SP_OMITTABLE:
@@ -3170,6 +3194,11 @@ this.removePendingSpace_try =
 function() {
   return this.hasPendingSpace() ? 
     this.removePendingSpace() : SP_NONE;
+};
+
+this.notJustAfterLineBreak =
+function() {
+  return this.curLine.length || !this.curLineHasLineBreakBefore;
 };
 
 },
@@ -3314,10 +3343,10 @@ function(stmt) {
   this.l(); // TODO: unnecessary when the body has nothing in it (like as in #Skip nodes)
 
   var own = {used: false};
-  this.listenForEmits(own);
+  var lsn = this.listenForEmits(own);
   this.emitStmt(stmt);
   this.u();
-  if (!own.used) { this.grmif(own); this.w(';'); }
+  if (!lsn.used) { this.grmif(own); this.w(';'); }
 };
 
 // a, b, e, ...l -> [a,b,e],sp(l)
@@ -3383,6 +3412,7 @@ function(memName, asStr) {
     this.eA(memName, EC_NONE, false);
     return this;
   case 'Identifier':
+  case '#-ResolvedName.ex':
     var cb = CB(memName); this.emc(cb, 'bef' );
     asStr ?
       this.writeString(memName.name,"'") :
@@ -3807,7 +3837,7 @@ function(n, flags, isStmt) {
 
 Emitters['#SynthAssig'] =
 function(n, flags, isStmt) {
-  if (n.binding && !n.left.target.isVar())
+  if (n.binding && !tg(n.left).isVar())
     return this.emitAssignment_binding(n, flags, isStmt);
   return this.emitAssignment_ex(n, flags, isStmt);
 };
@@ -3817,16 +3847,16 @@ function(n, flags, isStmt) {
   ASSERT.call(this, isResolvedName(n.left), 'name');
 
   var cb = n['#c']; this.emc(cb, 'bef');
-  n.left.target.isLLINOSA() || this.w('var').gu(wcb_afterVar).os();
+  tg(n.left).isLLINOSA() || this.w('var').gu(wcb_afterVar).os();
   this.emitRName_binding(n.left);
-  n.left.target.isLLINOSA() && this.wm('.','v');
+  tg(n.left).isLLINOSA() && this.wm('.','v');
   this.os().w('=').os();
   this.eN(n.right, EC_NONE, false);
   this.w(';');
   this.emc('aft');
   
   var l = n.left;
-  l.target.hasTZCheck && this.os().emitTZCheckPoint(l.target);
+  tg(l).hasTZCheck && this.os().emitTZCheckPoint(tg(l));
 };
 
 },
@@ -3852,24 +3882,24 @@ function(n, flags, isStmt) {
     this.emitBLEP(left, flags);
 
   o === '+' && this.sl(n['#o']);
-  this.wm('',o);
 
-  switch (n.operator) {
+  switch (o) {
   case '/':
-    this.gu(wcb_DIV_b);
+    this.os().w(o).gu(wcb_DIV_b);
     break;
   case '+':
-    this.gu(wcb_ADD_b);
+    this.os().w(o).gu(wcb_ADD_b);
     break;
   case '-':
-    this.gu(wcb_MIN_b);
+    this.os().w(o).gu(wcb_MIN_b);
     break;
   case 'in':
   case 'instanceof':
-    this.gu(wcb_idNumGuard);
+    this.bs(); // TODO: if writeToCurrentLine_checked keeps tt intact, we could know what the latest written token has been which helps us decide whether a bs is really necessary
+    this.wt(o,ETK_ID).gu(wcb_idNumGuard);
     break;
   default:
-    this.os();
+    this.wm('',o).os();
     break;
   }
 
@@ -4003,7 +4033,7 @@ function(n, flags, isStmt) {
 function(){
 Emitters['BreakStatement'] =
 function(n, flags, isStmt) {
-  this.w('break');
+  this.wt('break',ETK_ID );
   var wl = this.wrapLimit;
   this.wrapLimit = 0;
   n.label && this.hs().writeToCurrentLine_raw(n.label.name);
@@ -4083,7 +4113,7 @@ this.emitCondTest = function(n, prec, flags) {
 function(){
 Emitters['ContinueStatement'] =
 function(n, flags, isStmt) {
-  this.w('continue');
+  this.wt('continue',ETK_ID );
   var wl = this.wrapLimit;
   this.wrapLimit = 0;
   n.label && this.hs().writeIDName(n.label.name);
@@ -4301,7 +4331,7 @@ function(n, flags, isStmt) {
 
   this.sl(n.loc.start); // TODO: only ctors without supers
 
-  this.w('return');
+  this.wt('return',ETK_ID);
   if (n.argument) {
     var l = {hasParen: false};
     this.gu(wcb_afterRet).gar(l);
@@ -4449,7 +4479,7 @@ function(n, flags, isStmt) {
   this.emc(cb, 'bef');
 
   this.sl(n.loc.start);
-  this.w('throw').gu(wcb_afterRet).gar(r);
+  this.wt('throw',ETK_ID).gu(wcb_afterRet).gar(r);
   this.eA(n.argument, EC_NONE, false);
   if (r.hasParen) this.w(')');
   this.w(';').emc(cb, 'aft');
@@ -4539,8 +4569,8 @@ function(n, flags, isStmt) {
 
   if (hasParen) { this.w('('); flags = EC_NONE; }
 
-  if (t) { this.emitAccessChk_tz(l.target); this.w(',').os(); }
-  if (v) { this.emitAccessChk_invalidSAT(l.target); this.w(',').os(); }
+  if (t) { this.emitAccessChk_tz(tg(l)); this.w(',').os(); }
+  if (v) { this.emitAccessChk_invalidSAT(tg(l)); this.w(',').os(); }
 
   var o = n.operator;
   if (n.prefix) {
@@ -4780,7 +4810,7 @@ function(n, flags, t) {
   this.w('for').os().w('(');
 
   if (b) {
-    if (l.target.isLLINOSA()) {
+    if (tg(l).isLLINOSA()) {
       this.w('(').emitRName_binding(l);
       this.wm('','=','','{','v');
       this.os().wm(':','void',' ','0','}',')','.','v').bs();
@@ -5016,7 +5046,7 @@ UntransformedEmitters['global-update'] =
 function(n, flags, isStmt) {
   ;
   var hasParen = flags & EC_NEW_HEAD;
-  var td = (n.isU ? n.assig.argument : n.assig.left).target;
+  var td = tg(n.isU ? n.assig.argument : n.assig.left);
   hasParen && this.w('(');
   this.wt(td.synthName+'u', ETK_ID).w('(').eN(n.assig, EC_NONE, false).w(')');
   hasParen && this.w(')');
@@ -5115,44 +5145,38 @@ function(n, flags, isStmt) {
 
 },
 function(){
-var bes = {};
-UntransformedEmitters['resolved-name'] =
-function(n, flags, isStmt) {
-  return bes[n.bes].call(this, n, flags, isStmt);
-};
-
-bes['ex'] = this.emitRName_ex =
-bes['sat'] = this.emitRName_SAT =
+Emitters['#-ResolvedName.ex'] = this.emitRName_ex =
+Emitters['#-ResolvedName.sat'] = this.emitRName_SAT =
 function(n, flags, isStmt) {
   var hasParen = false;
   var hasZero = false;
-  var tv = n.target.isLLINOSA(); // tail v
+  var tv = tg(n).isLLINOSA(); // tail v
   var tz = false;
 
   if (tv)
     hasZero = hasParen = flags & EC_CALL_HEAD;
-  if (n.bes === 'ex') {
-    ASSERT_EQ.call(this, n.cv, false);
-    tz = n.tz;
+  if (n.type === '#-ResolvedName.ex') {
+    ASSERT_EQ.call(this, cvc(n), false);
+    tz = tzc(n);
     if (tz) {
       if (!hasParen) hasParen = flags & (EC_EXPR_HEAD|EC_NON_SEQ);
       if (hasZero) hasZero = false;
     }
   }
-  if (n.target.isGlobal())
-    this.sl(n.id.loc.start);
+  if (tg(n).isGlobal())
+    this.sl(n.loc.start);
   if (hasParen) { this.w('('); flags = EC_NONE; }
 
   if (hasZero) this.wm('0',',')
   else if ( tz) {
-    this.emitAccessChk_tz(n.target, n.id.loc.start);
+    this.emitAccessChk_tz(tg(n), n.loc.start);
     this.w(',').os();
   }
 
-  var cb = CB(n.id); this.emc(cb, 'bef');
+  var cb = CB(n); this.emc(cb, 'bef');
 
 //var ni = this.smSetName(n.id.name);
-  this.wt(n.target.synthName, ETK_ID );
+  this.wt(tg(n).synthName, ETK_ID );
   tv && this.v();
 //this.sl(n.id.loc.end);
 //this.namei_cur = ni;
@@ -5164,11 +5188,11 @@ function(n, flags, isStmt) {
   return true;
 };
 
-bes['binding'] = this.emitRName_binding =
+Emitters['#-ResolvedName.binding'] = this.emitRName_binding =
 function(n, flags, isStmt) {
   ASSERT.call(this, isResolvedName(n), 'rn');
-  var cb = CB(n.id); this.emc(cb, 'bef' );
-  this.wt(n.target.synthName, ETK_ID );
+  var cb = CB(n); this.emc(cb, 'bef' );
+  this.wt(tg(n).synthName, ETK_ID );
   this.emc(cb, 'aft');
   return true;
 };
@@ -5225,9 +5249,9 @@ function(n, flags, isStmt) {
   ASSERT_EQ.call(this, isStmt, false);
   this.jz('o').w('(').eN(n.value);
   if (n.rn.tz)
-    this.w(',').os().emitAccessChk_tz(n.rn.target, n.rn.id.loc.start);
+    this.w(',').os().emitAccessChk_tz(tg(n.rn), n.rn.id.loc.start);
   if (n.rn.cv)
-    this.w(',').os().emitAccessChk_invalidSAT(n.rn.target, n.rn.id.loc.start);
+    this.w(',').os().emitAccessChk_invalidSAT(tg(n.rn), n.rn.id.loc.start);
   this.w(')');
 };
 
@@ -8474,7 +8498,7 @@ function(memName, ctx) {
       this.err('obj.prop.assig.not.allowed');
 
     this.validate(memName.name);
-    this.scope.refDirect_m(_m(memName.name), null);
+    memName['#ref'] = this.scope.refDirect_m(_m(memName.name), null);
     val = this.parseAssignment(memName, ctx);
     if (errt_strack(ctx) && this.st === ERR_NONE_YET) {
       this.st = ERR_SHORTHAND_UNASSIGNED;
@@ -8489,7 +8513,7 @@ function(memName, ctx) {
     if (memName.type !== 'Identifier')
       this.err('obj.prop.assig.not.id',{tn:memName});
     this.validate(memName.name);
-    this.scope.refDirect_m(_m(memName.name), null);
+    memName['#ref'] = this.scope.refDirect_m(_m(memName.name), null);
     val = memName;
     if (!HAS.call(cb, 'bef') || cb.bef === null)
       cb.bef = new Comments();
@@ -8620,7 +8644,7 @@ function() {
     this.err('new.head.is.not.valid');
 
   if (head.type === 'Identifier')
-    this.scope.refDirect_m(_m(head.name), null);
+    head['#ref'] = this.scope.refDirect_m(_m(head.name), null);
 
   var inner = core(head), elem = null;
 
@@ -8899,7 +8923,7 @@ function(){
 this.parseTail =
 function(head) {
   if (head.type === 'Identifier')
-    this.scope.refDirect_m(_m(head.name), null);
+    head['#ref'] = this.scope.refDirect_m(_m(head.name), null);
 
   switch (this.lttype) {
   case CH_SINGLEDOT:
@@ -10564,7 +10588,10 @@ this.id = function() {
     loc: {
       start: this.loc0(),
       end: this.loc() },
-    raw: this.ltraw, '#c': {}
+    raw: this.ltraw,
+    '#ref': null,
+    '#cvtz': CVTZ_NONE,
+    '#c': {},
   };
   this.spc(id, 'bef');
   this.next() ;
@@ -14341,7 +14368,12 @@ this.declare = function(id) {
   }
 
   var decl = this.scope.decl_m(_m(id.name), this.declMode);
-  !decl.site && decl.s(id);
+  if (!decl.site) {
+    ASSERT.call(this, decl.site === null, 'null');
+    decl.s(id);
+  }
+
+  id['#ref'] = decl.ref;
 
   // lexport {e as E}; lexport var e = 12
   var entry = null;
@@ -16177,14 +16209,14 @@ function(target) {
 
 this.toResolvedName =
 function(id, bes, manualActivation) {
-  var name = id.name;
-  var isB = bes === 'binding', target = null;
+  ASSERT.call(this, id.type == 'Identifier', 'no');
 
-  target = this.getDeclFor(name, isB);
-  ASSERT.call(this, target, 'unresolved <'+name+'>');
+  var ref = id['#ref'], target = ref.getDecl();
+  ASSERT.call(this, target, 'unresolved <'+id.name+'>');
+
+  var isB = bes === 'binding';
 
   var hasTZ = !isB && this.needsTZ(target);
-
   if (hasTZ) {
     if (target.isClassName())
       return this.synthCheckForTZ(target, null, -1);
@@ -16193,16 +16225,10 @@ function(id, bes, manualActivation) {
     this.accessTZ(target.ref.scope);
   }
 
-  return {
-    target: target,
-    bes: bes,
-    id: id,
-    tz: hasTZ,
-    cv: false,
-    kind: 'resolved-name',
-    type: '#Untransformed' ,
-    loc: id.loc
-  };
+  if (hasTZ) id['#cvtz'] |= CVTZ_T;
+
+  id.type = '#-ResolvedName.' + bes;
+  return id;
 };
 
 this.getDeclFor =
@@ -16379,7 +16405,7 @@ function(n, isVal, isB) {
   n.right = this.tr(n.right, true);
   var rn = n.left = this.toResolvedName(n.left, isB ? 'binding' : 'sat', true); // target
   if (!isB) {
-    var l = n.left.target;
+    var l = tg(n.left);
     l.ref.assigned();
     if (this.needsCVLHS(l)) {
       n.left.cv = true;
@@ -16393,7 +16419,7 @@ function(n, isVal, isB) {
     n.right = this.synth_TC(n.right, n.left)
 
   if (isB) {
-    var target = n.left.target;
+    var target = tg(n.left);
     if (!target.isReached())
       this.makeReached(target);
   } 
@@ -16985,13 +17011,13 @@ function(n, isVal) {
   var arg = this.trSAT(n.argument);
   n.argument = arg;
   if (isResolvedName(arg)) {
-    arg.target.ref.assigned();
+    tg(arg).ref.assigned();
     var leftsig = false;
-    if (this.needsCVLHS(arg.target)) {
+    if (this.needsCVLHS(tg(arg))) {
       arg.cv = true;
-      this.cacheCVLHS(arg.target);
+      this.cacheCVLHS(tg(arg));
     }
-    if (arg.target.isRG())
+    if (tg(arg).isRG())
       n = this.synth_GlobalUpdate(n, true);
   }
 
@@ -17207,7 +17233,7 @@ function(n, isVal) {
 
 Transformers['ClassDeclaration'] =
 function(n, isVal) {
-  var target = this.cur.findDeclOwn_m(_m(n.id.name));
+  var target = tg(n.id );
   return this.transformCls(n, isVal, target);
 };
 
@@ -17289,7 +17315,7 @@ function(n, isVal) {
 
 this.transformDeclFn =
 function(n) {
-  var target = this.cur.findDeclOwn_m(_m(n.id.name));
+  var target = tg(n.id);
   ASSERT.call(this, target, 'unresolved ('+n.id.name+')');
   n = this.transformRawFn(n, false);
   n.target = target;

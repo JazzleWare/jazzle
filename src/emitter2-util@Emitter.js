@@ -116,10 +116,10 @@ function(stmt) {
   this.l(); // TODO: unnecessary when the body has nothing in it (like as in #Skip nodes)
 
   var own = {used: false};
-  this.listenForEmits(own);
+  var lsn = this.listenForEmits(own);
   this.emitStmt(stmt);
   this.u();
-  if (!own.used) { this.grmif(own); this.w(';'); }
+  if (!lsn.used) { this.grmif(own); this.w(';'); }
 };
 
 // a, b, e, ...l -> [a,b,e],sp(l)
@@ -185,6 +185,7 @@ function(memName, asStr) {
     this.eA(memName, EC_NONE, false);
     return this;
   case 'Identifier':
+  case '#-ResolvedName.ex':
     var cb = CB(memName); this.emc(cb, 'bef' );
     asStr ?
       this.writeString(memName.name,"'") :

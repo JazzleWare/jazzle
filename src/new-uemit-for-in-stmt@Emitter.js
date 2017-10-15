@@ -19,7 +19,7 @@ function(n, flags, t) {
   this.w('for').os().w('(');
 
   if (b) {
-    if (l.target.isLLINOSA()) {
+    if (tg(l).isLLINOSA()) {
       this.w('(').emitRName_binding(l);
       this.wm('','=','','{','v');
       this.os().wm(':','void',' ','0','}',')','.','v').bs();

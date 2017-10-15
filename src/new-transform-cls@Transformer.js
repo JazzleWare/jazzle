@@ -164,6 +164,6 @@ function(n, isVal) {
 
 Transformers['ClassDeclaration'] =
 function(n, isVal) {
-  var target = this.cur.findDeclOwn_m(_m(n.id.name));
+  var target = tg(n.id );
   return this.transformCls(n, isVal, target);
 };

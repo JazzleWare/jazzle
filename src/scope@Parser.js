@@ -6,7 +6,12 @@ this.declare = function(id) {
   }
 
   var decl = this.scope.decl_m(_m(id.name), this.declMode);
-  !decl.site && decl.s(id);
+  if (!decl.site) {
+    ASSERT.call(this, decl.site === null, 'null');
+    decl.s(id);
+  }
+
+  id['#ref'] = decl.ref;
 
   // lexport {e as E}; lexport var e = 12
   var entry = null;

@@ -6,13 +6,13 @@ function() { return this.pendingSpace !== SP_NONE; };
 
 this.enqueueOmittableSpace =
 function() {
-  this.ensureNoSpace(); ASSERT.call(this, this.curLine.length, 'leading');
+  this.ensureNoSpace(); ASSERT.call(this, this.notJustAfterLineBreak(), 'leading');
   this.pendingSpace = SP_OMITTABLE;
 };
 
 this.enqueueBreakingSpace =
 function() {
-  this.ensureNoSpace(); ASSERT.call(this, this.curLine.length, 'leading');
+  this.ensureNoSpace(); ASSERT.call(this, this.notJustAfterLineBreak(), 'leading');
   this.pendingSpace = SP_BREAKABLE;
 };
 
@@ -25,7 +25,7 @@ function() {
 
 this.effectPendingSpace =
 function(len) {
-  ASSERT.call(this, this.curLine.length, 'leading');
+  ASSERT.call(this, this.notJustAfterLineBreak(), 'leading');
   var pendingSpace = this.removePendingSpace();
   switch (pendingSpace) {
   case SP_OMITTABLE:
@@ -48,4 +48,9 @@ this.removePendingSpace_try =
 function() {
   return this.hasPendingSpace() ? 
     this.removePendingSpace() : SP_NONE;
+};
+
+this.notJustAfterLineBreak =
+function() {
+  return this.curLine.length || !this.curLineHasLineBreakBefore;
 };

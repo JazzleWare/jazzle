@@ -7,7 +7,7 @@ function(n, flags, isStmt) {
 
   this.sl(n.loc.start); // TODO: only ctors without supers
 
-  this.w('return');
+  this.wt('return',ETK_ID);
   if (n.argument) {
     var l = {hasParen: false};
     this.gu(wcb_afterRet).gar(l);

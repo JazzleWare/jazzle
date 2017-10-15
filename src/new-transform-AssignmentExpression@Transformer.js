@@ -135,7 +135,7 @@ function(n, isVal, isB) {
   n.right = this.tr(n.right, true);
   var rn = n.left = this.toResolvedName(n.left, isB ? 'binding' : 'sat', true); // target
   if (!isB) {
-    var l = n.left.target;
+    var l = tg(n.left);
     l.ref.assigned();
     if (this.needsCVLHS(l)) {
       n.left.cv = true;
@@ -149,7 +149,7 @@ function(n, isVal, isB) {
     n.right = this.synth_TC(n.right, n.left)
 
   if (isB) {
-    var target = n.left.target;
+    var target = tg(n.left);
     if (!target.isReached())
       this.makeReached(target);
   } 

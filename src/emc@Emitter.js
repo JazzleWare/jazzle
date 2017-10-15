@@ -23,7 +23,6 @@ function(comments) { // emc -- immediate
     return false;
 
   var list = comments.c, nl = comments.n, e = 0, l = null;
-
   while (e < list.length) {
     var elem = list[e];
     if (l) {
@@ -47,6 +46,10 @@ function(comments) { // emc -- immediate
     e++;
   }
 
-  l && l.type === 'Line' && this.gu(wcb_afterLineComment);
+  if (l && l.type === 'Line') {
+    this.nextLineHasLineBreakBefore = true;
+    this.gu(wcb_afterLineComment);
+  }
+
   return true;
 };

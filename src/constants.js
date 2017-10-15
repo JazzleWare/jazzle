@@ -195,3 +195,7 @@ var ACT_BARE = 0,
     ACT_DECL = 1,
     ACT_SCOPE = 2;
 
+var CVTZ_T = 1,
+    CVTZ_C = CVTZ_T << 1,
+    CVTZ_NONE = 0;
+

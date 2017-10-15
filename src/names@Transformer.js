@@ -57,14 +57,14 @@ function(target) {
 
 this.toResolvedName =
 function(id, bes, manualActivation) {
-  var name = id.name;
-  var isB = bes === 'binding', target = null;
+  ASSERT.call(this, id.type == 'Identifier', 'no');
 
-  target = this.getDeclFor(name, isB);
-  ASSERT.call(this, target, 'unresolved <'+name+'>');
+  var ref = id['#ref'], target = ref.getDecl();
+  ASSERT.call(this, target, 'unresolved <'+id.name+'>');
+
+  var isB = bes === 'binding';
 
   var hasTZ = !isB && this.needsTZ(target);
-
   if (hasTZ) {
     if (target.isClassName())
       return this.synthCheckForTZ(target, null, -1);
@@ -73,16 +73,10 @@ function(id, bes, manualActivation) {
     this.accessTZ(target.ref.scope);
   }
 
-  return {
-    target: target,
-    bes: bes,
-    id: id,
-    tz: hasTZ,
-    cv: false,
-    kind: 'resolved-name',
-    type: '#Untransformed' ,
-    loc: id.loc
-  };
+  if (hasTZ) id['#cvtz'] |= CVTZ_T;
+
+  id.type = '#-ResolvedName.' + bes;
+  return id;
 };
 
 this.getDeclFor =

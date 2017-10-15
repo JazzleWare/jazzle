@@ -183,9 +183,12 @@ function isTemp(n) {
 
 function isInteger(n) { return (n|0) === n; }
 
+function belongs1to2(t1, t2) {
+  return t1.indexOf(t2+'.') === 0 || t1 === t2;
+}
+
 function isResolvedName(n) {
-  return n.type === '#Untransformed' &&
-    n.kind === 'resolved-name';
+  return belongs1to2(n.type, '#-ResolvedName');
 }
 
 // vlq(-(2 ** 31))
@@ -196,6 +199,18 @@ function vlq1sh31() {
     else { str += B[1 << (len-1)]; break }
   }
   return str;
+}
+
+function tzc(resolvedName) {
+  return (resolvedName.cvtz & CVTZ_T) !== 0;
+}
+
+function cvc(resolvedName) {
+  return (resolvedName.cvtz & CVTZ_C) !== 0;
+}
+
+function tg(resolvedName) {
+  return resolvedName['#ref'].getDecl();
 }
 
 function iskw(name, v, s) {
