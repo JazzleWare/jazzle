@@ -208,3 +208,25 @@ function(n, flags, olen) {
 
   ASSERT.call(this, false, 'got <'+n.type+'>');
 };
+
+this.emitAccessChk_tz =
+function(nd, loc) {
+  ASSERT.call(this, nd.hasTZCheck, 'unnecessary tz');
+  var scope = nd.ref.scope;
+  ASSERT.call(this, scope.hasTZCheckPoint, 'could not find any tz');
+  var tz = scope.scs.getLG('tz').getL(0);
+  this.wt(tz.synthName,ETK_ID).wm('<',nd.idx+"",'&&').jz('tz');
+  loc && this.sl(loc);
+  this.w('(').writeString(nd.name, "'");
+  this.w(')');
+  return true;
+};
+
+this.emitAccessChk_invalidSAT =
+function(nd, loc) {
+  this.jz('cc');
+  loc && this.sl(loc);
+  this.w('(').writeString(nd.name,"'");
+  this.w(')');
+  return true;
+};

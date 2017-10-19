@@ -1,9 +1,11 @@
 this. push =
 function(comment) {
   this.c.push(comment);
-  if (!this.n)
+  if (!this.n) {
+    this.firstLen += comment['#firstLen'];
     this.n = comment.type === 'Line' ||
       (comment.loc.start.line !== comment.loc.end.line);
+  }
 };
 
 this.mergeWith =

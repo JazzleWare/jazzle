@@ -25,24 +25,30 @@ function(comments) { // emc -- immediate
   var list = comments.c, nl = comments.n, e = 0, l = null;
   while (e < list.length) {
     var elem = list[e];
-    if (l) {
-      if (l.type === 'Line' || l.loc.end.line < elem.loc.start.line)
-        this.l();
-    }
-    l = elem;
+    var resume = elem.type === 'Line' ?
+      this.allow.comments.l : this.allow.comments.m;
 
-    var wflag = ETK_DIV;
-    if (e === 0 && nl)
-      wflag |= ETK_NL;
+    if (resume) {
+      if (l) {
+        if (l.type === 'Line' || l.loc.end.line < elem.loc.start.line)
+          this.l();
+      }
+      l = elem;
 
-    if (elem.type === 'Line') {
-      this.wt('//', wflag).writeToCurrentLine_raw(elem.value);
+      var wflag = ETK_DIV;
+      if (e === 0 && nl)
+        wflag |= ETK_NL;
+
+      if (elem.type === 'Line') {
+        this.wt('//', wflag).writeToCurrentLine_raw(elem.value);
+      }
+      else {
+        this.wt('/*', wflag);
+        this.writeToCurrentLine_raw(elem.value);
+        this.writeToCurrentLine_raw('*/');
+      }
     }
-    else {
-      this.wt('/*', wflag);
-      this.writeToCurrentLine_raw(elem.value);
-      this.writeToCurrentLine_raw('*/');
-    }
+
     e++;
   }
 
