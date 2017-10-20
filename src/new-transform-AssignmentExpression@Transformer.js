@@ -138,14 +138,14 @@ function(n, isVal, isB) {
     var l = tg(n.left);
     l.ref.assigned();
     if (this.needsCVLHS(l)) {
-      n.left.cv = true;
+      n.left['#cvtz'] |= CVTZ_C;
       this.cacheCVLHS(l);
     }
     else if (l.isRG())
       n = this.synth_GlobalUpdate(n, false);
   }
 
-  if (rn.tz || rn.cv)
+  if (tzc(rn) || cvc(rn))
     n.right = this.synth_TC(n.right, n.left)
 
   if (isB) {

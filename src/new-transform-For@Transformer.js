@@ -11,7 +11,7 @@ function(n, isVal) {
 
   var lead = null;
   var tval = this.synth_TVal(t), isVar = false, simp = true;
-  if (l.type === 'VariableDeclaration') {
+  if (l.type === 'VariableDeclaration' && l.kind !== 'var') {
     isVar = true;
     simp = l.declarations[0].id.type === 'Identifier'; 
     l.declarations[0].init = tval;

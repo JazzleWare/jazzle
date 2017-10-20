@@ -49,8 +49,10 @@ function() {
 
 this.at_flush =
 function() {
-  ASSERT.call(this, this.at === ERR_NONE_YET,
-    'pending errors in at');
+//ASSERT.call(this, this.at === ERR_NONE_YET,
+//  'pending errors in at');
+  // [a-=b,l=e]
+  this.at = ERR_NONE_YET;
   this.st = this.pt = ERR_NONE_YET;
 };
 

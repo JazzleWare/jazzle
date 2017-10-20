@@ -111,6 +111,8 @@ function(stmt) {
     if (isAssigList(ex))
       return this.os().emitAny(ex, EC_START_STMT|EC_ATTACHED, true);
   }
+  else if (isAssigList(stmt))
+    return this.os().emitAny(stmt, EC_START_STMT|EC_ATTACHED, true);
 
   this.i();
   this.l(); // TODO: unnecessary when the body has nothing in it (like as in #Skip nodes)

@@ -87,13 +87,15 @@ this.parseAssignment = function(head, ctx) {
     right = this.parseNonSeq(PREC_NONE, (ctx & CTX_FOR)|CTX_TOP);
 
     // record an actual error if we have parsed a potential param or assignment pattern
-    if (errt_param(ctx)) {
-      this.pin_pt(c0,li0,col0);
-      this.pt = ERR_PIN_NOT_AN_EQ;
-    }
-    if (errt_pat(ctx)) {
-      this.pin_at(c0,li0,col0);
-      this.at = ERR_PIN_NOT_AN_EQ;
+    if (errt_track(ctx)) {
+      if (errt_param(ctx)) {
+        this.pin_pt(c0,li0,col0);
+        this.pt = ERR_PIN_NOT_AN_EQ;
+      }
+      if (errt_pat(ctx)) {
+        this.pin_at(c0,li0,col0);
+        this.at = ERR_PIN_NOT_AN_EQ;
+      }
     }
   }
  

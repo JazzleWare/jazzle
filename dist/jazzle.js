@@ -1608,11 +1608,11 @@ function vlq1sh31() {
 }
 
 function tzc(resolvedName) {
-  return (resolvedName.cvtz & CVTZ_T) !== 0;
+  return (resolvedName['#cvtz'] & CVTZ_T) !== 0;
 }
 
 function cvc(resolvedName) {
-  return (resolvedName.cvtz & CVTZ_C) !== 0;
+  return (resolvedName['#cvtz'] & CVTZ_C) !== 0;
 }
 
 function tg(resolvedName) {
@@ -3347,6 +3347,8 @@ function(stmt) {
     if (isAssigList(ex))
       return this.os().emitAny(ex, EC_START_STMT|EC_ATTACHED, true);
   }
+  else if (isAssigList(stmt))
+    return this.os().emitAny(stmt, EC_START_STMT|EC_ATTACHED, true);
 
   this.i();
   this.l(); // TODO: unnecessary when the body has nothing in it (like as in #Skip nodes)
@@ -4595,7 +4597,7 @@ function(n, flags, isStmt) {
   var hasParen = false;
   var l = n.argument;
   var t = false, v = false;
-  if (isResolvedName(l)) { t = l.tz; v = l.cv; hasParen = t || v; }
+  if (isResolvedName(l)) { t = tzc(l); v = cvc(l); hasParen = t || v; }
   else hasParen = flags & EC_EXPR_HEAD;
 
   if (hasParen) { this.w('('); flags = EC_NONE; }
@@ -4695,46 +4697,6 @@ function(n, flags, isStmt) {
   }
   hasParen && this.w(')');
   isStmt && this.w(';');
-};
-
-},
-function(){
-this.emitHead =
-function(n, flags, isStmt) {
-  return this.emitAny(n, flags|EC_EXPR_HEAD|EC_NON_SEQ, isStmt);
-};
-
-this.eH = function(n, flags, isStmt) {
-  this.emitHead(n, flags, isStmt);
-  return this;
-};
-
-this.emitAny = function(n, flags, isStmt) {
-  if (HAS.call(Emitters, n.type))
-    return Emitters[n.type].call(this, n, flags, isStmt);
-  this.err('unknow.node');
-};
-
-this.eA = function(n, flags, isStmt) {
-  this.emitAny(n, flags, isStmt); 
-  return this; 
-};
-
-this.emitNonSeq = function(n, flags, isStmt) {
-  this.emitAny(n, flags|EC_NON_SEQ, isStmt);
-};
-
-this.eN = function(n, flags, isStmt) {
-  this.emitNonSeq(n, flags, isStmt);
-  return this;
-};
-
-this.emitNewHead = function(n) {
-  return this.eH(n, EC_NEW_HEAD, false);
-};
-
-this.emitCallHead = function(n, flags) {
-  return this.eH(n, flags|EC_CALL_HEAD, false);
 };
 
 },
@@ -5279,10 +5241,11 @@ UntransformedEmitters['cvtz'] =
 function(n, flags, isStmt) {
   ASSERT_EQ.call(this, isStmt, false);
   this.jz('o').w('(').eN(n.value);
-  if (n.rn.tz)
-    this.w(',').os().emitAccessChk_tz(tg(n.rn), n.rn.id.loc.start);
-  if (n.rn.cv)
-    this.w(',').os().emitAccessChk_invalidSAT(tg(n.rn), n.rn.id.loc.start);
+  if (tzc(n.rn))
+    this.w(',').os().emitAccessChk_tz(tg(n.rn), n.rn.loc.start);
+  if (cvc(n.rn))
+    this.w(',').os().emitAccessChk_invalidSAT(tg(n.rn), n.rn.loc.start);
+
   this.w(')');
 };
 
@@ -6901,8 +6864,10 @@ function() {
 
 this.at_flush =
 function() {
-  ASSERT.call(this, this.at === ERR_NONE_YET,
-    'pending errors in at');
+//ASSERT.call(this, this.at === ERR_NONE_YET,
+//  'pending errors in at');
+  // [a-=b,l=e]
+  this.at = ERR_NONE_YET;
   this.st = this.pt = ERR_NONE_YET;
 };
 
@@ -10007,13 +9972,15 @@ this.parseAssignment = function(head, ctx) {
     right = this.parseNonSeq(PREC_NONE, (ctx & CTX_FOR)|CTX_TOP);
 
     // record an actual error if we have parsed a potential param or assignment pattern
-    if (errt_param(ctx)) {
-      this.pin_pt(c0,li0,col0);
-      this.pt = ERR_PIN_NOT_AN_EQ;
-    }
-    if (errt_pat(ctx)) {
-      this.pin_at(c0,li0,col0);
-      this.at = ERR_PIN_NOT_AN_EQ;
+    if (errt_track(ctx)) {
+      if (errt_param(ctx)) {
+        this.pin_pt(c0,li0,col0);
+        this.pt = ERR_PIN_NOT_AN_EQ;
+      }
+      if (errt_pat(ctx)) {
+        this.pin_at(c0,li0,col0);
+        this.at = ERR_PIN_NOT_AN_EQ;
+      }
     }
   }
  
@@ -16448,14 +16415,14 @@ function(n, isVal, isB) {
     var l = tg(n.left);
     l.ref.assigned();
     if (this.needsCVLHS(l)) {
-      n.left.cv = true;
+      n.left['#cvtz'] |= CVTZ_C;
       this.cacheCVLHS(l);
     }
     else if (l.isRG())
       n = this.synth_GlobalUpdate(n, false);
   }
 
-  if (rn.tz || rn.cv)
+  if (tzc(rn) || cvc(rn))
     n.right = this.synth_TC(n.right, n.left)
 
   if (isB) {
@@ -16696,7 +16663,7 @@ function(n, isVal) {
 
   var lead = null;
   var tval = this.synth_TVal(t), isVar = false, simp = true;
-  if (l.type === 'VariableDeclaration') {
+  if (l.type === 'VariableDeclaration' && l.kind !== 'var') {
     isVar = true;
     simp = l.declarations[0].id.type === 'Identifier'; 
     l.declarations[0].init = tval;
@@ -17054,7 +17021,7 @@ function(n, isVal) {
     tg(arg).ref.assigned();
     var leftsig = false;
     if (this.needsCVLHS(tg(arg))) {
-      arg.cv = true;
+      arg['#cvtz'] |= CVTZ_C;
       this.cacheCVLHS(tg(arg));
     }
     if (tg(arg).isRG())

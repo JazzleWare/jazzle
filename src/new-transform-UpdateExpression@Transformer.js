@@ -6,7 +6,7 @@ function(n, isVal) {
     tg(arg).ref.assigned();
     var leftsig = false;
     if (this.needsCVLHS(tg(arg))) {
-      arg.cv = true;
+      arg['#cvtz'] |= CVTZ_C;
       this.cacheCVLHS(tg(arg));
     }
     if (tg(arg).isRG())

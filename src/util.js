@@ -202,11 +202,11 @@ function vlq1sh31() {
 }
 
 function tzc(resolvedName) {
-  return (resolvedName.cvtz & CVTZ_T) !== 0;
+  return (resolvedName['#cvtz'] & CVTZ_T) !== 0;
 }
 
 function cvc(resolvedName) {
-  return (resolvedName.cvtz & CVTZ_C) !== 0;
+  return (resolvedName['#cvtz'] & CVTZ_C) !== 0;
 }
 
 function tg(resolvedName) {

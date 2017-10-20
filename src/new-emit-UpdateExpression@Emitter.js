@@ -8,7 +8,7 @@ function(n, flags, isStmt) {
   var hasParen = false;
   var l = n.argument;
   var t = false, v = false;
-  if (isResolvedName(l)) { t = l.tz; v = l.cv; hasParen = t || v; }
+  if (isResolvedName(l)) { t = tzc(l); v = cvc(l); hasParen = t || v; }
   else hasParen = flags & EC_EXPR_HEAD;
 
   if (hasParen) { this.w('('); flags = EC_NONE; }
