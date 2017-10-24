@@ -47,6 +47,8 @@ var Parser = function (src, o) {
   this.ex = DT_NONE;
 
   this.bundleScope = null;
+
+  this.bundler = null;
   this.chkDirective = false;
   this.alreadyApplied = false;
   // "pin" location; for errors that might not have been precisely caused by a syntax node, like:
