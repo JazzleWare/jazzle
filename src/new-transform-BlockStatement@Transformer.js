@@ -6,7 +6,7 @@ function(n, isVal) {
     bs = null;
   if (bs !== null) {
     var s = this.setScope(bs);
-    this.cur.synth_defs_to(this.cur.scs);
+    this.cur.synth_defs_to(this.cur.synthBase);
   }
   this.trList(n.body, isVal);
   if (bs !== null) this.setScope(s);

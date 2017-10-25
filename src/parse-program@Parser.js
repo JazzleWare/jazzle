@@ -8,6 +8,8 @@ this.parseProgram = function () {
   ASSERT.call(this, this.bundleScope, 'bundleScope');
   this.scope = new SourceScope(this.bundleScope, ST_SCRIPT);
 
+  this.scope.synthBase = this.bundleScope ;
+
   this.scope.parser = this;
   if (!this.isScript)
     this.scope.makeStrict();

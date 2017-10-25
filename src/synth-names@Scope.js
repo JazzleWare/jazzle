@@ -5,8 +5,12 @@ function(targetScope) {
     var tdclr = list.at(e++);
     if (this.owns(tdclr) && !tdclr.isFnArg() &&
       !(tdclr.isCatchArg() && this.argIsSimple)) {
-      targetScope.synthDecl(tdclr);
-      insertSelf && this.insertSynth_m(_m(tdclr.synthName), tdclr);
+      if ( tdclr.isImported())
+        ASSERT.call(this, this.isSourceLevel(), 'not' );
+      else {
+        targetScope.synthDecl(tdclr);
+        insertSelf && this.insertSynth_m(_m(tdclr.synthName), tdclr);
+      }
     }
   }
 };

@@ -1,7 +1,6 @@
 function SourceScope(parent, st) {
   ConcreteScope.call(this, parent, st);
   this.spThis = null;
-  this.globals = new SortedObj();
 
   this.allSourcesImported = this.asi = new SortedObj();
   this.allNamesExported = this.ane = new SortedObj();

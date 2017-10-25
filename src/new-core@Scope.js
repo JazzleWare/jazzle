@@ -76,7 +76,7 @@ function() {
 
   var fl = SF_NONE;
   if (!this.parent) {
-    ASSERT.call(this, this.isGlobal(),
+    ASSERT.call(this, this.isGlobal() || this.isBundle(),
       'global scope is the only scope that ' +
       'can have a null parent');
     return fl;
@@ -111,4 +111,11 @@ function(ref) {
     .n('this_');
 
   return this.spThis = spThis;
+};
+
+this.setSynthBase =
+function(base) {
+  ASSERT.call(this, this.synthBase === this.scs, 'synth-base is not intact');
+  ASSERT.call(this, base.isConcrete(), 'base' );
+  this.synthBase = base;
 };

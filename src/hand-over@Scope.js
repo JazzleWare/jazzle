@@ -30,14 +30,14 @@ function(mname, ref) {
     return this.parent.refDirect_m(mname, ref);
   }
 
-  ASSERT.call(this, this.isScript(),
+  ASSERT.call(this, this.isSourceLevel(),
     'a script scope was expected');
 
-  ASSERT.call(this, this.parent.isGlobal(),
+  ASSERT.call(this, this.parent.isGlobal() || this.parent.isBundle(),
     'script must have a parent scope with type global');
 
   if (ref_this_m(mname))
     return this.spCreate_this(ref);
 
-  return this.spCreate_global(mname, ref);
+  return this.parent.spReportGlobal_m(mname, ref);
 };

@@ -2,14 +2,18 @@ this.synth_boot =
 function(r) {
   if (this.renamer === null) this.renamer = r;
   ASSERT.call(this, this.isSourceLevel(), 'script m');
-  this.synth_boot_init();
-  this.synth_externals();
-  this.synth_defs_to(this);
+
+  // TODO: source-level-scope.synthNamesUntilNow will be a 0-length SortedObj (because it has a synthBase other than itself),
+  // yet because it gets recorded in rsList-s, it might be receiving queries like `locateSynth` (findSynth), etc., and this in turn requires
+  // the value for its synthNamesUntilNow be non-null; this behaviour is somewhat hacky though, and it has got to be eliminated as soon as possible
+  this.synth_boot_init(); 
+
+  this.synth_defs_to(this.synthBase);
 };
 
 this.synth_finish =
 function() {
-  this.synth_liquids_to(this);
+  this.synth_liquids_to(this.synthBase);
 };
 
 this.synth_start =
@@ -104,6 +108,19 @@ function(mname, synth) {
   return sn.set(mname, synth);
 };
 
+this.synth_globals =
+function(r) {
+  this.synth_boot_init();
+  ASSERT.call(this, this.isGlobal() || this.isBundle(), 'global/bundler' );
+  ASSERT.call(this, this.renamer === null, 'renamer' );
+
+  this.renamer = r;
+
+  var list = this.defs, len = list.length(), l = 0;
+  while (l < len)
+    this.synthGlobal(list.at(l++));
+};
+
 this.synthDecl =
 function(decl) {
   ASSERT.call(this,
@@ -165,7 +182,7 @@ function(decl) {
 
 this.synthGlobal =
 function(global) {
-  ASSERT.call(this, this.isSourceLevel(), 'script m');
+  ASSERT.call(this, this.isGlobal() || this.isBundle(), 'script m');
   ASSERT.call(this, global.isGlobal(), 'not g');
   if (!global.mustSynth()) {
     ASSERT.call(this, global.synthName === "", 'synth name');

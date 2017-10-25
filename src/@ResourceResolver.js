@@ -1,4 +1,4 @@
 function ResourceResolver() {
   this.savedNodes = {}; 
-  // this.URItoID = {};
+  this.bundleScope = null;
 }

@@ -7,7 +7,7 @@ function(r) {
     this.synth_rcv();
   else
     this.catchVar = new Liquid('catchname').n('t');
-  this.synth_defs_to(this.scs);
+  this.synth_defs_to(this.synthBase);
 };
 
 this.synth_boot_init =

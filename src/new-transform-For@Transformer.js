@@ -1,7 +1,7 @@
 Transformers['ForOfStatement'] =
 function(n, isVal) {
   var s = this.setScope(n['#scope']);
-  this.cur.synth_defs_to(this.cur.scs);
+  this.cur.synth_defs_to(this.cur.synthBase);
 
   var t = null;
   n.right = this.tr(n.right, true);
@@ -46,7 +46,7 @@ function(n, isVal) {
   var simp = true;
   var s = this.setScope(n['#scope']);
 
-  this.cur.synth_defs_to(this.cur.scs );
+  this.cur.synth_defs_to(this.cur.synthBase );
   var isVar = false;
   if (left.type === 'VariableDeclaration') {
     isVar = true;

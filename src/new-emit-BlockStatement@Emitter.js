@@ -21,7 +21,7 @@ function(n, flags, isStmt) {
 
   var lsn = this.listenForEmits(own);
   this.emitSimpleHead(n);
-  if (lsn.used) { em++; this.trygu(wcb_afterStmt, own); }
+  if (lsn.used) { em++; own.used = false; this.trygu(wcb_afterStmt, own); }
 
   lsn = this.listenForEmits(own);
   this.emitStmtList(n.body);

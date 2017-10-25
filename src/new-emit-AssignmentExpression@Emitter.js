@@ -55,5 +55,5 @@ function(n, flags, isStmt) {
   this.emc('aft');
   
   var l = n.left;
-  tg(l).hasTZCheck && this.os().emitAccessChk_tz(tg(l));
+  tg(l).hasTZCheck && this.os().emitTZCheckPoint(tg(l));
 };

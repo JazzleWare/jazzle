@@ -96,6 +96,24 @@ function(list) {
 this.emitStmt =
 function(stmt) { return this.emitAny(stmt, EC_START_STMT, true); };
 
+this.emitTZCheckPoint =
+function(l) {
+  ASSERT_EQ.call(this, l.hasTZCheck, true);
+  var tz = l.ref.scope.scs.getLG('tz').getL(0);
+  this.wm(tz.synthName,'','=','',l.idx+"",';');
+};
+
+this.wsndl =
+function(list) {
+  var e = 0;
+  while (e < list.length) {
+    e && this.wm(',','');
+    this.writeIDName(list[e].synthName);
+    ++e ;
+  }
+  return true;
+};
+
 this.emitAttached =
 function(stmt) {
   switch (stmt.type) {

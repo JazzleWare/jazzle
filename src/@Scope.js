@@ -38,7 +38,10 @@ function Scope(sParent, type) {
           this.parent.varTargets;
 
   this.funLists = new SortedObj();
-  this.tcTracker = new SortedObj(); // names tracked for tz/cv (const violation)
+
+  this.synthBase = 
+    this.isSourceLevel() ? null : this.isConcrete() ? this.scs :
+    this.isBundle() || this.isGlobal() ? this : this.parent.synthBase;
 
   this.reached = true;
   if (this.parent && this.parent.isParen())
