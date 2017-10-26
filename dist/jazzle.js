@@ -750,7 +750,8 @@ var ETK_NONE = 0,
     ETK_ADD = ETK_DIV << 1,
     ETK_NUM = ETK_ADD << 1,
     ETK_STR = ETK_NUM << 1,
-    ETK_NL = ETK_STR << 1;
+    ETK_NL = ETK_STR << 1,
+    ETK_COMMENT = ETK_NL << 1;
 
 var PE_NO_NONVAR = 1,
     PE_NO_LABEL = PE_NO_NONVAR << 1,
@@ -1828,7 +1829,10 @@ function wcb_idNumGuard(rawStr, tt) {
   if (tt & (ETK_NUM|ETK_ID)) this.bs();
 }
 
-function wcb_afterStmt(rawStr, tt) { this.l(); }
+function wcb_afterStmt(rawStr, tt) {
+  if (!(tt & ETK_NL) || (tt & ETK_COMMENT))
+    this.l();
+}
 
 function wcb_afterLineComment(rawStr, tt) {
   if (tt === ETK_NL)
@@ -2669,7 +2673,7 @@ function(comments) { // emc -- immediate
       }
       l = elem;
 
-      var wflag = ETK_DIV;
+      var wflag = ETK_DIV|ETK_COMMENT;
       if (e === 0 && nl)
         wflag |= ETK_NL;
 
@@ -3074,7 +3078,7 @@ this.writeToOut_lineBreak =
 function() {
   this.ensureOutActive();
   this.emline_cur++;
-  this.emcol_cur = 0;
+//this.emcol_cur = 0;
   this.writeToSMout(';'); // TODO: ensure we are allowed to actually write to SM; we must have actually committed anything in lm beforehands
   this.mustHaveSMLinkpoint = true;
   this.writeToOut_raw('\n');
@@ -3275,6 +3279,7 @@ function(sv, ql) {
 
     if (this.ol(vLen) > 0) {
       this.writeToCurrentLine_raw('\\');
+      this.nextLineHasLineBreakBefore = true;
       this.finishCurrentLine();
       this.curLineIndent = 0;
     }
@@ -3546,6 +3551,10 @@ function(rawStr) {
   if (this.hasPendingSpace())
     this.effectPendingSpace(rawStr.length);
 
+  var curEmCol = this.emcol_cur;
+  if (curEmCol && this.ol(rawStr.length) > 0)
+    this.wrapCurrentLine();
+
   if (this.guard) {
     var tt = this.ttype;
     tt === ETK_NONE || this.nott();
@@ -3558,10 +3567,6 @@ function(rawStr) {
 
   ASSERT.call(this, this.guard === null, 'guard' );
   this.ensureNoSpace();
-
-  var curEmCol = this.emcol_cur;
-  if (curEmCol && this.ol(rawStr.length) > 0)
-    this.wrapCurrentLine();
 
   srcLoc && this.refreshTheCurrentLineLevelSourceMapWith(srcLoc);
 

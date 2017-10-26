@@ -13,6 +13,7 @@ function(sv, ql) {
 
     if (this.ol(vLen) > 0) {
       this.writeToCurrentLine_raw('\\');
+      this.nextLineHasLineBreakBefore = true;
       this.finishCurrentLine();
       this.curLineIndent = 0;
     }

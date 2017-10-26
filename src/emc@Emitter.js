@@ -35,7 +35,7 @@ function(comments) { // emc -- immediate
       }
       l = elem;
 
-      var wflag = ETK_DIV;
+      var wflag = ETK_DIV|ETK_COMMENT;
       if (e === 0 && nl)
         wflag |= ETK_NL;
 

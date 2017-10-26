@@ -11,6 +11,10 @@ function(rawStr) {
   if (this.hasPendingSpace())
     this.effectPendingSpace(rawStr.length);
 
+  var curEmCol = this.emcol_cur;
+  if (curEmCol && this.ol(rawStr.length) > 0)
+    this.wrapCurrentLine();
+
   if (this.guard) {
     var tt = this.ttype;
     tt === ETK_NONE || this.nott();
@@ -23,10 +27,6 @@ function(rawStr) {
 
   ASSERT.call(this, this.guard === null, 'guard' );
   this.ensureNoSpace();
-
-  var curEmCol = this.emcol_cur;
-  if (curEmCol && this.ol(rawStr.length) > 0)
-    this.wrapCurrentLine();
 
   srcLoc && this.refreshTheCurrentLineLevelSourceMapWith(srcLoc);
 

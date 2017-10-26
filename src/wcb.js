@@ -30,7 +30,10 @@ function wcb_idNumGuard(rawStr, tt) {
   if (tt & (ETK_NUM|ETK_ID)) this.bs();
 }
 
-function wcb_afterStmt(rawStr, tt) { this.l(); }
+function wcb_afterStmt(rawStr, tt) {
+  if (!(tt & ETK_NL) || (tt & ETK_COMMENT))
+    this.l();
+}
 
 function wcb_afterLineComment(rawStr, tt) {
   if (tt === ETK_NL)
