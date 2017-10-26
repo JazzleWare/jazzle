@@ -84,6 +84,8 @@ function cp2sp(codePoint )  {
 
 function core(n) { return n.type === PAREN ? n.expr : n; };
 
+function NL(tt) { return tt & ETK_NL; }
+
 function hex2num(n) {
   return (n >= CH_0 && n <= CH_9) ? n - CH_0 :
          (n <= CH_f && n >= CH_a) ? 10 + n - CH_a :

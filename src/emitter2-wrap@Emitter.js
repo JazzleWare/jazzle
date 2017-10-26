@@ -3,7 +3,13 @@ function() {
   this.hasPendingSpace() && this.removePendingSpace();
   this.nextLineHasLineBreakBefore = true;
 
-  if (this.lineBlank()) this.startFreshLine();
+  if (this.lineBlank()) {
+    if (this.guard) {
+      ASSERT.call(this, !this.curLineHasLineBreakBefore, 'leading guard');
+      this.runGuard('\n', ETK_NL);
+    }
+    this.startFreshLine();
+  }
   else this.finishCurrentLine();
 };
 

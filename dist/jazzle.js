@@ -1496,6 +1496,8 @@ function cp2sp(codePoint )  {
 
 function core(n) { return n.type === PAREN ? n.expr : n; };
 
+function NL(tt) { return tt & ETK_NL; }
+
 function hex2num(n) {
   return (n >= CH_0 && n <= CH_9) ? n - CH_0 :
          (n <= CH_f && n >= CH_a) ? 10 + n - CH_a :
@@ -1800,17 +1802,17 @@ function isDirective(n) {
 
 function wcb_ADD_b(rawStr, tt) {
   if (tt & ETK_ADD) this.bs();
-  else this.os();
+  else NL(tt) || this.os();
 }
 
 function wcb_DIV_b(rawStr, tt) {
   if (tt & ETK_DIV) this.bs();
-  else this.os();
+  else NL(tt) || this.os();
 }
 
 function wcb_MIN_b(rawStr, tt) {
   if (tt & ETK_MIN) this.bs();
-  else this.os();
+  else NL(tt) || this.os();
 }
 
 function wcb_ADD_u(rawStr, tt) {
@@ -1830,7 +1832,7 @@ function wcb_idNumGuard(rawStr, tt) {
 }
 
 function wcb_afterStmt(rawStr, tt) {
-  if (!(tt & ETK_NL) || (tt & ETK_COMMENT))
+  if (!NL(tt) || (tt & ETK_COMMENT))
     this.l();
 }
 
@@ -1864,7 +1866,18 @@ function wcb_afterVDT(rawStr, tt) {
 
 // NOTE: only register it after a return that has a non-null argument
 function wcb_afterRet(rawStr, tt) {
-  if (tt & ETK_NL) { this.os().w('('); this.wcbp.hasParen = true; return; }
+  if (NL(tt)) {
+    this.os();
+
+    // use `w because `wtcl_raw alone is not handling spaces enqueued
+    var wl = this.wrapLimit;
+    this.wrapLimit = 0;
+    this.w('(');
+    this.wrapLimit = wl;
+
+    this.guardArg.hasParen = true;
+    return; 
+  }
   var lineLen = this.curLine.length;
   if (tt & (ETK_NUM|ETK_ID)) {
     if (this.ol(1+rawStr.length) > 0) {
@@ -3525,7 +3538,13 @@ function() {
   this.hasPendingSpace() && this.removePendingSpace();
   this.nextLineHasLineBreakBefore = true;
 
-  if (this.lineBlank()) this.startFreshLine();
+  if (this.lineBlank()) {
+    if (this.guard) {
+      ASSERT.call(this, !this.curLineHasLineBreakBefore, 'leading guard');
+      this.runGuard('\n', ETK_NL);
+    }
+    this.startFreshLine();
+  }
   else this.finishCurrentLine();
 };
 
