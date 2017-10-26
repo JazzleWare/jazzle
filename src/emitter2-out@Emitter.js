@@ -10,7 +10,6 @@ function() {
   this.emline_cur++;
 //this.emcol_cur = 0;
   this.writeToSMout(';'); // TODO: ensure we are allowed to actually write to SM; we must have actually committed anything in lm beforehands
-  this.mustHaveSMLinkpoint = true;
   this.writeToOut_raw('\n');
 }; 
 

@@ -56,6 +56,8 @@ function Emitter() {
   // </sourcemap-related>
 
   this.smLen = 0;
+  this.smLineStart = false;
+
   this.outLen = 0;
 
   this.emitters = createObj(Emitters);

@@ -139,6 +139,8 @@ function Emitter() {
   // </sourcemap-related>
 
   this.smLen = 0;
+  this.smLineStart = false;
+
   this.outLen = 0;
 
   this.emitters = createObj(Emitters);
@@ -3051,8 +3053,10 @@ function() {
   this.curLineIndent = this.nextLineIndent;
   this.curLine = "";
 
-  if (this.curLineHasLineBreakBefore)
+  if (this.curLineHasLineBreakBefore) {
     this.emcol_cur = 0;
+    this.smLineStart = true;
+  }
 
   this.hasRecorded_SMLinkpoint = false;
   this.hasRecorded_emcol_latestRec = false;
@@ -3072,8 +3076,12 @@ function() {
     if (lm.length) lm0 += ',';
   }
   if (!this.curLineHasLineBreakBefore) {
-    if (lm.length || lm0.length)
-      this.smLen && this.writeToSMout(',');
+    if (lm.length || lm0.length) {
+      if (this.smLineStart)
+        this.smLineStart = false;
+      else
+        this.writeToSMout(',');
+    }
   }
   lm0.length && this.writeToSMout(lm0);
   lm.length && this.writeToSMout(lm);
@@ -3093,7 +3101,6 @@ function() {
   this.emline_cur++;
 //this.emcol_cur = 0;
   this.writeToSMout(';'); // TODO: ensure we are allowed to actually write to SM; we must have actually committed anything in lm beforehands
-  this.mustHaveSMLinkpoint = true;
   this.writeToOut_raw('\n');
 }; 
 

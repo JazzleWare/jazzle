@@ -73,8 +73,10 @@ function() {
   this.curLineIndent = this.nextLineIndent;
   this.curLine = "";
 
-  if (this.curLineHasLineBreakBefore)
+  if (this.curLineHasLineBreakBefore) {
     this.emcol_cur = 0;
+    this.smLineStart = true;
+  }
 
   this.hasRecorded_SMLinkpoint = false;
   this.hasRecorded_emcol_latestRec = false;
@@ -94,8 +96,12 @@ function() {
     if (lm.length) lm0 += ',';
   }
   if (!this.curLineHasLineBreakBefore) {
-    if (lm.length || lm0.length)
-      this.smLen && this.writeToSMout(',');
+    if (lm.length || lm0.length) {
+      if (this.smLineStart)
+        this.smLineStart = false;
+      else
+        this.writeToSMout(',');
+    }
   }
   lm0.length && this.writeToSMout(lm0);
   lm.length && this.writeToSMout(lm);
