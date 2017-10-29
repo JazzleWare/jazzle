@@ -43,6 +43,8 @@ function Scope(sParent, type) {
     this.isSourceLevel() ? null : this.isConcrete() ? this.scs :
     this.isBundle() || this.isGlobal() ? this : this.parent.synthBase;
 
+  this.sourceScope = null;
+
   this.reached = true;
   if (this.parent && this.parent.isParen())
     this.parent.ch.push(this);

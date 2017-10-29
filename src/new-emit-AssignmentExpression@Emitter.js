@@ -7,7 +7,7 @@ function(n, flags, isStmt) {
   if (hasParen) { this.w('('); flags = EC_NONE; }
 
   this.emc(cb, 'bef');
-  this.emitSAT(left, flags);
+  this.emitSAT(left, flags, 0);
   this.os();
 
   if (n.operator === '**=') {

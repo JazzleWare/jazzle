@@ -30,7 +30,7 @@ function(n, flags, t) {
     }
   }
   else if (l.type === 'MemberExpression') {
-    this.emitSAT(l, EC_NONE);
+    this.emitSAT(l, EC_NONE, 0);
     this.os();
   }
   else {

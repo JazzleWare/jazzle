@@ -422,6 +422,8 @@ function Scope(sParent, type) {
     this.isSourceLevel() ? null : this.isConcrete() ? this.scs :
     this.isBundle() || this.isGlobal() ? this : this.parent.synthBase;
 
+  this.sourceScope = null;
+
   this.reached = true;
   if (this.parent && this.parent.isParen())
     this.parent.ch.push(this);
@@ -2518,6 +2520,7 @@ function(scope) {
     return false;
   }
   this.rsMap[id] = scope ;
+  this.ref.rsList.push(scope);
   return true;
 };
 
@@ -3916,7 +3919,7 @@ function(n, flags, isStmt) {
   if (hasParen) { this.w('('); flags = EC_NONE; }
 
   this.emc(cb, 'bef');
-  this.emitSAT(left, flags);
+  this.emitSAT(left, flags, 0);
   this.os();
 
   if (n.operator === '**=') {
@@ -4917,7 +4920,7 @@ function(n, flags, t) {
     }
   }
   else if (l.type === 'MemberExpression') {
-    this.emitSAT(l, EC_NONE);
+    this.emitSAT(l, EC_NONE, 0);
     this.os();
   }
   else {
@@ -5762,13 +5765,26 @@ function() {
           target.category === '<arguments>' || target.category === 'scall', 'liq');
         continue;
       }
-      ASSERT.call(this, target.synthName !== "" || target.isGlobal(), 'synth');
 
-      mname = _m(target.synthName);
-      var synth = this.findSynth_m(mname);
-      if (synth !== target) {
-        ASSERT.call(this, synth === null, 'override');
-        this.insertSynth_m(mname, target);
+      //  TODO: synth_boot has to trigger is target.isImported
+      //  TODO: all this is just because an import binding is resolved to its actual site, which is a plain binding rather than an 'import'-binding
+      if (target.synthName === "") {
+        if (!target.isGlobal()) 
+          ASSERT.call(
+            this,
+            target.ref.scope.isSourceLevel() && item.scope.getSourceLevelScope() !== target.ref.scope,
+            'unsynthesized name can only be an import binding'
+          );
+      }
+      else {
+        ASSERT.call(this, target.synthName !== "", 'synth');
+
+        mname = _m(target.synthName);
+        var synth = this.findSynth_m(mname);
+        if (synth !== target) {
+          ASSERT.call(this, synth === null, 'override');
+          this.insertSynth_m(mname, target);
+        }
       }
     }
   }
@@ -15456,6 +15472,22 @@ function(base) {
   ASSERT.call(this, this.synthBase === this.scs, 'synth-base is not intact');
   ASSERT.call(this, base.isConcrete(), 'base' );
   this.synthBase = base;
+};
+
+this.getSourceLevelScope =
+function() {
+  var l = this.sourceScope ; // up
+  if (l === null) {
+    var u = this.parent;
+    while (u) {
+      if (u.isSourceLevel()) {
+        l = this.sourceScope = u;
+        break;
+      }
+    }
+    ASSERT.call(this, u, 'source-scope ' );
+  }
+  return l;
 };
 
 },

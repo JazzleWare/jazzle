@@ -50,13 +50,26 @@ function() {
           target.category === '<arguments>' || target.category === 'scall', 'liq');
         continue;
       }
-      ASSERT.call(this, target.synthName !== "" || target.isGlobal(), 'synth');
 
-      mname = _m(target.synthName);
-      var synth = this.findSynth_m(mname);
-      if (synth !== target) {
-        ASSERT.call(this, synth === null, 'override');
-        this.insertSynth_m(mname, target);
+      //  TODO: synth_boot has to trigger is target.isImported
+      //  TODO: all this is just because an import binding is resolved to its actual site, which is a plain binding rather than an 'import'-binding
+      if (target.synthName === "") {
+        if (!target.isGlobal()) 
+          ASSERT.call(
+            this,
+            target.ref.scope.isSourceLevel() && item.scope.getSourceLevelScope() !== target.ref.scope,
+            'unsynthesized name can only be an import binding'
+          );
+      }
+      else {
+        ASSERT.call(this, target.synthName !== "", 'synth');
+
+        mname = _m(target.synthName);
+        var synth = this.findSynth_m(mname);
+        if (synth !== target) {
+          ASSERT.call(this, synth === null, 'override');
+          this.insertSynth_m(mname, target);
+        }
       }
     }
   }

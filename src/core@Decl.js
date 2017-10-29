@@ -61,5 +61,6 @@ function(scope) {
     return false;
   }
   this.rsMap[id] = scope ;
+  this.ref.rsList.push(scope);
   return true;
 };

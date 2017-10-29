@@ -119,3 +119,19 @@ function(base) {
   ASSERT.call(this, base.isConcrete(), 'base' );
   this.synthBase = base;
 };
+
+this.getSourceLevelScope =
+function() {
+  var l = this.sourceScope ; // up
+  if (l === null) {
+    var u = this.parent;
+    while (u) {
+      if (u.isSourceLevel()) {
+        l = this.sourceScope = u;
+        break;
+      }
+    }
+    ASSERT.call(this, u, 'source-scope ' );
+  }
+  return l;
+};
