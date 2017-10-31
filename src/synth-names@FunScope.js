@@ -44,22 +44,20 @@ function() {
   while (e < len) {
     var item = list.at(e++);
     if (item) {
-      var target = item.getDecl(), mname = "";
+      var target = item.getDecl_nearest(), mname = "";
       if (target.isLiquid()) {
         ASSERT.call(this, target.category === '<this>' ||
           target.category === '<arguments>' || target.category === 'scall', 'liq');
         continue;
       }
 
-      //  TODO: synth_boot has to trigger is target.isImported
-      //  TODO: all this is just because an import binding is resolved to its actual site, which is a plain binding rather than an 'import'-binding
+      //  TODO: synth_boot has to trigger if target.isImported
       if (target.synthName === "") {
-        if (!target.isGlobal()) 
-          ASSERT.call(
-            this,
-            target.ref.scope.isSourceLevel() && item.scope.getSourceLevelScope() !== target.ref.scope,
-            'unsynthesized name can only be an import binding'
-          );
+        ASSERT.call(
+          this,
+          target.isGlobal() || target.isImported(), 
+          'unsynthesized name can only be an import binding'
+        );
       }
       else {
         ASSERT.call(this, target.synthName !== "", 'synth');
@@ -80,7 +78,7 @@ function() {
   var list = this.argList, nmap = {}, e = list.length - 1;
   while (e >= 0) {
     var arg = list[e], mname = _m(arg.name);
-    arg = arg.ref.getDecl(); // must not be a dupl (TODO:should eliminate this)
+    arg = arg.ref.getDecl_nearest(); // must not be a dupl (TODO:should eliminate this)
     if (!HAS.call(nmap, mname)) {
       nmap[mname] = arg;
       this.synthDecl(arg);

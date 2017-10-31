@@ -2,7 +2,7 @@ Transformers['ThisExpression'] =
 function(n, isVal) {
   var ref = this.cur.findRefU_m(RS_THIS);
   ASSERT.call(this, ref, 'could not find [:this:]');
-  var th = ref.getDecl();
+  var th = ref.getDecl_nearest();
   var ths = this.thisState;
   if ((ths & THS_NEEDS_CHK) && !(ths & THS_IS_REACHED)) {
     var lg = th.ref.scope.scs.gocLG('ti');

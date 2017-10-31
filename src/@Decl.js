@@ -10,4 +10,5 @@ function Decl() {
   this.type = DT_NONE;
   this.synthName = "";
   this.rsMap = null;
+  this.realTarget = null;
 }

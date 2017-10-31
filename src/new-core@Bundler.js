@@ -51,7 +51,9 @@ function() {
   ASSERT.call(this, !this.resolver.hasInCache(this.curURI), 'incache');
   var n = this.resolver.loadNew(this.curURI);
   this.resolver.cache(this.curURI, n);
-  n['#imports'] = n['#scope'].satisfyWithBundler(this);
+
+//n['#imports'] = n['#scope'].satisfyWithBundler(this);
+
   this.freshSources.push(n);
   return n;
 };

@@ -9,12 +9,20 @@ function(bundler) {
   while (e < len) {
     var sourcePath = _u(allSourcesImported.keys[e]);
     var exitPath = bundler.enter(sourcePath);
-    var src = bundler.getExistingSourceNode() || bundler.loadNewSource();
+    var src = bundler.getExistingSourceNode();
+    var isNew = false;
+    if (src === null) {
+      src = bundler.loadNewSource();
+      isNew = true;
+    }
     ASSERT.call(this, src, 'source not found: "'+sourcePath+'"' );
 
     var satisfierScope = src['#scope'];
     if (this.forwardsSource(sourcePath))
       this.fillForwardedSourceEntryWith(sourcePath, satisfierScope);
+
+    if (isNew)
+      src['#imports'] = src['#scope'].satisfyWithBundler(bundler);
 
     var entriesImported = allSourcesImported.at(e);
     entriesImported && satisfierScope.satisfyEntries(entriesImported );
@@ -46,7 +54,7 @@ function(binding, name) {
   var ex = this.searchExports(name, null);
 
   ex || this.err('unresolved.name');
-  this.resolve1to2(binding, ex.ref.getDecl());
+  this.resolve1to2(binding, ex.ref.getDecl_real());
 };
 
 this.searchInOwnExports =
@@ -88,13 +96,13 @@ function(name, soFar) {
 
 this.resolve1to2 =
 function(slave, master) {
-  ASSERT.call(this, master === master.ref.getDecl(), 'master');
+  ASSERT.call(this, master === master.ref.getDecl_real(), 'master');
   ASSERT.call(this, master !== slave, 'same');
 
   var slaveRef = slave.ref;
   if (slaveRef) {
-    slaveRef.hasTarget = false;
-    slaveRef.targetDecl = null;
+//  slaveRef.hasTarget = false;
+//  slaveRef.targetDecl = null;
 
     var slaveRSList = slaveRef.rsList, l = 0;
     if (master.rsMap === null)

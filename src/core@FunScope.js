@@ -16,7 +16,7 @@ function() {
     if (ref === null)
       continue;
 
-    target = ref.getDecl();
+    target = ref.getDecl_nearest();
     if (target === this.scopeName)
       continue;
     if (target === this.spArguments)

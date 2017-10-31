@@ -29,22 +29,29 @@ function(childRef, refD) {
 this.updateStats =
 function(d, i) { this.d += d; this.i += i; };
 
-this.getDecl =
+this.getDecl_nearest =
 function() {
-  if (this.targetDecl !== null)
-    return this.targetDecl;
+  if (this.targetDecl_nearest !== null)
+    return this.targetDecl_nearest;
   var ref = this.parentRef;
   while (ref) {
-    if (ref.targetDecl)
-      return this.targetDecl = ref.targetDecl;
+    if (ref.targetDecl_nearest)
+      return this.targetDecl_nearest = ref.targetDecl_nearest;
     ref = ref.parentRef;
   }
+
   ASSERT.call(this, false, 'ref unresolved');
+};
+
+this.getDecl_real =
+function() {
+  return this.getDecl_nearest().getDecl_real();
 };
 
 this.assigned =
 function() {
-  var targetRef = this.getDecl().ref;
+  // TODO: assert target ref is not a relocated ref (i.e., it is a master decl)
+  var targetRef = this.getDecl_nearest().ref;
   if (targetRef.lhs < 0)
     targetRef.lhs = 0;
   return targetRef.lhs++;
@@ -54,7 +61,7 @@ this.cut =
 function() {
   ASSERT.call(this, this.hasTarget, 'cut');
   this.hasTarget = false;
-  this.targetDecl = null;
+  this.targetDecl_nearest = null;
 
   return this;
 };

@@ -3,7 +3,7 @@ function Ref(scope) {
   this.rsList = [];
   this.scope = scope || null;
   this.d = 0;
-  this.targetDecl = null;
+  this.targetDecl_nearest = null;
   this.hasTarget = false;
   this.parentRef = null;
   this.lhs = 0;

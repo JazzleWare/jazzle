@@ -93,14 +93,14 @@ function(ctor, oBinding, r) {
     var clsName = ctor['#scope'].parent.scopeName;
     if (clsName === null) break REF;
     var ref = scope.findRefU_m(_m(clsName.name));
-    if (ref === null || ref.getDecl() !== clsName) break REF;
+    if (ref === null || ref.getDecl_nearest() !== clsName) break REF;
     var sn = scope.scopeName = new ScopeName(clsName.name, null).t(DT_FNNAME); 
 
     sn.r(new Ref(scope));
 
     ref.hasTarget = false;
     ref.parentRef = null;
-    ref.targetDecl = null;
+    ref.targetDecl_nearest = null;
     sn.ref.absorbDirect(ref);
   }
 
@@ -126,14 +126,14 @@ function(mem, oBinding, r) {
     sn = cls.scopeName;
     var ref = scope.findRefU_m(_m(sn.name));
     if (ref === null) { sn = null; break REF; }
-    ASSERT.call(this, sn === ref.getDecl(), 'sn' );
+    ASSERT.call(this, sn === ref.getDecl_nearest(), 'sn' );
     sn = new ScopeName(sn.name, null).t(DT_CLSNAME);
     ASSERT.call(this,scope.parent.isClass(),'cls');
     sn.r(new Ref(scope.parent));
 
     ref.hasTarget = false;
     ref.parentRef = null;
-    ref.targetDecl = null;
+    ref.targetDecl_nearest = null;
     sn.ref.absorbDirect(ref);
 
     this.makeReached(sn);

@@ -79,6 +79,7 @@ function Decl() {
   this.type = DT_NONE;
   this.synthName = "";
   this.rsMap = null;
+  this.realTarget = null;
 }
 ;
 function Emitter() {
@@ -366,7 +367,7 @@ function Ref(scope) {
   this.rsList = [];
   this.scope = scope || null;
   this.d = 0;
-  this.targetDecl = null;
+  this.targetDecl_nearest = null;
   this.hasTarget = false;
   this.parentRef = null;
   this.lhs = 0;
@@ -1628,7 +1629,9 @@ function cvc(resolvedName) {
 }
 
 function tg(resolvedName) {
-  return resolvedName['#ref'].getDecl();
+  var real = resolvedName['#ref'].getDecl_real();
+  ASSERT.call(this, real.ref.parentRef === null, 'relocated' );
+  return real;
 }
 
 function iskw(name, v, s) {
@@ -1989,7 +1992,9 @@ function() {
   ASSERT.call(this, !this.resolver.hasInCache(this.curURI), 'incache');
   var n = this.resolver.loadNew(this.curURI);
   this.resolver.cache(this.curURI, n);
-  n['#imports'] = n['#scope'].satisfyWithBundler(this);
+
+//n['#imports'] = n['#scope'].satisfyWithBundler(this);
+
   this.freshSources.push(n);
   return n;
 };
@@ -2467,10 +2472,10 @@ function(s) {
 this.r =
 function(r) {
   ASSERT_EQ.call(this, this.ref, null);
-  ASSERT_EQ.call(this, r.targetDecl, null);
+  ASSERT_EQ.call(this, r.targetDecl_nearest, null);
   ASSERT_EQ.call(this, r.hasTarget, false);
   this.ref = r;
-  r.targetDecl = this;
+  r.targetDecl_nearest = this;
   r.hasTarget = true;
   return this;
 };
@@ -2522,6 +2527,19 @@ function(scope) {
   this.rsMap[id] = scope ;
   this.ref.rsList.push(scope);
   return true;
+};
+
+this.getDecl_real =
+function() {
+  if (this.realTarget !== null)
+    return this.realTarget;
+
+  var t = this;
+  while (t.ref.parentRef !== null)
+    t = t.ref.parentRef.getDecl_nearest();
+
+  this.realTarget = t;
+  return t;
 };
 
 },
@@ -5555,7 +5573,7 @@ function() {
     if (ref === null)
       continue;
 
-    target = ref.getDecl();
+    target = ref.getDecl_nearest();
     if (target === this.scopeName)
       continue;
     if (target === this.spArguments)
@@ -5759,22 +5777,20 @@ function() {
   while (e < len) {
     var item = list.at(e++);
     if (item) {
-      var target = item.getDecl(), mname = "";
+      var target = item.getDecl_nearest(), mname = "";
       if (target.isLiquid()) {
         ASSERT.call(this, target.category === '<this>' ||
           target.category === '<arguments>' || target.category === 'scall', 'liq');
         continue;
       }
 
-      //  TODO: synth_boot has to trigger is target.isImported
-      //  TODO: all this is just because an import binding is resolved to its actual site, which is a plain binding rather than an 'import'-binding
+      //  TODO: synth_boot has to trigger if target.isImported
       if (target.synthName === "") {
-        if (!target.isGlobal()) 
-          ASSERT.call(
-            this,
-            target.ref.scope.isSourceLevel() && item.scope.getSourceLevelScope() !== target.ref.scope,
-            'unsynthesized name can only be an import binding'
-          );
+        ASSERT.call(
+          this,
+          target.isGlobal() || target.isImported(), 
+          'unsynthesized name can only be an import binding'
+        );
       }
       else {
         ASSERT.call(this, target.synthName !== "", 'synth');
@@ -5795,7 +5811,7 @@ function() {
   var list = this.argList, nmap = {}, e = list.length - 1;
   while (e >= 0) {
     var arg = list[e], mname = _m(arg.name);
-    arg = arg.ref.getDecl(); // must not be a dupl (TODO:should eliminate this)
+    arg = arg.ref.getDecl_nearest(); // must not be a dupl (TODO:should eliminate this)
     if (!HAS.call(nmap, mname)) {
       nmap[mname] = arg;
       this.synthDecl(arg);
@@ -14888,22 +14904,29 @@ function(childRef, refD) {
 this.updateStats =
 function(d, i) { this.d += d; this.i += i; };
 
-this.getDecl =
+this.getDecl_nearest =
 function() {
-  if (this.targetDecl !== null)
-    return this.targetDecl;
+  if (this.targetDecl_nearest !== null)
+    return this.targetDecl_nearest;
   var ref = this.parentRef;
   while (ref) {
-    if (ref.targetDecl)
-      return this.targetDecl = ref.targetDecl;
+    if (ref.targetDecl_nearest)
+      return this.targetDecl_nearest = ref.targetDecl_nearest;
     ref = ref.parentRef;
   }
+
   ASSERT.call(this, false, 'ref unresolved');
+};
+
+this.getDecl_real =
+function() {
+  return this.getDecl_nearest().getDecl_real();
 };
 
 this.assigned =
 function() {
-  var targetRef = this.getDecl().ref;
+  // TODO: assert target ref is not a relocated ref (i.e., it is a master decl)
+  var targetRef = this.getDecl_nearest().ref;
   if (targetRef.lhs < 0)
     targetRef.lhs = 0;
   return targetRef.lhs++;
@@ -14913,7 +14936,7 @@ this.cut =
 function() {
   ASSERT.call(this, this.hasTarget, 'cut');
   this.hasTarget = false;
-  this.targetDecl = null;
+  this.targetDecl_nearest = null;
 
   return this;
 };
@@ -16121,12 +16144,20 @@ function(bundler) {
   while (e < len) {
     var sourcePath = _u(allSourcesImported.keys[e]);
     var exitPath = bundler.enter(sourcePath);
-    var src = bundler.getExistingSourceNode() || bundler.loadNewSource();
+    var src = bundler.getExistingSourceNode();
+    var isNew = false;
+    if (src === null) {
+      src = bundler.loadNewSource();
+      isNew = true;
+    }
     ASSERT.call(this, src, 'source not found: "'+sourcePath+'"' );
 
     var satisfierScope = src['#scope'];
     if (this.forwardsSource(sourcePath))
       this.fillForwardedSourceEntryWith(sourcePath, satisfierScope);
+
+    if (isNew)
+      src['#imports'] = src['#scope'].satisfyWithBundler(bundler);
 
     var entriesImported = allSourcesImported.at(e);
     entriesImported && satisfierScope.satisfyEntries(entriesImported );
@@ -16158,7 +16189,7 @@ function(binding, name) {
   var ex = this.searchExports(name, null);
 
   ex || this.err('unresolved.name');
-  this.resolve1to2(binding, ex.ref.getDecl());
+  this.resolve1to2(binding, ex.ref.getDecl_real());
 };
 
 this.searchInOwnExports =
@@ -16200,13 +16231,13 @@ function(name, soFar) {
 
 this.resolve1to2 =
 function(slave, master) {
-  ASSERT.call(this, master === master.ref.getDecl(), 'master');
+  ASSERT.call(this, master === master.ref.getDecl_real(), 'master');
   ASSERT.call(this, master !== slave, 'same');
 
   var slaveRef = slave.ref;
   if (slaveRef) {
-    slaveRef.hasTarget = false;
-    slaveRef.targetDecl = null;
+//  slaveRef.hasTarget = false;
+//  slaveRef.targetDecl = null;
 
     var slaveRSList = slaveRef.rsList, l = 0;
     if (master.rsMap === null)
@@ -16394,7 +16425,7 @@ this.toResolvedName =
 function(id, bes, manualActivation) {
   ASSERT.call(this, id.type == 'Identifier', 'no');
 
-  var ref = id['#ref'], target = ref.getDecl();
+  var ref = id['#ref'], target = ref.getDecl_real();
   ASSERT.call(this, target, 'unresolved <'+id.name+'>');
 
   var isB = bes === 'binding';
@@ -16423,7 +16454,7 @@ function(name, isB) {
   else {
     var ref = this.cur.findRefAny_m(_m(name));
     ASSERT.call(this, ref, 'name is not used in the current scope: <'+name+'>');
-    target = ref.getDecl();
+    target = ref.getDecl_real();
   }
   return target;
 };
@@ -16735,8 +16766,8 @@ Transformers['CallExpression'] =
 function(n, isVal) {
   var ti = false, l = n.callee;
   if (l.type === 'Super') {
-    l['#liq'] = this.cur.findRefU_m(RS_SCALL).getDecl();
-    var th = this.cur.findRefU_m(RS_THIS).getDecl();
+    l['#liq'] = this.cur.findRefU_m(RS_SCALL).getDecl_nearest();
+    var th = this.cur.findRefU_m(RS_THIS).getDecl_nearest();
     l['#this'] = this.synth_BareThis(th);
     if (!(this.thisState & THS_IS_REACHED)) {
       ti = true;
@@ -16774,7 +16805,7 @@ function(n, isVal) {
   }
   else if (l.type === 'Super') {
     mem = l;
-    head = this.synth_BareThis(this.cur.findRefU_m(RS_THIS).getDecl());
+    head = this.synth_BareThis(this.cur.findRefU_m(RS_THIS).getDecl_nearest());
   }
   else
     head = this.tr(head, true );
@@ -17102,7 +17133,7 @@ Transformers['ThisExpression'] =
 function(n, isVal) {
   var ref = this.cur.findRefU_m(RS_THIS);
   ASSERT.call(this, ref, 'could not find [:this:]');
-  var th = ref.getDecl();
+  var th = ref.getDecl_nearest();
   var ths = this.thisState;
   if ((ths & THS_NEEDS_CHK) && !(ths & THS_IS_REACHED)) {
     var lg = th.ref.scope.scs.gocLG('ti');
@@ -17345,14 +17376,14 @@ function(ctor, oBinding, r) {
     var clsName = ctor['#scope'].parent.scopeName;
     if (clsName === null) break REF;
     var ref = scope.findRefU_m(_m(clsName.name));
-    if (ref === null || ref.getDecl() !== clsName) break REF;
+    if (ref === null || ref.getDecl_nearest() !== clsName) break REF;
     var sn = scope.scopeName = new ScopeName(clsName.name, null).t(DT_FNNAME); 
 
     sn.r(new Ref(scope));
 
     ref.hasTarget = false;
     ref.parentRef = null;
-    ref.targetDecl = null;
+    ref.targetDecl_nearest = null;
     sn.ref.absorbDirect(ref);
   }
 
@@ -17378,14 +17409,14 @@ function(mem, oBinding, r) {
     sn = cls.scopeName;
     var ref = scope.findRefU_m(_m(sn.name));
     if (ref === null) { sn = null; break REF; }
-    ASSERT.call(this, sn === ref.getDecl(), 'sn' );
+    ASSERT.call(this, sn === ref.getDecl_nearest(), 'sn' );
     sn = new ScopeName(sn.name, null).t(DT_CLSNAME);
     ASSERT.call(this,scope.parent.isClass(),'cls');
     sn.r(new Ref(scope.parent));
 
     ref.hasTarget = false;
     ref.parentRef = null;
-    ref.targetDecl = null;
+    ref.targetDecl_nearest = null;
     sn.ref.absorbDirect(ref);
 
     this.makeReached(sn);

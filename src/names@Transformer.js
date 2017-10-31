@@ -59,7 +59,7 @@ this.toResolvedName =
 function(id, bes, manualActivation) {
   ASSERT.call(this, id.type == 'Identifier', 'no');
 
-  var ref = id['#ref'], target = ref.getDecl();
+  var ref = id['#ref'], target = ref.getDecl_real();
   ASSERT.call(this, target, 'unresolved <'+id.name+'>');
 
   var isB = bes === 'binding';
@@ -88,7 +88,7 @@ function(name, isB) {
   else {
     var ref = this.cur.findRefAny_m(_m(name));
     ASSERT.call(this, ref, 'name is not used in the current scope: <'+name+'>');
-    target = ref.getDecl();
+    target = ref.getDecl_real();
   }
   return target;
 };

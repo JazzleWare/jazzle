@@ -2,8 +2,8 @@ Transformers['CallExpression'] =
 function(n, isVal) {
   var ti = false, l = n.callee;
   if (l.type === 'Super') {
-    l['#liq'] = this.cur.findRefU_m(RS_SCALL).getDecl();
-    var th = this.cur.findRefU_m(RS_THIS).getDecl();
+    l['#liq'] = this.cur.findRefU_m(RS_SCALL).getDecl_nearest();
+    var th = this.cur.findRefU_m(RS_THIS).getDecl_nearest();
     l['#this'] = this.synth_BareThis(th);
     if (!(this.thisState & THS_IS_REACHED)) {
       ti = true;
@@ -41,7 +41,7 @@ function(n, isVal) {
   }
   else if (l.type === 'Super') {
     mem = l;
-    head = this.synth_BareThis(this.cur.findRefU_m(RS_THIS).getDecl());
+    head = this.synth_BareThis(this.cur.findRefU_m(RS_THIS).getDecl_nearest());
   }
   else
     head = this.tr(head, true );

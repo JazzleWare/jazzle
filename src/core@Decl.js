@@ -8,10 +8,10 @@ function(s) {
 this.r =
 function(r) {
   ASSERT_EQ.call(this, this.ref, null);
-  ASSERT_EQ.call(this, r.targetDecl, null);
+  ASSERT_EQ.call(this, r.targetDecl_nearest, null);
   ASSERT_EQ.call(this, r.hasTarget, false);
   this.ref = r;
-  r.targetDecl = this;
+  r.targetDecl_nearest = this;
   r.hasTarget = true;
   return this;
 };
@@ -63,4 +63,17 @@ function(scope) {
   this.rsMap[id] = scope ;
   this.ref.rsList.push(scope);
   return true;
+};
+
+this.getDecl_real =
+function() {
+  if (this.realTarget !== null)
+    return this.realTarget;
+
+  var t = this;
+  while (t.ref.parentRef !== null)
+    t = t.ref.parentRef.getDecl_nearest();
+
+  this.realTarget = t;
+  return t;
 };

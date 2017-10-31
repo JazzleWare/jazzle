@@ -212,7 +212,9 @@ function cvc(resolvedName) {
 }
 
 function tg(resolvedName) {
-  return resolvedName['#ref'].getDecl();
+  var real = resolvedName['#ref'].getDecl_real();
+  ASSERT.call(this, real.ref.parentRef === null, 'relocated' );
+  return real;
 }
 
 function iskw(name, v, s) {
