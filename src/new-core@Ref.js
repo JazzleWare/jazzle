@@ -56,39 +56,3 @@ function() {
     targetRef.lhs = 0;
   return targetRef.lhs++;
 };
-
-this.cut =
-function() {
-  ASSERT.call(this, this.hasTarget, 'cut');
-  this.hasTarget = false;
-  this.targetDecl_nearest = null;
-
-  return this;
-};
-
-this.getLHS =
-function() {
-  var targetRef = this.getDecl().ref;
-  return targetRef.lhs < 0 ? 0 : targetRef.lhs;
-};
-
-this.updateRSList =
-function(rsList) {
-  var rsMap = {};
-  var e = 0;
-  var list = this.rsList;
-  while (e < list.length)
-    rsMap[list[e++].scopeID] = true;
-
-  e = 0;
-  list = rsList;
-  while (e < list.length) {
-    var elem = list[e++];
-    if (!HAS.call(rsMap, elem.scopeID)) {
-      this.rsList.push(elem);
-      rsMap[elem.scopeID] = true
-    }
-  }
-
-  return this;
-};

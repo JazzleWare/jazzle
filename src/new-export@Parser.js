@@ -160,11 +160,22 @@ this.parseExport_elemDefault =
 function(c0,loc0) {
   var cb = this.cb; this.suc(cb, 'default.bef' );
   var defaultID = this.id();
-  var elem = null, stmt = false;
+  var elem = null;
 
   var entry = this.scope.registerExportedEntry_oi('*default*', defaultID, '*default*');
+  var stmt = false; 
+  ASSERT.call(this, entry.target === null, 'target' );
+
+  var lg = this.scope.gocLG('default');
+  var liqDefault = lg.newL();
+  lg.seal();
+
+  liqDefault.name = "_default";
+
+  entry.target = {prev: null, v: liqDefault, next: null};
+  
   if (this.lttype !== TK_ID)
-    elem = entry.value = this.parseNonSeq(PREC_NONE, CTX_TOP);
+    elem = this.parseNonSeq(PREC_NONE, CTX_TOP);
   else {
     this.canBeStatement = true;
     switch (this.ltval) {
@@ -182,14 +193,17 @@ function(c0,loc0) {
         this.exprHead = elem;
         elem = this.parseNonSeq(PREC_NONE, CTX_TOP) ;
       }
+      else { this.inferName(defaultID, elem, false); }
       break;
     case 'function':
       this.ex = DT_EDEFAULT;
       elem = this.parseFn(CTX_DEFAULT, ST_DECL);
+      this.inferName(defaultID, elem, false );
       break;
     case 'class':
       this.ex = DT_EDEFAULT;
-      elem = this.parseClass(CTX_DEFAULT);
+      elem = this.parseClass(CTX_DEFAULT );
+      this.inferName(defaultID, elem, false);
       break;
     default:
       this.canBeStatement = false;
@@ -209,7 +223,7 @@ function(c0,loc0) {
     loc: { start: loc0, end: this.semiLoc || elem.loc.end },
     end: this.semiC || elem.end,
     declaration: core(elem),
-    '#y': 0, '#c': cb
+    '#y': 0, '#c': cb, '#binding': liqDefault
   };
 };
 

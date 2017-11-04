@@ -118,4 +118,7 @@ function(slave, master) {
     ASSERT.call(this, slave.type & DT_EFW, 'slave' );
     slave.ref = master.ref;
   }
+
+  master.ref.i += slaveRef.i;
+  master.ref.d++; // TODO: must be exact
 };

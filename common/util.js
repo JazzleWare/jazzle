@@ -324,6 +324,7 @@ mex.ej_adjust = function(e, j, name) {
   delete j['#t'];
   delete j['#ref'];
   delete j['#cvtz'];
+  delete j['#binding'];
 
   if (e.tokens) {
     e.tokens = mex.clearComments(e.tokens);

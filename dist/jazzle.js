@@ -4906,6 +4906,20 @@ function(n) {
 
 },
 function(){
+/*  TODO: raw, for alternative bundlers */Emitters['#ExportDefaultDeclaration'] =
+function(n, isVal) {
+  var b = n['#binding'];
+  var elem = n.declaration;
+  this.wt('var',ETK_ID).bs();
+  this.w(b.synthName).os().w('=').os();
+  this.eN(elem, EC_NONE, true);
+};
+
+/*  TODO: raw, for alternative bundlers */Emitters['#ImportDeclaration'] =
+function(n, isVal) {};
+
+},
+function(){
 Emitters['#ForInStatementWithDeclarationHead' ] =
 function(n, flags, isStmt) {
   ASSERT_EQ.call(this, isStmt, true);
@@ -6204,18 +6218,20 @@ function(left, right, isComputed) {
 
   var t = DT_NONE, c = false;
   switch (right.type) {
-  case 'ArrowFunctionExpression':
-    t = DT_FN;
-    break;
   case 'FunctionExpression':
+  case 'FunctionDeclaration': // TODO: must be a default ex
     if (right.id) return null;
     t = DT_FN;
     break;
   case 'ClassExpression':
     if (right.id)
       return null;
-    t = DT_CLS; c = true;
+    t = DT_CLS;
+    c = true;
     break; 
+  case 'ArrowFunctionExpression':
+    t = DT_FN;
+    break;
 
   default: return null
   }
@@ -6229,9 +6245,11 @@ function(left, right, isComputed) {
     return null;
 
   var scopeName = null;
-  scopeName = scope.setName(name, null).t(t);
-  scopeName.site = left;
-  scopeName.synthName = scopeName.name;
+  if (name !== 'default') {
+    scopeName = scope.setName(name, null).t(t);
+    scopeName.site = left;
+    scopeName.synthName = scopeName.name;
+  }
 
   if (c && right['#ct'] !== null) this.inferName(left, right['#ct'].value, false);
 
@@ -7266,11 +7284,22 @@ this.parseExport_elemDefault =
 function(c0,loc0) {
   var cb = this.cb; this.suc(cb, 'default.bef' );
   var defaultID = this.id();
-  var elem = null, stmt = false;
+  var elem = null;
 
   var entry = this.scope.registerExportedEntry_oi('*default*', defaultID, '*default*');
+  var stmt = false; 
+  ASSERT.call(this, entry.target === null, 'target' );
+
+  var lg = this.scope.gocLG('default');
+  var liqDefault = lg.newL();
+  lg.seal();
+
+  liqDefault.name = "_default";
+
+  entry.target = {prev: null, v: liqDefault, next: null};
+  
   if (this.lttype !== TK_ID)
-    elem = entry.value = this.parseNonSeq(PREC_NONE, CTX_TOP);
+    elem = this.parseNonSeq(PREC_NONE, CTX_TOP);
   else {
     this.canBeStatement = true;
     switch (this.ltval) {
@@ -7288,14 +7317,17 @@ function(c0,loc0) {
         this.exprHead = elem;
         elem = this.parseNonSeq(PREC_NONE, CTX_TOP) ;
       }
+      else { this.inferName(defaultID, elem, false); }
       break;
     case 'function':
       this.ex = DT_EDEFAULT;
       elem = this.parseFn(CTX_DEFAULT, ST_DECL);
+      this.inferName(defaultID, elem, false );
       break;
     case 'class':
       this.ex = DT_EDEFAULT;
-      elem = this.parseClass(CTX_DEFAULT);
+      elem = this.parseClass(CTX_DEFAULT );
+      this.inferName(defaultID, elem, false);
       break;
     default:
       this.canBeStatement = false;
@@ -7315,7 +7347,7 @@ function(c0,loc0) {
     loc: { start: loc0, end: this.semiLoc || elem.loc.end },
     end: this.semiC || elem.end,
     declaration: core(elem),
-    '#y': 0, '#c': cb
+    '#y': 0, '#c': cb, '#binding': liqDefault
   };
 };
 
@@ -14932,42 +14964,6 @@ function() {
   return targetRef.lhs++;
 };
 
-this.cut =
-function() {
-  ASSERT.call(this, this.hasTarget, 'cut');
-  this.hasTarget = false;
-  this.targetDecl_nearest = null;
-
-  return this;
-};
-
-this.getLHS =
-function() {
-  var targetRef = this.getDecl().ref;
-  return targetRef.lhs < 0 ? 0 : targetRef.lhs;
-};
-
-this.updateRSList =
-function(rsList) {
-  var rsMap = {};
-  var e = 0;
-  var list = this.rsList;
-  while (e < list.length)
-    rsMap[list[e++].scopeID] = true;
-
-  e = 0;
-  list = rsList;
-  while (e < list.length) {
-    var elem = list[e++];
-    if (!HAS.call(rsMap, elem.scopeID)) {
-      this.rsList.push(elem);
-      rsMap[elem.scopeID] = true
-    }
-  }
-
-  return this;
-};
-
 }]  ],
 [ResourceResolver.prototype, [function(){
 // TODO: fetch nodes based on id's, such that, in case the uri's 'a/b' and 'l/e' both point to the same file on a disk, and we have only saved 'a/b', this.get('l/e') returns the 
@@ -16253,6 +16249,9 @@ function(slave, master) {
     ASSERT.call(this, slave.type & DT_EFW, 'slave' );
     slave.ref = master.ref;
   }
+
+  master.ref.i += slaveRef.i;
+  master.ref.d++; // TODO: must be exact
 };
 
 }]  ],
@@ -17454,10 +17453,43 @@ function(n, isVal) {
 },
 function(){
 Transformers['ExportNamedDeclaration'] = 
+function(n, isVal) {
+  // TODO: transform local names to rns when bundling is not active
+
+  if (n.declatarion !== null)
+    n.declaration = this.tr(n.declaration, false);
+
+  n.type = '#' + n.type ;
+  return n;
+};
+
 Transformers['ExportDefaultDeclaration'] =
-Transformers['ExportAllDeclaration'] = function(n, isVal) { return this.synth_Skip(); };
+function(n, isVal) {
+  var elem = n.declaration;
+  var isStmt = false;
+  switch (elem.type) {
+  case 'FunctionDeclaration':
+  case 'ClassDeclaration':
+    isStmt = true;
+  }
+
+  n. declaration = this.tr(elem, isStmt);
+  n.type = '#' + n.type ;
+
+  return n;
+};
+
+Transformers['ExportAllDeclaration'] =
+function(n, isVal) {
+  n.type = '#' + n.type ;
+  return n;
+};
+
 Transformers['ImportDeclaration'] =
-function(n, isVal) { return this.synth_Skip(); };
+function(n, isVal) {
+  n.type = '#' + n.type ;
+  return n; 
+};
 
 },
 function(){

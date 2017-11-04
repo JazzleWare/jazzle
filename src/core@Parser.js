@@ -5,18 +5,20 @@ function(left, right, isComputed) {
 
   var t = DT_NONE, c = false;
   switch (right.type) {
-  case 'ArrowFunctionExpression':
-    t = DT_FN;
-    break;
   case 'FunctionExpression':
+  case 'FunctionDeclaration': // TODO: must be a default ex
     if (right.id) return null;
     t = DT_FN;
     break;
   case 'ClassExpression':
     if (right.id)
       return null;
-    t = DT_CLS; c = true;
+    t = DT_CLS;
+    c = true;
     break; 
+  case 'ArrowFunctionExpression':
+    t = DT_FN;
+    break;
 
   default: return null
   }
@@ -30,9 +32,11 @@ function(left, right, isComputed) {
     return null;
 
   var scopeName = null;
-  scopeName = scope.setName(name, null).t(t);
-  scopeName.site = left;
-  scopeName.synthName = scopeName.name;
+  if (name !== 'default') {
+    scopeName = scope.setName(name, null).t(t);
+    scopeName.site = left;
+    scopeName.synthName = scopeName.name;
+  }
 
   if (c && right['#ct'] !== null) this.inferName(left, right['#ct'].value, false);
 
