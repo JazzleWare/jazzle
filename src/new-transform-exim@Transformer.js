@@ -12,14 +12,23 @@ function(n, isVal) {
 Transformers['ExportDefaultDeclaration'] =
 function(n, isVal) {
   var elem = n.declaration;
-  var isStmt = false;
+  var isVal = true;
   switch (elem.type) {
   case 'FunctionDeclaration':
+    if (elem.id === null)
+      elem.type = 'FunctionExpression';
+    else
+      isVal = false;
+    break;
   case 'ClassDeclaration':
-    isStmt = true;
+    if (elem.id === null)
+      elem.type = 'ClassExpression';
+    else
+      isVal = false;
+    break;
   }
 
-  n. declaration = this.tr(elem, isStmt);
+  n. declaration = this.tr(elem, isVal);
   n.type = '#' + n.type ;
 
   return n;

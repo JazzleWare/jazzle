@@ -156,6 +156,16 @@ function(c0,loc0) {
   };
 };
 
+this.createDefaultLiq =
+function() {
+  var lg = this.scope.gocLG('default');
+  var liqDefault = lg.newL();
+  lg.seal();
+
+  liqDefault.name = "_default";
+  return liqDefault;
+};
+
 this.parseExport_elemDefault =
 function(c0,loc0) {
   var cb = this.cb; this.suc(cb, 'default.bef' );
@@ -166,14 +176,10 @@ function(c0,loc0) {
   var stmt = false; 
   ASSERT.call(this, entry.target === null, 'target' );
 
-  var lg = this.scope.gocLG('default');
-  var liqDefault = lg.newL();
-  lg.seal();
-
-  liqDefault.name = "_default";
-
-  entry.target = {prev: null, v: liqDefault, next: null};
+  entry.target = {prev: null, v: null, next: null};
   
+  var target = null;
+
   if (this.lttype !== TK_ID)
     elem = this.parseNonSeq(PREC_NONE, CTX_TOP);
   else {
@@ -213,6 +219,19 @@ function(c0,loc0) {
     stmt = this.foundStatement;
   }
 
+  // for named [fns/clses], a 'var <name> = <the default elem>' is unnecessary
+  var needsTarget = true;
+  switch (elem.type) {
+  case 'FunctionDeclaration':
+  case 'ClassDeclaration':
+    if (elem.id !== null) {
+      target = this.scope.findDeclOwn_m(_m(elem.id.name));
+      needsTarget = false;
+    }
+  }
+
+  entry.target.v = target || this.createDefaultLiq();
+
   if (!stmt)
     this.semi(core(elem)['#c'], 'aft') || this.err('no.semi');
 
@@ -223,7 +242,7 @@ function(c0,loc0) {
     loc: { start: loc0, end: this.semiLoc || elem.loc.end },
     end: this.semiC || elem.end,
     declaration: core(elem),
-    '#y': 0, '#c': cb, '#binding': liqDefault
+    '#y': 0, '#c': cb, '#binding': needsTarget ? entry.target.v : null
   };
 };
 
