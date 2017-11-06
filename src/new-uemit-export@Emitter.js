@@ -1,4 +1,10 @@
-/*  TODO: raw, for alternative bundlers */Emitters['#ExportDefaultDeclaration'] =
+/*  TODO: Raw, for alternative bundlers */Emitters['#ExportNamedDeclaration'] = 
+function(n, isVal) {
+  if (n.declaration)
+    return this.emitAny(n.declaration, EC_START_STMT, true);
+};
+
+/*  TODO: Raw, for alternative bundlers */Emitters['#ExportDefaultDeclaration'] =
 function(n, isVal) {
   var b = n['#binding'];
   var elem = n.declaration;
@@ -11,5 +17,5 @@ function(n, isVal) {
     this.eA(elem, EC_START_STMT, true);
 };
 
-/*  TODO: raw, for alternative bundlers */Emitters['#ImportDeclaration'] =
+/*  TODO: Raw, for alternative bundlers */Emitters['#ImportDeclaration'] =
 function(n, isVal) {};
