@@ -1,6 +1,10 @@
-function ErrorString(stringsAndTemplates) {
-  this.stringsAndTemplates = stringsAndTemplates;
-}
+ import Template from '../../share/Template/cls.js';
+ import {ASSERT} from '../../helpers/util.js';
+ import {CH_LCURLY} from '../../constants/constants.js';
+
+ export function ErrorString(stringsAndTemplates) {
+   this.stringsAndTemplates = stringsAndTemplates;
+ }
 
 function eof_rcurly(str, i) {
   if (i >= str.length)

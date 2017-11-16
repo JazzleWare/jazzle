@@ -1,23 +1,27 @@
-this.isSlash =
+ import {ASSERT} from '../../helpers/util.js';
+ import {CH_DIV} from '../../constants/constants.js';
+ import {cls} from './cls.js';
+
+cls.isSlash =
 function(path, at) {
   return path.length <= at ? false : 
     path.charCodeAt(at) === CH_DIV;
 };
 
-this.findSlash =
+cls.findSlash =
 function(path, at) {
   ASSERT.call(this, arguments.length === 2, 'arguments');
   return path.indexOf('/', at);
 };
 
-this.findLastSlash =
+cls.findLastSlash =
 function(path, at) {
   ASSERT.call(this, arguments.length === 2, 'arguments');
   return path.lastIndexOf('/', at);
 }; 
 
 // tail(a/b) -> b; tail(a) -> ""
-this.tail =
+cls.tail =
 function(path) {
   var slash = this.findLastSlash(path, path.length);
   if (slash === -1)
@@ -27,13 +31,13 @@ function(path) {
 };
 
 // head(a/b) -> a; head(a) -> ""
-this.head =
+cls.head =
 function(path) {
   var slash = this.findLastSlash(path, path.length);
   return slash === -1 ? "" : slash === 0 ? path.charAt(0) : path.substring(0, slash);
 };
  
-this.len =
+cls.len =
 function(path, start) {
   if (start >= path.length)
     return 0;
@@ -50,30 +54,30 @@ function(path, start) {
   return tail - start;
 };
 
-this.trimSlash =
+cls.trimSlash =
 function(path) {
   return path !== '/' && this.isSlash(path, path.length-1) ?
     path.substring(0, path.length-1) : path;
 };
 
-this.trimAll =
+cls.trimAll =
 function(path) {
   var slash = this.findSlash(path, 0);
   return slash === -1 ? path :
     slash === 0 ? path.charAt(0) : path.substring(0,slash);
 };
 
-this.hasTailSlash =
+cls.hasTailSlash =
 function(path) {
   return this.isSlash(path, path.length-1) ;
 };
 
-this.hasHeadSlash =
+cls.hasHeadSlash =
 function(path) {
   return this.isSlash(path, 0);
 };
 
-this.joinRaw =
+cls.joinRaw =
 function(a, b, nd) {
   if (this.hasHeadSlash(b))
     return b;

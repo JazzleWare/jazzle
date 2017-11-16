@@ -12,7 +12,10 @@
 // 
 // what is its output supposed to be?
 
-this.enter = 
+ import {cls} from './cls.js';
+ import {ASSERT} from '../../helpers/util.js';
+
+cls.enter = 
 function(relPath) {
   var ll = { uri: this.curURI, dir: this.curDir };
   var man = this.pathMan;
@@ -30,23 +33,23 @@ function(relPath) {
   return ll;
 };
 
-this.setURIAndDir =
+cls.setURIAndDir =
 function(uri, dir) {
   this.curURI = uri;
   this.curDir = dir;
 };
 
-this.save =
+cls.save =
 function(n) {
   this.resolver.cache(this.curURI, n);
 };
 
-this.getExistingSourceNode =
+cls.getExistingSourceNode =
 function() {
   return this.resolver.loadCached(this.curURI);
 };
 
-this.loadNewSource =
+cls.loadNewSource =
 function() {
   ASSERT.call(this, !this.resolver.hasInCache(this.curURI), 'incache');
   var n = this.resolver.loadNew(this.curURI);

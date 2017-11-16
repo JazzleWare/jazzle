@@ -1,4 +1,4 @@
-function Bundler(pathMan) {
+ export default function Bundler(pathMan) {
   this.type = '#Bundler';
   this.pathMan = pathMan;
   this.curDir = "";
@@ -8,4 +8,6 @@ function Bundler(pathMan) {
   this['#scope'] = null;
   this.rootNode = null;
   this.bundleScope = null;
-}
+ }
+
+ export var cls = Bundler.prototype ;
