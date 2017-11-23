@@ -16,6 +16,8 @@ this.Transformer = Transformer;
 
 // this.Emitter2 = Emitter2;
 
+this.AutoImex = AutoImex;
+
 this.transpile = function(src, options) {
   var p = new Parser(src, options);
   return new Emitter().eA(
