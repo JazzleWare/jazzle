@@ -84,10 +84,12 @@ function(uri) {
 this.resolveAll =
 function() {
   var list = this.sources, l = 0, len = list.length();
+  console.error(' --------- ['+len+'] sources ----------; START');
   while (l < len) {
     var elem = list.at(l++ );
     this.tryResolveExternals(elem);
   }
+  console.error(' --------- ['+l+'/'+len+'] complete ---------');
 };
 
 this.tryResolveExternals =
@@ -99,7 +101,8 @@ function(n) {
     var b = this.findBundleBinding(name.name);
     if (b) {
       sourceScope['#importList'].names.push({name: name.name, target: b});
-      console.log('  ['+n['#uri']+']:import ['+name.name+'] from ['+b.uri+']');
+      console.log('  ['+n['#uri']+']:import ['+name.name+'] from ['+b.uri+'] '+
+        (name.name === b.binding.ref.scope['#exportList'].defaultExpr ? 'default' : 'raw' ) );
     }
   }
 };
@@ -110,7 +113,7 @@ function(uri, elem) {
   var b = this.findBundleBinding(name);
   if (b) ASSERT.call(this, false, 'name ['+name+'] exists @['+b.uri+']');
 
-  return this.bundleBindings.set(_m(name), {uri: uri, name: name});
+  return this.bundleBindings.set(_m(name), {uri: uri, binding: elem});
 };
 
 this.findBundleBinding =
