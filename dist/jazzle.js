@@ -17,6 +17,7 @@ function AutoImex() {
   this.sources = new SortedObj();
   this.unresolvedNames = new SortedObj();
   this.bundleBindings = new SortedObj();
+  this.clsUriList = {};
 }
 ;
 function BundleScope() { ConcreteScope.call(this, null, ST_BUNDLE); }
@@ -1984,6 +1985,11 @@ function(uri) {
     this.insertBundleBinding(uri, binding);
     ASSERT.call(this, scope.findDeclAny_m(_m('cls')) === null, 'cls exists in ' + uri );
     scope['#exportList'].bindings.push({real: 'cls', outer: 'cls'});
+    var cul = this.clsUriList;
+    var mname = _m(name);
+    ASSERT.call(this, !HAS.call(cul, mname),
+      'class has been registered: ['+name+']<==['+uri+']');
+    cul[mname] = uri;
     logBinding(name, '<<cls>>', uri);
   }
   else if (at > 0) {
@@ -2071,8 +2077,13 @@ function() {
   var list = this.sources, l = 0, len = list.length();
   while (l < len) {
     var elem = list.at(l++);
+    this.onStartImports(elem);
     this.writeImports(elem);
+    this.onFinishImports(elem);
+
+    this.onStartExports(elem);
     this.writeExports(elem);
+    this.onFinishExports(elem);
   }
 };
 
@@ -2103,7 +2114,7 @@ function writeImports(n) {
   len = usedSources.length(), l = 0;
   while (l < len) {
     var sourceBindings = usedSources.at(l);
-    var sourceUri = usedSources.keys[l];
+    var sourceUri = _u(usedSources.keys[l]);
     var str = "";
     if (sourceBindings.defaultName !== "")
       str += sourceBindings.defaultName;
@@ -2118,13 +2129,79 @@ function writeImports(n) {
       }
       str += '}';
     }
-    console.log('  import ' + str + ' from ' + sourceUri );
+    this.onImport({str: str, to: uri, from: sourceUri, usedSources: usedSources});
     l++;
   }
 };
 
 this.writeExports = function(elem) {};
 
+this.path1to2 =
+function(from, to) {
+  var fromNum = 0, toNum = 0;
+  var fromStart = 0, toStart = 0;
+  var fromElemLen = 0, toElemLen = 0;
+
+  var manp = new PathMan();
+  var str = "";
+
+  var hasLeadingToElem = false;
+
+  while (true) {
+    fromElemLen = manp.len(from, fromStart);
+    if (fromElemLen === 0) {
+      ASSERT.call(this, fromNum > 0, '['+from+'] -- from has no elems');
+      break;
+    }
+
+    toElemLen = manp.len(to, toStart);
+    if (toElemLen === 0) {
+      ASSERT.call(this, toNum > 0, '['+to+'] to has no elems');
+      break;
+    }
+
+    var fromElem = manp.trimSlash(from.substr(fromStart, fromElemLen));
+    fromNum++;
+    fromStart += fromElemLen;
+
+    var toElem = manp.trimSlash(to.substr(toStart, toElemLen));
+    toNum++;
+    toStart += toElemLen;
+
+    if (fromElem !== toElem) {
+      str = '..';
+      hasLeadingToElem = true;
+      break;
+    }
+  }
+
+  while (true) {
+    fromElemLen = manp.len(from, fromStart);
+    if (fromElemLen === 0)
+      break;
+    if (str.length) str += '/';
+    str += '..';
+    fromStart += fromElemLen;
+  }
+
+  if (hasLeadingToElem) {
+    ASSERT.call(this, str.length, 'str must not be empty if hasLeadingToElem is set to on' );
+    str += '/' + toElem;
+  }
+
+  while (true) {
+    toElemLen = manp.len(to, toStart);
+    if (toElemLen === 0)
+      break;
+    var toElem = manp.trimSlash(to.substr(toStart, toElemLen));
+    if (str.length) str += '/';
+    else str = './';
+    str += toElem;
+    toStart += toElemLen;
+  }
+
+  return str;
+};
 
 }]  ],
 [BundleScope.prototype, [function(){

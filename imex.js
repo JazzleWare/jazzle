@@ -1,3 +1,18 @@
+function rewrite(str, rules) {
+  var r = 0;
+  while (r < rules.length) {
+    var rule = rules[r++];
+    if (rule === null)
+      break;
+    if (str.match(rule.regex()))
+      return str.replace(rule.regex(), rule.sub);
+  }
+  if (rule || r < rules.length)
+    throw new Error('not match for ['+str+']');
+
+  return str;
+}
+
 var jazzle = require('./dist/jazzle.js');
 var fs = require('fs');
 var AutoImex = jazzle.AutoImex;
@@ -19,5 +34,27 @@ while (l < list.length)
 
 autimex.resolveAll();
 
+autimex.onStartImports =
+function(elem) {
+  console.log('starting ['+elem['#uri']+']');
+};
+
+autimex.onImport =
+function(o) {
+  console.log('  import ['+o.str+'] from ['+o.from+'] to ['+o.to+']');
+};
+
+autimex.onFinishImports =
+function(elem) {
+  console.log('finish ['+elem['#uri']+']\n');
+};
+
+autimex.onStartExports =
+function(elem) {};
+
+autimex.onFinishExports =
+function(elem) {};
+
 autimex.flush();
+
 

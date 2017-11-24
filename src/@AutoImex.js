@@ -4,4 +4,5 @@ function AutoImex() {
   this.sources = new SortedObj();
   this.unresolvedNames = new SortedObj();
   this.bundleBindings = new SortedObj();
+  this.clsUriList = {};
 }
