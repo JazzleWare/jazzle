@@ -41,6 +41,10 @@ var logE = function() {
 }();
 autimex.logE = function() {};
 
+var wr = function() {
+  return console.log.apply(console, arguments);
+};
+
 var list = null; list = process.argv;
 var l = 2;
 
@@ -53,15 +57,18 @@ autimex.resolveAll();
 
 autimex.onStartImports =
 function(elem) {
-  logE(1)('starting ['+elem['#uri']+']');
+//logE(1)('starting ['+elem['#uri']+']');
+  var uri = elem['#uri'];
+  wr('URL="'+uri+'"');
+  wr('echo \''+rewrite(manp.tail(uri), RULES)+'\' >> "$URL.name.extra"');
+  wr('(cat <<AUTIMEX');
 };
 
 autimex.onImport =
 function(o) {
   var rewrittenFrom = rewrite(manp.tail(o.from), RULES);
   var rewrittenTo = rewrite(manp.tail(o.to), RULES);
-
-  console.log('  import ['+o.str+'] from ['+o.from+'='+rewrittenFrom+'] to ['+o.to+'=' + rewrittenTo+']');
+  wr('  import '+o.str+' from \''+rewrittenFrom+'\';');
 };
 
 autimex.onFinishImports =
@@ -75,10 +82,11 @@ function(elem) {
     logE(0)('clsThisList', m, 12, scope['#clsThisList']);
     var im = autimex.clsUriList[m+'%'];
     var rewrittenFrom = rewrite(manp.tail(im), RULES);
-    console.log('  import {cls} from '+'['+im+'='+rewrittenFrom+'] to ['+uri+'='+rewrittenTo+']');
+    wr('  import {cls} from \''+rewrittenFrom+'\';');
   }
+  wr('AUTIMEX\n) >> "$URL.imports.extra"');
 
-  logE(1)('finish ['+elem['#uri']+']\n');
+  logE(0)('finish ['+elem['#uri']+']\n');
 };
 
 autimex.onStartExports =
