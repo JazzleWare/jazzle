@@ -1,3 +1,5 @@
+  import ConcreteScope from '../ConcreteScope/cls.js';
+  import SortedObj from '../SortedObj/cls.js';
 
 function SourceScope(parent, st) {
   ConcreteScope.call(this, parent, st);

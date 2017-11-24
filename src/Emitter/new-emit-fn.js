@@ -1,3 +1,6 @@
+  import {EC_START_STMT, EC_NEW_HEAD, EC_NONE, ETK_ID} from '../other/constants.js';
+  import {wcb_afterVar, wcb_afterRet} from '../other/wcb.js';
+  import {cls} from './cls.js';
 
 this.emitExprFn =
 function(n, flags, isStmt) {

@@ -1,3 +1,7 @@
+  import {isCharSeq} from '../other/util.js';
+  import {isNum} from '../other/ctype.js';
+  import {CH_0} from '../other/constants.js';
+  import {cls} from './cls.js';
 
 this.resetLastRegexElem =
 function() {

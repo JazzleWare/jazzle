@@ -1,3 +1,8 @@
+  import {Emitters} from '../other/globals.js';
+  import {CB} from '../other/util.js';
+  import {EC_EXPR_HEAD, EC_NONE, ETK_MIN, ETK_ADD, ETK_ID, ASSERT} from '../other/constants.js';
+  import {wcb_MIN_u, wcb_ADD_u, wcb_afterVDT} from '../other/wcb.js';
+  import {cls} from './cls.js';
 
 Emitters['UnaryExpression'] = 
 function(n, flags, isStmt) {

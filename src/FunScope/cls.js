@@ -1,3 +1,6 @@
+  import ConcreteScope from '../ConcreteScope/cls.js';
+  import {ST_FN} from '../other/scope-constants.js';
+  import SortedObj from '../SortedObj/cls.js';
 
 // TODO: inBody makes the logic brittle
 function FunScope(parent, type) {

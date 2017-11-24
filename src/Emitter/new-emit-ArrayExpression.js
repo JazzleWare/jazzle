@@ -1,3 +1,6 @@
+  import {Emitters} from '../other/globals.js';
+  import {EC_NEW_HEAD} from '../other/constants.js';
+  import {cls} from './cls.js';
 
 Emitters['ArrayExpression'] =
 function(n, flags, isStmt) {

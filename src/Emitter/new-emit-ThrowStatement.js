@@ -1,3 +1,8 @@
+  import {Emitters} from '../other/globals.js';
+  import {CB} from '../other/util.js';
+  import {ETK_ID, EC_NONE} from '../other/constants.js';
+  import {wcb_afterRet} from '../other/wcb.js';
+  import {cls} from './cls.js';
 
 Emitters['ThrowStatement'] =
 function(n, flags, isStmt) {

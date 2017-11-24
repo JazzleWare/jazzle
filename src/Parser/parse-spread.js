@@ -1,3 +1,9 @@
+  import {PREC_NONE} from '../other/lexer-constants.js';
+  import {PAREN_NODE} from '../other/constants.js';
+  import {errt_ptrack, errt_atrack} from '../other/errt.js';
+  import {ERR_PAREN_UNBINDABLE} from '../other/error-constants.js';
+  import {core} from '../other/util.js';
+  import {cls} from './cls.js';
 
 this.parseSpread = 
 function(ctx) {

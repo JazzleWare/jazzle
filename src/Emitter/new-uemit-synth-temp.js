@@ -1,3 +1,7 @@
+  import {UntransformedEmitters} from '../other/globals.js';
+  import {ETK_ID, EC_EXPR_HEAD, EC_IN} from '../other/constants.js';
+  import {CB} from '../other/util.js';
+  import {cls} from './cls.js';
 
 UntransformedEmitters['temp'] =
 function(n, flags, isStmt) {

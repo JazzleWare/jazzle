@@ -1,3 +1,5 @@
+  import {ASSERT} from '../other/constants.js';
+  import {cls} from './cls.js';
 
 this.isValidName = function(name) {
   return this.isValidName_m(name+'%');

@@ -1,3 +1,8 @@
+  import {Emitters} from '../other/globals.js';
+  import {CB, findElem} from '../other/util.js';
+  import {ETK_ID, EC_NEW_HEAD, EC_NONE} from '../other/constants.js';
+  import {wcb_afterNew} from '../other/wcb.js';
+  import {cls} from './cls.js';
 
 Emitters['NewExpression'] =
 function(n, flags, isStmt) {

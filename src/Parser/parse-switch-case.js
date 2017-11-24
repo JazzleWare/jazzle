@@ -1,3 +1,7 @@
+  import {TK_ID} from '../other/lexer-constants.js';
+  import {core} from '../other/util.js';
+  import {CTX_TOP, CH_COLON} from '../other/constants.js';
+  import {cls} from './cls.js';
 
 this.parseSwitchCase = function () {
   var c0 = -1, cb = {}, loc0 = null;

@@ -1,3 +1,4 @@
+  import {cls} from './cls.js';
 
 this.applyTo = function(obj) {
   var errorMessage = "",

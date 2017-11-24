@@ -1,3 +1,5 @@
+  import {CH_DIV} from '../other/constants.js';
+  import {cls} from './cls.js';
 
 this.readDiv =
 function() {

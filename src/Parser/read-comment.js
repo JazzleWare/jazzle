@@ -1,3 +1,6 @@
+  import {CH_CARRIAGE_RETURN, CH_LINE_FEED, CH_MUL, CH_DIV} from '../other/constants.js';
+  import Comments from '../Comments/cls.js';
+  import {cls} from './cls.js';
 
 this.readComment_line =
 function() {

@@ -1,3 +1,5 @@
+  import {CH_DIV, ASSERT} from '../other/constants.js';
+  import {cls} from './cls.js';
 
 this.isSlash =
 function(path, at) {

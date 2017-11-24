@@ -1,3 +1,4 @@
+  import {ASSERT, activeID_new, ANESS_UNKNOWN} from '../other/constants.js';
 
 function Actix(role) { // activity ctx
   ASSERT.call(this, arguments.length === 1, 'len' );

@@ -1,3 +1,4 @@
+  import {cls} from './cls.js';
 
 this.isResv =
 function (name) {

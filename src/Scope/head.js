@@ -1,3 +1,5 @@
+  import {ASSERT, ASSERT_EQ} from '../other/constants.js';
+  import {cls} from './cls.js';
 
 this.activateBody =
 function() {

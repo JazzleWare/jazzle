@@ -1,3 +1,5 @@
+  import Decl from '../Decl/cls.js';
+  import {DT_LIQUID} from '../other/scope-constants.js';
 
 function Liquid(category) {
   Decl.call(this);

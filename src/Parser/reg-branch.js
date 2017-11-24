@@ -1,3 +1,7 @@
+  import {isCharSeq} from '../other/util.js';
+  import {isLead, isTrail, uAkin} from '../other/regex-util.js';
+  import {CH_LSQBRACKET, CH_LPAREN, CH_LCURLY, ASSERT, CH_RCURLY, CH_BACK_SLASH, CH_$, CH_XOR, CH_QUESTION, CH_ADD, CH_MUL, CH_OR, CH_RPAREN, CH_SINGLEDOT} from '../other/constants.js';
+  import {cls} from './cls.js';
 
 this.regBranch =
 function() {

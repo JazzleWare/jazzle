@@ -1,3 +1,5 @@
+  import {HAS} from '../other/constants.js';
+  import {cls} from './cls.js';
 
 // GENERAL RULE: if error occurs while parsing an elem, the parse routine sets the `regexErr and returns null
 this. parseRegex =

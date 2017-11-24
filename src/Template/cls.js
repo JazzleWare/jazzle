@@ -1,3 +1,4 @@
+  import {CH_SINGLEDOT, CH_GREATER_THAN, CH_LESS_THAN, CH_RPAREN, ASSERT, CH_LPAREN} from '../other/constants.js';
 
 function Template(idxList) {
   this.idxList = idxList;

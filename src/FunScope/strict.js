@@ -1,3 +1,5 @@
+  import {arorev} from '../other/util.js';
+  import {cls} from './cls.js';
 
 this.verifyForStrictness =
 function() {

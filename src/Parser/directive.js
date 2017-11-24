@@ -1,3 +1,4 @@
+  import {cls} from './cls.js';
 
 this.enterPrologue =
 function() {

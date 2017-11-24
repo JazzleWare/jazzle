@@ -1,3 +1,4 @@
+  import {createObj} from '../other/util.js';
 
 function SortedObj(obj) {
   this.keys = [];

@@ -1,3 +1,9 @@
+  import GlobalScope from '../GlobalScope/cls.js';
+  import {ASSERT} from '../other/constants.js';
+  import SourceScope from '../SourceScope/cls.js';
+  import {ST_SCRIPT} from '../other/scope-constants.js';
+  import {TK_EOF} from '../other/lexer-constants.js';
+  import {cls} from './cls.js';
 
 this.parseProgram = function () {
   var c0 = this.c, li0 = this.li, col0 = this.col;

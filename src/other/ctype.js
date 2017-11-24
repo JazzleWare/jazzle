@@ -1,3 +1,5 @@
+  import {CH_0, CH_9, CH_z, CH_a, CH_Z, CH_A, CH_UNDERLINE, CH_$, D_INTBITLEN, M_INTBITLEN, CH_f, CH_F} from './constants.js';
+  import {IDS_, IDC_} from './unicode.js';
 
 function isNum(c) {
   return (c >= CH_0 && c <= CH_9);

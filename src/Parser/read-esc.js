@@ -1,3 +1,7 @@
+  import {CH_BACK_SLASH, CH_MULTI_QUOTE, CH_SINGLE_QUOTE, CH_v, CH_b, CH_f, CH_t, CH_r, CH_n, CH_u, CH_x, CH_0, CH_8, CH_1, CH_2, CH_3, CH_4, CH_5, CH_6, CH_7, CH_9, CH_CARRIAGE_RETURN, CH_LINE_FEED} from '../other/constants.js';
+  import {cp2sp, hex2num} from '../other/util.js';
+  import {ERR_NONE_YET, ERR_PIN_OCTAL_IN_STRICT} from '../other/error-constants.js';
+  import {cls} from './cls.js';
 
 this.readEsc =
 function(t) { // is it a template escape?

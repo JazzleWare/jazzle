@@ -1,3 +1,5 @@
+  import {ASSERT_EQ, CH_COMMA, CH_RCURLY} from '../other/constants.js';
+  import {cls} from './cls.js';
 
 this.regCurlyQuantifier =
 function() {

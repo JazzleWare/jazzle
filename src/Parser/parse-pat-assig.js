@@ -1,3 +1,7 @@
+  import {PREC_NONE} from '../other/lexer-constants.js';
+  import {CTX_TOP} from '../other/constants.js';
+  import {core} from '../other/util.js';
+  import {cls} from './cls.js';
 
 this.parsePat_assig = 
 function (head) {

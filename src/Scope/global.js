@@ -1,3 +1,8 @@
+  import {ASSERT} from '../other/constants.js';
+  import Decl from '../Decl/cls.js';
+  import {DT_GLOBAL} from '../other/scope-constants.js';
+  import {_u} from '../other/scope-util.js';
+  import {cls} from './cls.js';
 
 this.spReportGlobal_m =
 function(mname, ref) {

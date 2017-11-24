@@ -1,3 +1,7 @@
+  import {_m} from '../other/scope-util.js';
+  import {ASSERT} from '../other/constants.js';
+  import LiquidGroup from '../LiquidGroup/cls.js';
+  import {cls} from './cls.js';
 
 this.gocLG =
 function(gName) {

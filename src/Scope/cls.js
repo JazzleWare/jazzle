@@ -1,3 +1,7 @@
+  import Actix from '../Actix/cls.js';
+  import {ACT_SCOPE, ASSERT} from '../other/constants.js';
+  import SortedObj from '../SortedObj/cls.js';
+  import {createObj} from '../other/util.js';
 
 function Scope(sParent, type) {
   Actix.call(this, ACT_SCOPE);

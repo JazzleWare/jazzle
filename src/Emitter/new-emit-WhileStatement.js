@@ -1,3 +1,7 @@
+  import {Emitters} from '../other/globals.js';
+  import {CB} from '../other/util.js';
+  import {ETK_ID, EC_NONE} from '../other/constants.js';
+  import {cls} from './cls.js';
 
 Emitters['WhileStatement'] =
 function(n, flags, isStmt) {

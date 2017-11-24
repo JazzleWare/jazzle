@@ -1,3 +1,11 @@
+  import {ASSERT} from '../other/constants.js';
+  import {DT_CLSNAME, DT_FNNAME} from '../other/scope-constants.js';
+  import {_m} from '../other/scope-util.js';
+  import ScopeName from '../ScopeName/cls.js';
+  import Ref from '../Ref/cls.js';
+  import {Transformers} from '../other/globals.js';
+  import {tg} from '../other/util.js';
+  import {cls} from './cls.js';
 
 this.transformCls =
 function(n, isVal, oBinding) { // o -> outer

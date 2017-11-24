@@ -1,3 +1,10 @@
+  import {ERR_ASYNC_NEWLINE_BEFORE_PAREN} from '../other/error-constants.js';
+  import {ASSERT, PAREN_NODE, INTERMEDIATE_ASYNC, CH_LCURLY, CTX_PAT} from '../other/constants.js';
+  import {ST_ARROW, ST_ASYNC} from '../other/scope-constants.js';
+  import {_m} from '../other/scope-util.js';
+  import {cmn, core} from '../other/util.js';
+  import {PREC_NONE} from '../other/lexer-constants.js';
+  import {cls} from './cls.js';
 
 this.parseArrow = function(arg, ctx)   {
   if (this.v <= 5)

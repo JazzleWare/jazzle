@@ -1,3 +1,6 @@
+  import {Transformers} from '../other/globals.js';
+  import {THS_IS_REACHED, THS_NEEDS_CHK} from '../other/constants.js';
+  import {cls} from './cls.js';
 
 Transformers['ReturnStatement'] =
 function(n, isVal) {

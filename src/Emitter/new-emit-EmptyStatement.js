@@ -1,3 +1,7 @@
+  import {Emitters} from '../other/globals.js';
+  import {CB} from '../other/util.js';
+  import {ASSERT_EQ} from '../other/constants.js';
+  import {cls} from './cls.js';
 
 Emitters['EmptyStatement'] =
 function(n, flags, isStmt) {

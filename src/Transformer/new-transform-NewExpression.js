@@ -1,3 +1,5 @@
+  import {Transformers} from '../other/globals.js';
+  import {cls} from './cls.js';
 
 Transformers['NewExpression'] =
 function(n, isVal) {

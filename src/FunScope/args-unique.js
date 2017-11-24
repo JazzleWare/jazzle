@@ -1,3 +1,6 @@
+  import {SF_UNIQUE} from '../other/scope-constants.js';
+  import {ASSERT} from '../other/constants.js';
+  import {cls} from './cls.js';
 
 this.insideUniqueArgs =
 function() { return this.flags & SF_UNIQUE; };

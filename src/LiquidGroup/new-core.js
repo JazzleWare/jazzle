@@ -1,3 +1,7 @@
+  import {ASSERT} from '../other/constants.js';
+  import Liquid from '../Liquid/cls.js';
+  import Ref from '../Ref/cls.js';
+  import {cls} from './cls.js';
 
 this.getL =
 function(idx) {

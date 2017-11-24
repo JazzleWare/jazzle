@@ -1,3 +1,8 @@
+  import {Emitters} from '../other/globals.js';
+  import {ASSERT_EQ, ETK_ID, EC_NONE, EC_START_STMT, EC_ATTACHED} from '../other/constants.js';
+  import {CB, isAssigList} from '../other/util.js';
+  import {wcb_afterElse, wcb_afterStmt} from '../other/wcb.js';
+  import {cls} from './cls.js';
 
 Emitters['IfStatement'] =
 function(n, flags, isStmt) {

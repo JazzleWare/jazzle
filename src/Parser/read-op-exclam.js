@@ -1,3 +1,6 @@
+  import {CH_EQUALITY_SIGN} from '../other/constants.js';
+  import {PREC_EQ, TK_SIMP_BINARY, TK_UNARY} from '../other/lexer-constants.js';
+  import {cls} from './cls.js';
 
 this.readOp_exclam =
 function() {

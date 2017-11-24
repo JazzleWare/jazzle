@@ -1,3 +1,8 @@
+  import {SA_BREAK, SA_CONTINUE} from '../other/scope-constants.js';
+  import {TK_ID} from '../other/lexer-constants.js';
+  import {CH_LPAREN, CTX_TOP, CH_RPAREN, CH_SEMI} from '../other/constants.js';
+  import {core} from '../other/util.js';
+  import {cls} from './cls.js';
 
 this.parseDoWhile =
 function () {

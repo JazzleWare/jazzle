@@ -1,3 +1,6 @@
+  import {TK_SIMP_BINARY, TK_ID, TK_SIMP_ASSIG} from '../other/lexer-constants.js';
+  import {CH_SINGLE_QUOTE, CH_MULTI_QUOTE} from '../other/constants.js';
+  import {cls} from './cls.js';
 
 this.peekMul =
 function() { 

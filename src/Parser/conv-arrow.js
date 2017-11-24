@@ -1,3 +1,7 @@
+  import {arorev} from '../other/util.js';
+  import {_m} from '../other/scope-util.js';
+  import {DT_FNARG} from '../other/scope-constants.js';
+  import {cls} from './cls.js';
 
 this.asArrowFuncArgList = function(argList) {
   var i = 0, list = argList;

@@ -1,3 +1,9 @@
+  import {CTX_NONE, CTX_PAT, CTX_PARAM, CTX_NULLABLE, CTX_TOP, PAREN_NODE, CTX_HAS_A_PARAM_ERR, CTX_HAS_A_SIMPLE_ERR, CH_COMMA, CH_RPAREN, CTX_PARPAT} from '../other/constants.js';
+  import {ERR_NONE_YET, ERR_UNEXPECTED_REST, ERR_PAREN_UNBINDABLE, ERR_YIELD_OR_SUPER, ERR_NON_TAIL_EXPR, ERR_EMPTY_LIST_MISSING_ARROW} from '../other/error-constants.js';
+  import {PREC_NONE, TK_ELLIPSIS} from '../other/lexer-constants.js';
+  import {errt_param, errt_ptrack, errt_pin, errt_psyn, errt_strack, errt_ssyn, errt_pat} from '../other/errt.js';
+  import {core, CB} from '../other/util.js';
+  import {cls} from './cls.js';
 
 this.parseParen = function(ctx) {
   var c0 = this.c0, loc0 = this.loc0(),

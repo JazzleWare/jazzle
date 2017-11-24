@@ -1,3 +1,7 @@
+  import {UntransformedEmitters} from '../other/globals.js';
+  import {ASSERT_EQ, ETK_ID, ASSERT, EC_NONE} from '../other/constants.js';
+  import {CB, isResolvedName, isTemp} from '../other/util.js';
+  import {cls} from './cls.js';
 
 UntransformedEmitters['arg-at'] =
 function(n, flags, isStmt) {

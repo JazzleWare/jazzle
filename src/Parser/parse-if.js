@@ -1,3 +1,8 @@
+  import {SF_INSIDEIF} from '../other/scope-constants.js';
+  import {CH_LPAREN, CTX_TOP, CH_RPAREN} from '../other/constants.js';
+  import {core} from '../other/util.js';
+  import {TK_ID} from '../other/lexer-constants.js';
+  import {cls} from './cls.js';
 
 this.parseIf = function () {
   this.resvchk();

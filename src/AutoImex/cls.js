@@ -1,3 +1,4 @@
+  import SortedObj from '../SortedObj/cls.js';
 
 function AutoImex() {
   this.Parser = null;

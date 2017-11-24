@@ -1,3 +1,7 @@
+  import {CH_BACK_SLASH, CH_SINGLE_QUOTE, CH_MULTI_QUOTE, CH_COMPLEMENT, CH_WHITESPACE, CH_VTAB, CH_BACK, CH_FORM_FEED, CH_TAB, CH_CARRIAGE_RETURN, CH_LINE_FEED, ASSERT, ETK_STR, EC_IN, EC_START_STMT, ASSERT_EQ, EC_ATTACHED, EC_NONE, ETK_ID} from '../other/constants.js';
+  import {hex2, hex, isAssigList, CB, isResolvedName} from '../other/util.js';
+  import {wcb_afterStmt} from '../other/wcb.js';
+  import {cls} from './cls.js';
 
 this.writeStringValue =
 function(sv, ql) {

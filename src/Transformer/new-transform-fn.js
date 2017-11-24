@@ -1,3 +1,9 @@
+  import {ASSERT, THS_NEEDS_CHK, THS_NONE, THS_IS_REACHED, HAS, ASSERT_EQ} from '../other/constants.js';
+  import {createObj, tg} from '../other/util.js';
+  import {_m} from '../other/scope-util.js';
+  import {DT_FNARG} from '../other/scope-constants.js';
+  import {Transformers} from '../other/globals.js';
+  import {cls} from './cls.js';
 
 this.transformRawFn =
 function(n, isVal) {

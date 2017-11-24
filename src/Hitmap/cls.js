@@ -1,3 +1,4 @@
+  import SortedObj from '../SortedObj/cls.js';
 
 function Hitmap() {
   var validNames = arguments.length ? new SortedObj({}) : null;

@@ -1,3 +1,5 @@
+  import {ASSERT, CH_RCURLY, CH_LCURLY} from '../other/constants.js';
+  import Template from '../Template/cls.js';
 
 function ErrorString(stringsAndTemplates) {
   this.stringsAndTemplates = stringsAndTemplates;

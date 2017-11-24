@@ -1,3 +1,6 @@
+  import {ASSERT} from '../other/constants.js';
+  import Ref from '../Ref/cls.js';
+  import {cls} from './cls.js';
 
 this.refDirect_m = 
 function(mname, childRef) {

@@ -1,3 +1,7 @@
+  import {Transformers} from '../other/globals.js';
+  import {isResolvedName, tg} from '../other/util.js';
+  import {CVTZ_C} from '../other/constants.js';
+  import {cls} from './cls.js';
 
 Transformers['UpdateExpression'] =
 function(n, isVal) {

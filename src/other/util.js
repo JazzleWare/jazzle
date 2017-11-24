@@ -1,3 +1,5 @@
+  import {INTBITLEN, D_INTBITLEN, M_INTBITLEN, PAREN, ETK_NL, CH_0, CH_9, CH_f, CH_a, CH_A, CH_F, STRING_TYPE, ASSERT, HAS, B, CVTZ_T, CVTZ_C, I_31} from './constants.js';
+  import {isIDHead, isIDBody} from './ctype.js';
 
 
 function char2int(c) { return c.charCodeAt(0); }

@@ -1,3 +1,7 @@
+  import {DT_EFW} from '../other/scope-constants.js';
+  import {ASSERT} from '../other/constants.js';
+  import {_m} from '../other/scope-util.js';
+  import {cls} from './cls.js';
 
 this.regulateForwardExportList =
 function(list, src) {

@@ -1,3 +1,5 @@
+  import {ASSERT, SP_NONE, SP_OMITTABLE, SP_BREAKABLE} from '../other/constants.js';
+  import {cls} from './cls.js';
 
 this.ensureNoSpace =
 function() { ASSERT.call(this, !this.hasPendingSpace(), 'hasPendingSpace' ); };

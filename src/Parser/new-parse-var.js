@@ -1,3 +1,8 @@
+  import {DT_LET, DT_VAR, DT_CONST} from '../other/scope-constants.js';
+  import {CTX_FOR, PE_NO_NONVAR, PE_NO_LABEL, CTX_TOP, CH_COMMA} from '../other/constants.js';
+  import {PREC_NONE} from '../other/lexer-constants.js';
+  import {core} from '../other/util.js';
+  import {cls} from './cls.js';
 
 this.parseVar =
 function(dt, ctx) {

@@ -1,3 +1,8 @@
+  import {ST_NONE, ST_DECL, DT_CLS, ST_EXPR, DT_CLSNAME, ST_CLSMEM, SF_HERITAGE, RS_SCALL, RS_THIS} from '../other/scope-constants.js';
+  import {TK_ID} from '../other/lexer-constants.js';
+  import {_m} from '../other/scope-util.js';
+  import {CTX_DEFAULT, CTX_NONE, CH_LCURLY, CH_SEMI, CTX_CTOR_NOT_ALLOWED, CH_RCURLY, CH_LPAREN, CH_SINGLEDOT, CH_LSQBRACKET} from '../other/constants.js';
+  import {cls} from './cls.js';
 
 this.parseClass = 
 function(ctx) {

@@ -1,3 +1,6 @@
+  import {CH_LPAREN, CH_RPAREN} from '../other/constants.js';
+  import {DT_CATCHARG, DT_NONE} from '../other/scope-constants.js';
+  import {cls} from './cls.js';
 
 this. parseCatchClause = function () {
    var c0 = this.c0, cb = {}, loc0 = this.loc0();

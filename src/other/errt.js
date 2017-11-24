@@ -1,3 +1,5 @@
+  import {CTX_TOP, CTX_PARAM, CTX_PAT, CTX_HAS_A_PARAM_ERR, CTX_HAS_AN_ASSIG_ERR, CTX_HAS_A_SIMPLE_ERR, CTX_NO_SIMPLE_ERR} from './constants.js';
+  import {ERR_PIN, ERR_NONE_YET, ERR_P_SYN, ERR_A_SYN, ERR_S_SYN} from './error-constants.js';
 
 function errt_top(ctx) {
   return (ctx & CTX_TOP) === CTX_TOP;

@@ -1,3 +1,9 @@
+  import {isIDBody} from '../other/ctype.js';
+  import {CH_BACK_SLASH} from '../other/constants.js';
+  import {ERR_NONE_YET, ERR_PIN_UNICODE_IN_RESV} from '../other/error-constants.js';
+  import {cp2sp, surrogate} from '../other/util.js';
+  import {TK_ID} from '../other/lexer-constants.js';
+  import {cls} from './cls.js';
 
 this.readID_withHead = 
 function(v) {

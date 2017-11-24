@@ -1,3 +1,6 @@
+  import Scope from '../Scope/cls.js';
+  import {ST_CATCH} from '../other/scope-constants.js';
+  import SortedObj from '../SortedObj/cls.js';
 
 function CatchScope(sParent) {
   Scope.call(this, sParent, ST_CATCH);

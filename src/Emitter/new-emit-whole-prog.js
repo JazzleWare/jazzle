@@ -1,3 +1,7 @@
+  import {Emitters} from '../other/globals.js';
+  import {wcb_afterStmt} from '../other/wcb.js';
+  import {CB} from '../other/util.js';
+  import {cls} from './cls.js';
 
 Emitters['Program'] =
 function(n, flags, isStmt) {

@@ -1,3 +1,9 @@
+  import {TK_ID, PREC_NONE} from '../other/lexer-constants.js';
+  import {DT_ESELF, DT_VAR, DT_LET, ST_DECL, DT_CONST, DT_EDEFAULT} from '../other/scope-constants.js';
+  import {CTX_NONE, CH_COMMA, CH_RCURLY, ASSERT, CTX_TOP, CTX_DEFAULT, CH_LCURLY} from '../other/constants.js';
+  import {_m} from '../other/scope-util.js';
+  import {core} from '../other/util.js';
+  import {cls} from './cls.js';
 
 this.parseExport_elemOther =
 function(c0,loc0) {

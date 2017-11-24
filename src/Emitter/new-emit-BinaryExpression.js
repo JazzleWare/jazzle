@@ -1,3 +1,9 @@
+  import {Emitters} from '../other/globals.js';
+  import {CB, cmn_erase} from '../other/util.js';
+  import {EC_EXPR_HEAD, EC_NONE, ETK_ID, EC_NEW_HEAD} from '../other/constants.js';
+  import {wcb_DIV_b, wcb_ADD_b, wcb_MIN_b, wcb_idNumGuard} from '../other/wcb.js';
+  import {bp, isLA, isRA} from '../other/lexer-constants.js';
+  import {cls} from './cls.js';
 
 this.emitBLE =
 Emitters['LogicalExpression'] =

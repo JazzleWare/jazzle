@@ -1,3 +1,7 @@
+  import {CH_u, CH_v, CH_b, CH_f, CH_t, CH_r, CH_n, CH_x, CH_c, CH_D, CH_W, CH_S, CH_d, CH_w, CH_s, CH_B, CH_0, CH_9, CH_Z, CH_A, CH_a, CH_z, CH_UNDERLINE, CH_MIN, ASSERT, CH_8, CH_4, CH_7} from '../other/constants.js';
+  import {hex2num, makeAcceptor} from '../other/util.js';
+  import {isNum} from '../other/ctype.js';
+  import {cls} from './cls.js';
 
 this.regEsc =
 function(ce) {

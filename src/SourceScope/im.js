@@ -1,3 +1,7 @@
+  import {_m} from '../other/scope-util.js';
+  import SortedObj from '../SortedObj/cls.js';
+  import Decl from '../Decl/cls.js';
+  import {cls} from './cls.js';
 
 this.regulateImports_sl =
 function(src, list) {

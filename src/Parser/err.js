@@ -1,3 +1,5 @@
+  import {HAS} from '../other/constants.js';
+  import {cls} from './cls.js';
 
 this.err = function(errorType, errParams) {
   errParams = this.normalize(errParams);

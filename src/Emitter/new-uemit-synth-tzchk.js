@@ -1,3 +1,6 @@
+  import {UntransformedEmitters} from '../other/globals.js';
+  import {EC_NON_SEQ, EC_EXPR_HEAD, EC_NEW_HEAD, EC_NONE, ASSERT} from '../other/constants.js';
+  import {cls} from './cls.js';
 
 UntransformedEmitters['tzchk'] =
 function(n, flags, isStmt) {

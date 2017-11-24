@@ -1,3 +1,6 @@
+  import {UntransformedEmitters} from '../other/globals.js';
+  import {EC_NONE} from '../other/constants.js';
+  import {cls} from './cls.js';
 
 UntransformedEmitters['rcheck'] =
 function(n, flags, isStmt) {

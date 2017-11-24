@@ -1,3 +1,7 @@
+  import {CH_XOR, CH_RSQBRACKET, ASSERT, CH_BACK_SLASH} from '../other/constants.js';
+  import {isTrail, uAkin, isLead} from '../other/regex-util.js';
+  import {cpReg} from '../other/util.js';
+  import {cls} from './cls.js';
 
 this.regClass =
 function() {

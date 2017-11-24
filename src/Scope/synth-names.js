@@ -1,3 +1,6 @@
+  import {ASSERT} from '../other/constants.js';
+  import {_m} from '../other/scope-util.js';
+  import {cls} from './cls.js';
 
 this.synth_defs_to =
 function(targetScope) {

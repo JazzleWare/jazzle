@@ -1,3 +1,5 @@
+  import {DT_LET, DT_VAR, DT_CONST, DT_GLOBAL, DT_FN, DT_FNARG, DT_CLS, DT_CATCHARG, DT_LIQUID, DT_IDEFAULT, DT_IALIASED, DT_INAMESPACE, DT_EDEFAULT, DT_EALIASED, DT_ESELF, DT_FNNAME, DT_CLSNAME, DT_INFERRED} from '../other/scope-constants.js';
+  import {cls} from './cls.js';
 
 this.isLet =
 function() { return this.type & DT_LET; };

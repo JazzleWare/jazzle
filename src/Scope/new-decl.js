@@ -1,3 +1,8 @@
+  import Decl from '../Decl/cls.js';
+  import {_u} from '../other/scope-util.js';
+  import {ASSERT, HAS} from '../other/constants.js';
+  import {DT_EXPORTED, DT_LET, DT_FN, DT_CONST, DT_VAR, DT_CLS, DT_CATCHARG, DT_FNARG} from '../other/scope-constants.js';
+  import {cls} from './cls.js';
 
 this.declareHoisted_m =
 function(mname, t) {

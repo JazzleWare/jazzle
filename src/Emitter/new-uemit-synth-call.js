@@ -1,3 +1,7 @@
+  import {UntransformedEmitters} from '../other/globals.js';
+  import {EC_NEW_HEAD, EC_NONE} from '../other/constants.js';
+  import {CB} from '../other/util.js';
+  import {cls} from './cls.js';
 
 UntransformedEmitters['call'] = 
 function(n, flags, isStmt) {

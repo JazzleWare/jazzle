@@ -1,3 +1,6 @@
+  import {Emitters} from '../other/globals.js';
+  import {EC_START_STMT, ETK_ID, EC_NONE} from '../other/constants.js';
+  import {cls} from './cls.js';
 
 /*  TODO: Raw, for alternative bundlers */Emitters['#ExportNamedDeclaration'] = 
 function(n, isVal) {

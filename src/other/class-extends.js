@@ -1,3 +1,20 @@
+  import Scope from '../Scope/cls.js';
+  import {createObj} from './util.js';
+  import Actix from '../Actix/cls.js';
+  import ConcreteScope from '../ConcreteScope/cls.js';
+  import GlobalScope from '../GlobalScope/cls.js';
+  import Decl from '../Decl/cls.js';
+  import FunScope from '../FunScope/cls.js';
+  import ModuleScope from '../ModuleScope/cls.js';
+  import ClassScope from '../ClassScope/cls.js';
+  import CatchScope from '../CatchScope/cls.js';
+  import ParenScope from '../ParenScope/cls.js';
+  import ScopeName from '../ScopeName/cls.js';
+  import Liquid from '../Liquid/cls.js';
+  import SourceScope from '../SourceScope/cls.js';
+  import BundleScope from '../BundleScope/cls.js';
+  import VirtualResourceResolver from '../VirtualResourceResolver/cls.js';
+  import ResourceResolver from '../ResourceResolver/cls.js';
 
  Scope.prototype = createObj(Actix.prototype);
  ConcreteScope.prototype = createObj(Scope.prototype);

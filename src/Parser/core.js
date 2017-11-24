@@ -1,3 +1,6 @@
+  import {DT_NONE, DT_FN, DT_CLS, DT_INFERRED} from '../other/scope-constants.js';
+  import {getIDName} from '../other/util.js';
+  import {cls} from './cls.js';
 
 this.inferName =
 function(left, right, isComputed) {

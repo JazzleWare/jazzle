@@ -1,3 +1,7 @@
+  import {PREC_NONE, TK_ELLIPSIS} from '../other/lexer-constants.js';
+  import {CTX_NULLABLE, CTX_TOP, CTX_NONE, CH_COMMA} from '../other/constants.js';
+  import {core} from '../other/util.js';
+  import {cls} from './cls.js';
 
 this.parseArgList = function () {
   var c0 = -1, li0 = -1, col0 = -1, parenAsync = this.parenAsync,

@@ -1,3 +1,20 @@
+  import Parser from '../Parser/cls.js';
+  import Emitter from '../Emitter/cls.js';
+  import Transformer from '../Transformer/cls.js';
+  import PathMan from '../PathMan/cls.js';
+  import AutoImex from '../AutoImex/cls.js';
+  import {EC_NONE} from './constants.js';
+  import {vlq, makeAcceptor} from './util.js';
+  import Scope from '../Scope/cls.js';
+  import FunScope from '../FunScope/cls.js';
+  import CatchScope from '../CatchScope/cls.js';
+  import GlobalScope from '../GlobalScope/cls.js';
+  import ConcreteScope from '../ConcreteScope/cls.js';
+  import BundleScope from '../BundleScope/cls.js';
+  import {ST_GLOBAL, ST_MODULE, ST_SCRIPT, ST_EXPR, ST_DECL, ST_OBJ, ST_FN, ST_CLS, ST_CLSMEM, ST_STATICMEM, ST_OBJMEM, ST_METH, ST_CTOR, ST_SETTER, ST_GETTER, ST_ARROW, ST_GEN, ST_ASYNC, ST_BLOCK, ST_BARE, ST_CATCH} from './scope-constants.js';
+  import VirtualResourceResolver from '../VirtualResourceResolver/cls.js';
+  import Bundler from '../Bundler/cls.js';
+  import {renamer_incremental, renamer_minify} from './renamer.js';
 
 this.parse = function(src, isModule ) {
   var newp = new Parser(src, isModule);

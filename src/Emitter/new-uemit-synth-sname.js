@@ -1,3 +1,6 @@
+  import {UntransformedEmitters} from '../other/globals.js';
+  import {ETK_ID} from '../other/constants.js';
+  import {cls} from './cls.js';
 
 UntransformedEmitters['synth-name'] =
 function(n, flags, isStmt) {

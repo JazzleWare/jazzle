@@ -1,3 +1,8 @@
+  import {TK_UNARY, TK_UNBIN, TK_AA_MM, TK_YIELD, PREC_NONE, TK_ANY_ASSIG, PREC_UNARY, PREC_EX, isRA, isLog} from '../other/lexer-constants.js';
+  import {CTX_NULLABLE, CH_QUESTION, CTX_FOR} from '../other/constants.js';
+  import {errt_pat, errt_noLeak} from '../other/errt.js';
+  import {core} from '../other/util.js';
+  import {cls} from './cls.js';
 
 this.parseNonSeq =
 function(prec, ctx) {

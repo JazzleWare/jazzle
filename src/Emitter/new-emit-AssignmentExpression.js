@@ -1,3 +1,8 @@
+  import {EC_EXPR_HEAD, EC_NONE, ASSERT, EC_IN} from '../other/constants.js';
+  import {isResolvedName, tg} from '../other/util.js';
+  import {Emitters} from '../other/globals.js';
+  import {wcb_afterVar} from '../other/wcb.js';
+  import {cls} from './cls.js';
 
 this.emitAssignment_ex =
 function(n, flags, isStmt) {

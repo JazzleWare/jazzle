@@ -1,3 +1,8 @@
+  import {Emitters} from '../other/globals.js';
+  import {ASSERT_EQ, ETK_ID, EC_NONE} from '../other/constants.js';
+  import {CB} from '../other/util.js';
+  import {wcb_afterRet} from '../other/wcb.js';
+  import {cls} from './cls.js';
 
 Emitters['ReturnStatement'] =
 function(n, flags, isStmt) {

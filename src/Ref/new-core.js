@@ -1,3 +1,5 @@
+  import {ASSERT} from '../other/constants.js';
+  import {cls} from './cls.js';
 
 this.absorbDirect =
 function(ref) { return this.absorb(ref, true); };

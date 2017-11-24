@@ -1,3 +1,6 @@
+  import {Emitters} from '../other/globals.js';
+  import {EC_NEW_HEAD, EC_NONE} from '../other/constants.js';
+  import {cls} from './cls.js';
 
 Emitters['TaggedTemplateExpression'] =
 function(n, flags, isStmt) {

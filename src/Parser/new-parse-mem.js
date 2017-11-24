@@ -1,3 +1,12 @@
+  import {ST_NONE, ST_CLSMEM, ST_STATICMEM, ST_ASYNC, ST_ACCESSOR, ST_GETTER, ST_SETTER, ST_GEN, ST_CTOR} from '../other/scope-constants.js';
+  import {TK_ID, TK_NUM, PREC_NONE, TK_SIMP_ASSIG} from '../other/lexer-constants.js';
+  import {CH_LSQBRACKET, CH_MULTI_QUOTE, CH_SINGLE_QUOTE, CTX_HASPROTOTYPE, CTX_HASPROTO, CH_LPAREN, CH_COLON, PAREN_NODE, PAREN, HAS} from '../other/constants.js';
+  import {core, CB} from '../other/util.js';
+  import {errt_track, errt_ptrack, errt_atrack, errt_noLeak, errt_strack} from '../other/errt.js';
+  import {ERR_NONE_YET, ERR_PAREN_UNBINDABLE, ERR_SHORTHAND_UNASSIGNED} from '../other/error-constants.js';
+  import {_m} from '../other/scope-util.js';
+  import Comments from '../Comments/cls.js';
+  import {cls} from './cls.js';
 
 this.parseMem =
 function(ctx, st) {

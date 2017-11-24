@@ -1,3 +1,6 @@
+  import {HAS, ETK_DIV, ETK_COMMENT, ETK_NL} from '../other/constants.js';
+  import {wcb_afterLineComment} from '../other/wcb.js';
+  import {cls} from './cls.js';
 
 this.emc =
 function(cb, i) {

@@ -1,3 +1,5 @@
+  import {CH_MULTI_QUOTE, CH_SINGLE_QUOTE} from '../other/constants.js';
+  import {cls} from './cls.js';
 
 this.read_multiQ =
 function() {

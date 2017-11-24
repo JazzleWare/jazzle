@@ -1,3 +1,9 @@
+  import {CTX_NONE, CTX_PAT, CTX_PARPAT, CTX_PARPAT_ERR, CTX_TOP, CTX_HAS_A_PARAM_ERR, CTX_HAS_AN_ASSIG_ERR, CTX_HAS_A_SIMPLE_ERR, CH_COMMA, CH_RCURLY} from '../other/constants.js';
+  import {ERR_NONE_YET} from '../other/error-constants.js';
+  import {errt_track, errt_ptrack, errt_atrack, errt_strack, errt_pin, errt_psyn, errt_asyn, errt_ssyn, errt_perr, errt_aerr, errt_serr} from '../other/errt.js';
+  import {ST_OBJMEM} from '../other/scope-constants.js';
+  import {core} from '../other/util.js';
+  import {cls} from './cls.js';
 
 this.parseObj = function(ctx) {
   var c0 = this.c0, loc0 = this.loc0(),

@@ -1,3 +1,4 @@
+  import {_m} from './scope-util.js';
 
 var ST_GLOBAL = 1,
     ST_MODULE = ST_GLOBAL << 1,

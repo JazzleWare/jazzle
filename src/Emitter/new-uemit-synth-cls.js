@@ -1,3 +1,6 @@
+  import {UntransformedEmitters} from '../other/globals.js';
+  import {ASSERT, EC_NONE, ASSERT_EQ} from '../other/constants.js';
+  import {cls} from './cls.js';
 
 UntransformedEmitters['cls'] =
 function(n, flags, isStmt) {

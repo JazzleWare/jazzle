@@ -1,3 +1,6 @@
+  import {surrogate} from '../other/util.js';
+  import {isIDHead} from '../other/ctype.js';
+  import {cls} from './cls.js';
 
 this.readID_surrogate =
 function(sc) {

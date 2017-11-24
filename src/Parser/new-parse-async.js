@@ -1,3 +1,8 @@
+  import {INTERMEDIATE_ASYNC, CTX_PAT, CH_LPAREN} from '../other/constants.js';
+  import {ERR_INTERMEDIATE_ASYNC, ERR_ASYNC_NEWLINE_BEFORE_PAREN} from '../other/error-constants.js';
+  import {TK_ID} from '../other/lexer-constants.js';
+  import {ST_ASYNC} from '../other/scope-constants.js';
+  import {cls} from './cls.js';
 
 this.parseAsync_otherID =
 function(asyncID, ctx) {

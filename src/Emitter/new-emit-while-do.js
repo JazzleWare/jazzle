@@ -1,3 +1,8 @@
+  import {Emitters} from '../other/globals.js';
+  import {CB} from '../other/util.js';
+  import {ASSERT_EQ, ETK_ID, EC_NONE} from '../other/constants.js';
+  import {wcb_afterStmt} from '../other/wcb.js';
+  import {cls} from './cls.js';
 
 Emitters['DoWhileStatement'] =
 function(n, flags, isStmt) {

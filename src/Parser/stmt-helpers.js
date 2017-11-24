@@ -1,3 +1,5 @@
+  import {HAS} from '../other/constants.js';
+  import {cls} from './cls.js';
 
 this.findLabel_m = 
 function(mname) {

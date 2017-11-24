@@ -1,3 +1,7 @@
+  import {TK_ID, TK_NUM} from '../other/lexer-constants.js';
+  import {CH_LSQBRACKET, CH_SINGLE_QUOTE, CH_MULTI_QUOTE, CH_COLON, PAREN, CH_COMMA, CH_RCURLY} from '../other/constants.js';
+  import {arorev, core} from '../other/util.js';
+  import {cls} from './cls.js';
 
 this.parsePat_obj =
 function() {

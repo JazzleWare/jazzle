@@ -1,3 +1,5 @@
+  import {SF_STRICT} from '../other/scope-constants.js';
+  import {cls} from './cls.js';
 
 this.makeStrict =
 function() {

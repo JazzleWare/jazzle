@@ -1,3 +1,5 @@
+  import {CB, cmn_ac} from '../other/util.js';
+  import {cls} from './cls.js';
 
 this.cc =
 function() { // cuts comments

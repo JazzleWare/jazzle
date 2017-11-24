@@ -1,3 +1,10 @@
+  import {SA_NONE, SA_RETURN, SA_CALLSUPER, SA_NEW_TARGET, SA_MEMSUPER, SA_YIELD, SA_AWAIT, SF_NONE, SF_STRICT, SF_LOOP, SF_UNIQUE} from '../other/scope-constants.js';
+  import {ASSERT, ASSERT_EQ} from '../other/constants.js';
+  import ScopeName from '../ScopeName/cls.js';
+  import Ref from '../Ref/cls.js';
+  import {_m} from '../other/scope-util.js';
+  import Liquid from '../Liquid/cls.js';
+  import {cls} from './cls.js';
 
 this.determineActions =
 function() {

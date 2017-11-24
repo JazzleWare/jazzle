@@ -1,3 +1,5 @@
+  import {THS_NONE} from '../other/constants.js';
+  import {renamer_incremental} from '../other/renamer.js';
 
 function Transformer() {
   // TODO: `inGen or `flag for more contextual info (doesn't `cur have all that, anyway?)

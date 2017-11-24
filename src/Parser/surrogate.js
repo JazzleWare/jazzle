@@ -1,3 +1,5 @@
+  import {CH_BACK_SLASH} from '../other/constants.js';
+  import {cls} from './cls.js';
 
 this.readSurrogateTail =
 function() {

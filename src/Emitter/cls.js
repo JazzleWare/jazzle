@@ -1,3 +1,7 @@
+  import {SP_NONE, ETK_NONE} from '../other/constants.js';
+  import SortedObj from '../SortedObj/cls.js';
+  import {createObj} from '../other/util.js';
+  import {Emitters} from '../other/globals.js';
 
 function Emitter() {
   this.indentCache = [""];

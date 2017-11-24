@@ -1,3 +1,9 @@
+  import {errt_elem_ctx_of, errt_track, errt_ptrack, errt_atrack, errt_strack, errt_psyn, errt_pin, errt_asyn, errt_ssyn, errt_perr, errt_aerr, errt_serr} from '../other/errt.js';
+  import {CTX_NULLABLE, CH_COMMA, PAREN_NODE, CTX_HAS_A_PARAM_ERR, CTX_HAS_AN_ASSIG_ERR, CTX_HAS_A_SIMPLE_ERR, CH_RSQBRACKET} from '../other/constants.js';
+  import {ERR_NONE_YET, ERR_PAREN_UNBINDABLE, ERR_NON_TAIL_REST} from '../other/error-constants.js';
+  import {PREC_NONE, TK_ELLIPSIS} from '../other/lexer-constants.js';
+  import {core} from '../other/util.js';
+  import {cls} from './cls.js';
 
 this.parseArray = 
 function(ctx) {

@@ -1,3 +1,6 @@
+  import {TK_ID} from '../other/lexer-constants.js';
+  import {_m} from '../other/scope-util.js';
+  import {cls} from './cls.js';
 
 this.parseContinue =
 function() {

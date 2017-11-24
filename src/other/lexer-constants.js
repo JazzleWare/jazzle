@@ -1,3 +1,4 @@
+  import {ASSERT, HAS} from './constants.js';
 
 var VDT_VOID = 1;
 var VDT_TYPEOF = 2;

@@ -1,3 +1,4 @@
+  import {ASSERT} from './constants.js';
 
 function isSurroComp(n) {
   return n.type === '#Regex.SurrogateComponent';

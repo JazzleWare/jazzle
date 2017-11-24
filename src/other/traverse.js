@@ -1,3 +1,4 @@
+  import {ASSERT} from './constants.js';
 
 var D = '.'.charCodeAt(0);
 

@@ -1,3 +1,6 @@
+  import {CH_LCURLY, CH_RCURLY} from '../other/constants.js';
+  import {hex2num} from '../other/util.js';
+  import {cls} from './cls.js';
 
 this.readBS = function() {
   var c = this.c, s = this.src, l = s.length;

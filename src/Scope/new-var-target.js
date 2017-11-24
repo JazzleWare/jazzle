@@ -1,3 +1,5 @@
+  import {ASSERT, HAS} from '../other/constants.js';
+  import {cls} from './cls.js';
 
 this.addVarTarget_m =
 function(mname, newDecl) {

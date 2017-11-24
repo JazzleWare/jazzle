@@ -1,3 +1,8 @@
+  import {ST_CLSMEM, ST_OBJMEM, ST_ASYNC, ST_GEN, ST_DECL, DT_FN, ST_EXPR, DT_FNNAME, ST_ACCESSOR, ST_GETTER, DT_FNARG} from '../other/scope-constants.js';
+  import {TK_ID} from '../other/lexer-constants.js';
+  import {CTX_DEFAULT, ARGLEN_ANY, ARGLEN_GET, ARGLEN_SET} from '../other/constants.js';
+  import {_m} from '../other/scope-util.js';
+  import {cls} from './cls.js';
 
 this.parseFn =
 function(ctx, st) {

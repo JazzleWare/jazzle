@@ -1,3 +1,5 @@
+  import {surrogate} from '../other/util.js';
+  import {cls} from './cls.js';
 
 this.regMakeSurrogate =
 function(c1, c2) {

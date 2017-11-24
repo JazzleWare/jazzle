@@ -1,3 +1,4 @@
+  import {ASSERT, CH_MODULO} from './constants.js';
 
 function _m(name) { return name+'%'; }
 function _u(name) {

@@ -1,3 +1,5 @@
+  import {Emitters, UntransformedEmitters} from '../other/globals.js';
+  import {cls} from './cls.js';
 
 Emitters['#Untransformed'] = 
 function(n, flags, isStmt) {

@@ -1,3 +1,6 @@
+  import {CTX_NULLABLE, CTX_TOP} from '../other/constants.js';
+  import {core} from '../other/util.js';
+  import {cls} from './cls.js';
 
 this.parseThrow =
 function () {

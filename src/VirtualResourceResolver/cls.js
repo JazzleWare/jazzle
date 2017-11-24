@@ -1,3 +1,4 @@
+  import ResourceResolver from '../ResourceResolver/cls.js';
 
 function VirtualResourceResolver(pathMan) {
   ResourceResolver.call(this, pathMan);

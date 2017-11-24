@@ -1,3 +1,6 @@
+  import {VDT_NONE} from '../other/lexer-constants.js';
+  import {DT_NONE} from '../other/scope-constants.js';
+  import {ERR_NONE_YET} from '../other/error-constants.js';
 
 var Parser = function (src, o) {
 

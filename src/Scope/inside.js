@@ -1,3 +1,5 @@
+  import {SF_INSIDEIF, SF_LOOP, SF_STRICT, SF_INSIDEPROLOGUE, SF_FORINIT} from '../other/scope-constants.js';
+  import {cls} from './cls.js';
 
 this.insideIf =
 function() { return this.flags & SF_INSIDEIF; };

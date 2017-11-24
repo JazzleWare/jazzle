@@ -1,3 +1,5 @@
+  import {ASSERT_EQ, ASSERT} from '../other/constants.js';
+  import {cls} from './cls.js';
 
 this.writeToOut_nonLineBreak =
 function(str) {

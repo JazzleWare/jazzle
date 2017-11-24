@@ -1,3 +1,6 @@
+  import {SF_STRICT, ST_DECL, ST_GEN, ST_ASYNC} from '../other/scope-constants.js';
+  import {arorev} from '../other/util.js';
+  import {cls} from './cls.js';
 
 this.getName_cls =
 function(st) {

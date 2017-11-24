@@ -1,3 +1,8 @@
+  import {CH_LPAREN, CTX_NONE, CTX_FOR, CTX_NULLABLE, CTX_PAT, CTX_TOP, CH_RPAREN, CH_SEMI} from '../other/constants.js';
+  import {TK_ID, PREC_NONE} from '../other/lexer-constants.js';
+  import {DT_LET, DT_VAR, DT_CONST, SA_CONTINUE, SA_BREAK, SF_LOOP} from '../other/scope-constants.js';
+  import {core} from '../other/util.js';
+  import {cls} from './cls.js';
 
 this.parseFor = function() {
   this.resvchk();

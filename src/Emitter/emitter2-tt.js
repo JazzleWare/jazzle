@@ -1,3 +1,5 @@
+  import {ASSERT, ETK_NONE} from '../other/constants.js';
+  import {cls} from './cls.js';
 
 this.tt =
 function(tt) {

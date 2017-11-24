@@ -1,3 +1,6 @@
+  import {Emitters} from '../other/globals.js';
+  import {wcb_afterStmt} from '../other/wcb.js';
+  import {cls} from './cls.js';
 
 Emitters['#Bundler'] =
 function(n, flags, isStmt) {

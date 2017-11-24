@@ -1,3 +1,4 @@
+  import {RS_ARGUMENTS, RS_SCALL, RS_THIS} from './scope-constants.js';
 
 function ref_arguments_m(mname) {
   return mname === RS_ARGUMENTS;

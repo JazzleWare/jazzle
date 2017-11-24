@@ -1,3 +1,6 @@
+  import {ASSERT} from '../other/constants.js';
+  import {isTemp, CB} from '../other/util.js';
+  import {cls} from './cls.js';
 
 this.synth_Temp =
 function(liq) {

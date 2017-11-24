@@ -1,3 +1,5 @@
+  import {ETK_ADD, ETK_DIV, ETK_MIN, ETK_NUM, ETK_ID, ETK_COMMENT, ETK_NL} from './constants.js';
+  import {NL} from './util.js';
 
 
 function wcb_ADD_b(rawStr, tt) {

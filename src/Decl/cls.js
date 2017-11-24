@@ -1,3 +1,6 @@
+  import Actix from '../Actix/cls.js';
+  import {ACT_DECL} from '../other/constants.js';
+  import {DT_NONE} from '../other/scope-constants.js';
 
 function Decl() {
   Actix.call(this, ACT_DECL );

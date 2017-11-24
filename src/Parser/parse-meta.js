@@ -1,3 +1,5 @@
+  import {TK_ID} from '../other/lexer-constants.js';
+  import {cls} from './cls.js';
 
 this.parseMeta =
 function(c0,loc0,c,li,col) {

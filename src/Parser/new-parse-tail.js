@@ -1,3 +1,8 @@
+  import {_m} from '../other/scope-util.js';
+  import {CH_SINGLEDOT, CH_LSQBRACKET, CH_LPAREN, CH_BACKTICK, CTX_NONE, CH_RSQBRACKET, CH_RPAREN} from '../other/constants.js';
+  import {core} from '../other/util.js';
+  import {TK_ID, PREC_NONE} from '../other/lexer-constants.js';
+  import {cls} from './cls.js';
 
 this.parseTail =
 function(head) {

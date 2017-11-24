@@ -1,3 +1,6 @@
+  import {Emitters} from '../other/globals.js';
+  import {ETK_ID} from '../other/constants.js';
+  import {cls} from './cls.js';
 
 Emitters['BreakStatement'] =
 function(n, flags, isStmt) {
