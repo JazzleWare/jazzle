@@ -23,7 +23,7 @@ function(uri) {
   n['#uri'] = uri;
 
   scope['#importList'] = {ns: null, names: []};
-  scope['#exportList'] = {bindings: [], defaultExpr: ""};
+  scope['#exportList'] = {bindings: [], defaultExpr: "", cls: ""};
 
   var subName = pathMan.tail(uri);
   var at = subName.indexOf('@');
@@ -35,7 +35,7 @@ function(uri) {
     this.logBinding(name, '*default*', uri);
     this.insertBundleBinding(uri, binding);
     ASSERT.call(this, scope.findDeclAny_m(_m('cls')) === null, 'cls exists in ' + uri );
-    scope['#exportList'].bindings.push({real: 'cls', outer: 'cls'});
+    scope['#exportList'].cls = 'cls';
     var cul = this.clsUriList;
     var mname = _m(name);
     ASSERT.call(this, !HAS.call(cul, mname),
@@ -190,9 +190,33 @@ function writeImports(n) {
   }
 };
 
-this.writeExports = function(elem) {};
+this.writeExports = function(elem) {
+  var scope = elem['#scope'];
+  var ex = scope['#exportList'];
+  var str = "";
+  if (ex.defaultExpr !== "")
+    this.onExport(' export default '+ex.defaultExpr+';');
+  var list = ex.bindings, l = 0;
+  str = "";
+  while (l < list.length) {
+    if (l) str += ', ';
+    else { str = '{'; }
+    var elem = list[l++];
+    ASSERT.call(this, elem.real && elem.real === elem.outer, '[real-'+elem.real+'; outer-'+elem.outer+']');
+    str += elem.real;
+  }
+  if (l) {
+    str += '}';
+    this.onExport(' export '+str+';');
+  }
 
-this.path1to2 =
+  if (ex.cls !== "") {
+    ASSERT.call(this, ex.defaultExpr !== "", 'cls but no default');
+    this.onExport(' export var cls = '+ex.defaultExpr+'.prototype = ;');
+  }
+};
+
+this.pathThatLeads2to1 =
 function(from, to) {
   var fromNum = 0, toNum = 0;
   var fromStart = 0, toStart = 0;
@@ -256,6 +280,7 @@ function(from, to) {
     toStart += toElemLen;
   }
 
+  console.error('['+from+']*['+str+']->['+to+']');
   return str;
 };
 

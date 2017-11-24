@@ -67,8 +67,14 @@ function(elem) {
 autimex.onImport =
 function(o) {
   var rewrittenFrom = rewrite(manp.tail(o.from), RULES);
+  var rewrittenFrom_head = manp.head(rewrittenFrom);
+  var rewrittenFrom_tail = manp.tail(rewrittenFrom);
   var rewrittenTo = rewrite(manp.tail(o.to), RULES);
-  wr('  import '+o.str+' from \''+rewrittenFrom+'\';');
+  var rewrittenTo_head = manp.head(rewrittenTo);
+  var relPath = autimex.pathThatLeads2to1(rewrittenTo_head, rewrittenFrom_head);
+  if (relPath === "") relPath = '.';
+  relPath += '/' + rewrittenFrom_tail;
+  wr('  import '+o.str+' from \''+relPath+'\';');
 };
 
 autimex.onFinishImports =
@@ -82,7 +88,13 @@ function(elem) {
     logE(0)('clsThisList', m, 12, scope['#clsThisList']);
     var im = autimex.clsUriList[m+'%'];
     var rewrittenFrom = rewrite(manp.tail(im), RULES);
-    wr('  import {cls} from \''+rewrittenFrom+'\';');
+    var rewrittenFrom_head = manp.head(rewrittenFrom);
+    var rewrittenFrom_tail = manp.tail(rewrittenFrom);
+    var rewrittenTo_head = manp.head(rewrittenTo);
+    var relPath = autimex.pathThatLeads2to1(rewrittenTo_head, rewrittenFrom_head);
+    if (relPath === "") relPath = '.';
+    relPath += '/' + rewrittenFrom_tail;
+    wr('  import {cls} from \''+relPath+'\';');
   }
   wr('AUTIMEX\n) >> "$URL.imports.extra"');
 
@@ -90,9 +102,18 @@ function(elem) {
 };
 
 autimex.onStartExports =
-function(elem) {};
+function(elem) {
+  wr('(cat <<AUTIMEX');
+};
+
+autimex.onExport =
+function(str) {
+  console.log(str);
+};
 
 autimex.onFinishExports =
-function(elem) {};
+function(elem) {
+  wr('AUTIMEX\n) >> "$URL.exports.extra"');
+};
 
 autimex.flush();
