@@ -1995,20 +1995,25 @@ function(uri) {
   else if (at > 0) {
     scope['#clsThisList'] = [];
     var list = n.body, l = 0;
+    console.log('stmts', list.length);
     while (l < list.length) {
       var elem = list[l++];
+      console.log('[uri-'+uri+';'+elem.type+']');
       if (elem.type !== 'ExpressionStatement')
         continue;
 
       elem = elem.expression;
-      if (elem.type !== 'AssignmentsExpression')
+      console.log('[uri-'+uri+';'+elem.type+']');
+      if (elem.type !== 'AssignmentExpression')
         continue;
 
       elem = elem.left;
+      console.log('[uri-'+uri+';'+elem.type+']');
       if (elem.type !== 'MemberExpression')
         continue;
 
       elem = elem.object;
+      console.log('[uri-'+uri+';'+elem.type+']');
       if (elem.type !== 'ThisExpression')
         continue;
 

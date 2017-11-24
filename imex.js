@@ -13,10 +13,17 @@ function rewrite(str, rules) {
   return str;
 }
 
+var RULES = [
+  {regex: function() { return /^([^@]*)$/; }, sub: "./other/$1"},
+  {regex: function() { return /^@(.*)\.js$/; }, sub: "./$1/cls.js"},
+  {regex: function() { return /^(.+)@(.+).js$/; }, sub: "./$2/$1.js"}
+];
+
 var jazzle = require('./dist/jazzle.js');
 var fs = require('fs');
 var AutoImex = jazzle.AutoImex;
 var autimex = new AutoImex();
+var manp = new jazzle.PathMan;
 
 autimex.Parser = jazzle.Parser;
 autimex.loadSource =
@@ -41,11 +48,26 @@ function(elem) {
 
 autimex.onImport =
 function(o) {
-  console.log('  import ['+o.str+'] from ['+o.from+'] to ['+o.to+']');
+  var rewrittenFrom = rewrite(manp.tail(o.from), RULES);
+  var rewrittenTo = rewrite(manp.tail(o.to), RULES);
+
+  console.log('  import ['+o.str+'] from ['+o.from+'='+rewrittenFrom+'] to ['+o.to+'=' + rewrittenTo+']');
 };
 
 autimex.onFinishImports =
 function(elem) {
+  var scope = elem['#scope'], uri = elem['#uri'];
+  var sub = manp.tail(uri);
+  var rewrittenTo = rewrite(sub, RULES);
+
+  if (scope['#clsThisList'] && scope['#clsThisList']) {
+    var m = sub.substring(sub.indexOf('@')+1, sub.lastIndexOf('.js'));
+    console.error('clsThisList', m, 12, scope['#clsThisList']);
+    var im = autimex.clsUriList[m+'%'];
+    var rewrittenFrom = rewrite(manp.tail(im), RULES);
+    console.log('  import {cls} from '+'['+im+'='+rewrittenFrom+'] to ['+uri+'='+rewrittenTo+']');
+  }
+
   console.log('finish ['+elem['#uri']+']\n');
 };
 
@@ -56,5 +78,3 @@ autimex.onFinishExports =
 function(elem) {};
 
 autimex.flush();
-
-
