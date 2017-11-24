@@ -12,9 +12,12 @@ function(uri) {
 var list = null; list = process.argv;
 var l = 2;
 
-console.log('LIST', list);
+console.error('LIST', list);
 
 while (l < list.length)
   autimex.insertSourceByURI(list[l++]);
 
 autimex.resolveAll();
+
+autimex.flush();
+

@@ -121,3 +121,63 @@ function(name) {
   var mname = _m(name), bb = this.bundleBindings;
   return bb.has(mname) ? bb.get(mname) : null;
 };
+
+this.flush =
+function() {
+  var list = this.sources, l = 0, len = list.length();
+  while (l < len) {
+    var elem = list.at(l++);
+    this.writeImports(elem);
+    this.writeExports(elem);
+  }
+};
+
+this.writeImports = 
+function writeImports(n) {
+  var scope = n['#scope'];
+  var uri = n['#uri'];
+  console.error('writing imports for ['+uri+']');
+  var im = scope['#importList'].names, usedSources = new SortedObj();
+  var len = im.length, l = 0;
+  while (l < len) {
+    var elem = im[l++];
+    var name = elem.name;
+    var target = elem.target;
+    var targetUri = target.uri, binding = target.binding;
+    var mname = _m(targetUri);
+//  console.error('  name['+name+']', mname, usedSources.obj);
+    var entry = usedSources.has(mname) ? usedSources.get(mname) : null;
+    if (entry === null)
+      entry = usedSources.set(mname, {bindings: [], defaultName: "", wholeNS: "" });
+    if (name === binding.ref.scope['#exportList'].defaultExpr) {
+      ASSERT.call(this, entry.defaultName === "", '['+targetUri+'] default');
+      entry.defaultName = name;
+    }
+    else { entry.bindings.push(name); }
+  }
+
+  len = usedSources.length(), l = 0;
+  while (l < len) {
+    var sourceBindings = usedSources.at(l);
+    var sourceUri = usedSources.keys[l];
+    var str = "";
+    if (sourceBindings.defaultName !== "")
+      str += sourceBindings.defaultName;
+    if (sourceBindings.bindings.length) {
+      if (str.length) str += ', ';
+      str += '{';
+      var bindings = sourceBindings.bindings, b = 0;
+      while (b < bindings.length) {
+        if (b) str += ', ';
+        str += bindings[b];
+        b++;
+      }
+      str += '}';
+    }
+    console.log('  import ' + str + ' from ' + sourceUri );
+    l++;
+  }
+};
+
+this.writeExports = function(elem) {};
+
