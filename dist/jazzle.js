@@ -1957,10 +1957,6 @@ function(inactiveIf) {
 
 var pathMan = new PathMan();
 
-function logBinding(real, outer, uri) {
-  console.log('  ['+uri+']:export {['+real+'] as ['+outer+']}');
-}
-
 this.insertSourceByURI =
 function(uri) {
   var m = _m(uri);
@@ -1981,7 +1977,7 @@ function(uri) {
     var binding = scope.findDeclAny_m(_m(name));
     ASSERT.call(this, binding, 'no ['+name+'] in ['+uri+']');
     scope['#exportList'].defaultExpr = name;
-    logBinding(name, '*default*', uri);
+    this.logBinding(name, '*default*', uri);
     this.insertBundleBinding(uri, binding);
     ASSERT.call(this, scope.findDeclAny_m(_m('cls')) === null, 'cls exists in ' + uri );
     scope['#exportList'].bindings.push({real: 'cls', outer: 'cls'});
@@ -1990,30 +1986,30 @@ function(uri) {
     ASSERT.call(this, !HAS.call(cul, mname),
       'class has been registered: ['+name+']<==['+uri+']');
     cul[mname] = uri;
-    logBinding(name, '<<cls>>', uri);
+    this.logBinding(name, '<<cls>>', uri);
   }
   else if (at > 0) {
     scope['#clsThisList'] = [];
     var list = n.body, l = 0;
-    console.log('stmts', list.length);
+    this.logE('stmts', list.length);
     while (l < list.length) {
       var elem = list[l++];
-      console.log('[uri-'+uri+';'+elem.type+']');
+      this.logE('[uri-'+uri+';'+elem.type+']');
       if (elem.type !== 'ExpressionStatement')
         continue;
 
       elem = elem.expression;
-      console.log('[uri-'+uri+';'+elem.type+']');
+      this.logE('[uri-'+uri+';'+elem.type+']');
       if (elem.type !== 'AssignmentExpression')
         continue;
 
       elem = elem.left;
-      console.log('[uri-'+uri+';'+elem.type+']');
+      this.logE('[uri-'+uri+';'+elem.type+']');
       if (elem.type !== 'MemberExpression')
         continue;
 
       elem = elem.object;
-      console.log('[uri-'+uri+';'+elem.type+']');
+      this.logE('[uri-'+uri+';'+elem.type+']');
       if (elem.type !== 'ThisExpression')
         continue;
 
@@ -2025,7 +2021,7 @@ function(uri) {
     while (l < len) {
       var elem = list.at(l++ );
       scope['#exportList'].bindings.push({real: elem.name, outer: elem.name});
-      logBinding(elem.name, elem.name, uri );
+      this.logBinding(elem.name, elem.name, uri );
       this.insertBundleBinding(uri, elem);
     }
   }
@@ -2039,12 +2035,12 @@ function(uri) {
 this.resolveAll =
 function() {
   var list = this.sources, l = 0, len = list.length();
-  console.error(' --------- ['+len+'] sources ----------; START');
+  this.logE(' --------- ['+len+'] sources ----------; START');
   while (l < len) {
     var elem = list.at(l++ );
     this.tryResolveExternals(elem);
   }
-  console.error(' --------- ['+l+'/'+len+'] complete ---------');
+  this.logE(' --------- ['+l+'/'+len+'] complete ---------');
 };
 
 this.tryResolveExternals =
@@ -2056,7 +2052,7 @@ function(n) {
     var b = this.findBundleBinding(name.name);
     if (b) {
       sourceScope['#importList'].names.push({name: name.name, target: b});
-      console.log('  ['+n['#uri']+']:import ['+name.name+'] from ['+b.uri+'] '+
+      this.logE('  ['+n['#uri']+']:import ['+name.name+'] from ['+b.uri+'] '+
         (name.name === b.binding.ref.scope['#exportList'].defaultExpr ? 'default' : 'raw' ) );
     }
   }
@@ -2096,7 +2092,7 @@ this.writeImports =
 function writeImports(n) {
   var scope = n['#scope'];
   var uri = n['#uri'];
-  console.error('writing imports for ['+uri+']');
+  this.logE('writing imports for ['+uri+']');
   var im = scope['#importList'].names, usedSources = new SortedObj();
   var len = im.length, l = 0;
   while (l < len) {
@@ -2206,6 +2202,16 @@ function(from, to) {
   }
 
   return str;
+};
+
+this.logE =
+function() {
+  return console.log.apply(console, arguments);
+};
+
+this.logBinding = 
+function(real, outer, uri) {
+  this.logE('  ['+uri+']:export {['+real+'] as ['+outer+']}');
 };
 
 }]  ],

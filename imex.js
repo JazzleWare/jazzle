@@ -31,10 +31,20 @@ function(uri) {
   return fs.readFileSync(uri, 'utf-8').toString();
 };
 
+var logE = function() {
+  var log = autimex.logE;
+  function none() {}
+  function logE() { return log.apply(this, arguments); }
+  return function (l) {
+    return l ? logE : none;
+  };
+}();
+autimex.logE = function() {};
+
 var list = null; list = process.argv;
 var l = 2;
 
-console.error('LIST', list);
+logE(0)('LIST', list);
 
 while (l < list.length)
   autimex.insertSourceByURI(list[l++]);
@@ -43,7 +53,7 @@ autimex.resolveAll();
 
 autimex.onStartImports =
 function(elem) {
-  console.log('starting ['+elem['#uri']+']');
+  logE(1)('starting ['+elem['#uri']+']');
 };
 
 autimex.onImport =
@@ -62,13 +72,13 @@ function(elem) {
 
   if (scope['#clsThisList'] && scope['#clsThisList']) {
     var m = sub.substring(sub.indexOf('@')+1, sub.lastIndexOf('.js'));
-    console.error('clsThisList', m, 12, scope['#clsThisList']);
+    logE(0)('clsThisList', m, 12, scope['#clsThisList']);
     var im = autimex.clsUriList[m+'%'];
     var rewrittenFrom = rewrite(manp.tail(im), RULES);
     console.log('  import {cls} from '+'['+im+'='+rewrittenFrom+'] to ['+uri+'='+rewrittenTo+']');
   }
 
-  console.log('finish ['+elem['#uri']+']\n');
+  logE(1)('finish ['+elem['#uri']+']\n');
 };
 
 autimex.onStartExports =
