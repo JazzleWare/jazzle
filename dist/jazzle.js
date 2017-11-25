@@ -31,7 +31,7 @@ function Bundler(pathMan) {
   this.freshSources = [];
   this['#scope'] = null;
   this.rootNode = null;
-  this.bundleScope = null;
+  this.bundleScope = new BundleScope();
 }
 ;
 function CatchScope(sParent) {
