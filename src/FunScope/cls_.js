@@ -1,0 +1,11 @@
+  import './src/FunScope/core.js';
+  import './src/FunScope/new-core.js';
+  import './src/FunScope/hand-over.js';
+  import './src/FunScope/sp.js';
+  import './src/FunScope/synth-names.js';
+  import './src/FunScope/strict.js';
+  import './src/FunScope/can.js';
+  import './src/FunScope/args-unique.js';
+  import {FunScope, cls} from './ctor.js';
+  export default FunScope;
+  export {cls};

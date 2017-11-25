@@ -1,0 +1,8 @@
+// ctor.js
+ export default Constructor() {}
+ export var cls = Constructor.prototype;
+
+// cls
+ import Constructor, {cls} from './ctor';
+ export {Constructor, cls};
+ import './sub1' ... './subn'

@@ -34,6 +34,7 @@ var normalize = function normalize(str) {
 
 cls.asNode =
 function(uri) {
+  uri = normalize(uri);
   var src = fs.readFileSync(uri, 'utf-8').toString();
   var newParser = new Parser(src, {sourceType: 'module'});
   newParser.bundleScope = this.bundleScope;
