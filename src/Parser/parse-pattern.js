@@ -3,7 +3,7 @@
   import {CH_LSQBRACKET, CH_LCURLY} from '../other/constants.js';
   import {cls} from './cls.js';
 
-this.parsePat = 
+cls.parsePat = 
 function() {
   switch (this.lttype) {
   case TK_ID:
@@ -31,4 +31,5 @@ function() {
      return null;
   }
 };
+
 

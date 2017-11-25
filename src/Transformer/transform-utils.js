@@ -1,7 +1,7 @@
   import {ASSERT} from '../other/constants.js';
   import {cls} from './cls.js';
 
-this.trListChunk =
+cls.trListChunk =
 function(list, isVal, s, e) {
   while (s<=e) {
     if (list[s] !== null)
@@ -10,7 +10,7 @@ function(list, isVal, s, e) {
   }
 };
 
-this.trSAT =
+cls.trSAT =
 function(n, isVal) {
   switch (n.type) {
   case 'Identifier':
@@ -21,7 +21,7 @@ function(n, isVal) {
   ASSERT.call(this, false, 'SAT !== <'+n.type+'>');
 };
 
-this.accessTZ =
+cls.accessTZ =
 function(scope) {
   var lg = scope.scs.gocLG('tz');
   var l = lg.getL(0);
@@ -33,7 +33,7 @@ function(scope) {
   return l.track(this.cur);
 };
 
-this.accessJZ =
+cls.accessJZ =
 function() {
   var lg = this.script.gocLG('jz');
   var l = lg.getL(0);
@@ -44,8 +44,9 @@ function() {
   return l.track(this.cur);
 };
 
-this.trList =
+cls.trList =
 function(list, isVal) {
   return this.trListChunk(list, isVal, 0, list.length-1) ;
 };
+
 

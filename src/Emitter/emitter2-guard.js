@@ -2,7 +2,7 @@
   import {guard_simpleListener} from '../other/wcb.js';
   import {cls} from './cls.js';
 
-this.insertGuard =
+cls.insertGuard =
 function(guard) {
   ASSERT.call(this, this.guard === null, 'existing guard');
   ASSERT.call(this, this.guardArg === null, 'existing guardArg');
@@ -13,7 +13,7 @@ function(guard) {
   this.guard = guard;
 };
 
-this.monitorGuard =
+cls.monitorGuard =
 function(listener) {
   ASSERT.call(this, this.guard !== null, 'no');
   ASSERT.call(this, this.guardListener === null, 'listener');
@@ -21,7 +21,7 @@ function(listener) {
   this.guardListener = listener;
 };
 
-this.runGuard =
+cls.runGuard =
 function(str, t) {
   var guard = this.guard, guardListener = this.guardListener;
   this.removeGuard_any();
@@ -36,7 +36,7 @@ function(str, t) {
   this.runningGuard = false;
 };
 
-this.listenForEmits =
+cls.listenForEmits =
 function(fallbackListener) {
   var l = null;
   if (this.guard === null) {
@@ -54,13 +54,13 @@ function(fallbackListener) {
   return l;
 };
 
-this.removeGuard_any =
+cls.removeGuard_any =
 function() {
   ASSERT.call(this, this.guard !== null, 'no');
   this.guard = this.guardListener = null;
 };
 
-this.removeGuard_if =
+cls.removeGuard_if =
 function(listener) {
   // TODO: uncomment below
   // ASSERT.call(this, this.guard !== null, 'no');
@@ -82,7 +82,7 @@ function(listener) {
   return true;
 };
 
-this.setGuardArg =
+cls.setGuardArg =
 function(arg) {
   ASSERT.call(this, arg === null || this.guard !== null, 'no');
   ASSERT.call(this, (arg === null ? this.guard : this.guardArg) === null, 'n');
@@ -90,11 +90,12 @@ function(arg) {
   this.guardArg = arg;
 };
 
-this.insertGuard_try =
+cls.insertGuard_try =
 function(guard) {
   if (this.guard !== null)
     return false;
   this.insertGuard(guard);
   return true;
 };
+
 

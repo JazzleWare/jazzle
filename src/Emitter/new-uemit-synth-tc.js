@@ -1,7 +1,6 @@
   import {UntransformedEmitters} from '../other/globals.js';
   import {ASSERT_EQ} from '../other/constants.js';
   import {tzc, tg, cvc} from '../other/util.js';
-  import {cls} from './cls.js';
 
 UntransformedEmitters['cvtz'] =
 function(n, flags, isStmt) {

@@ -2,7 +2,7 @@
   import {wcb_afterVar, wcb_afterRet} from '../other/wcb.js';
   import {cls} from './cls.js';
 
-this.emitExprFn =
+cls.emitExprFn =
 function(n, flags, isStmt) {
   var hasParen = flags & EC_START_STMT;
   var raw = n.fun;
@@ -50,4 +50,5 @@ function(n, flags, isStmt) {
   hasParen && this.w(')');
   isStmt && this.w(';');
 };
+
 

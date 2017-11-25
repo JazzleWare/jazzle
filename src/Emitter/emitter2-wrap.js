@@ -1,7 +1,7 @@
   import {ASSERT, ETK_NL} from '../other/constants.js';
   import {cls} from './cls.js';
 
-this.wrapCurrentLine =
+cls.wrapCurrentLine =
 function() {
   this.hasPendingSpace() && this.removePendingSpace();
   this.nextLineHasLineBreakBefore = true;
@@ -16,10 +16,11 @@ function() {
   else this.finishCurrentLine();
 };
 
-this.overflowLength =
+cls.overflowLength =
 this.ol =
 function(len) {
   var wl = this.wrapLimit;
   return wl <= 0 ? 0 : this.emcol_cur + len - wl;
 };
+
 

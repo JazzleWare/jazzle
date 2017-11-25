@@ -4,7 +4,7 @@
   import {core} from '../other/util.js';
   import {cls} from './cls.js';
 
-this.parseFor = function() {
+cls.parseFor = function() {
   this.resvchk();
   this.testStmt() || this.err('not.stmt');
   this.fixupLabels(true) ;
@@ -165,7 +165,8 @@ this.parseFor = function() {
   };
 };
 
-this.ensureVarsAreNotResolvingToCatchParams = function() {
+cls.ensureVarsAreNotResolvingToCatchParams = function() {
   return;
 };
+
 

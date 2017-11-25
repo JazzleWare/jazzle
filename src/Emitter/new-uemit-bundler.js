@@ -7,7 +7,7 @@ function(n, flags, isStmt) {
   return this.emitBundleItem(n.rootNode);
 };
 
-this.emitBundleItem =
+cls.emitBundleItem =
 function(n) {
   var list = n['#imports'], len = list === null ? 0 : list.length, l = 0;
   var lsn = null;
@@ -27,4 +27,5 @@ function(n) {
 
   own.used || this.grmif(own);
 };
+
 

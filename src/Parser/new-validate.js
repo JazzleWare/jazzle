@@ -1,6 +1,6 @@
   import {cls} from './cls.js';
 
-this.isResv =
+cls.isResv =
 function (name) {
   switch (name.length) {
   case 1:
@@ -132,8 +132,9 @@ function (name) {
   }
 };
 
-this.validate =
+cls.validate =
 function(name) {
   this.isResv(name) && this.ri();
 };
+
 

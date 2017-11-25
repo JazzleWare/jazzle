@@ -3,7 +3,7 @@
   import Template from '../Template/cls.js';
   import {cls} from './cls.js';
 
-this.onErr = function(errorType, errParams) {
+cls.onErr = function(errorType, errParams) {
    var message = "";
    if (!HAS.call(ErrorBuilders, errorType))
      message = "Error: " + errorType + "\n" +
@@ -30,7 +30,7 @@ this.onErr = function(errorType, errParams) {
 };
   
 // TODO: find a way to squash it with normalize
-this.buildErrorInfo = function(builder, params) {
+cls.buildErrorInfo = function(builder, params) {
   if (builder.preprocessor !== null)
     builder.preprocessor.call(params);
 
@@ -563,5 +563,6 @@ a('yield.args',{m:'yield expression not allowed in generator\'s argument list'},
 a('yield.as.an.id',{m:'yield is not allowed as an identifier in this context'},'function* l() { var yield = 12 }');
 
 a('yield.has.no.expr.deleg',{m:'unexpected {parser.lttype} -- it can not star an expression'},'function* l() { yield* ?}');
+
 
 

@@ -3,19 +3,19 @@
   import Ref from '../Ref/cls.js';
   import {cls} from './cls.js';
 
-this.getL =
+cls.getL =
 function(idx) {
   return idx < this.list.length ?
     this.list[idx] : null;
 };
 
-this.seal = function() {
+cls.seal = function() {
   ASSERT.call(this, !this.hasSeal, 'has seal');
   this.hasSeal = true;
   return this;
 };
 
-this.newL =
+cls.newL =
 function() {
   ASSERT.call(this, !this.hasSeal, 'has seal');
 
@@ -26,4 +26,5 @@ function() {
   this.length = this.list.length;
   return liq;
 };
+
 

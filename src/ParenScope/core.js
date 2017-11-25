@@ -1,17 +1,17 @@
   import {ASSERT} from '../other/constants.js';
   import {cls} from './cls.js';
 
-this.finish = 
+cls.finish = 
 function() {};
 
-this.makeParams =
+cls.makeParams =
 function(paramScope) {
   paramScope.setRefsAndArgRefs(this.refs);
   this.updateParentForSubScopesTo(paramScope);
   this.hasDissolved = true;
 };
 
-this.makeSimple =
+cls.makeSimple =
 function() {
   var list = this.refs;
   var i = 0;
@@ -30,7 +30,7 @@ function() {
   this.hasDissolved = true;
 };
 
-this.updateParentForSubScopesTo =
+cls.updateParentForSubScopesTo =
 function(sParent) {
   var list = this.ch, i = 0;
   while (i<list.length) {
@@ -50,4 +50,5 @@ function(sParent) {
     i++;
   }
 };
+
 

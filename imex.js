@@ -61,7 +61,7 @@ function(elem) {
   var uri = elem['#uri'];
   wr('URL="'+uri+'"');
   wr('echo \''+rewrite(manp.tail(uri), RULES)+'\' >> "$URL.name.extra"');
-  wr('(cat <<AUTIMEX');
+  wr('(cat <<\'AUTIMEX\'');
 };
 
 autimex.onImport =
@@ -83,7 +83,7 @@ function(elem) {
   var sub = manp.tail(uri);
   var rewrittenTo = rewrite(sub, RULES);
 
-  if (scope['#clsThisList'] && scope['#clsThisList']) {
+  if (scope['#clsThisList'] && scope['#clsThisList'].length) {
     var m = sub.substring(sub.indexOf('@')+1, sub.lastIndexOf('.js'));
     logE(0)('clsThisList', m, 12, scope['#clsThisList']);
     var im = autimex.clsUriList[m+'%'];
@@ -98,12 +98,19 @@ function(elem) {
   }
   wr('AUTIMEX\n) >> "$URL.imports.extra"');
 
+  if (scope['#clsThisList'] && scope['#clsThisList'].length) {
+    wr('( cat <<\'AUTIMEX\'');
+    wr(this2cls(elem['#src'], scope['#clsThisList']));
+    wr('AUTIMEX');
+    wr(') >> "$URL.this2cls.extra"');
+  }
+
   logE(0)('finish ['+elem['#uri']+']\n');
 };
 
 autimex.onStartExports =
 function(elem) {
-  wr('(cat <<AUTIMEX');
+  wr('(cat <<\'AUTIMEX\'');
 };
 
 autimex.onExport =
@@ -117,3 +124,16 @@ function(elem) {
 };
 
 autimex.flush();
+
+function this2cls(str, thisList) {
+  var result = "", curStart = 0, l = 0;
+  while (l < thisList.length) {
+    var n = thisList[l++];
+    var head = n.start, tail = n.end;
+    result += str.substring(curStart, head);
+    result += 'cls';
+    curStart = tail;
+  }
+  result += str.substr(curStart);
+  return result;
+}

@@ -2,42 +2,42 @@
   import {Transformers} from '../other/globals.js';
   import {cls} from './cls.js';
 
-this.setCVTZ =
+cls.setCVTZ =
 function(cvtz) {
   var l = this.cvtz;
   this.cvtz = cvtz;
   return l;
 };
 
-this.setRR =
+cls.setRR =
 function(reachedRef) {
   var rr = this.reachedRef;
   this.reachedRef = reachedRef;
   return rr;
 };
 
-this.setScope =
+cls.setScope =
 function(scope) {
   var cur = this.cur;
   this.cur = scope ;
   return cur;
 };
 
-this.setTS =
+cls.setTS =
 function(ts) {
   var ts0 = this.tempStack;
   this.tempStack = ts;
   return ts0;
 };
 
-this.setThis =
+cls.setThis =
 function(thisState) {
   var th = this.thisState;
   this.thisState = thisState;
   return th;
 };
 
-this.tr =
+cls.tr =
 function(n, isVal) {
   var ntype = n.type;
   switch (ntype) {
@@ -57,6 +57,7 @@ function(n, isVal) {
   return transformer.call(this, n, isVal);
 };
 
-this.rename =
+cls.rename =
 function(base, i) { return this.renamer(base, i); };
+
 

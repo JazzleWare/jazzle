@@ -6,7 +6,7 @@
 //       contain any significant names, but they are not recorded in the lsi
 //       of the scope's unresolved references; nothing looks actually wrong with this approach,
 //       except that it is in total contrast to the one taken in the previous version
-this.track =
+cls.track =
 function(scope) {
   if (this.rsMap === null)
     this.rsMap = {};
@@ -28,4 +28,5 @@ function(scope) {
   }
   return this;
 };
+
 

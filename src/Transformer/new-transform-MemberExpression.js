@@ -8,5 +8,6 @@ function(n, isVal) {
   return n;
 };
 
-this.trSAT_mem = Transformers['MemberExpression'];
+cls.trSAT_mem = Transformers['MemberExpression'];
+
 

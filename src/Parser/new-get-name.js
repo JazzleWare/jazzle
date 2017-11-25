@@ -2,7 +2,7 @@
   import {arorev} from '../other/util.js';
   import {cls} from './cls.js';
 
-this.getName_cls =
+cls.getName_cls =
 function(st) {
   var fl = this.scope.flags, name = null;
   this.scope.flags |= SF_STRICT;
@@ -18,7 +18,7 @@ function(st) {
   return name;
 };
 
-this.getName_fn =
+cls.getName_fn =
 function(st) {
   switch (this.ltval) {
   case 'yield':
@@ -38,4 +38,5 @@ function(st) {
 
   return this.id();
 };
+
 

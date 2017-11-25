@@ -3,7 +3,7 @@
   import {CTX_TOP, CH_COLON, CTX_FOR} from '../other/constants.js';
   import {cls} from './cls.js';
 
-this.parseCond = function(cond, ctx) {
+cls.parseCond = function(cond, ctx) {
   this.spc(core(cond), 'aft');
   this.next(); // '?'
 
@@ -26,4 +26,5 @@ this.parseCond = function(cond, ctx) {
     '#y': this.Y(cond,alt,seq), '#c': {}
   };
 };
+
 

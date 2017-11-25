@@ -4,7 +4,7 @@
   import {ERR_NONE_YET, ERR_PIN_UNICODE_IN_RESV} from '../other/error-constants.js';
   import {cls} from './cls.js';
 
-this.parseIDExprHead =
+cls.parseIDExprHead =
 function(ctx) {
   var name = this.ltval;
   SWITCH:
@@ -221,12 +221,13 @@ function(ctx) {
   return this.id();
 };
  
-this.resvchk = function() {
+cls.resvchk = function() {
   if (this.ct !== ERR_NONE_YET) {
     ASSERT.call(this.ct === ERR_PIN_UNICODE_IN_RESV,
       'the error in this.ct is something other than ERR_PIN_UNICODE_IN_RESV: ' + this.ct);
     this.err('resv.unicode');
   }
 };
+
 
 

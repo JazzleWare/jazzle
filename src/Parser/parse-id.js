@@ -1,7 +1,7 @@
   import {CVTZ_NONE} from '../other/constants.js';
   import {cls} from './cls.js';
 
-this.id = function() {
+cls.id = function() {
   var id = {
     type: 'Identifier',
     name: this.ltval,
@@ -19,4 +19,5 @@ this.id = function() {
   this.next() ;
   return id;
 };
+
 

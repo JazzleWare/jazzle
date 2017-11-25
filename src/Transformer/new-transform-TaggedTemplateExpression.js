@@ -1,5 +1,4 @@
   import {Transformers} from '../other/globals.js';
-  import {cls} from './cls.js';
 
 Transformers['TaggedTemplateExpression'] =
 function(n, isVal) {

@@ -8,7 +8,7 @@
   import Comments from '../Comments/cls.js';
   import {cls} from './cls.js';
 
-this.parseMem =
+cls.parseMem =
 function(ctx, st) {
   var firstMod = null, latestMod = null, nonMod = null;
   var mpending = ST_NONE, nina = false; // name is newline async
@@ -176,7 +176,7 @@ function(ctx, st) {
   return this.parseNonMethObjMem(memName, ctx);
 };
 
-this.parseNonMethObjMem =
+cls.parseNonMethObjMem =
 function(memName, ctx) {
   var hasProto = ctx & CTX_HASPROTO, firstProto = this.first__proto__;
   var cb = this.cb, val = null;
@@ -277,4 +277,5 @@ function(memName, ctx) {
     '#y': 0, '#c': cb
   };
 };
+
 

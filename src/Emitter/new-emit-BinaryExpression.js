@@ -5,7 +5,7 @@
   import {bp, isLA, isRA} from '../other/lexer-constants.js';
   import {cls} from './cls.js';
 
-this.emitBLE =
+cls.emitBLE =
 Emitters['LogicalExpression'] =
 Emitters['BinaryExpression'] =
 function(n, flags, isStmt) {
@@ -60,7 +60,7 @@ function(n, flags, isStmt) {
   return true; // something was actually emitted
 };
 
-this.emitRight = 
+cls.emitRight = 
 function(n, o, flags) {
   var hasParen = false;
   var rp = bp(n.operator), lp = bp(o);
@@ -79,7 +79,7 @@ function(n, o, flags) {
   this.emcim(aft );
 };
 
-this.emitLeft =
+cls.emitLeft =
 function(n, o, flags) {
   var hasParen = false;
   var rp = bp(o), lp = bp(n.operator);
@@ -98,7 +98,7 @@ function(n, o, flags) {
   this.emcim(aft );
 };
 
-this.emitBLEP =
+cls.emitBLEP =
 function(n, flags) {
   switch (n.type) {
   case 'UnaryExpression': // it has a higher pr than any other op
@@ -108,7 +108,7 @@ function(n, flags) {
   return this.emitHead(n, flags, false);
 };
 
-this.emitPow =
+cls.emitPow =
 function(n, flags, isStmt) {
   var hasParen = flags & EC_NEW_HEAD;
   if (hasParen) { this.w('('); flags = EC_NONE; }
@@ -129,4 +129,5 @@ function isBLE(n) {
     return false;
   }
 }
+
 

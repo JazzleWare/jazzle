@@ -1,6 +1,6 @@
   import {cls} from './cls.js';
 
-this. push =
+cls. push =
 function(comment) {
   this.c.push(comment);
   if (!this.n) {
@@ -10,10 +10,11 @@ function(comment) {
   }
 };
 
-this.mergeWith =
+cls.mergeWith =
 function(another) {
   if (!this.n)
     this.n = another.n;
   this.c = this.c.concat(another.c);
 };
+
 

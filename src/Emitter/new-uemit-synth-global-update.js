@@ -1,7 +1,6 @@
   import {UntransformedEmitters} from '../other/globals.js';
   import {EC_NEW_HEAD, ETK_ID, EC_NONE} from '../other/constants.js';
   import {tg} from '../other/util.js';
-  import {cls} from './cls.js';
 
 UntransformedEmitters['global-update'] =
 function(n, flags, isStmt) {

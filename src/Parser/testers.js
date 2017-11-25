@@ -2,7 +2,7 @@
   import {ASSERT, PE_NO_NONVAR, PE_NO_LABEL, PE_NONE} from '../other/constants.js';
   import {cls} from './cls.js';
 
-this.ensureSAT =
+cls.ensureSAT =
 function(left) {
 
   switch (left.type) {
@@ -17,7 +17,7 @@ function(left) {
   return false;
 };
 
-this.patErrCheck =
+cls.patErrCheck =
 function() {
   ASSERT.call(this, this.vpatCheck,
     'PEC msut have vpatCheck hold');
@@ -31,11 +31,12 @@ function() {
   return true;
 };
 
-this.setPatCheck =
+cls.setPatCheck =
 function(shouldCheck) {
   if (shouldCheck) {
     this.vpatCheck = true;
     this.vpatErr = PE_NONE;
   }
 };
+
 

@@ -2,14 +2,14 @@
   import {DT_NONE} from '../other/scope-constants.js';
   import {cls} from './cls.js';
 
-this.s =
+cls.s =
 function(s) {
   ASSERT_EQ.call(this, this.site, null);
   this.site = s;
   return this;
 };
 
-this.r =
+cls.r =
 function(r) {
   ASSERT_EQ.call(this, this.ref, null);
   ASSERT_EQ.call(this, r.targetDecl_nearest, null);
@@ -20,21 +20,21 @@ function(r) {
   return this;
 };
 
-this.n =
+cls.n =
 function(n) {
   ASSERT_EQ.call(this, this.name, "");
   this.name = n;
   return this;
 };
 
-this.t =
+cls.t =
 function(t) {
   ASSERT_EQ.call(this, this.type, DT_NONE);
   this.type = t;
   return this;
 };
 
-this.activateTZ =
+cls.activateTZ =
 function() {
   if (this.hasTZCheck)
     return false;
@@ -43,19 +43,19 @@ function() {
   return true;
 };
 
-this.isReached =
+cls.isReached =
 function() {
   return this.reached && this.reached.v;
 };
 
-this.refreshRSListWithList =
+cls.refreshRSListWithList =
 function(list) {
   var l = 0;
   while (l < list.length)
     this.refreshRSListWith(list[l++]);
 };
 
-this.refreshRSListWith =
+cls.refreshRSListWith =
 function(scope) {
   if (this.rsMap === null)
     this.rsMap = {};
@@ -69,7 +69,7 @@ function(scope) {
   return true;
 };
 
-this.getDecl_real =
+cls.getDecl_real =
 function() {
   if (this.realTarget !== null)
     return this.realTarget;
@@ -81,4 +81,5 @@ function() {
   this.realTarget = t;
   return t;
 };
+
 

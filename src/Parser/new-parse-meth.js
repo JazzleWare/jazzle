@@ -3,7 +3,7 @@
   import {core} from '../other/util.js';
   import {cls} from './cls.js';
 
-this.parseMeth =
+cls.parseMeth =
 function(memName, ctx, st) {
   if (this.lttype !== CH_LPAREN)
     this.err('meth.paren');
@@ -82,4 +82,5 @@ function(memName, ctx, st) {
     '#y': computed ? this.Y(memName) : 0, '#c': cb
   };
 };
+
 

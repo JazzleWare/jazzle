@@ -3,7 +3,7 @@
   import {ERR_NONE_YET, ERR_PIN_OCTAL_IN_STRICT} from '../other/error-constants.js';
   import {cls} from './cls.js';
 
-this.readEsc =
+cls.readEsc =
 function(t) { // is it a template escape?
   var c = this.c,
       s = this.src,
@@ -96,7 +96,7 @@ function(t) { // is it a template escape?
   return v;
 };
 
-this.readEsc_legacy =
+cls.readEsc_legacy =
 function() {
   if (this.scope.insideStrict())
     this.err('esc.legacy.not.allowed.in.strict.mode');
@@ -124,4 +124,5 @@ function() {
 
   return String.fromCharCode(v);
 };
+
 

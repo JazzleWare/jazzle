@@ -2,7 +2,7 @@
   import {cls} from './cls.js';
 
 // GENERAL RULE: if error occurs while parsing an elem, the parse routine sets the `regexErr and returns null
-this. parseRegex =
+cls. parseRegex =
 function(rc, rli, rcol, regLast, nump, flags, 
   /* tail (flags) */
   tc, tli, tcol) {
@@ -68,6 +68,7 @@ function(rc, rli, rcol, regLast, nump, flags,
 
   return n;
 };
+
 
 
 

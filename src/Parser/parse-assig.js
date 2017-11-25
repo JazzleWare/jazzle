@@ -5,7 +5,7 @@
   import {PREC_NONE} from '../other/lexer-constants.js';
   import {cls} from './cls.js';
 
-this.parseAssignment = function(head, ctx) {
+cls.parseAssignment = function(head, ctx) {
   var o = this.ltraw;
   if (o === '=>')
     return this.parseArrow(head, ctx&CTX_FOR);
@@ -121,4 +121,5 @@ this.parseAssignment = function(head, ctx) {
     '#y': this.Y(head)+this.Y(right), '#c': {}
   };
 };
+
 

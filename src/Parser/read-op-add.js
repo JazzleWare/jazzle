@@ -2,7 +2,7 @@
   import {TK_AA_MM, TK_OP_ASSIG, TK_UNBIN} from '../other/lexer-constants.js';
   import {cls} from './cls.js';
 
-this.readOp_add =
+cls.readOp_add =
 function() {
   var c = this.c; c++ // '+'
   var ch = this.scat(c);
@@ -23,4 +23,5 @@ function() {
 
   this.setsimpoff(c);
 };
+
 

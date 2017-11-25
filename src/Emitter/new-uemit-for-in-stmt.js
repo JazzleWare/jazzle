@@ -18,7 +18,7 @@ function(n, flags, isStmt) {
 };
 
 
-this.emitEnumeration =
+cls.emitEnumeration =
 function(n, flags, t) {
   var b = t === 'dh';
   var l = n.left;
@@ -53,4 +53,5 @@ function(n, flags, t) {
 
   this.emitAttached(n.body);
 };
+
 

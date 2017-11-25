@@ -14,7 +14,7 @@ function(n, isVal) {
   return s.length === 1 ? s[0] : this.synth_AssigList(s);
 };
 
-this.transformDtor =
+cls.transformDtor =
 function(n, kind) {
   var assig = null, left = n.id, right = n.init;
   if (right === null) {
@@ -26,4 +26,5 @@ function(n, kind) {
   assig = this.synth_SynthAssig(left, right, true);
   return this.tr(assig, false);
 };
+
 

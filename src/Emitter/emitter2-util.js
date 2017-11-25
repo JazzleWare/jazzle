@@ -3,7 +3,7 @@
   import {wcb_afterStmt} from '../other/wcb.js';
   import {cls} from './cls.js';
 
-this.writeStringValue =
+cls.writeStringValue =
 function(sv, ql) {
   var ch = -1, len = sv.length, c = 0, v = "";
   while (c < len) {
@@ -28,7 +28,7 @@ function(sv, ql) {
   }
 };
 
-this.isNormalCh =
+cls.isNormalCh =
 function(ch) {
   switch (ch) {
   case CH_BACK_SLASH:
@@ -40,7 +40,7 @@ function(ch) {
   return ch <= CH_COMPLEMENT && ch >= CH_WHITESPACE;
 };
 
-this.stringEscapeFor =
+cls.stringEscapeFor =
 function(ch) {
   switch (ch) {
   case CH_BACK_SLASH: return '\\\\';
@@ -61,7 +61,7 @@ function(ch) {
   }
 };
 
-this.writeString =
+cls.writeString =
 function(sv, quotation) {
   this.tt(ETK_STR);
   this.writeToCurrentLine_checked(quotation); // must take care of wrapping for the quotation
@@ -71,7 +71,7 @@ function(sv, quotation) {
   this.writeToCurrentLine_raw(quotation); 
 };
 
-this.emitCommaList =
+cls.emitCommaList =
 function(list, flags) {
   var e = 0;
   while (e < list.length) {
@@ -82,7 +82,7 @@ function(list, flags) {
   }
 };
 
-this.emitStmtList =
+cls.emitStmtList =
 function(list) {
   var own = {used: false};
 
@@ -99,17 +99,17 @@ function(list) {
   own.used || this.grmif(own);
 };
 
-this.emitStmt =
+cls.emitStmt =
 function(stmt) { return this.emitAny(stmt, EC_START_STMT, true); };
 
-this.emitTZCheckPoint =
+cls.emitTZCheckPoint =
 function(l) {
   ASSERT_EQ.call(this, l.hasTZCheck, true);
   var tz = l.ref.scope.scs.getLG('tz').getL(0);
   this.wm(tz.synthName,'','=','',l.idx+"",';');
 };
 
-this.wsndl =
+cls.wsndl =
 function(list) {
   var e = 0;
   while (e < list.length) {
@@ -120,7 +120,7 @@ function(list) {
   return true;
 };
 
-this.emitAttached =
+cls.emitAttached =
 function(stmt) {
   switch (stmt.type) {
   case 'BlockStatement':
@@ -150,7 +150,7 @@ function(stmt) {
 
 // a, b, e, ...l -> [a,b,e],sp(l)
 // a, b, e, l -> a,b,e,l
-this.emitElems =
+cls.emitElems =
 function(list, selem /* i.e., it contains a spread element */, cb) {
   var e = 0, em = 0;
   while (e < list.length) {
@@ -172,14 +172,14 @@ function(list, selem /* i.e., it contains a spread element */, cb) {
   }
 };
 
-this.emitSpread =
+cls.emitSpread =
 function(n) {
   var cb = CB(n); this.emc(cb, 'bef' );
   this.jz('sp').sl(n.loc.start);
   this.w('(').eN(n.argument, EC_NONE, false).w(')').emc(cb, 'aft');
 };
 
-this.emitElems_toRest =
+cls.emitElems_toRest =
 function(list, s, cb) {
   var e = s;
   while (e < list.length) {
@@ -204,7 +204,7 @@ function(list, s, cb) {
   return e;
 };
 
-this.writeMemName =
+cls.writeMemName =
 function(memName, asStr) {
   switch (memName.type) {
   case 'Literal':
@@ -222,10 +222,10 @@ function(memName, asStr) {
   ASSERT.call(this, false, 'unknown name');
 };
 
-this.writeIDName =
+cls.writeIDName =
 function(nameStr) { return this.writeToCurrentLine_checked(nameStr); };
 
-this.emitSAT =
+cls.emitSAT =
 function(n, flags, olen) {
   if (n.type === 'MemberExpression')
     return this.emitSAT_mem(n, flags, olen);
@@ -235,7 +235,7 @@ function(n, flags, olen) {
   ASSERT.call(this, false, 'got <'+n.type+'>');
 };
 
-this.emitAccessChk_tz =
+cls.emitAccessChk_tz =
 function(nd, loc) {
   ASSERT.call(this, nd.hasTZCheck, 'unnecessary tz');
   var scope = nd.ref.scope;
@@ -248,7 +248,7 @@ function(nd, loc) {
   return true;
 };
 
-this.emitAccessChk_invalidSAT =
+cls.emitAccessChk_invalidSAT =
 function(nd, loc) {
   this.jz('cc');
   loc && this.sl(loc);
@@ -256,4 +256,5 @@ function(nd, loc) {
   this.w(')');
   return true;
 };
+
 

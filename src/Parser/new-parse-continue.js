@@ -2,7 +2,7 @@
   import {_m} from '../other/scope-util.js';
   import {cls} from './cls.js';
 
-this.parseContinue =
+cls.parseContinue =
 function() {
   this.resvchk();
   this.testStmt() || this.err('not.stmt');
@@ -47,4 +47,5 @@ function() {
     '#c': cb
   };
 };
+
 

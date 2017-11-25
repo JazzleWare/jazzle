@@ -4,7 +4,7 @@
   import {core} from '../other/util.js';
   import {cls} from './cls.js';
 
-this.parseVar =
+cls.parseVar =
 function(dt, ctx) {
   if (!this.testStmt()) {
     if (dt === DT_LET)
@@ -129,4 +129,5 @@ function(dt, ctx) {
     '#y': y,
   };
 };
+
 

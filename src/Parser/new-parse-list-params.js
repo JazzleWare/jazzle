@@ -2,7 +2,7 @@
   import {TK_ELLIPSIS} from '../other/lexer-constants.js';
   import {cls} from './cls.js';
 
-this.parseParams =
+cls.parseParams =
 function(argLen) {
   var
     c0 = -1, li0 = -1, col0 = -1,
@@ -73,4 +73,5 @@ function(argLen) {
 
   return list;
 };
+
 

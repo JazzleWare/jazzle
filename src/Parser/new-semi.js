@@ -2,7 +2,7 @@
   import {TK_EOF} from '../other/lexer-constants.js';
   import {cls} from './cls.js';
 
-this.semi =
+cls.semi =
 function(cb, i) {
   var t = this.lttype;
   if (t === CH_SEMI) {
@@ -34,4 +34,5 @@ function(cb, i) {
 
   return false;
 };
+
 

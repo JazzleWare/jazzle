@@ -3,7 +3,7 @@
   import {core} from '../other/util.js';
   import {cls} from './cls.js';
 
-this.parseUnary =
+cls.parseUnary =
 function(ctx) {
   var op = "", loc0 = this.loc0(), c0 = this.c0, vdt = this.vdt;
 
@@ -49,4 +49,5 @@ function(ctx) {
     '#y': this.Y(arg)
   };
 };
+
 

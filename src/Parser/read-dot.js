@@ -3,7 +3,7 @@
   import {FL_HEADLESS_FLOAT, TK_NUM} from '../other/lexer-constants.js';
   import {cls} from './cls.js';
 
-this.read_dot =
+cls.read_dot =
 function() {
   var ch = this.scat(this.c+1);
   if (ch === CH_SINGLEDOT)
@@ -19,4 +19,5 @@ function() {
     this.lttype = CH_SINGLEDOT;
   }
 };
+
 

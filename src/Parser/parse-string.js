@@ -1,7 +1,7 @@
   import {CH_BACK_SLASH, CH_CARRIAGE_RETURN, CH_LINE_FEED, CH_0} from '../other/constants.js';
   import {cls} from './cls.js';
 
-this.parseString =
+cls.parseString =
 function(startChar) {
   var c = this.c, s = this.src, l = s.length, v = "";
   var luo = c, surrogateTail = -1, ch = -1;
@@ -70,4 +70,5 @@ function(startChar) {
 
   return n;
 };
+
 

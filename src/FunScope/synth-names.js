@@ -3,13 +3,13 @@
   import {_m} from '../other/scope-util.js';
   import {cls} from './cls.js';
 
-this.synth_ref_may_escape_m =
+cls.synth_ref_may_escape_m =
 function(mname) { return !ref_arguments_m(mname); };
 
-this.synth_name_is_valid_binding_m =
+cls.synth_name_is_valid_binding_m =
 function(mname) { return true; };
 
-this.synth_ref_find_homonym_m =
+cls.synth_ref_find_homonym_m =
 function(mname, r) {
   this.isBooted || this.synth_boot(r);
   var synth = this.findSynth_m(mname)
@@ -18,13 +18,13 @@ function(mname, r) {
   return synth;
 };
 
-this.synth_decl_find_homonym_m =
+cls.synth_decl_find_homonym_m =
 function(mname, r) {
   this.isBooted || this.synth_boot(r);
   return this.findSynth_m(mname);
 };
 
-this.synth_boot =
+cls.synth_boot =
 function(r) {
   if (this.renamer === null) this.renamer = r;
   this.synth_boot_init();
@@ -35,14 +35,14 @@ function(r) {
   this.deactivateBody();
 };
 
-this.synth_start =
+cls.synth_start =
 function(r) {
   this.isBooted || this.synth_boot(r);
   this.synth_externals();
 };
 
 // TODO: save extenals on hand-over to obviate the chore below
-this.synth_externals =
+cls.synth_externals =
 function() {
   ASSERT.call(this, !this.inBody, 'inBody');
   var list = this.argRefs, e = 0, len = list.length();
@@ -78,7 +78,7 @@ function() {
   }
 };
 
-this.synth_args =
+cls.synth_args =
 function() {
   var list = this.argList, nmap = {}, e = list.length - 1;
   while (e >= 0) {
@@ -91,4 +91,5 @@ function() {
     e--;
   }
 };
+
 

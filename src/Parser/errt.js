@@ -3,31 +3,31 @@
   import {errt_pin} from '../other/errt.js';
   import {cls} from './cls.js';
 
-this.pt_override =
+cls.pt_override =
 function(pt) {
   return this.pt !== ERR_NONE_YET &&
     (pt === ERR_NONE_YET || agtb(this.pt, pt));
 };
 
-this.at_override =
+cls.at_override =
 function(at) {
   return this.at !== ERR_NONE_YET &&
     (at === ERR_NONE_YET || agtb(this.at, at));
 };
 
-this.st_override =
+cls.st_override =
 function(st) {
   return this.st !== ERR_NONE_YET &&
     (st === ERR_NONE_YET || agtb(this.st, st));
 };
 
-this.pt_reset =
+cls.pt_reset =
 function() { this.pt = ERR_NONE_YET; };
 
-this.at_reset =
+cls.at_reset =
 function() { this.at = ERR_NONE_YET; };
 
-this.st_reset =
+cls.st_reset =
 function() { this.st = ERR_NONE_YET; };
 
 // tricky map
@@ -45,14 +45,14 @@ tm[ERR_INTERMEDIATE_ASYNC] = 'intermediate.async';
 tm[ERR_ASYNC_NEWLINE_BEFORE_PAREN] = 'async.newline.before.paren';
 tm[ERR_PIN_NOT_AN_EQ] = 'complex.assig.not.pattern';
 
-this.pt_flush =
+cls.pt_flush =
 function() {
   ASSERT.call(this, this.pt === ERR_NONE_YET,
     'pending errors in pt');
   this.st = this.at = ERR_NONE_YET;
 };
 
-this.at_flush =
+cls.at_flush =
 function() {
 //ASSERT.call(this, this.at === ERR_NONE_YET,
 //  'pending errors in at');
@@ -61,7 +61,7 @@ function() {
   this.st = this.pt = ERR_NONE_YET;
 };
 
-this.st_flush =
+cls.st_flush =
 function() {
   this.at = this.pt = ERR_NONE_YET;
   if (this.st === ERR_NONE_YET)
@@ -81,16 +81,16 @@ function() {
   return this.err(tm[st], ep) ;
 };
 
-this.pt_teot =
+cls.pt_teot =
 function(t,e,o) { this.pt = t; this.pe = e; this.po = o; };
 
-this.at_teot =
+cls.at_teot =
 function(t,e,o) { this.at = t; this.ae = e; this.ao = o; };
 
-this.st_teot =
+cls.st_teot =
 function(t,e,o) { this.st = t; this.se = e; this.so = o; };
 
-this.st_adjust_for_toAssig =
+cls.st_adjust_for_toAssig =
 function() {
   if (this.st === ERR_ARGUMENTS_OR_EVAL_ASSIGNED)
     this.st = ERR_ARGUMENTS_OR_EVAL_DEFAULT;
@@ -98,22 +98,22 @@ function() {
     this.st = ERR_NONE_YET;
 };
 
-this.pin_at =
+cls.pin_at =
 function(c0,li0,col0) { return this.pinErr(this.pin.a,c0,li0,col0); };
 
-this.pin_ct =
+cls.pin_ct =
 function(c0,li0,col0) { return this.pinErr(this.pin.c,c0,li0,col0); };
 
-this.pin_st =
+cls.pin_st =
 function(c0,li0,col0) { return this.pinErr(this.pin.s,c0,li0,col0); };
 
-this.pin_pt =
+cls.pin_pt =
 function(c0,li0,col0) { return this.pinErr(this.pin.p,c0,li0,col0); };
 
-this.pinErr =
+cls.pinErr =
 function(pin,c0,li0,col0) { pin.c0=c0; pin.li0=li0; pin.col0=col0; };
 
-this.strict_esc_chk =
+cls.strict_esc_chk =
 function() {
   if (this.ct === ERR_NONE_YET)
     return;
@@ -123,4 +123,5 @@ function() {
 
   this.err('strict.octal');
 };
+
 

@@ -3,7 +3,7 @@
   import {core} from '../other/util.js';
   import {cls} from './cls.js';
 
-this.parseYield = 
+cls.parseYield = 
 function(ctx) {
   var c = this.c, li = this.li, col = this.col;
   var deleg = false, arg = null;
@@ -44,4 +44,5 @@ function(ctx) {
 
   return n;
 };
+
 

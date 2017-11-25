@@ -3,7 +3,7 @@
   import {cp2sp} from '../other/util.js';
   import {cls} from './cls.js';
 
-this.readID_bs =
+cls.readID_bs =
 function() {
   if (this.ct === ERR_NONE_YET) {
     this.ct = ERR_PIN_UNICODE_IN_RESV;
@@ -19,4 +19,5 @@ function() {
   var head = cp2sp(bsc);
   return this.readID_withHead(head);
 };
+
 

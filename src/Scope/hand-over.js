@@ -2,7 +2,7 @@
   import {ref_this_m} from '../other/ref-cat.js';
   import {cls} from './cls.js';
 
-this.handOverRefList =
+cls.handOverRefList =
 function(list) {
   var len = list.length(), i = 0;
   while (i<len) {
@@ -15,7 +15,7 @@ function(list) {
   }
 };
 
-this.handOver_m =
+cls.handOver_m =
 function(mname, ref) {
   if (this.isBlock() || this.isBare())
     return this.parent.refDirect_m(mname, ref);
@@ -45,4 +45,5 @@ function(mname, ref) {
 
   return this.parent.spReportGlobal_m(mname, ref);
 };
+
 

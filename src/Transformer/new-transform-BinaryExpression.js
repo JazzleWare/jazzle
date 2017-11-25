@@ -1,6 +1,5 @@
   import {Transformers} from '../other/globals.js';
   import {createObj} from '../other/util.js';
-  import {cls} from './cls.js';
 
 Transformers['LogicalExpression'] =
 function(n, isVal) {

@@ -2,7 +2,7 @@
   import {ERR_ARGUMENTS_OR_EVAL_DEFAULT, ERR_NONE_YET, ERR_ARGUMENTS_OR_EVAL_ASSIGNED} from '../other/error-constants.js';
   import {cls} from './cls.js';
 
-this.toAssig = function(head, context) {
+cls.toAssig = function(head, context) {
   if (head === this.ao)
     this.throwTricky('a', this.at, this.ae)
 
@@ -79,6 +79,7 @@ this.toAssig = function(head, context) {
  
   }
 };
+
 
 
 

@@ -10,7 +10,7 @@ function(n, isVal) {
   return n;
 };
 
-this.transformBundleItem =
+cls.transformBundleItem =
 function(n) {
 //n['#scope'].setSynthBase(this.bundleScope);
   var list = n['#imports'], len = list ? list.length : 0, l = 0;
@@ -23,4 +23,5 @@ function(n) {
 
   return this.tr(n, false);
 };
+
 

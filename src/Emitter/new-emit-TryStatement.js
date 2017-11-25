@@ -1,5 +1,4 @@
   import {Emitters} from '../other/globals.js';
-  import {cls} from './cls.js';
 
 Emitters['TryStatement'] =
 function(n, flags, isStmt) {

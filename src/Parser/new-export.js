@@ -5,7 +5,7 @@
   import {core} from '../other/util.js';
   import {cls} from './cls.js';
 
-this.parseExport_elemOther =
+cls.parseExport_elemOther =
 function(c0,loc0) {
   var elem = null, cb = this.cb, stmt = false;
   if (this.lttype === TK_ID) {
@@ -66,7 +66,7 @@ function(c0,loc0) {
   };
 };
 
-this.parseExport_elemList = 
+cls.parseExport_elemList = 
 function(c0,loc0) {
   var cb = this.cb; this.suc(cb, 'list.bef');
   this.next();
@@ -143,7 +143,7 @@ function(c0,loc0) {
   };
 };
 
-this.parseExport_elemAll =
+cls.parseExport_elemAll =
 function(c0,loc0) {
   var cb = this.cb; this.suc(cb, '*.bef');
   this.next();
@@ -163,7 +163,7 @@ function(c0,loc0) {
   };
 };
 
-this.createDefaultLiq =
+cls.createDefaultLiq =
 function() {
   var lg = this.scope.gocLG('default');
   var liqDefault = lg.newL();
@@ -173,7 +173,7 @@ function() {
   return liqDefault;
 };
 
-this.parseExport_elemDefault =
+cls.parseExport_elemDefault =
 function(c0,loc0) {
   var cb = this.cb; this.suc(cb, 'default.bef' );
   var defaultID = this.id();
@@ -253,7 +253,7 @@ function(c0,loc0) {
   };
 };
 
-this.parseExport_from =
+cls.parseExport_from =
 function() {
   var cb = this.cb;
   this.peekID('from') || this.err('export.from');
@@ -264,7 +264,7 @@ function() {
   return this.parseString(this.lttype);
 };
 
-this.parseExport =
+cls.parseExport =
 function() {
   if (this.v<=5) this.err('ver.exim');
   this.testStmt() || this.err('not.stmt');
@@ -287,7 +287,7 @@ function() {
   );
 };
 
-this.parseExport_elemDefault_async =
+cls.parseExport_elemDefault_async =
 function() {
   var a = this.id(); // 'async'
   if (this.nl) {
@@ -298,4 +298,5 @@ function() {
 
   return this.parseAsync(a, CTX_TOP|CTX_DEFAULT);
 };
+
 

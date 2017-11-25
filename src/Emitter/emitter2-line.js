@@ -2,7 +2,7 @@
   import {vlq} from '../other/util.js';
   import {cls} from './cls.js';
 
-this.flushCurrentLine =
+cls.flushCurrentLine =
 function() {
   if (this.curLine.length) {
     this.finishCurrentLine(); 
@@ -11,10 +11,10 @@ function() {
   return false;
 };
 
-this.lineBlank =
+cls.lineBlank =
 function() { return this.curLine.length === 0; };
 
-this.finishCurrentLine =
+cls.finishCurrentLine =
 function() {
   var line = this.curLine;
   ASSERT.call(this, !this.finishingLine, 'finishing');
@@ -59,7 +59,7 @@ function() {
   this.finishingLine = false;
 };
 
-this.adjustColumns =
+cls.adjustColumns =
 function(lindLen) { // line indentation length
   if (this.hasRecorded_SMLinkpoint)
     this.ln_emcol_cur += lindLen;
@@ -71,7 +71,7 @@ function(lindLen) { // line indentation length
     this.emcol_cur += lindLen;
 };
 
-this.startFreshLine =
+cls.startFreshLine =
 function() {
   this.curLineHasLineBreakBefore = this.nextLineHasLineBreakBefore;
   this.curLineIndent = this.nextLineIndent;
@@ -92,7 +92,7 @@ function() {
   this.nextLineHasLineBreakBefore = this.allow.nl;
 };
 
-this.refreshSMOutWithLM =
+cls.refreshSMOutWithLM =
 function() {
   var lm0 = "", lm = this.lm;
   if (this.hasRecorded_SMLinkpoint) {
@@ -110,4 +110,5 @@ function() {
   lm0.length && this.writeToSMout(lm0);
   lm.length && this.writeToSMout(lm);
 };
+
 

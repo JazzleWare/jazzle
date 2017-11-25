@@ -1,98 +1,98 @@
   import {ST_FN, ST_CATCH, ST_SCRIPT, ST_MODULE, ST_CLS, ST_GEN, ST_ASYNC, ST_GETTER, ST_SETTER, ST_CLSMEM, ST_STATICMEM, ST_OBJMEM, ST_ARROW, ST_BLOCK, ST_BARE, ST_CTOR, ST_DECL, ST_PAREN, ST_EXPR, ST_BUNDLE, ST_GLOBAL} from '../other/scope-constants.js';
   import {cls} from './cls.js';
 
-this.isAnyFn = 
+cls.isAnyFn = 
 function() { return this.type & ST_FN; };
 
-this.isCatch = 
+cls.isCatch = 
 function() { return this.type & ST_CATCH; };
 
-this.isScript = 
+cls.isScript = 
 function() { return this.type & ST_SCRIPT; };
 
-this.isModule = 
+cls.isModule = 
 function() { return this.type & ST_MODULE; };
 
-this.isClass = 
+cls.isClass = 
 function() { return this.type & ST_CLS; };
 
-this.isGen = 
+cls.isGen = 
 function() { return this.type & ST_GEN; };
 
-this.isAsync = 
+cls.isAsync = 
 function() { return this.type & ST_ASYNC; };
 
-this.isGetter = 
+cls.isGetter = 
 function() { return this.type & ST_GETTER; };
 
-this.isSetter = 
+cls.isSetter = 
 function() { return this.type & ST_SETTER; };
 
-this.isClassMem = 
+cls.isClassMem = 
 function() { return this.type & ST_CLSMEM; };
 
-this.isStaticMem = 
+cls.isStaticMem = 
 function() { return this.type & ST_STATICMEM; };
 
-this.isObjMem = 
+cls.isObjMem = 
 function() { return this.type & ST_OBJMEM; };
 
-this.isMem =
+cls.isMem =
 function() { return this.isClassMem() || this.isStaticMem() || this.isObjMem(); };
 
-this.isArrow = 
+cls.isArrow = 
 function() { return this.type & ST_ARROW; };
 
-this.isBlock =
+cls.isBlock =
 function() { return this.type & ST_BLOCK; };
 
-this.isBare =
+cls.isBare =
 function() { return this.type & ST_BARE; };
 
-this.isCtor = 
+cls.isCtor = 
 function() { return this.type & ST_CTOR; };
 
-this.isLexicalLike =
+cls.isLexicalLike =
 function() {
   return this.isBlock() || this.isCatch();
 };
 
-this.isDecl = 
+cls.isDecl = 
 function() { return this.type & ST_DECL; };
 
-this.isParen =
+cls.isParen =
 function() { return this.type & ST_PAREN; };
 
-this.isHoisted =
+cls.isHoisted =
 function() { return this.isAnyFn() && this.isDecl(); };
 
-this.isExpr = 
+cls.isExpr = 
 function() { return this.type & ST_EXPR; };
 
-this.isBootable =
+cls.isBootable =
 function() {
   return this.isScript() || this.isAnyFn() || this.isCatch() || this.isModule() || this.isBundle() || this.isGlobal();
 };
 
-this.isSourceLevel = 
+cls.isSourceLevel = 
 function() { return this.isScript() || this.isModule(); };
 
-this.isSimpleFn =
+cls.isSimpleFn =
 function() { return this.type & (ST_EXPR|ST_DECL); };
 
-this.isBundle =
+cls.isBundle =
 function() { return this.type & ST_BUNDLE; };
 
-this.isGlobal =
+cls.isGlobal =
 function() { return this.type & ST_GLOBAL; };
 
-this.isConditional = 
+cls.isConditional = 
 function() { return this.flags & ST_COND; };
 
-this.isConcrete =
+cls.isConcrete =
 function() { return this.isModule() || this.isAnyFn() || this.isScript() || this.isBundle(); };
 
-this.isSoft = 
+cls.isSoft = 
 function() {
   return this.isBlock() ||
          this.isClass() ||
@@ -100,4 +100,5 @@ function() {
          this.isParen() ||
          this.isBare();
 };
+
 

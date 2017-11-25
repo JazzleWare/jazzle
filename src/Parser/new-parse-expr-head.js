@@ -2,7 +2,7 @@
   import {CH_LSQBRACKET, CH_LPAREN, CH_LCURLY, CH_MULTI_QUOTE, CH_SINGLE_QUOTE, CH_DIV, CH_BACKTICK} from '../other/constants.js';
   import {cls} from './cls.js';
 
-this.parseExprHead =
+cls.parseExprHead =
 function(ctx) {
   var head = this.exprHead;
   if (head !== null) this.exprHead = null;
@@ -56,4 +56,5 @@ function(ctx) {
 
   return head;
 };
+
 

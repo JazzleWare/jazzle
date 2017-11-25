@@ -3,7 +3,7 @@
   import Decl from '../Decl/cls.js';
   import {cls} from './cls.js';
 
-this.regulateImports_sl =
+cls.regulateImports_sl =
 function(src, list) {
   var sourceImported = this.gocSourceImported(src.value);
   var e = 0;
@@ -17,13 +17,13 @@ function(src, list) {
   }
 };
 
-this.addImportedAlias_ios =
+cls.addImportedAlias_ios =
 function(inner, outer, sourceImported) {
   var aliases = this.gocAliasesImported(sourceImported, outer);
   aliases.push(inner);
 };
 
-this.gocSourceImported =
+cls.gocSourceImported =
 function(src) {
   var mname = _m(src);
   var im = this.allSourcesImported.has(mname) ?
@@ -32,7 +32,7 @@ function(src) {
   return im || this.allSourcesImported.set(mname, new SortedObj());
 };
 
-this.declareImportedName =
+cls.declareImportedName =
 function(id, t) {
   var mname = _m(id.name);
   var existing = this.findDeclAny_m(mname);
@@ -46,7 +46,7 @@ function(id, t) {
   return nd;
 };
 
-this.gocAliasesImported =
+cls.gocAliasesImported =
 function(sourceImported, outerName) {
   var mname = _m(outerName);
   return sourceImported.has(mname) ? 
@@ -54,10 +54,11 @@ function(sourceImported, outerName) {
     sourceImported.set(mname, []);
 };
 
-this.createImportedBinding =
+cls.createImportedBinding =
 function(id, t) {
   var nd = new Decl()
   nd.t(t).s(id).n(id.name);
   return nd;
 };
+
 

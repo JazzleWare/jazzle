@@ -32,15 +32,16 @@
 //   }(len));
 // }
 
-this.getClosureLLINOSA_m =
+cls.getClosureLLINOSA_m =
 function(mname) {
   return this.closureLLINOSA[mname]; 
 };
 
 // CLs are only inserted when an fn's outer-loop-lexicals are getting calculated;
-this.insertClosureLLINOSA_m =
+cls.insertClosureLLINOSA_m =
 function(mname, llinosa) {
   ASSERT.call(this, !this.getClosureLLINOSA_m(mname), 'closure-l');
   this.closureLLINOSA[mname] = llinosa;
 };
+
 

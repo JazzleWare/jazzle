@@ -1,7 +1,7 @@
   import {CH_LCURLY, CH_RCURLY} from '../other/constants.js';
   import {cls} from './cls.js';
 
-this.parseDependent = 
+cls.parseDependent = 
 function(name) {
   var c0 = this.c0, cb = {}, loc0 = this.loc0();
 
@@ -28,4 +28,5 @@ function(name) {
 
   return n;
 };
+
 

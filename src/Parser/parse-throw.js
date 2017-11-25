@@ -2,7 +2,7 @@
   import {core} from '../other/util.js';
   import {cls} from './cls.js';
 
-this.parseThrow =
+cls.parseThrow =
 function () {
   this.resvchk();
   this.testStmt() || this.err('not.stmt');
@@ -37,4 +37,5 @@ function () {
     '#y': this.Y(ex)
   };
 };
+
 

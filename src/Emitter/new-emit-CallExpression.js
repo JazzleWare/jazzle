@@ -1,7 +1,6 @@
   import {Emitters} from '../other/globals.js';
   import {CB} from '../other/util.js';
   import {EC_NEW_HEAD, EC_NONE, ETK_ID} from '../other/constants.js';
-  import {cls} from './cls.js';
 
 Emitters['CallExpression'] =
 function(n, flags, isStmt) {

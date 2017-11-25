@@ -1,7 +1,7 @@
   import {TK_ID} from '../other/lexer-constants.js';
   import {cls} from './cls.js';
 
-this.parseMeta =
+cls.parseMeta =
 function(c0,loc0,c,li,col) {
   var cb = this.cb;
   this.v<=5 && this.err('ver.ntarget');
@@ -33,4 +33,5 @@ function(c0,loc0,c,li,col) {
     '#y': 0, '#c': cb
   };
 };
+
 

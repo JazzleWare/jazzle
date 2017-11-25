@@ -1,14 +1,14 @@
   import {CB, cmn_ac} from '../other/util.js';
   import {cls} from './cls.js';
 
-this.cc =
+cls.cc =
 function() { // cuts comments
   var commentBuf = this.commentBuf;
   this.commentBuf = null;
   return commentBuf;
 };
 
-this.augmentCB =
+cls.augmentCB =
 function(n, i, c) {
   if (c === null)
     return;
@@ -18,14 +18,15 @@ function(n, i, c) {
   else
     cb[i].mergeWith(c);
 }
-this.suc =
+cls.suc =
 function(cb, i) {
   cb[i] = this.cc();
 };
 
-this.spc =
+cls.spc =
 function(n, i) {
   var cb = CB(n);
   cmn_ac(cb, i, this.cc());
 };
+
 

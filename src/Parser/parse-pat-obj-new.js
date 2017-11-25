@@ -3,7 +3,7 @@
   import {arorev, core} from '../other/util.js';
   import {cls} from './cls.js';
 
-this.parsePat_obj =
+cls.parsePat_obj =
 function() {
   this.v<=5 && this.err('ver.patobj');
 
@@ -108,4 +108,5 @@ function() {
 
   return n;
 };
+
 

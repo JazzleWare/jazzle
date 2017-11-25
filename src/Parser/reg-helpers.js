@@ -3,7 +3,7 @@
   import {CH_0} from '../other/constants.js';
   import {cls} from './cls.js';
 
-this.resetLastRegexElem =
+cls.resetLastRegexElem =
 function() {
   var lbe = this.regLastBareElem;
   if (lbe !== null)
@@ -12,13 +12,13 @@ function() {
   return lbe;
 };
 
-this.regLEIAC =
+cls.regLEIAC =
 function() {
   return (this.regLastBareElem && isCharSeq(this.regLastBareElem)) ?
     this.regLastBareElem : null;
 };
 
-this.expectChar =
+cls.expectChar =
 function(ch) {
   var c = this.c, s = this.src, l = this.regLastOffset;
   if (c >= l)
@@ -30,7 +30,7 @@ function(ch) {
   return false;
 };
 
-this.regTryToParseNum =
+cls.regTryToParseNum =
 function() {
   var c = this.c, s = this.src, l = this.regLastOffset;
   if (c >= l)
@@ -50,4 +50,5 @@ function() {
   this.setsimpoff(c);
   return v;
 };
+
 

@@ -1,7 +1,7 @@
   import {ASSERT} from '../other/constants.js';
   import {cls} from './cls.js';
 
-this.finish =
+cls.finish =
 function() {
   if (this.isAnyFn() || this.isCatch())
     this.finishBody();
@@ -9,7 +9,7 @@ function() {
   return this.handOverRefList(this.refs);
 };
 
-this.finishBody =
+cls.finishBody =
 function() {
   ASSERT.call(this, this.inBody, 'finish must be in body');
   var list = this.refs, len = list.length();
@@ -31,4 +31,5 @@ function() {
   }
   this.inBody = false;
 };
+
 

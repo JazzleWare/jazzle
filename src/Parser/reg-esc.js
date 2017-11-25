@@ -3,7 +3,7 @@
   import {isNum} from '../other/ctype.js';
   import {cls} from './cls.js';
 
-this.regEsc =
+cls.regEsc =
 function(ce) {
   var c = this.c, s = this.src, l = this.regLastOffset;
   if (c+1 >= l)
@@ -62,7 +62,7 @@ function(ce) {
   }
 };
 
-this.regClassifier =
+cls.regClassifier =
 function() {
   var c0 = this.c, loc0 = this.loc(), t = this.src.charAt(c0+1);
   this.setsimpoff(c0+2);
@@ -76,7 +76,7 @@ function() {
   };
 };
 
-this.regEsc_hex =
+cls.regEsc_hex =
 function(ce) { 
   var s = this.src, l = this.regLastOffset, c = this.c;
   c += 2; // \x
@@ -103,12 +103,12 @@ function(ce) {
   return this.regChar_VECI(String.fromCharCode(ch), c, ch, ce);
 };
 
-this.regEsc_simple =
+cls.regEsc_simple =
 function(v, ce) {
   return this.regChar_VECI(v, this.c+2, v.charCodeAt(0), ce);
 };
 
-this.regEsc_control =
+cls.regEsc_control =
 function(ce) {
   var c0 = this.c, c = c0;
   var s = this.src, l = this.regLastOffset;
@@ -134,7 +134,7 @@ function(ce) {
 };
 
 var isUIEsc = makeAcceptor('^$\\.*+?()[]{}|/');
-this.regEsc_itself =
+cls.regEsc_itself =
 function(ch, ce) {
   var c = this.c, s = this.src;
   c++; // \
@@ -150,7 +150,7 @@ function(ch, ce) {
   return this.regChar_VECI(String.fromCharCode(ch), c, ch, ce);
 };
 
-this.regEsc_num =
+cls.regEsc_num =
 function(ch, ce) {
   var c = this.c, s = this.src, l = this.regLastOffset;
   if (ch === CH_0)
@@ -187,7 +187,7 @@ function(ch, ce) {
 };
 
 // TODO: strict-chk
-this.regEsc_legacyNum =
+cls.regEsc_legacyNum =
 function(ch, ce) {
   var c = this.c, s = this.src, l = this.regLastOffset;
   var max = ch >= CH_4 ? 1 : 2, num = ch - CH_0;
@@ -202,7 +202,7 @@ function(ch, ce) {
   return this.regChar_VECI(String.fromCharCode(num), c, num, ce);
 };
 
-this.regEsc_num0 =
+cls.regEsc_num0 =
 function(ce) {
   var c = this.c, s = this.src, l = this.regLastOffset;
   c += 2; // \0
@@ -213,4 +213,5 @@ function(ce) {
   }
   return this.regEsc_simple('\0', ce);
 };
+
 

@@ -2,14 +2,14 @@
   import {HAS, CHK_NONE, CHK_T, ASSERT, CVTZ_T} from '../other/constants.js';
   import {cls} from './cls.js';
 
-this.getTCCache =
+cls.getTCCache =
 function(decl) {
   var mname =_m(decl.ref.scope.scopeID+':'+decl.name);
   return decl.ref.scope.reached ? this.cvtz[mname] :
     HAS.call(this.cvtz, mname) ? this.cvtz[mname] : CHK_NONE;
 };
 
-this.needsTZ =
+cls.needsTZ =
 function(decl) {
   if (!decl.isTemporal())
     return false;
@@ -43,7 +43,7 @@ function(decl) {
   return tz;
 };
 
-this.cacheTZ =
+cls.cacheTZ =
 function(decl) {
   var tc = this.getTCCache(decl);
   if (tc)
@@ -53,13 +53,13 @@ function(decl) {
   this.cvtz[_m(decl.ref.scope.scopeID+':'+decl.name)] = tc | CHK_T;
 };
 
-this.makeReached =
+cls.makeReached =
 function(target) {
   ASSERT.call(this, target.reached === null, 'reached used');
   target.reached = this.reachedRef;
 };
 
-this.toResolvedName =
+cls.toResolvedName =
 function(id, bes, manualActivation) {
   ASSERT.call(this, id.type == 'Identifier', 'no');
 
@@ -83,7 +83,7 @@ function(id, bes, manualActivation) {
   return id;
 };
 
-this.getDeclFor =
+cls.getDeclFor =
 function(name, isB) {
   ASSERT.call(this, isB === true || isB === false, 'isB' );
   var target = null;
@@ -97,7 +97,7 @@ function(name, isB) {
   return target;
 };
 
-this.synthCheckForTZ =
+cls.synthCheckForTZ =
 function(target, t, num) {
   this.accessJZ();
   return {
@@ -109,4 +109,5 @@ function(target, t, num) {
   };
 
 };
+
 

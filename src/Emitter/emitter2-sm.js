@@ -3,7 +3,7 @@
   import {vlq} from '../other/util.js';
   import {cls} from './cls.js';
 
-this.smSetName_str =
+cls.smSetName_str =
 function(name) {
   var nc = -1;
   if (name.length) {
@@ -13,7 +13,7 @@ function(name) {
   return this.smSetName_i(nc);
 };
 
-this.smSetName_i =
+cls.smSetName_i =
 function(i) {
   var list = this.smNameList;
   ASSERT.call(this, i >= 0 ? i <= list.length() : i === -1, 'namei' );
@@ -23,7 +23,7 @@ function(i) {
   return nc;
 };
 
-this.smSetSrc_str =
+cls.smSetSrc_str =
 function(srcName) {
   var sc = -1;
   if (srcName.length) {
@@ -33,7 +33,7 @@ function(srcName) {
   return this.smSetSrc_i(sc);
 };
 
-this.smSetSrc_i =
+cls.smSetSrc_i =
 function(i) {
   var list = this.smSrcList;
   ASSERT.call(this, i >= 0 ? i <= list.length() : i === -1, 'srci' );
@@ -43,10 +43,10 @@ function(i) {
   return sc;
 };
 
-this.writeToSMout =
+cls.writeToSMout =
 function(lm) { this.sm = this.sm.concat(lm); this.smLen += lm.length; };
 
-this.refreshTheCurrentLineLevelSourceMapWith =
+cls.refreshTheCurrentLineLevelSourceMapWith =
 function(srcLoc) {
   var l = 0, vlqTail = "";
 
@@ -80,9 +80,10 @@ function(srcLoc) {
   this.emline_latestRec = this.emline_cur;
 };
 
-this.setSourceLocTo =
+cls.setSourceLocTo =
 function(srcLoc) {
   ASSERT.call(this, srcLoc, 'lw');
   this.pendingSrcLoc = srcLoc;
 };
+
 

@@ -1,7 +1,7 @@
   import {EC_EXPR_HEAD, EC_NON_SEQ, EC_NEW_HEAD, EC_CALL_HEAD} from '../other/constants.js';
   import {cls} from './cls.js';
 
-this.emitAny =
+cls.emitAny =
 function(n, flags, isStmt) {
   var emitters = this.emitters, t = n.type;
   if (t in emitters)
@@ -10,19 +10,20 @@ function(n, flags, isStmt) {
   this.err('unknown.node');
 };
 
-this.emitHead =
+cls.emitHead =
 function(n, flags, isStmt) { return this.emitAny(n, flags|EC_EXPR_HEAD|EC_NON_SEQ, isStmt); };
 
-this.emitNonSeq =
+cls.emitNonSeq =
 function(n, flags, isStmt) { return this.emitAny(n, flags|EC_NON_SEQ, isStmt); };
 
-this.emitNewHead =
+cls.emitNewHead =
 function(n, flags, isStmt) {
   return this.emitHead(n, EC_NEW_HEAD, false);
 };
 
-this.emitCallHead =
+cls.emitCallHead =
 function(n, flags, isStmt) {
   return this.emitHead(n, flags|EC_CALL_HEAD, false);
 };
+
 

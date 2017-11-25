@@ -5,7 +5,7 @@
   import {Transformers} from '../other/globals.js';
   import {cls} from './cls.js';
 
-this.transformRawFn =
+cls.transformRawFn =
 function(n, isVal) {
   var s = n['#scope'];
   s = this.setScope(s);
@@ -71,7 +71,7 @@ function(n, isVal) {
   return this.synth_TransformedFn(n, argsPrologue);
 };
 
-this.transformDeclFn =
+cls.transformDeclFn =
 function(n) {
   var target = tg(n.id);
   ASSERT.call(this, target, 'unresolved ('+n.id.name+')');
@@ -80,7 +80,7 @@ function(n) {
   return n;
 };
 
-this.transformExprFn =
+cls.transformExprFn =
 function(n) {
   var sn = n['#scope'].scopeName;
   if (sn) sn.isInsignificant() || this.synthFnExprName(sn);
@@ -88,7 +88,7 @@ function(n) {
   return n;
 };
 
-this.transformParams =
+cls.transformParams =
 function(list) {
   if (this.cur.firstNonSimple)
     return this.transformParamsToArgumentsPrologue(list);
@@ -140,7 +140,7 @@ function(n, isVal) {
   return this.transformExprFn(n);
 };
 
-this.transformParamsToArgumentsPrologue =
+cls.transformParamsToArgumentsPrologue =
 function(list) {
   var a = null, t = null, e = 0;
   var prologue = [];
@@ -175,7 +175,7 @@ function(list) {
   return this.synth_AssigList(prologue);
 };
 
-this.synthFnExprName =
+cls.synthFnExprName =
 function(fnName) {
   ASSERT.call(this, fnName.synthName === "", 'synth');
 //ASSERT.call(this, fnName.ref.scope.isExpr() || fnName.ref.scope.isCtor(), 'fn not an expr');
@@ -204,7 +204,7 @@ function(fnName) {
   fnName.synthName = synthName;
 };
 
-this.e2b =
+cls.e2b =
 function(ex) {
   return {
     type: 'BlockStatement',
@@ -221,4 +221,5 @@ function(ex) {
     loc: ex.loc, '#c': {}, '#y': 0
   };
 };
+
 

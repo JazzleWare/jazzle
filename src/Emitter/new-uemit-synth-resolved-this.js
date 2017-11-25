@@ -1,7 +1,6 @@
   import {UntransformedEmitters} from '../other/globals.js';
   import {CB} from '../other/util.js';
   import {EC_EXPR_HEAD, EC_NON_SEQ, EC_NONE, ETK_ID, ASSERT_EQ} from '../other/constants.js';
-  import {cls} from './cls.js';
 
 UntransformedEmitters['resolved-this'] =
 function(n, flags, isStmt) {

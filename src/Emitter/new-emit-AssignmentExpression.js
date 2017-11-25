@@ -4,7 +4,7 @@
   import {wcb_afterVar} from '../other/wcb.js';
   import {cls} from './cls.js';
 
-this.emitAssignment_ex =
+cls.emitAssignment_ex =
 function(n, flags, isStmt) {
   var hasParen = flags & EC_EXPR_HEAD;
   var left = n.left;
@@ -47,7 +47,7 @@ function(n, flags, isStmt) {
   return this.emitAssignment_ex(n, flags, isStmt);
 };
 
-this.emitAssignment_binding =
+cls.emitAssignment_binding =
 function(n, flags, isStmt) {
   ASSERT.call(this, isResolvedName(n.left), 'name');
 
@@ -63,4 +63,5 @@ function(n, flags, isStmt) {
   var l = n.left;
   tg(l).hasTZCheck && this.os().emitTZCheckPoint(tg(l));
 };
+
 

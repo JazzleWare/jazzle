@@ -2,7 +2,7 @@
   import Liquid from '../Liquid/cls.js';
   import {cls} from './cls.js';
 
-this.spCreate_arguments =
+cls.spCreate_arguments =
 function(ref) {
   ASSERT.call(this, ref,
     'ref must be provided to create an argumentsSP');
@@ -14,7 +14,7 @@ function(ref) {
   return this.spArguments = spArguments;
 };
 
-this.spCreate_scall =
+cls.spCreate_scall =
 function(ref) {
   ASSERT.call(this, this.isCtor(),
     'only ctor scopes are allowed to create scall');
@@ -31,4 +31,5 @@ function(ref) {
 
   return this.spSuperCall = spSuperCall;
 };
+
 

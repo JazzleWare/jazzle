@@ -5,7 +5,7 @@
   import {TK_ID} from '../other/lexer-constants.js';
   import {cls} from './cls.js';
 
-this.readID_withHead = 
+cls.readID_withHead = 
 function(v) {
   var c = this.c,
       s = this.src,
@@ -55,4 +55,5 @@ function(v) {
   this.ltraw = this.c0_to_c();
   this.lttype = TK_ID;
 };
+
 

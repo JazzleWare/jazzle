@@ -20,7 +20,7 @@ function(n, flags, isStmt) {
   return true;
 };
 
-this.emitIfBody =
+cls.emitIfBody =
 function(stmt) {
   switch (stmt.type) {
   case 'BlockStatement':
@@ -46,10 +46,11 @@ function(stmt) {
   this.u().w('}');
 };
 
-this.emitElseBody =
+cls.emitElseBody =
 function(stmt) {
   return stmt.type === 'IfStatement' ?
     this.emitStmt(stmt) :
     this.emitAttached(stmt);
 };
+
 

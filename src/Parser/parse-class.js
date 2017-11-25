@@ -4,7 +4,7 @@
   import {CTX_DEFAULT, CTX_NONE, CH_LCURLY, CH_SEMI, CTX_CTOR_NOT_ALLOWED, CH_RCURLY, CH_LPAREN, CH_SINGLEDOT, CH_LSQBRACKET} from '../other/constants.js';
   import {cls} from './cls.js';
 
-this.parseClass = 
+cls.parseClass = 
 function(ctx) {
   if (this.v <= 5)
     this.err('ver.class');
@@ -128,7 +128,7 @@ function(ctx) {
   return n;
 };
 
-this.parseSuper = function() {
+cls.parseSuper = function() {
   if (this.v <=5 ) this.err('ver.super');
 
   var cb = {}; this.suc(cb, 'bef');
@@ -162,4 +162,5 @@ this.parseSuper = function() {
  
   return n;
 };
+
 

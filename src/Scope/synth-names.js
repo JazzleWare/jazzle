@@ -2,7 +2,7 @@
   import {_m} from '../other/scope-util.js';
   import {cls} from './cls.js';
 
-this.synth_defs_to =
+cls.synth_defs_to =
 function(targetScope) {
   var list = this.defs, e = 0, len = list.length(), insertSelf = this.isCatch() && !this.argIsSimple;
   while (e < len) {
@@ -18,4 +18,5 @@ function(targetScope) {
     }
   }
 };
+
 

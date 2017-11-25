@@ -1,6 +1,6 @@
   import {cls} from './cls.js';
 
-this.parseEmptyStatement =
+cls.parseEmptyStatement =
 function() {
   var n = {
     type: 'EmptyStatement',
@@ -13,4 +13,5 @@ function() {
   this.next();
   return n;
 };
+
 

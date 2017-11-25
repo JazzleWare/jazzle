@@ -1,7 +1,7 @@
   import {CH_QUESTION, CH_RPAREN, CH_EQUALITY_SIGN, CH_EXCLAMATION, CH_COLON} from '../other/constants.js';
   import {cls} from './cls.js';
 
-this.regParen =
+cls.regParen =
 function() {
   var c0 = this.c;
   var s = this.src;
@@ -37,7 +37,7 @@ function() {
   return this.regErr_unfinishedParen(n);
 };
 
-this.regPeekOrGroup =
+cls.regPeekOrGroup =
 function() {
   var c0 = this.c, s = this.src, l = this.regLastOffset;
   var r = this.scat(c0+2);
@@ -53,7 +53,7 @@ function() {
   }
 };
 
-this.regPeek =
+cls.regPeek =
 function(notInverse) {
   var c0 = this.c, loc0 = this.loc(), n = null, elem = null, finished = false;
   this.setsimpoff(c0+3);
@@ -73,7 +73,7 @@ function(notInverse) {
   return this.regErr_unfinishedParen(n);
 };
 
-this.regGroup = 
+cls.regGroup = 
 function() {
   var c0 = this.c, loc0 = this.loc(), n = null, elem = null, finished = false;
   this.setsimpoff(c0+3);
@@ -92,4 +92,5 @@ function() {
   if (finished) return n;
   return this.regErr_unfinishedParen(n);
 };
+
 

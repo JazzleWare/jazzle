@@ -1,7 +1,6 @@
   import {Emitters} from '../other/globals.js';
   import {CB} from '../other/util.js';
   import {EC_EXPR_HEAD, EC_NON_SEQ, EC_NONE} from '../other/constants.js';
-  import {cls} from './cls.js';
 
 Emitters['SequenceExpression'] =
 function(n, flags, isStmt) {

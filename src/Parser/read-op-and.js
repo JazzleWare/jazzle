@@ -2,7 +2,7 @@
   import {TK_OP_ASSIG, TK_SIMP_BINARY, PREC_LOG_AND, PREC_BIT_AND} from '../other/lexer-constants.js';
   import {cls} from './cls.js';
 
-this.readOp_and = 
+cls.readOp_and = 
 function() {
   var c = this.c; c++;
   var ch = this.scat(c);
@@ -25,4 +25,5 @@ function() {
 
   this.setsimpoff(c);
 };
+
 

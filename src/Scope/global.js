@@ -4,7 +4,7 @@
   import {_u} from '../other/scope-util.js';
   import {cls} from './cls.js';
 
-this.spReportGlobal_m =
+cls.spReportGlobal_m =
 function(mname, ref) {
   var globalBinding = this.findGlobal_m(mname);
 
@@ -22,7 +22,7 @@ function(mname, ref) {
   return globalBinding;
 };
 
-this.insertGlobal_m =
+cls.insertGlobal_m =
 function(mname, global) {
   ASSERT.call(this, this.isGlobal() || this.isBundle(), 'global or bundler' );
   ASSERT.call(this, global.isGlobal(), 'global');
@@ -31,7 +31,7 @@ function(mname, global) {
   return this.defs.set(mname, global);
 };
 
-this.findGlobal_m =
+cls.findGlobal_m =
 function(mname) {
   var global = null;
   if (this.defs.has(mname)) {
@@ -40,4 +40,5 @@ function(mname) {
   }
   return global;
 };
+
 

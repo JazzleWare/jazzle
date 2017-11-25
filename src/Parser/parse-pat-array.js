@@ -2,7 +2,7 @@
   import {CH_COMMA, CH_RSQBRACKET} from '../other/constants.js';
   import {cls} from './cls.js';
 
-this.parsePat_array = 
+cls.parsePat_array = 
 function() {
   if (this.v <= 5)
     this.err('ver.patarr');
@@ -59,4 +59,5 @@ function() {
 
   return n;
 };
+
 

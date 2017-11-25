@@ -2,7 +2,6 @@
   import {RS_SCALL, RS_THIS} from '../other/scope-constants.js';
   import {THS_IS_REACHED, THS_NEEDS_CHK} from '../other/constants.js';
   import {findElem} from '../other/util.js';
-  import {cls} from './cls.js';
 
 Transformers['CallExpression'] =
 function(n, isVal) {

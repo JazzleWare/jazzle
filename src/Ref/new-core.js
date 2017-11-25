@@ -1,13 +1,13 @@
   import {ASSERT} from '../other/constants.js';
   import {cls} from './cls.js';
 
-this.absorbDirect =
+cls.absorbDirect =
 function(ref) { return this.absorb(ref, true); };
 
-this.absorbIndirect =
+cls.absorbIndirect =
 function(ref) { return this.absorb(ref, false); };
 
-this.absorb =
+cls.absorb =
 function(childRef, refD) {
   ASSERT.call(this, !childRef.hasTarget,
     'resolved ref are not allowed to get absorbed by another ref');
@@ -29,10 +29,10 @@ function(childRef, refD) {
   childRef.parentRef = this;
 };
 
-this.updateStats =
+cls.updateStats =
 function(d, i) { this.d += d; this.i += i; };
 
-this.getDecl_nearest =
+cls.getDecl_nearest =
 function() {
   if (this.targetDecl_nearest !== null)
     return this.targetDecl_nearest;
@@ -46,12 +46,12 @@ function() {
   ASSERT.call(this, false, 'ref unresolved');
 };
 
-this.getDecl_real =
+cls.getDecl_real =
 function() {
   return this.getDecl_nearest().getDecl_real();
 };
 
-this.assigned =
+cls.assigned =
 function() {
   // TODO: assert target ref is not a relocated ref (i.e., it is a master decl)
   var targetRef = this.getDecl_nearest().ref;
@@ -59,4 +59,5 @@ function() {
     targetRef.lhs = 0;
   return targetRef.lhs++;
 };
+
 

@@ -3,7 +3,7 @@
   import {isDirective, core} from '../other/util.js';
   import {cls} from './cls.js';
 
-this.parseStatement =
+cls.parseStatement =
 function(allowNull) {
   var head = null;
   switch (this.lttype) {
@@ -75,4 +75,5 @@ function(allowNull) {
 
   return head;
 };
+
 

@@ -2,7 +2,6 @@
   import {CB, isInteger} from '../other/util.js';
   import {ETK_ID, STRING_TYPE, ETK_NONE, BOOL_TYPE, NUMBER_TYPE, ETK_NUM, ASSERT} from '../other/constants.js';
   import {wcb_intDotGuard} from '../other/wcb.js';
-  import {cls} from './cls.js';
 
 Emitters['Literal'] =
 function(n, flags, isStmt) {

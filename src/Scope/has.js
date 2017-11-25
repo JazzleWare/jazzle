@@ -1,15 +1,15 @@
   import {SA_NEW_TARGET} from '../other/scope-constants.js';
   import {cls} from './cls.js';
 
-this.hasNewTarget =
+cls.hasNewTarget =
 function() { return this.allowed & SA_NEW_TARGET; };
 
-this.hasHead =
+cls.hasHead =
 function() {
   return this.isAnyFn() || this.isCatch();
 };
 
-this.hasSignificantNames =
+cls.hasSignificantNames =
 function() {
   if (this.isModule() ||
     this.isScript())
@@ -22,4 +22,5 @@ function() {
 
   return false;
 };
+
 

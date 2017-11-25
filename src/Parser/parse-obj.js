@@ -5,7 +5,7 @@
   import {core} from '../other/util.js';
   import {cls} from './cls.js';
 
-this.parseObj = function(ctx) {
+cls.parseObj = function(ctx) {
   var c0 = this.c0, loc0 = this.loc0(),
       elem = null, list = [], first__proto__ = null,
       elctx = CTX_NONE,
@@ -109,5 +109,6 @@ this.parseObj = function(ctx) {
 
   return n;
 };
+
 
 

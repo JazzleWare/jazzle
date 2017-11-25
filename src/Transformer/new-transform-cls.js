@@ -7,7 +7,7 @@
   import {tg} from '../other/util.js';
   import {cls} from './cls.js';
 
-this.transformCls =
+cls.transformCls =
 function(n, isVal, oBinding) { // o -> outer
   var scope = this.setScope(n['#scope']), ex = oBinding === null;
   var ctor = n['#ct'] && n['#ct'].value, reached = {v: true};
@@ -85,7 +85,7 @@ function(n, isVal, oBinding) { // o -> outer
   return cls;
 };
 
-this.transformCtor =
+cls.transformCtor =
 function(ctor, oBinding, r) {
   var r0 = null;
   if (oBinding) {
@@ -116,7 +116,7 @@ function(ctor, oBinding, r) {
   return this.transformExprFn(ctor);
 };
 
-this.transformMem =
+cls.transformMem =
 function(mem, oBinding, r) {
   var r0 = null, scope = mem['#scope'], cls = scope.parent;
   if (oBinding) {
@@ -155,7 +155,7 @@ function(mem, oBinding, r) {
   return mem;
 };
 
-this.syntheticCtor =
+cls.syntheticCtor =
 function(cls, heritage) {
   return {
     kind: 'synthc',
@@ -176,4 +176,5 @@ function(n, isVal) {
   var target = tg(n.id );
   return this.transformCls(n, isVal, target);
 };
+
 

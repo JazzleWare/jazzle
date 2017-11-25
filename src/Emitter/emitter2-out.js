@@ -1,13 +1,13 @@
   import {ASSERT_EQ, ASSERT} from '../other/constants.js';
   import {cls} from './cls.js';
 
-this.writeToOut_nonLineBreak =
+cls.writeToOut_nonLineBreak =
 function(str) {
   this.ensureOutActive();
   this.writeToOut_raw(str);
 };
 
-this.writeToOut_lineBreak =
+cls.writeToOut_lineBreak =
 function() {
   this.ensureOutActive();
   this.emline_cur++;
@@ -16,15 +16,16 @@ function() {
   this.writeToOut_raw('\n');
 }; 
 
-this.writeToOut_raw =
+cls.writeToOut_raw =
 function(str) { this.out = this.out.concat(str); this.outLen += str.length; };
 
-this.useOut =
+cls.useOut =
 function(use) {
   ASSERT_EQ.call(this, !this.outActive, use);
   this.outActive = use;
 };
 
-this.ensureOutActive =
+cls.ensureOutActive =
 function() { ASSERT.call(this, this.outActive, 'out is not in use' ); };
+
 

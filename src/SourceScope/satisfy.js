@@ -3,7 +3,7 @@
   import {DT_EFW} from '../other/scope-constants.js';
   import {cls} from './cls.js';
 
-this.satisfyWithBundler =
+cls.satisfyWithBundler =
 function(bundler) {
   var bundlerSources = bundler.freshSources;
   var allSourcesImported = this.allSourcesImported,
@@ -42,7 +42,7 @@ function(bundler) {
   return im;
 };
 
-this.satisfyEntries =
+cls.satisfyEntries =
 function(list) {
   var len = list.length(), l = 0;
   while (l < len) {
@@ -54,7 +54,7 @@ function(list) {
   }
 };
 
-this.satisfyBindingWithName =
+cls.satisfyBindingWithName =
 function(binding, name) {
   var ex = this.searchExports(name, null);
 
@@ -62,7 +62,7 @@ function(binding, name) {
   this.resolve1to2(binding, ex.ref.getDecl_real());
 };
 
-this.searchInOwnExports =
+cls.searchInOwnExports =
 function(name) {
   var mname = _m(name);
   var entry = this.allNamesExported.has(mname) ?
@@ -74,7 +74,7 @@ function(name) {
   return null;
 };
 
-this.searchExports =
+cls.searchExports =
 function(name, soFar) {
   var ex = this.searchInOwnExports(name);
   if (ex === null) {
@@ -85,7 +85,7 @@ function(name, soFar) {
   return ex;
 };
 
-this.searchInForwardedExports =
+cls.searchInForwardedExports =
 function(name, soFar) {
   var list = this.allSourcesForwarded, l = 0, len = list.length();
   var entry = null
@@ -99,7 +99,7 @@ function(name, soFar) {
   return entry;
 };
 
-this.resolve1to2 =
+cls.resolve1to2 =
 function(slave, master) {
   ASSERT.call(this, master === master.ref.getDecl_real(), 'master');
   ASSERT.call(this, master !== slave, 'same');
@@ -127,4 +127,5 @@ function(slave, master) {
   master.ref.i += slaveRef.i;
   master.ref.d++; // TODO: must be exact
 };
+
 

@@ -3,7 +3,7 @@
   import {core} from '../other/util.js';
   import {cls} from './cls.js';
 
-this.parseExpr =
+cls.parseExpr =
 function(ctx) {
   var head = this.parseNonSeq(PREC_NONE, ctx);
   var latestExpr = null;
@@ -36,4 +36,5 @@ function(ctx) {
     '#y': y, '#c': {}
   };
 };
+
 

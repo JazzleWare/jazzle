@@ -1,12 +1,12 @@
   import {HAS} from '../other/constants.js';
   import {cls} from './cls.js';
 
-this.err = function(errorType, errParams) {
+cls.err = function(errorType, errParams) {
   errParams = this.normalize(errParams);
   return this.errorListener.onErr(errorType, errParams);
 };
 
-this.normalize = function(err) {
+cls.normalize = function(err) {
   // normalized err
   var loc0 = { li: this.li0, col: this.col0 },
       loc = { li: this.li, col: this.col };
@@ -67,5 +67,6 @@ this.normalize = function(err) {
   return e;
 };
 
-this.ga = function() { this.err('gen.async'); };
+cls.ga = function() { this.err('gen.async'); };
+
 

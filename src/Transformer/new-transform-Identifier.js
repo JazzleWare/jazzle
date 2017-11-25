@@ -7,9 +7,10 @@ function(n, isVal) {
   return n;
 };
 
-this.trSAT_name =
+cls.trSAT_name =
 function(n, isVal) {
   n = this.toResolvedName(n, 'sat');
   return n;
 };
+
 

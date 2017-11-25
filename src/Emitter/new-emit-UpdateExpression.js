@@ -1,7 +1,6 @@
   import {Emitters} from '../other/globals.js';
   import {CB, isResolvedName, tzc, cvc, tg} from '../other/util.js';
   import {EC_EXPR_HEAD, EC_NONE, ETK_ADD, ETK_MIN} from '../other/constants.js';
-  import {cls} from './cls.js';
 
 // somevery[:wraplimit:]longid--
 // (someverylongid

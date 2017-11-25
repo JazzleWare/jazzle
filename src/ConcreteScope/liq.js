@@ -3,13 +3,13 @@
   import LiquidGroup from '../LiquidGroup/cls.js';
   import {cls} from './cls.js';
 
-this.gocLG =
+cls.gocLG =
 function(gName) {
   var lg = this.getLG(gName);
   return lg || this.createLG(gName);
 };
 
-this.getLG =
+cls.getLG =
 function(gName) {
   var mname = _m(gName);
   if (this.liquidDefs.has(mname))
@@ -17,7 +17,7 @@ function(gName) {
   return null;
 };
 
-this.createLG =
+cls.createLG =
 function(gName) {
   var mname = _m(gName);
   ASSERT.call(this, this.getLG(gName) === null, 'LGr exists');
@@ -26,4 +26,5 @@ function(gName) {
 //group.newL();
   return this.liquidDefs.set(mname, group );
 };
+
 

@@ -31,17 +31,18 @@ function base_Y(n) {
   return base_Y0.call(this, n);
 }
 
-this.Y0 = function() {
+cls.Y0 = function() {
   var yc = 0, e = 0;
   while (e < arguments.length)
     yc += base_Y0.call(this, arguments[e++]);
   return yc;
 };
 
-this.Y = function() {
+cls.Y = function() {
   var yc = 0, e = 0;
   while (e < arguments.length)
     yc += base_Y.call(this, arguments[e++]);
   return yc;
 };
+
 

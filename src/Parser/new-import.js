@@ -3,7 +3,7 @@
   import {CH_COMMA, CH_LCURLY, ASSERT, CH_RCURLY} from '../other/constants.js';
   import {cls} from './cls.js';
 
-this.parseImport =
+cls.parseImport =
 function() {
   this.v<=5 && this.err('ver.exim');
   this.isScript && this.err('import.not.in.module');
@@ -92,7 +92,7 @@ function() {
   };
 };
 
-this.parseImport_slist =
+cls.parseImport_slist =
 function(list) {
   var cb = this.cb; this.suc(cb, 'list.bef');
   this.next(); // '{'
@@ -132,7 +132,7 @@ function(list) {
   this.expectT(CH_RCURLY) || this.err('import.specifier.list.unfinished');
 };
       
-this.parseImport_namespace =
+cls.parseImport_namespace =
 function() {
   var c0 = this.c0, cb = this.cb, loc0 = this.loc0();
 
@@ -161,4 +161,5 @@ function() {
     '#c': {}
   };
 };
+
 

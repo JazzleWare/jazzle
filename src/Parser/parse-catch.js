@@ -2,7 +2,7 @@
   import {DT_CATCHARG, DT_NONE} from '../other/scope-constants.js';
   import {cls} from './cls.js';
 
-this. parseCatchClause = function () {
+cls. parseCatchClause = function () {
    var c0 = this.c0, cb = {}, loc0 = this.loc0();
 
    this.suc(cb, 'bef');
@@ -45,4 +45,5 @@ this. parseCatchClause = function () {
        '#y': this.Y(catParam)+this.Y(catBlock)
    };
 };
+
 

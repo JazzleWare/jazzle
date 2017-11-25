@@ -6,7 +6,7 @@
   import {PREC_NONE} from '../other/lexer-constants.js';
   import {cls} from './cls.js';
 
-this.parseArrow = function(arg, ctx)   {
+cls.parseArrow = function(arg, ctx)   {
   if (this.v <= 5)
     this.err('ver.arrow');
   var async = false;
@@ -136,4 +136,5 @@ this.parseArrow = function(arg, ctx)   {
     '#scope': scope, '#y': 0, '#c': cb, '#argploc': loc
   }; 
 };
+
 

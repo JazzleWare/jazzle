@@ -1,6 +1,6 @@
   import {cls} from './cls.js';
 
-this.setsimpoff =
+cls.setsimpoff =
 function(offset) {
   this.col += (this.c = offset) - this.luo;
   // TODO: will luo remain relevant even if
@@ -8,7 +8,7 @@ function(offset) {
   this.luo = offset;
 };
 
-this.setzoff =
+cls.setzoff =
 function(offset) {
   this.luo = offset;
   this.c = offset;
@@ -16,9 +16,10 @@ function(offset) {
   this.li++;
 };
 
-this.scat =
+cls.scat =
 function(offset) {
   return offset < this.src.length ?
     this.src.charCodeAt(offset) : -1;
 };
+
 

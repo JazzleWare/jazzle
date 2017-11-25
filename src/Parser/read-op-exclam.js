@@ -2,7 +2,7 @@
   import {PREC_EQ, TK_SIMP_BINARY, TK_UNARY} from '../other/lexer-constants.js';
   import {cls} from './cls.js';
 
-this.readOp_exclam =
+cls.readOp_exclam =
 function() {
   var c = this.c; c++; // '!';
   var ch = this.scat(c);
@@ -24,4 +24,5 @@ function() {
 
   this.setsimpoff(c);
 };
+
 

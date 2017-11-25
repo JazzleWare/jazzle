@@ -3,7 +3,7 @@
   import {core} from '../other/util.js';
   import {cls} from './cls.js';
 
-this.parseWhile = 
+cls.parseWhile = 
 function () {
   this.resvchk();
   this.testStmt() || this.err('not.stmt');
@@ -46,4 +46,5 @@ function () {
     '#y': this.Y(cond, nbody), '#c': cb
   };
 };
+
 

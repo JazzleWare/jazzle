@@ -2,7 +2,7 @@
   import {isIDHead} from '../other/ctype.js';
   import {cls} from './cls.js';
 
-this.readID_surrogate =
+cls.readID_surrogate =
 function(sc) {
   if (this.c+1 >= this.src.length)
     this.err('id.head.got.eof.surrogate');
@@ -18,4 +18,5 @@ function(sc) {
     String.fromCharCode(surrogateTail)
   );
 };
+
 

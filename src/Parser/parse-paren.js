@@ -5,7 +5,7 @@
   import {core, CB} from '../other/util.js';
   import {cls} from './cls.js';
 
-this.parseParen = function(ctx) {
+cls.parseParen = function(ctx) {
   var c0 = this.c0, loc0 = this.loc0(),
       list = null, prevys = this.suspys,
       elctx = CTX_NONE, hasRest = false,
@@ -183,10 +183,11 @@ this.parseParen = function(ctx) {
   return n;
 };
 
-this.dissolveParen = function() {
+cls.dissolveParen = function() {
   if (this.parenScope) {
     this.parenScope.makeSimple();
     this.parenScope = null;
   }
 };
+
 

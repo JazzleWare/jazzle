@@ -1,7 +1,7 @@
   import {surrogate} from '../other/util.js';
   import {cls} from './cls.js';
 
-this.regMakeSurrogate =
+cls.regMakeSurrogate =
 function(c1, c2) {
   return {
     type: '#Regex.Ho',
@@ -15,7 +15,7 @@ function(c1, c2) {
   };
 };
 
-this.regSurrogateComponent_VOKE =
+cls.regSurrogateComponent_VOKE =
 function(cp, offset, kind, escape) {
   var c0 = this.c, loc0 = this.loc();
   this.setsimpoff(offset);
@@ -32,4 +32,5 @@ function(cp, offset, kind, escape) {
     raw: this.src.substring(c0, offset)
   };
 };
+
 

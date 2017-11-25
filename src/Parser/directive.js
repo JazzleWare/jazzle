@@ -1,17 +1,17 @@
   import {cls} from './cls.js';
 
-this.enterPrologue =
+cls.enterPrologue =
 function() {
   this.scope.enterPrologue();
 };
 
-this.exitPrologue =
+cls.exitPrologue =
 function() {
   this.scope.exitPrologue();
   this.clearPendingStrictErrors();
 };
 
-this.applyDirective =
+cls.applyDirective =
 function(directiveLiteral) {
   if (this.alreadyApplied) {
     this.alreadyApplied = false;
@@ -24,4 +24,5 @@ function(directiveLiteral) {
     this.strict_esc_chk(); // for now it is the sole possible error
   }
 };
+
 

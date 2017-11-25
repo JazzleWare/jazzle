@@ -2,7 +2,7 @@
   import {TK_ELLIPSIS} from '../other/lexer-constants.js';
   import {cls} from './cls.js';
 
-this.read_ellipsis =
+cls.read_ellipsis =
 function() {
   var c = this.c+2, s = this.src;
   if (c>=s.length || s.charCodeAt(c) !== CH_SINGLEDOT) {
@@ -13,4 +13,5 @@ function() {
   this.setsimpoff(c+1);
   this.lttype = TK_ELLIPSIS;
 };
+
 

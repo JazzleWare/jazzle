@@ -4,7 +4,7 @@
   import {_m} from '../other/scope-util.js';
   import {cls} from './cls.js';
 
-this.parseFn =
+cls.parseFn =
 function(ctx, st) {
   var labels_ = this.labels;
   var declMode_ = this.declMode;
@@ -132,4 +132,5 @@ function(ctx, st) {
 
   return n;
 };
+
 

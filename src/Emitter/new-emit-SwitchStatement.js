@@ -2,7 +2,6 @@
   import {CB} from '../other/util.js';
   import {ETK_ID, EC_NONE} from '../other/constants.js';
   import {wcb_afterStmt, wcb_afterCase} from '../other/wcb.js';
-  import {cls} from './cls.js';
 
 Emitters['SwitchStatement'] =
 function(n, flags, isStmt) {

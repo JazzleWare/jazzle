@@ -2,7 +2,7 @@
   import {_m} from '../other/scope-util.js';
   import {cls} from './cls.js';
 
-this.mustSynth =
+cls.mustSynth =
 function() {
   if (this.msynth !== -1)
     return this.msynth;
@@ -30,4 +30,5 @@ function() {
 
   return this.msynth = msynth;
 };
+
 

@@ -4,7 +4,7 @@
   import {CB} from '../other/util.js';
   import {cls} from './cls.js';
 
-this.emitSourceHead =
+cls.emitSourceHead =
 function(n) {
   var scope = n['#scope'], em = 0;
   this.emitJ(scope, em) && em++;
@@ -16,7 +16,7 @@ function(n) {
   return em;
 };
 
-this.emitFnHead =
+cls.emitFnHead =
 function(n) {
   var scope = n.fun['#scope'], em = 0;
   this.emitTCheckVar(scope, em) && em++;
@@ -30,7 +30,7 @@ function(n) {
   return em;
 };
 
-this.emitSimpleHead =
+cls.emitSimpleHead =
 function(n) {
   var scope = n['#scope'], em = 0;
   scope.hasTZCheckPoint && this.emitTCHP(scope, em) && em++;
@@ -39,7 +39,7 @@ function(n) {
   return em;
 };
 
-this.emitVarList =
+cls.emitVarList =
 function(scope, hasPrev) {
   ASSERT.call(this, scope.isSourceLevel() || scope.isAnyFn(), 'source/fn');
   var list = scope.defs, i = 0, len = list.length(), em = 0;
@@ -58,7 +58,7 @@ function(scope, hasPrev) {
   return em;
 };
 
-this.emitTempList =
+cls.emitTempList =
 function(scope, hasPrev) {
   ASSERT.call(this, scope.isSourceLevel() || scope.isAnyFn(), 'source/fn');
   var list = scope.getLG('<t>'), i = 0, len = list ? list.length : 0;
@@ -76,7 +76,7 @@ function(scope, hasPrev) {
   return i;
 };
 
-this.emitFunLists =
+cls.emitFunLists =
 function(scope, allowsDecl, hasPrev) {
   var list = scope.funLists, i = 0, len = list.length(), em = 0;
   var own = {used: false};
@@ -88,7 +88,7 @@ function(scope, allowsDecl, hasPrev) {
   return em;
 };
 
-this.emitLLINOSAList =
+cls.emitLLINOSAList =
 function(scope, hasPrev) {
   ASSERT.call(this, !scope.isSourceLevel() && !scope.isAnyFn(), 'scope/fn');
   var list = scope.defs, i = 0, len = list.length(), em = 0;
@@ -107,7 +107,7 @@ function(scope, hasPrev) {
   return em;
 };
 
-this.emitFunList_subList =
+cls.emitFunList_subList =
 function(funList, allowsDecl, hasPrev) {
   var i = 0, em = 0;
   var own = {used: false}, lsn = null; 
@@ -120,7 +120,7 @@ function(funList, allowsDecl, hasPrev) {
   return em;
 };
 
-this.emitThisRef =
+cls.emitThisRef =
 function(scope, hasPrev) {
   var th = scope.spThis;
   if (th === null) return 0;
@@ -135,7 +135,7 @@ function(scope, hasPrev) {
   return 1;
 };
 
-this.emitSingleFun =
+cls.emitSingleFun =
 function(n, allowsDecl, i, hasPrev) {
   var scope = n.fun['#scope'];
   var target = n.target;
@@ -164,7 +164,7 @@ function(n, allowsDecl, i, hasPrev) {
   return 1;
 };
 
-this.emitTCheckVar =
+cls.emitTCheckVar =
 function(scope, hasPrev) {
   var tg = scope.getLG('tz');
   if (tg === null) return 0;
@@ -176,7 +176,7 @@ function(scope, hasPrev) {
   return 1;
 };
 
-this.emitTransformedArgs =
+cls.emitTransformedArgs =
 function(n, hasPrev) {
   var ta = n.argsPrologue;
   if (ta === null)
@@ -193,7 +193,7 @@ function(n, hasPrev) {
   return 1;
 };
 
-this.emitTCHP =
+cls.emitTCHP =
 function(scope, hasPrev) {
   var tg = scope.scs.getLG('tz').getL(0);
   if (tg === null)
@@ -208,7 +208,7 @@ function(scope, hasPrev) {
   return 1;
 };
 
-this.emitArgumentsRef =
+cls.emitArgumentsRef =
 function(scope, hasPrev) {
   var ar = scope.spArguments;
   if (ar === null) return 0;
@@ -223,7 +223,7 @@ function(scope, hasPrev) {
   return 1;
 };
 
-this.emitThisChk =
+cls.emitThisChk =
 function(scope, hasPrev) {
   var ti = scope.getLG('ti');
   if (ti === null) return 0;
@@ -238,7 +238,7 @@ function(scope, hasPrev) {
   return 1;
 };
 
-this.emitJ =
+cls.emitJ =
 function(scope, hasPrev) {
   return 0;
   var own = false, u = null, o = {v: false};
@@ -253,4 +253,5 @@ function(scope, hasPrev) {
   if (own) u.v || this.clear_onw();
   return 1;
 };
+
 

@@ -2,7 +2,7 @@
   import {core} from '../other/util.js';
   import {cls} from './cls.js';
 
-this.parseUpdate = function(arg, ctx) {
+cls.parseUpdate = function(arg, ctx) {
   var c = 0, loc = null, u = this.ltraw;
   if (arg === null) {
     c = this.c0;
@@ -42,4 +42,5 @@ this.parseUpdate = function(arg, ctx) {
     prefix: false, '#y': this.Y(arg)
   };
 };
+
 

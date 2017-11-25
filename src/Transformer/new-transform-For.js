@@ -1,5 +1,4 @@
   import {Transformers, TransformByLeft} from '../other/globals.js';
-  import {cls} from './cls.js';
 
 Transformers['ForOfStatement'] =
 function(n, isVal) {

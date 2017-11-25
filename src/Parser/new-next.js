@@ -3,7 +3,7 @@
   import {CH_MIN, CH_ADD, CH_MULTI_QUOTE, CH_SINGLE_QUOTE, CH_SINGLEDOT, CH_EQUALITY_SIGN, CH_LESS_THAN, CH_GREATER_THAN, CH_MUL, CH_MODULO, CH_EXCLAMATION, CH_COMPLEMENT, CH_OR, CH_AND, CH_XOR, CH_BACK_SLASH, CH_DIV} from '../other/constants.js';
   import {cls} from './cls.js';
 
-this.next =
+cls.next =
 function() {
 
   this.skipWS();
@@ -67,6 +67,7 @@ function() {
   }
 };
 
-this.c0_to_c =
+cls.c0_to_c =
 function() { return this.src.substring(this.c0,this.c); };
+
 

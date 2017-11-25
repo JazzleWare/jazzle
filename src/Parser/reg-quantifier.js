@@ -1,7 +1,7 @@
   import {CH_ADD, CH_QUESTION, CH_MUL, CH_LCURLY, ASSERT} from '../other/constants.js';
   import {cls} from './cls.js';
 
-this.regPrepareQ =
+cls.regPrepareQ =
 function() {
   var c = this.c, s = this.src, l = this.regLastOffset;
   if (c >= l)
@@ -19,7 +19,7 @@ function() {
   return false;
 };
 
-this.regQuantify =
+cls.regQuantify =
 function(elem) {
   var c = this.c, li = this.li, col = this.col;
   var loc = null, s = this.src;
@@ -64,6 +64,7 @@ function(elem) {
     greedy: greedy
   };
 };
+
 
 
 

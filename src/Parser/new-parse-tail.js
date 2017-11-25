@@ -4,7 +4,7 @@
   import {TK_ID, PREC_NONE} from '../other/lexer-constants.js';
   import {cls} from './cls.js';
 
-this.parseTail =
+cls.parseTail =
 function(head) {
   if (head.type === 'Identifier')
     head['#ref'] = this.scope.refDirect_m(_m(head.name), null);
@@ -111,4 +111,5 @@ function(head) {
 
   return head;
 };
+
 

@@ -3,7 +3,7 @@
   import {cpReg} from '../other/util.js';
   import {cls} from './cls.js';
 
-this.regClass =
+cls.regClass =
 function() {
   var c0 = this.c, loc0 = this.loc(), list = [];
   var e = null, latest = null;
@@ -43,7 +43,7 @@ function() {
   return n;
 };
 
-this.regPushClassElem =
+cls.regPushClassElem =
 function(list, tail) {
   if (list.length === 0) { list.push(tail); return; }
 
@@ -110,7 +110,7 @@ function(list, tail) {
   list.push(elem);
 };
 
-this.regTryCompleteSemiRange =
+cls.regTryCompleteSemiRange =
 function() {
   var sr = this.regSemiRange;
   ASSERT.call(this, sr.type === '#Regex.SemiRange', 'semi' );
@@ -128,12 +128,12 @@ function() {
 };
 
 // true if completeing the semi-range results in a `regErr
-this.testSRerr =
+cls.testSRerr =
 function() {
   return this.regSemiRange && !this.regTryCompleteSemiRange();
 };
 
-this.regClassElem =
+cls.regClassElem =
 function() {
   var c = this.c, s = this.src, l = this.regLastOffset;
   if (c >= l)
@@ -147,4 +147,5 @@ function() {
     return this.regChar(true);
   }
 };
+
 

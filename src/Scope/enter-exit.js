@@ -2,21 +2,22 @@
   import {ASSERT} from '../other/constants.js';
   import {cls} from './cls.js';
 
-this.enterForInit =
+cls.enterForInit =
 function() { this.flags |= SF_FORINIT; };
 
-this.enterPrologue =
+cls.enterPrologue =
 function() { this.flags |= SF_INSIDEPROLOGUE; };
 
-this.exitForInit =
+cls.exitForInit =
 function() {
   ASSERT.call(this, this.insideForInit(),
     'must be in a for');
   this.flags &= ~SF_FORINIT;
 };
 
-this.exitPrologue =
+cls.exitPrologue =
 function() {
   this.flags &= ~SF_INSIDEPROLOGUE;
 };
+
 

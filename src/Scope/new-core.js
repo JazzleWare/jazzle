@@ -6,7 +6,7 @@
   import Liquid from '../Liquid/cls.js';
   import {cls} from './cls.js';
 
-this.determineActions =
+cls.determineActions =
 function() {
   if (this.isParen())
     return this.parent.actions;
@@ -38,7 +38,7 @@ function() {
   return a;
 };
 
-this.activateTZ =
+cls.activateTZ =
 function() {
   var scope = this.scs;
   if (scope.hasTZCheckPoint)
@@ -46,7 +46,7 @@ function() {
   return this.hasTZCheckPoint = true;
 };
 
-this.setName =
+cls.setName =
 function(name, source) {
   ASSERT.call(this, this.canHaveName(),
     'only cls/fn can have a name');
@@ -57,10 +57,10 @@ function(name, source) {
   return this.scopeName;
 };
 
-this.getThisBase =
+cls.getThisBase =
 function() { return this.scs; };
 
-this.pushFun =
+cls.pushFun =
 function(name, transformedFn) {
   ASSERT.call(
     this,
@@ -72,12 +72,12 @@ function(name, transformedFn) {
   list.push(transformedFn);
 };
 
-this.owns =
+cls.owns =
 function(nd) {
   return nd.ref.scope === this /* && (!nd.isImported()) */;
 };
 
-this.determineFlags =
+cls.determineFlags =
 function() {
   if (this.isParen())
     return this.parent.flags;
@@ -103,7 +103,7 @@ function() {
   return fl;
 };
 
-this.spCreate_this =
+cls.spCreate_this =
 function(ref) {
   ASSERT.call(this, this.canMakeThis(), 'this');
 
@@ -121,14 +121,14 @@ function(ref) {
   return this.spThis = spThis;
 };
 
-this.setSynthBase =
+cls.setSynthBase =
 function(base) {
   ASSERT.call(this, this.synthBase === this.scs, 'synth-base is not intact');
   ASSERT.call(this, base.isConcrete(), 'base' );
   this.synthBase = base;
 };
 
-this.getSourceLevelScope =
+cls.getSourceLevelScope =
 function() {
   var l = this.sourceScope ; // up
   if (l === null) {
@@ -143,4 +143,5 @@ function() {
   }
   return l;
 };
+
 

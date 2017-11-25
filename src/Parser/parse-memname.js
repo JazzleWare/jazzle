@@ -3,7 +3,7 @@
   import {CB, core} from '../other/util.js';
   import {cls} from './cls.js';
 
-this.mem_id = 
+cls.mem_id = 
 function() {
   if (this.v>5)
     return this.id();
@@ -12,7 +12,7 @@ function() {
   return this.id();
 };
 
-this.mem_expr = 
+cls.mem_expr = 
 function() {
   if (this.v <= 5)
     this.err('ver.mem.comp');
@@ -51,4 +51,5 @@ function() {
 
   return n;
 };
+
 

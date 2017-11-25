@@ -174,7 +174,7 @@ function(n, isVal) {
   return TransformByLeft[n.left.type].call(this, n, isVal, n.binding);
 };
 
-this.trArrayElem =
+cls.trArrayElem =
 function(left, iter, at, isB, cbn) {
   var right = null, rest_cb = null;
   if (left && left.type === 'RestElement') {
@@ -206,7 +206,7 @@ function(left, iter, at, isB, cbn) {
   return res;
 };
 
-this.trObjElem =
+cls.trObjElem =
 function(elem, iter, isB) {
   var name = elem.key;
   if (elem.computed)
@@ -218,7 +218,7 @@ function(elem, iter, isB) {
   return this.tr(this.synth_SynthAssig(left, right, isB), false);
 };
 
-this.needsCVLHS =
+cls.needsCVLHS =
 function(decl) {
   if (!decl.isImmutable())
     return false;
@@ -228,7 +228,7 @@ function(decl) {
   return true;
 };
 
-this.cacheCVLHS =
+cls.cacheCVLHS =
 function(decl) {
   var tc = this.getTCCache(decl);
   if (tc)
@@ -237,4 +237,5 @@ function(decl) {
     tc = CHK_NONE;
   this.cvtz[_m(decl.ref.scope.scopeID+':'+decl.name)] = tc | CHK_V;
 };
+
 

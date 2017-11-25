@@ -1,21 +1,22 @@
   import {SF_INSIDEIF, SF_LOOP, SF_STRICT, SF_INSIDEPROLOGUE, SF_FORINIT} from '../other/scope-constants.js';
   import {cls} from './cls.js';
 
-this.insideIf =
+cls.insideIf =
 function() { return this.flags & SF_INSIDEIF; };
 
-this.insideLoop =
+cls.insideLoop =
 function() { return this.flags & SF_LOOP; };
 
-this.insideStrict = 
+cls.insideStrict = 
 function() { return this.flags & SF_STRICT; };
 
-this.insidePrologue =
+cls.insidePrologue =
 function() { return this.flags & SF_INSIDEPROLOGUE; };
 
-this.insideForInit =
+cls.insideForInit =
 function() { return this.flags & SF_FORINIT; };
 
-this.insideArgs =
+cls.insideArgs =
 function() { return this.isAnyFn() && !this.inBody; };
+
 

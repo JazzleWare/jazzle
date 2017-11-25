@@ -3,7 +3,7 @@
   import {core} from '../other/util.js';
   import {cls} from './cls.js';
 
-this.parseArgList = function () {
+cls.parseArgList = function () {
   var c0 = -1, li0 = -1, col0 = -1, parenAsync = this.parenAsync,
       elem = null, list = [];
 
@@ -46,4 +46,5 @@ this.parseArgList = function () {
 
   return list ;
 };
+
 

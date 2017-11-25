@@ -5,7 +5,7 @@
   import {core} from '../other/util.js';
   import {cls} from './cls.js';
 
-this.parseArray = 
+cls.parseArray = 
 function(ctx) {
   var c0 = this.c0, cb = {}, loc0 = this.loc0();
 
@@ -150,4 +150,5 @@ function(ctx) {
   
   return n;
 };
+
 

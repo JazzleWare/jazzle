@@ -2,7 +2,7 @@
   import {getIDName} from '../other/util.js';
   import {cls} from './cls.js';
 
-this.inferName =
+cls.inferName =
 function(left, right, isComputed) {
   if (isComputed && left.type === 'Identifier')
     return null;
@@ -47,10 +47,11 @@ function(left, right, isComputed) {
   return scopeName;
 };
 
-this.cutEx =
+cls.cutEx =
 function() {
   var ex = this.ex;
   this.ex = DT_NONE;
   return ex;
 };
+
 

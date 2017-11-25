@@ -2,7 +2,7 @@
   import {ASSERT} from '../other/constants.js';
   import {cls} from './cls.js';
 
-this.handOver_m =
+cls.handOver_m =
 function(mname, ref) {
   if (!this.isArrow()) {
     if (ref_arguments_m(mname))
@@ -17,7 +17,7 @@ function(mname, ref) {
   return this.parent.refIndirect_m(mname, ref);
 };
 
-this.refInHead =
+cls.refInHead =
 function(mname, ref) {
   if (!this.isArrow()) {
     if (ref_this_m(mname))
@@ -31,4 +31,5 @@ function(mname, ref) {
 
   return this.focRefAny_m(mname).absorbDirect(ref);
 };
+
 

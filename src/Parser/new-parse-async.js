@@ -4,7 +4,7 @@
   import {ST_ASYNC} from '../other/scope-constants.js';
   import {cls} from './cls.js';
 
-this.parseAsync_otherID =
+cls.parseAsync_otherID =
 function(asyncID, ctx) {
   this.cutEx();
   if (this.nl)
@@ -27,7 +27,7 @@ function(asyncID, ctx) {
   return n;
 };
 
-this.parseAsync_exprHead =
+cls.parseAsync_exprHead =
 function(asyncID, ctx) {
   if (!(ctx & CTX_PAT))
     return asyncID;
@@ -80,7 +80,7 @@ function(asyncID, ctx) {
   return n;
 };
 
-this.parseAsync_fn =
+cls.parseAsync_fn =
 function(asyncID, ctx) {
   if (this.nl) 
     return asyncID;
@@ -93,7 +93,7 @@ function(asyncID, ctx) {
   return asyncFn;
 };
 
-this.parseAsync =
+cls.parseAsync =
 function(asyncID, ctx) {
   if (this.peekID('function'))
     return this.parseAsync_fn(asyncID, ctx);
@@ -101,4 +101,5 @@ function(asyncID, ctx) {
   this.cutEx();
   return this.parseAsync_exprHead(asyncID, ctx);
 };
+
 

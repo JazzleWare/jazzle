@@ -1,7 +1,7 @@
   import {arorev} from '../other/util.js';
   import {cls} from './cls.js';
 
-this.verifyForStrictness =
+cls.verifyForStrictness =
 function() {
   this.verifyUniqueArgs();
   var list = this.argList, i = 0;
@@ -13,4 +13,5 @@ function() {
       this.parser.err('invalid.argument.in.strict.mode');
   }
 };
+
 

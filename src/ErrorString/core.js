@@ -1,6 +1,6 @@
   import {cls} from './cls.js';
 
-this.applyTo = function(obj) {
+cls.applyTo = function(obj) {
   var errorMessage = "",
       isString = true,
       list = this.stringsAndTemplates,
@@ -14,5 +14,6 @@ this.applyTo = function(obj) {
   
   return errorMessage;
 };
+
 
 

@@ -1,7 +1,7 @@
   import {ASSERT, HAS} from '../other/constants.js';
   import {cls} from './cls.js';
 
-this.ac =
+cls.ac =
 function(to, name, from) {
   if (from === null)
     return;
@@ -12,8 +12,9 @@ function(to, name, from) {
     to[name].mergeWith(from );
 };
 
-this.gec0 =
+cls.gec0 =
 function(cb, n) {
   return HAS.call(cb, n) ? cb[n] : null;
 };
+
 

@@ -2,7 +2,7 @@
   import {CH_DIV, CH_EQUALITY_SIGN, CTX_FOR, CH_QUESTION} from '../other/constants.js';
   import {cls} from './cls.js';
 
-this.getOp = 
+cls.getOp = 
 function(ctx) {
   switch ( this. lttype ) {
   case TK_SIMP_BINARY:
@@ -51,4 +51,5 @@ function(ctx) {
   }
 
 };
+
 

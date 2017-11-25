@@ -1,6 +1,6 @@
   import {cls} from './cls.js';
 
-this.parseDbg = 
+cls.parseDbg = 
 function() {
   this.resvchk();
   this.testStmt() || this.err('not.stmt');
@@ -27,4 +27,5 @@ function() {
     '#c': bl
   };
 };
+
 

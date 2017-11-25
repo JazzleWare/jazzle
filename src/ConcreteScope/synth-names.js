@@ -4,7 +4,7 @@
   import {ATS_DISTINCT} from '../other/scope-constants.js';
   import {cls} from './cls.js';
 
-this.synth_boot =
+cls.synth_boot =
 function(r) {
   if (this.renamer === null) this.renamer = r;
   ASSERT.call(this, this.isSourceLevel(), 'script m');
@@ -17,18 +17,18 @@ function(r) {
   this.synth_defs_to(this.synthBase);
 };
 
-this.synth_finish =
+cls.synth_finish =
 function() {
   this.synth_liquids_to(this.synthBase);
 };
 
-this.synth_start =
+cls.synth_start =
 function(r) {
   ASSERT.call(this, this.isSourceLevel(), 'script m');
   this.isBooted || this.synth_boot(r);
 };
 
-this.synth_liquids_to =
+cls.synth_liquids_to =
 function(targetScope) {
   if (this.spThis !== null && this.spThis.ref.i)
     targetScope.synthLiquid(this.spThis);
@@ -46,7 +46,7 @@ function(targetScope) {
     this.synth_lg_to(list.at(e++), targetScope);
 };
 
-this.synth_externals =
+cls.synth_externals =
 function() {
   ASSERT.call(this, this.isSourceLevel(), 'script m');
   var list = this.parent.defs, e = 0, len = list.length()  ;
@@ -54,14 +54,14 @@ function() {
     this.synthGlobal(list.at(e++));
 };
 
-this.synth_lg_to =
+cls.synth_lg_to =
 function(lg, target) {
   var list = lg.list, e = 0;
   while (e < list.length)
     target.synthLiquid(list[e++]);
 };
 
-this.synth_boot_init =
+cls.synth_boot_init =
 function() {
   ASSERT.call(this, this.isBootable(), 'not bootable');
   ASSERT.call(this, !this.isBooted, 'scope has been already booted'); 
@@ -70,7 +70,7 @@ function() {
   this.isBooted = true;
 };
 
-this.findSynth_m =
+cls.findSynth_m =
 function(mname) {
   var sn = this.synthNamesUntilNow;
   return sn.has(mname) ? sn.get(mname) : null;
@@ -79,7 +79,7 @@ function(mname) {
 // can this name escape the current scope anyway?
 // there is a difference between 'can' and 'do', of course -- a name could potentially escape a scope but still remain there because of a synth homonym.
 // on the other hand, some names never escape a scope -- for example, an `arguments` never escapes an emitted function
-this.synth_ref_may_escape_m =
+cls.synth_ref_may_escape_m =
 function(mname) {
   ASSERT.call(this, this.isSourceLevel(), 'script m');
   return true;
@@ -88,24 +88,24 @@ function(mname) {
 // can this name get bound in the current scope anyway?
 // there is a difference between being a valid binding name and being a valid binding -- any name that is not an `eval/arguments` (when strict) and is not reserved
 // can be a valid binding name; but even then, they might remain invalid bindings, for example because they may be duplicates of an existing binding
-this.synth_name_is_valid_binding_m =
+cls.synth_name_is_valid_binding_m =
 function(mname) { return true; };
 
-this.synth_ref_find_homonym_m =
+cls.synth_ref_find_homonym_m =
 function(mname, r) {
   ASSERT.call(this, this.isSourceLevel(), 'script m');
   this.isBooted || this.synth_boot(r);
   return this.findSynth_m(mname);
 };
 
-this.synth_decl_find_homonym_m =
+cls.synth_decl_find_homonym_m =
 function(mname) {
   ASSERT.call(this, this.isSourceLevel(), 'script m');
   this.isBooted || this.synth_boot(r);
   return this.findSynth_m(mname);
 };
 
-this.insertSynth_m =
+cls.insertSynth_m =
 function(mname, synth) {
   var sn = this.synthNamesUntilNow || 
     (this.synthNamesUntilNow = new SortedObj()); // for msynth which uses it before the scope is booted
@@ -114,7 +114,7 @@ function(mname, synth) {
   return sn.set(mname, synth);
 };
 
-this.synth_globals =
+cls.synth_globals =
 function(r) {
   this.synth_boot_init();
   ASSERT.call(this, this.isGlobal() || this.isBundle(), 'global/bundler' );
@@ -127,7 +127,7 @@ function(r) {
     this.synthGlobal(list.at(l++));
 };
 
-this.synthDecl =
+cls.synthDecl =
 function(decl) {
   ASSERT.call(this,
     decl.isFnArg() ||
@@ -186,7 +186,7 @@ function(decl) {
   this.insertSynth_m(mname, decl);
 };
 
-this.synthGlobal =
+cls.synthGlobal =
 function(global) {
   ASSERT.call(this, this.isGlobal() || this.isBundle(), 'script m');
   ASSERT.call(this, global.isGlobal(), 'not g');
@@ -240,7 +240,7 @@ function(global) {
     this.insertSynth_m(_m(synthNames[1]), global /* TODO: s/global/null/ */);
 };
 
-this.synthLiquid =
+cls.synthLiquid =
 function(liquid) {
   ASSERT.call(this, liquid.isLiquid(), 'not liquid');
   ASSERT.call(this, liquid.synthName === "", 'has init');
@@ -278,6 +278,7 @@ function(liquid) {
   this.insertSynth_m(mname, liquid );
 };
 
-this.rename =
+cls.rename =
 function(base, i) { return this.renamer(base, i); };
+
 

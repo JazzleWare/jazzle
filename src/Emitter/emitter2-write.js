@@ -1,7 +1,7 @@
   import {ASSERT, STRING_TYPE, ETK_NONE, ETK_NL} from '../other/constants.js';
   import {cls} from './cls.js';
 
-this.writeToCurrentLine_checked =
+cls.writeToCurrentLine_checked =
 function(rawStr) {
   ASSERT.call(this, arguments.length === 1, 'write must have only one single argument');
 
@@ -36,13 +36,13 @@ function(rawStr) {
   this.writeToCurrentLine_raw(rawStr);
 };
 
-this.writeToCurrentLine_raw =
+cls.writeToCurrentLine_raw =
 function(rawStr) {
   this.emcol_cur += rawStr.length;
   this.curLine += rawStr;
 };
 
-this.writeToCurrentLine_space =
+cls.writeToCurrentLine_space =
 function() {
   this.ensureNoSpace();
   if (this.guard) this.runGuard(' ', ETK_NONE);
@@ -53,9 +53,10 @@ function() {
   this.writeToCurrentLine_raw(' ');
 };
 
-this.writeToCurrentLine_virtualLineBreak =
+cls.writeToCurrentLine_virtualLineBreak =
 function() {
   this.ensureNoSpace();
   this.guard && this.runGuard('\n', ETK_NL);
 };
+
 

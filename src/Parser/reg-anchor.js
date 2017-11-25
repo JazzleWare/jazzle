@@ -1,6 +1,6 @@
   import {cls} from './cls.js';
 
-this.regUnitAssertion =
+cls.regUnitAssertion =
 function() {
   var c0 = this.c, loc0 = this.loc();
   var kind = this.src.charAt(this.c);
@@ -14,7 +14,7 @@ function() {
   };
 };
 
-this.regBbAssertion =
+cls.regBbAssertion =
 function() {
   var c0 = this.c, loc0 = this.loc();
   var kind = this.src.charAt(c0+1);
@@ -27,4 +27,5 @@ function() {
     loc: { start: loc0, end: this.loc() }
   };
 };
+
 

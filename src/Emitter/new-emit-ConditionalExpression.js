@@ -17,7 +17,7 @@ function(n, flags, isStmt) {
   isStmt && this.w(';');
 };
 
-this.emitCondTest = function(n, prec, flags) {
+cls.emitCondTest = function(n, prec, flags) {
   var hasParen = false;
   switch (n.type) {
   case 'AssignmentExpression':
@@ -29,4 +29,5 @@ this.emitCondTest = function(n, prec, flags) {
   this.eN(n, false, flags);
   if (hasParen) this.w(')');
 };
+
 

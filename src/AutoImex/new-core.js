@@ -18,7 +18,7 @@
 
 var pathMan = new PathMan();
 
-this.insertSourceByURI =
+cls.insertSourceByURI =
 function(uri) {
   var m = _m(uri);
   ASSERT.call(this, !this.sources.has(m), 'existing ['+uri+']');
@@ -93,7 +93,7 @@ function(uri) {
   return this.sources.set(m, n);
 };
 
-this.resolveAll =
+cls.resolveAll =
 function() {
   var list = this.sources, l = 0, len = list.length();
   this.logE(' --------- ['+len+'] sources ----------; START');
@@ -104,7 +104,7 @@ function() {
   this.logE(' --------- ['+l+'/'+len+'] complete ---------');
 };
 
-this.tryResolveExternals =
+cls.tryResolveExternals =
 function(n) {
   var sourceScope = n['#scope'], globalScope = sourceScope.parent;
   var list = globalScope.defs, l = 0, len = list.length();
@@ -119,7 +119,7 @@ function(n) {
   }
 };
 
-this.insertBundleBinding =
+cls.insertBundleBinding =
 function(uri, elem) {
   var name = elem.name;
   var b = this.findBundleBinding(name);
@@ -128,13 +128,13 @@ function(uri, elem) {
   return this.bundleBindings.set(_m(name), {uri: uri, binding: elem});
 };
 
-this.findBundleBinding =
+cls.findBundleBinding =
 function(name) {
   var mname = _m(name), bb = this.bundleBindings;
   return bb.has(mname) ? bb.get(mname) : null;
 };
 
-this.flush =
+cls.flush =
 function() {
   var list = this.sources, l = 0, len = list.length();
   while (l < len) {
@@ -149,7 +149,7 @@ function() {
   }
 };
 
-this.writeImports = 
+cls.writeImports = 
 function writeImports(n) {
   var scope = n['#scope'];
   var uri = n['#uri'];
@@ -196,7 +196,7 @@ function writeImports(n) {
   }
 };
 
-this.writeExports = function(elem) {
+cls.writeExports = function(elem) {
   var scope = elem['#scope'];
   var ex = scope['#exportList'];
   var str = "";
@@ -222,7 +222,7 @@ this.writeExports = function(elem) {
   }
 };
 
-this.pathThatLeads2to1 =
+cls.pathThatLeads2to1 =
 function(from, to) {
   var fromNum = 0, toNum = 0;
   var fromStart = 0, toStart = 0;
@@ -290,13 +290,14 @@ function(from, to) {
   return str;
 };
 
-this.logE =
+cls.logE =
 function() {
-  return console.log.apply(console, arguments);
+  return console.error.apply(console, arguments);
 };
 
-this.logBinding = 
+cls.logBinding = 
 function(real, outer, uri) {
   this.logE('  ['+uri+']:export {['+real+'] as ['+outer+']}');
 };
+
 

@@ -3,7 +3,7 @@
   import {_m} from '../other/scope-util.js';
   import {cls} from './cls.js';
 
-this.asNode =
+cls.asNode =
 function(uri) {
   ASSERT.call(this, this.has(uri), 'resource not found ('+uri+')');
   var newParser = new Parser(this.fsMap[_m(uri)], {sourceType: 'module'});
@@ -11,14 +11,15 @@ function(uri) {
   return newParser.parseProgram();
 };
 
-this.has =
+cls.has =
 function(uri) { return HAS.call(this.fsMap, _m(uri)); };
 
-this.set =
+cls.set =
 function(uri, value) {
   ASSERT.call(this, !this.has(uri), 'has' );
   this.fsMap[_m(uri)] = value;
 };
+
 
 
 

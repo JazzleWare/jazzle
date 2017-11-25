@@ -1,7 +1,7 @@
   import {_m} from '../other/scope-util.js';
   import {cls} from './cls.js';
 
-this.parseLabel = function(label, allowNull) {
+cls.parseLabel = function(label, allowNull) {
   var ref = this.scope.findRefAny_m(_m(label.name));
   ref.d--;
   this.spc(label, 'aft');
@@ -28,4 +28,5 @@ this.parseLabel = function(label, allowNull) {
     '#y': this.Y0(stmt), '#c': {}
   };
 };
+
 

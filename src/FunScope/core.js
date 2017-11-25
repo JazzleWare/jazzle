@@ -2,7 +2,7 @@
   import {_m} from '../other/scope-util.js';
   import {cls} from './cls.js';
 
-this.setRefsAndArgRefs =
+cls.setRefsAndArgRefs =
 function(refs) {
   ASSERT.call(this, !this.inBody, 'sraar must be in args');
   var len = refs.length(), e = 0;
@@ -11,7 +11,7 @@ function(refs) {
   this.refs = this.argRefs;
 };
 
-this.getNonLocalLoopLexicals =
+cls.getNonLocalLoopLexicals =
 function() {
   var argRefs = this.argRefs, e = 0, len = argRefs.length(), target = null;
   var list = null;
@@ -51,4 +51,5 @@ function() {
 
   return list;
 };
+
 

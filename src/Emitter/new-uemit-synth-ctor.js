@@ -1,7 +1,6 @@
   import {UntransformedEmitters} from '../other/globals.js';
   import {ASSERT_EQ, ETK_ID} from '../other/constants.js';
   import {wcb_afterRet} from '../other/wcb.js';
-  import {cls} from './cls.js';
 
 UntransformedEmitters['synthc'] =
 function(n, flags, isStmt) {

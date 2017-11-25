@@ -1,6 +1,6 @@
   import {cls} from './cls.js';
 
-this.expectT =
+cls.expectT =
 function(lttype) {
   if (this.lttype === lttype) {
     this.next();
@@ -9,6 +9,7 @@ function(lttype) {
   return false;
 };
 
-this.rw =
+cls.rw =
 function(c,li,col,luo) { this.c = c; this.li = li; this.col = col; this.luo = luo; };
+
 

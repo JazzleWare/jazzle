@@ -11,7 +11,7 @@ function(n, flags, isStmt) {
     this.emitExprFn(n, flags, isStmt);
 };
 
-this.emitTransformedFn =
+cls.emitTransformedFn =
 function(n, flags, isStmt) {
   var raw = n.fun, cb = CB(raw);
   this.emc(cb, 'bef');
@@ -61,4 +61,5 @@ function(n, flags, isStmt) {
   this.namei_cur = ni;
   this.emc(cb, 'aft');
 };
+
 

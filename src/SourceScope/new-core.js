@@ -2,12 +2,12 @@
   import {ASSERT} from '../other/constants.js';
   import {cls} from './cls.js';
 
-this.forwardsSource =
+cls.forwardsSource =
 function(src) {
   return this.allSourcesForwarded.has(_m(src));
 };
 
-this.fillForwardedSourceEntryWith =
+cls.fillForwardedSourceEntryWith =
 function(fw, scope ) {
   var mname = _m(fw);
   ASSERT.call(this, this.allSourcesForwarded.has(mname) &&
@@ -17,4 +17,5 @@ function(fw, scope ) {
 
   this.allSourcesForwarded.set(mname, scope);
 };
+
 

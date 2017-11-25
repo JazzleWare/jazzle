@@ -1,7 +1,7 @@
   import {CH_WHITESPACE, CH_CARRIAGE_RETURN, CH_LINE_FEED, CH_VTAB, CH_TAB, CH_FORM_FEED, CH_DIV, CH_MUL, CH_MIN, CH_GREATER_THAN, CH_LESS_THAN, CH_EXCLAMATION} from '../other/constants.js';
   import {cls} from './cls.js';
 
-this.skipWS =
+cls.skipWS =
 function() {
   var c = this.c, s = this.src, l = s.length;
   var nl = false, sourceStart = c === 0, ch = -1;
@@ -112,4 +112,5 @@ function() {
   this.setsimpoff(c);
   this.nl = nl;
 };
+
 

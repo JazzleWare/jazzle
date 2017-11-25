@@ -5,7 +5,7 @@
 // /\1200(*followed by 1200 ()'s)/ becomes /(*backref=\1200)(*1200 ()'s)/; but, /\1200(*followed by 1199 ()'s)/ becomes /(*legacyEsc=\120)(*ch='0')(*1199 ()'s);
 // this means any captureP had better get tracked below, rather than in `parseRegex`
 
-this.parseRegexLiteral =
+cls.parseRegexLiteral =
 function() {
   this.v < 2 && this.err('ver.regex');
   var c = this.c, b = {}, s = this.src, nump = 0, l = s.length;
@@ -81,4 +81,5 @@ function() {
    this.next () ;
    return regex ;
 };
+
 

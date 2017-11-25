@@ -6,21 +6,22 @@
   import ClassScope from '../ClassScope/cls.js';
   import {cls} from './cls.js';
 
-this.spawnBlock =
+cls.spawnBlock =
 function() { return new Scope(this, ST_BLOCK); };
 
-this.spawnFn =
+cls.spawnFn =
 function(st) { return new FunScope(this, st|ST_FN); }
 
-this.spawnCatch =
+cls.spawnCatch =
 function() { return new CatchScope(this); };
 
-this.spawnParen =
+cls.spawnParen =
 function() { return new ParenScope(this); };
 
-this.spawnCls =
+cls.spawnCls =
 function(st) { return new ClassScope(this, st|ST_CLS); };
 
-this.spawnBare =
+cls.spawnBare =
 function() { return new Scope(this, ST_BARE); };
+
 

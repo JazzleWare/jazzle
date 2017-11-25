@@ -1,7 +1,7 @@
   import {ASSERT} from '../other/constants.js';
   import {cls} from './cls.js';
 
-this.releaseTemp =
+cls.releaseTemp =
 function(t) {
   ASSERT.call(this, t.occupied, 'unoccupied temp');
   t.occupied = 0;
@@ -10,7 +10,7 @@ function(t) {
   return t;
 };
  
-this.saveInTemp =
+cls.saveInTemp =
 function(expr, list) {
   var t = this.allocTemp();
   var tsave = this.synth_TempSave(t, expr);
@@ -18,14 +18,14 @@ function(expr, list) {
   return t;
 };
 
-this.createTemp =
+cls.createTemp =
 function() {
   var liq = this.cur.scs.gocLG('<t>').newL();
   liq.name = 't';
   return this.synth_Temp(liq);
 };
 
-this.allocTemp =
+cls.allocTemp =
 function() { 
   var t = null;
   if (this.tempStack.length !== 0)
@@ -40,4 +40,5 @@ function() {
 
   return t;
 };
+
 

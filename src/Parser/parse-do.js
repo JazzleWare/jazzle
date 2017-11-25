@@ -4,7 +4,7 @@
   import {core} from '../other/util.js';
   import {cls} from './cls.js';
 
-this.parseDoWhile =
+cls.parseDoWhile =
 function () {
   this.resvchk();
   this.testStmt() || this.err('not.stmt');
@@ -64,4 +64,5 @@ function () {
     '#y': this.Y(cond)+this.Y(nbody), '#c': cb
   };
 };
+
 

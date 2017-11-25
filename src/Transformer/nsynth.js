@@ -2,7 +2,7 @@
   import {isTemp, CB} from '../other/util.js';
   import {cls} from './cls.js';
 
-this.synth_Temp =
+cls.synth_Temp =
 function(liq) {
   return {
     kind: 'temp',
@@ -14,7 +14,7 @@ function(liq) {
   };
 };
 
-this.synth_TempSave =
+cls.synth_TempSave =
 function(t, expr) {
   ASSERT.call(this, isTemp(t), 't is not temp');
   if (t === expr)
@@ -29,7 +29,7 @@ function(t, expr) {
   };
 };
 
-this.synth_AssigList =
+cls.synth_AssigList =
 function(list) {
   return {
     kind: 'assig-list',
@@ -41,7 +41,7 @@ function(list) {
   };
 };
 
-this.synth_UCond =
+cls.synth_UCond =
 function(t,c,a,tr) {
   return {
     kind: 'ucond' ,
@@ -53,7 +53,7 @@ function(t,c,a,tr) {
   };
 };
 
-this.synth_ArrIterEnd =
+cls.synth_ArrIterEnd =
 function(iterVal) {
   return {
     kind: 'arr-iter-end' ,
@@ -63,7 +63,7 @@ function(iterVal) {
   };
 };
 
-this.synth_ArrIter =
+cls.synth_ArrIter =
 function(iterVal) {
   this.accessJZ();
   return {
@@ -74,7 +74,7 @@ function(iterVal) {
   };
 };
 
-this.synth_ArrIterGet =
+cls.synth_ArrIterGet =
 function(iterVal, at) {
   return {
     kind: 'arr-iter-get',
@@ -85,7 +85,7 @@ function(iterVal, at) {
   };
 };
 
-this.synth_SynthAssig =
+cls.synth_SynthAssig =
 function(left, right, isB) {
   return {
     binding: isB || false,
@@ -97,7 +97,7 @@ function(left, right, isB) {
   };
 };
 
-this.synth_Call =
+cls.synth_Call =
 function(head, mem, list) {
   return {
     head: head,
@@ -111,7 +111,7 @@ function(head, mem, list) {
   };
 };
 
-this.synth_U =
+cls.synth_U =
 function(expr) {
   this.accessJZ();
   return {
@@ -122,7 +122,7 @@ function(expr) {
   };
 };
 
-this.synth_ArrIterGetRest =
+cls.synth_ArrIterGetRest =
 function(iter, at) {
   return {
     kind: 'arr-iter-get-rest',
@@ -133,7 +133,7 @@ function(iter, at) {
   };
 };
 
-this.synth_ObjIter =
+cls.synth_ObjIter =
 function(iterVal) {
   return {
     kind: 'obj-iter',
@@ -143,7 +143,7 @@ function(iterVal) {
   };
 };
 
-this.synth_ObjIterEnd =
+cls.synth_ObjIterEnd =
 function(iterVal) {
   return {
     kind: 'obj-iter-end' ,
@@ -153,7 +153,7 @@ function(iterVal) {
   };
 };
 
-this.synth_ObjIterGet =
+cls.synth_ObjIterGet =
 function(iter, at, isC) {
   return {
     kind: 'obj-iter-get',
@@ -165,7 +165,7 @@ function(iter, at, isC) {
   };
 };
 
-this.synth_ArgAt =
+cls.synth_ArgAt =
 function(at) {
   return {
     type: '#Untransformed' ,
@@ -175,7 +175,7 @@ function(at) {
   };
 };
 
-this.synth_ArgRest =
+cls.synth_ArgRest =
 function(ex, at) {
   return {
     idx: at,
@@ -199,7 +199,7 @@ var SYNTH_VOID0 = {
   '#c': {}
 };
 
-this.synth_node_BinaryExpression =
+cls.synth_node_BinaryExpression =
 function(left,o,right,y) {
   return {
     left: left,
@@ -211,9 +211,9 @@ function(left,o,right,y) {
   };
 };
 
-this.synth_Void0 = function() { return SYNTH_VOID0; };
+cls.synth_Void0 = function() { return SYNTH_VOID0; };
 
-this.synth_SynthName =
+cls.synth_SynthName =
 function(liq) {
   return {
     type: '#Untransformed' ,
@@ -223,7 +223,7 @@ function(liq) {
   };
 };
 
-this.synth_node_MemberExpression =
+cls.synth_node_MemberExpression =
 function(n,v) {
   return {
     loc: null,
@@ -236,7 +236,7 @@ function(n,v) {
   };
 };
 
-this.synth_TransformedFn =
+cls.synth_TransformedFn =
 function(n, a) {
   return {
     type: '#Untransformed' ,
@@ -250,7 +250,7 @@ function(n, a) {
   };
 };
 
-this.synth_GlobalUpdate =
+cls.synth_GlobalUpdate =
 function(assig, isU) {
   return {
     isU: isU,
@@ -261,7 +261,7 @@ function(assig, isU) {
   };
 };
 
-this.synth_SynthLiteral =
+cls.synth_SynthLiteral =
 function(l) {
   switch (l.type) {
   case 'Literal':
@@ -280,10 +280,10 @@ function(l) {
 };
 
 var SKIP = {type: '#Untransformed', kind: 'skip' };
-this.synth_Skip =
+cls.synth_Skip =
 function() { return SKIP; };
 
-this.synth_ResolvedThis =
+cls.synth_ResolvedThis =
 function(src, th, chk) {
   var simp = th.ref.scope === this.cur.getThisBase();
   return {
@@ -298,7 +298,7 @@ function(src, th, chk) {
 
 };
 
-this.synth_BareThis =
+cls.synth_BareThis =
 function(th) {
   return {
     type: '#Untransformed' ,
@@ -309,7 +309,7 @@ function(th) {
 
 };
 
-this.synth_MakeClass =
+cls.synth_MakeClass =
 function(cls, herit, target) {
   return {
     cls: cls,
@@ -321,7 +321,7 @@ function(cls, herit, target) {
 
 };
 
-this.synth_RCheck =
+cls.synth_RCheck =
 function(v,t) {
   this.accessJZ();
   return {
@@ -333,7 +333,7 @@ function(v,t) {
 
 };
 
-this.synth_MemList =
+cls.synth_MemList =
 function(mList, tProto) {
   return {
     m: mList,
@@ -344,7 +344,7 @@ function(mList, tProto) {
 
 };
 
-this.synth_ClassSave =
+cls.synth_ClassSave =
 function(target, ctor) {
   return {
     target: target,
@@ -354,7 +354,7 @@ function(target, ctor) {
   };
 
 };
-this.synth_Heritage =
+cls.synth_Heritage =
 function(h) {
   return {
     type: '#Untransformed' ,
@@ -363,7 +363,7 @@ function(h) {
   };
 };
 
-this.synth_TC =
+cls.synth_TC =
 function(right, rn) {
   this.accessJZ(); // jz  o
   return {
@@ -375,7 +375,7 @@ function(right, rn) {
 
 };
 
-this.synth_TVal =
+cls.synth_TVal =
 function(ex) {
   return {
     type: '#Untransformed' ,
@@ -384,7 +384,7 @@ function(ex) {
   };
 };
 
-this.synth_NameList =
+cls.synth_NameList =
 function(scope, vinit) {
   return {
     type: '#Untransformed' ,
@@ -394,4 +394,5 @@ function(scope, vinit) {
   };
 
 };
+
 

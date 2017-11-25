@@ -4,7 +4,7 @@
   import {core} from '../other/util.js';
   import {cls} from './cls.js';
 
-this.parseNonSeq =
+cls.parseNonSeq =
 function(prec, ctx) {
   var head = this.exprHead;
   if (head) this.exprHead = null;
@@ -97,4 +97,5 @@ function(prec, ctx) {
 
   return head;
 };
+
 

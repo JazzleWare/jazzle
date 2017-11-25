@@ -4,7 +4,7 @@
   import {TK_ID, PREC_NONE} from '../other/lexer-constants.js';
   import {cls} from './cls.js';
 
-this.parseNew =
+cls.parseNew =
 function() {
   this.resvchk();
   var c0 = this.c0, loc0 = this.loc0();
@@ -126,4 +126,5 @@ function() {
 
   return head;
 };
+
 

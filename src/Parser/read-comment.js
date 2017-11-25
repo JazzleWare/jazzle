@@ -2,7 +2,7 @@
   import Comments from '../Comments/cls.js';
   import {cls} from './cls.js';
 
-this.readComment_line =
+cls.readComment_line =
 function() {
   var c = this.c, s = this.src, l = s.length;
   var li0 = this.li, col0 = this.col, c0 = c;
@@ -22,7 +22,7 @@ function() {
   this.foundComment(c0,li0,col0,c,'Line');
 };
 
-this.readComment_multi =
+cls.readComment_multi =
 function() {
   var c = this.c, s = this.src, l = s.length;
   var li0 = this.li, col0 = this.col, c0 = c, hasNL = false, finished = false;
@@ -65,7 +65,7 @@ function() {
   return hasNL;
 };
 
-this.foundComment =
+cls.foundComment =
 function(c0,li0,col0,l0o,t) {
   var c = this.c, li = this.li, col = this.col;
   if (this.commentBuf === null)
@@ -87,4 +87,5 @@ function(c0,li0,col0,l0o,t) {
   this.commentBuf.push(comment);
   this.commentCallback && this.commentCallback(comment);
 };
+
 

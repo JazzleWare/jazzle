@@ -1,7 +1,7 @@
   import {RS_THIS} from '../other/scope-constants.js';
   import {cls} from './cls.js';
 
-this.parseThis = function() {
+cls.parseThis = function() {
   this.resvchk();
   var cb = {}; this.suc(cb, 'bef' );
 
@@ -16,6 +16,7 @@ this.parseThis = function() {
   this.scope.refDirect_m(RS_THIS, null);
   return n;
 };
+
 
 
 

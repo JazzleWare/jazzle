@@ -38,7 +38,7 @@ function(n, flags, isStmt) {
   return true;
 };
 
-this.emitUA = function(n) {
+cls.emitUA = function(n) {
   switch (n.type) {
   case 'UnaryExpression':
   case 'UpdateExpression':
@@ -46,4 +46,5 @@ this.emitUA = function(n) {
   }
   return this.emitHead(n, EC_NONE, false);
 };
+
 

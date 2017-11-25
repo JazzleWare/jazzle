@@ -1,7 +1,7 @@
   import {ASSERT} from '../other/constants.js';
   import {cls} from './cls.js';
 
-this.findIndentStringWithIdealLength =
+cls.findIndentStringWithIdealLength =
 function(idealLength) {
   var INLEN = this.indentString.length;
 //ASSERT.call(this, idealLength % INLEN === 0, 'len'); // TODO: eliminate
@@ -29,12 +29,13 @@ function(idealLength) {
   return str;
 };
 
-this.indentNextLine =
+cls.indentNextLine =
 function() { this.nextLineIndent++; };
 
-this.unindentNextLine =
+cls.unindentNextLine =
 function() {
   ASSERT.call(this, this.nextLineIndent > 0, 'line has a <1 indent');
   this.nextLineIndent--;
 };
+
 

@@ -3,7 +3,7 @@
   import {CTX_TOP, CH_COLON} from '../other/constants.js';
   import {cls} from './cls.js';
 
-this.parseSwitchCase = function () {
+cls.parseSwitchCase = function () {
   var c0 = -1, cb = {}, loc0 = null;
 
   var nbody = null, cond = null;
@@ -59,4 +59,5 @@ this.parseSwitchCase = function () {
     '#y': this.Y0(cond)+this.yc, '#c': cb
   };
 };
+
 

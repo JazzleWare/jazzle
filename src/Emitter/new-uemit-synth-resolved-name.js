@@ -1,7 +1,6 @@
   import {Emitters} from '../other/globals.js';
   import {tg, cvc, tzc, CB, isResolvedName} from '../other/util.js';
   import {EC_CALL_HEAD, ASSERT_EQ, EC_EXPR_HEAD, EC_NON_SEQ, EC_NONE, ETK_ID, ASSERT} from '../other/constants.js';
-  import {cls} from './cls.js';
 
 Emitters['#-ResolvedName.ex'] = this.emitRName_ex =
 Emitters['#-ResolvedName.sat'] = this.emitRName_SAT =

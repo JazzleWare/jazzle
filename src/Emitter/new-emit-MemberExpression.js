@@ -3,7 +3,7 @@
   import {Emitters} from '../other/globals.js';
   import {cls} from './cls.js';
 
-this.emitMemex =
+cls.emitMemex =
 function(n, flags, isStmt, len) {
   var cb = CB(n); this.emc(cb, 'bef' );
 //this.sl(n.loc.start);
@@ -23,9 +23,10 @@ function(n, flags, isStmt, len) {
   return true;
 };
 
-this.emitSAT_mem = 
+cls.emitSAT_mem = 
 function(n, flags, len) { return this.emitMemex(n, flags, false, len); };
 
 Emitters['MemberExpression'] =
 function(n, flags, isStmt, len) { return this.emitMemex(n, flags, isStmt, 0); };
+
 

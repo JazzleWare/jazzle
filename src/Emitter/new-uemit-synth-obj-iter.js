@@ -1,6 +1,5 @@
   import {UntransformedEmitters} from '../other/globals.js';
   import {ASSERT_EQ, EC_NONE} from '../other/constants.js';
-  import {cls} from './cls.js';
 
 UntransformedEmitters['obj-iter'] =
 function(n, flags, isStmt) {

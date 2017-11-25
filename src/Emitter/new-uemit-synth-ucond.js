@@ -1,6 +1,5 @@
   import {UntransformedEmitters, Emitters} from '../other/globals.js';
   import {CB} from '../other/util.js';
-  import {cls} from './cls.js';
 
 UntransformedEmitters['ucond'] =
 function(n, flags, isStmt) {

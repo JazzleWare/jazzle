@@ -1,7 +1,7 @@
   import {CH_LCURLY, CH_RCURLY} from '../other/constants.js';
   import {cls} from './cls.js';
 
-this.parseFunBody =
+cls.parseFunBody =
 function() {
   if (this.lttype !== CH_LCURLY)
     this.err('fun.body.not.a.curly');
@@ -32,4 +32,5 @@ function() {
 
   return n;
 };
+
 

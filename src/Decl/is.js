@@ -1,31 +1,31 @@
   import {DT_LET, DT_VAR, DT_CONST, DT_GLOBAL, DT_FN, DT_FNARG, DT_CLS, DT_CATCHARG, DT_LIQUID, DT_IDEFAULT, DT_IALIASED, DT_INAMESPACE, DT_EDEFAULT, DT_EALIASED, DT_ESELF, DT_FNNAME, DT_CLSNAME, DT_INFERRED} from '../other/scope-constants.js';
   import {cls} from './cls.js';
 
-this.isLet =
+cls.isLet =
 function() { return this.type & DT_LET; };
 
-this.isVar =
+cls.isVar =
 function() { return this.type & DT_VAR; };
 
-this.isConst =
+cls.isConst =
 function() { return this.type & DT_CONST; };
 
-this.isGlobal =
+cls.isGlobal =
 function() { return this.type & DT_GLOBAL; };
 
-this.isFn =
+cls.isFn =
 function() { return this.type & DT_FN; };
 
-this.isFnArg =
+cls.isFnArg =
 function() { return this.type & DT_FNARG; };
 
-this.isCls =
+cls.isCls =
 function() { return this.type & DT_CLS; };
 
-this.isCatchArg =
+cls.isCatchArg =
 function() { return this.type & DT_CATCHARG; };
 
-this.isTemporal =
+cls.isTemporal =
 function() {
   if (this.isFnArg())
     return !this.ref.scope.inBody;
@@ -37,26 +37,26 @@ function() {
   return this.isCls() || this.isClassName() || this.isLexicalLike();
 };
 
-this.isLLINOSA =
+cls.isLLINOSA =
 function() {
   return this.isLexicalLike() &&
     this.ref.scope.insideLoop() &&
     this.ref.i;
 };
 
-this.isLiquid =
+cls.isLiquid =
 function() { return this.type & DT_LIQUID; };
 
 var _HOISTED = DT_FN|DT_VAR;
-this.isHoisted =
+cls.isHoisted =
 function() { return this.type & _HOISTED; };
 
 var _ARG = DT_FNARG|DT_CATCHARG;
-this.isArg =
+cls.isArg =
 function() { return this.type & _ARG; };
 
 var _LEXICAL = DT_CLS|DT_LET|DT_CONST;
-this.isLexicalLike =
+cls.isLexicalLike =
 function() {
   if (this.isFn())
     return this.ref.scope.isLexicalLike();
@@ -65,7 +65,7 @@ function() {
 
 // TODO: CATCHARG
 var _VARLIKE = DT_FNARG|DT_VAR;
-this.isVarLike =
+cls.isVarLike =
 function() {
   if (this.isFn())
     return !this.ref.scope.isLexicalLike();
@@ -73,57 +73,58 @@ function() {
 };
 
 var _OVERRIDABLE = DT_CATCHARG|_VARLIKE;
-this.isOverridableByVar =
+cls.isOverridableByVar =
 function() { return this.isVarLike() || (this.type & _OVERRIDABLE); };
 
-this.isIDefault =
+cls.isIDefault =
 function() { return this.type & DT_IDEFAULT; };
 
-this.isIAliased =
+cls.isIAliased =
 function() { return this.type & DT_IALIASED; };
 
-this.isINamespace =
+cls.isINamespace =
 function() { return this.type & DT_INAMESPACE; };
 
-this.isImported =
+cls.isImported =
 function() {
   return this.isIDefault() || this.isIAliased() || this.isINamespace();
 };
 
-this.isEDefault =
+cls.isEDefault =
 function() { return this.type & DT_EDEFAULT; };
 
-this.isEAliased =
+cls.isEAliased =
 function() { return this.type & DT_EALIASED; };
 
-this.isESelf =
+cls.isESelf =
 function() { return this.type & DT_ESELF; };
 
-this.isExported =
+cls.isExported =
 function() {
   return this.isEDefault() || this.isEAliased() || this.isESelf();
 };
 
-this.isFnName =
+cls.isFnName =
 function() { return this.type & DT_FNNAME; };
 
-this.isClassName =
+cls.isClassName =
 function() { return this.type & DT_CLSNAME; };
 
-this.isName =
+cls.isName =
 function() { return this.type & (DT_FNNAME|DT_CLSNAME); };
 
-this.isInsignificant =
+cls.isInsignificant =
 function() { return this.type & DT_INFERRED; };
 
-this.isImmutable =
+cls.isImmutable =
 function() {
   return this.isConst() || this.isName();
 };
 
 // renamed global
-this.isRG =
+cls.isRG =
 function() {
   return this.isGlobal() && this.name !== this.synthName;
 };
+
 

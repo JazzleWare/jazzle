@@ -1,32 +1,32 @@
   import {ASSERT, SP_NONE, SP_OMITTABLE, SP_BREAKABLE} from '../other/constants.js';
   import {cls} from './cls.js';
 
-this.ensureNoSpace =
+cls.ensureNoSpace =
 function() { ASSERT.call(this, !this.hasPendingSpace(), 'hasPendingSpace' ); };
 
-this.hasPendingSpace =
+cls.hasPendingSpace =
 function() { return this.pendingSpace !== SP_NONE; };
 
-this.enqueueOmittableSpace =
+cls.enqueueOmittableSpace =
 function() {
   this.ensureNoSpace(); ASSERT.call(this, this.notJustAfterLineBreak(), 'leading');
   this.pendingSpace = SP_OMITTABLE;
 };
 
-this.enqueueBreakingSpace =
+cls.enqueueBreakingSpace =
 function() {
   this.ensureNoSpace(); ASSERT.call(this, this.notJustAfterLineBreak(), 'leading');
   this.pendingSpace = SP_BREAKABLE;
 };
 
-this.removePendingSpace =
+cls.removePendingSpace =
 function() {
   var sp = this.pendingSpace;
   this.pendingSpace = SP_NONE;
   return sp;
 };
 
-this.effectPendingSpace =
+cls.effectPendingSpace =
 function(len) {
   ASSERT.call(this, this.notJustAfterLineBreak(), 'leading');
   var pendingSpace = this.removePendingSpace();
@@ -47,14 +47,15 @@ function(len) {
   }
 };
 
-this.removePendingSpace_try =
+cls.removePendingSpace_try =
 function() {
   return this.hasPendingSpace() ? 
     this.removePendingSpace() : SP_NONE;
 };
 
-this.notJustAfterLineBreak =
+cls.notJustAfterLineBreak =
 function() {
   return this.curLine.length || !this.curLineHasLineBreakBefore;
 };
+
 

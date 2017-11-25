@@ -1,6 +1,5 @@
   import {UntransformedEmitters} from '../other/globals.js';
   import {EC_NONE} from '../other/constants.js';
-  import {cls} from './cls.js';
 
 UntransformedEmitters['memlist'] =
 function(n, flags, isStmt) {

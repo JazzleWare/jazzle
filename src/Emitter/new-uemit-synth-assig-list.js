@@ -2,7 +2,6 @@
   import {CB} from '../other/util.js';
   import {EC_ATTACHED, EC_EXPR_HEAD, EC_NON_SEQ, EC_IN} from '../other/constants.js';
   import {wcb_afterStmt} from '../other/wcb.js';
-  import {cls} from './cls.js';
 
 UntransformedEmitters['assig-list'] =
 function(n, flags, isStmt) {

@@ -5,7 +5,7 @@
   import {core} from '../other/util.js';
   import {cls} from './cls.js';
 
-this.parseSpread = 
+cls.parseSpread = 
 function(ctx) {
   this.v <= 5 && this.err('ver.spread.rest');
 
@@ -39,4 +39,5 @@ function(ctx) {
     '#y': this.Y(arg)
   };
 };
+
 

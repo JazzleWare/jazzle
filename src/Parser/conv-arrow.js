@@ -3,13 +3,13 @@
   import {DT_FNARG} from '../other/scope-constants.js';
   import {cls} from './cls.js';
 
-this.asArrowFuncArgList = function(argList) {
+cls.asArrowFuncArgList = function(argList) {
   var i = 0, list = argList;
   while (i < list.length)
     this.asArrowFuncArg(list[i++]);
 };
 
-this.asArrowFuncArg = function(arg) {
+cls.asArrowFuncArg = function(arg) {
   var i = 0, list = null;
   if (arg === this.po)
     this.throwTricky('p', this.pt);
@@ -95,5 +95,6 @@ this.asArrowFuncArg = function(arg) {
 
   }
 };
+
 
 

@@ -3,7 +3,7 @@
   import {_m} from '../other/scope-util.js';
   import {cls} from './cls.js';
 
-this.regulateForwardExportList =
+cls.regulateForwardExportList =
 function(list, src) {
   var sourceImported = this.gocSourceImported(src.value);
   var l = 0;
@@ -11,7 +11,7 @@ function(list, src) {
     this.regulateForwardExport(list[l++], sourceImported );
 };
 
-this.regulateForwardExport =
+cls.regulateForwardExport =
 function(ex, sourceImported) {
   var entry = ex['#entry'];
   var nd = this.createImportedBinding(ex.local, DT_EFW);
@@ -20,14 +20,14 @@ function(ex, sourceImported) {
   entry.target = entry.target || { prev: null, v: nd, next: null };
 };
 
-this.regulateOwnExportList =
+cls.regulateOwnExportList =
 function(list) {
   var l = 0;
   while (l < list.length)
     this.regulateOwnExport(list[l++]['#entry']);
 };
 
-this.regulateOwnExport =
+cls.regulateOwnExport =
 function(entry) {
   var mname = _m(entry.innerName), nd = this.findDeclAny_m(mname);
   entry.target = nd ?
@@ -35,7 +35,7 @@ function(entry) {
     this.focUnresolvedExportedTarget(entry.innerName);
 };
 
-this.registerForwardedSource =
+cls.registerForwardedSource =
 function(src) {
   var mname = _m(src.value);
   if (this.allSourcesForwarded.has(mname))
@@ -47,7 +47,7 @@ function(src) {
   this.allSourcesImported.set(mname, null);
 };
 
-this.refreshUnresolvedExportsWith =
+cls.refreshUnresolvedExportsWith =
 function(n) {
   var mname = _m(n.name);
   var target = this.allUnresolvedExports.has(mname) ?
@@ -69,7 +69,7 @@ function(n) {
   target.next = target.prev = null;
 };
 
-this.registerExportedEntry_oi =
+cls.registerExportedEntry_oi =
 function(outerName, outerID, innerName) {
   var mname = _m(outerName);
   var entry = this.allNamesExported.has(mname) ?
@@ -79,7 +79,7 @@ function(outerName, outerID, innerName) {
     mname, {innerName: innerName, outerName: outerName, target: null, outerID: outerID});
 };
 
-this.focUnresolvedExportedTarget =
+cls.focUnresolvedExportedTarget =
 function(name) {
   var mname = _m(name);
   if (this.allUnresolvedExports.has(mname))
@@ -94,4 +94,5 @@ function(name) {
 
   return this.allUnresolvedExports.set(mname, target  );
 };
+
 

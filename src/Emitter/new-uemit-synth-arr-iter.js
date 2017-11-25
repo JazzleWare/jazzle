@@ -1,7 +1,6 @@
   import {UntransformedEmitters} from '../other/globals.js';
   import {CB} from '../other/util.js';
   import {EC_NONE} from '../other/constants.js';
-  import {cls} from './cls.js';
 
 UntransformedEmitters['arr-iter-get'] =
 function(n, flags, isStmt) {

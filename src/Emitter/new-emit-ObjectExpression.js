@@ -1,7 +1,6 @@
   import {Emitters} from '../other/globals.js';
   import {CB} from '../other/util.js';
   import {EC_NEW_HEAD, EC_START_STMT, EC_NONE} from '../other/constants.js';
-  import {cls} from './cls.js';
 
 Emitters['ObjectExpression'] =
 function(n, flags, isStmt) {

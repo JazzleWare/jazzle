@@ -4,7 +4,7 @@
   import {DT_EXPORTED, DT_LET, DT_FN, DT_CONST, DT_VAR, DT_CLS, DT_CATCHARG, DT_FNARG} from '../other/scope-constants.js';
   import {cls} from './cls.js';
 
-this.declareHoisted_m =
+cls.declareHoisted_m =
 function(mname, t) {
   var tdecl = this.findDeclAny_m(mname);
 
@@ -39,7 +39,7 @@ function(mname, t) {
   return tdecl;
 };
 
-this.findDeclOwn_m =
+cls.findDeclOwn_m =
 function(mname) {
   var tdecl = this.findDeclAny_m(mname);
   if (tdecl && this.owns(tdecl))
@@ -48,7 +48,7 @@ function(mname) {
   return null;
 };
 
-this.findDeclAny_m = 
+cls.findDeclAny_m = 
 function(mname) {
   if (this.isAnyFn() && !this.inBody )
     return this.findParam_m(mname);
@@ -61,7 +61,7 @@ function(mname) {
     this.defs.get(mname) : null;
 };
 
-this.hoistName_m =
+cls.hoistName_m =
 function(mname, tdecl, tscope, isNew) {
   var cur = this;
   while (true) {
@@ -81,7 +81,7 @@ function(mname, tdecl, tscope, isNew) {
   }
 };
 
-this.findParam_m =
+cls.findParam_m =
 function(mname) {
   ASSERT.call(this, this.isAnyFn() || this.isCatch(),
     'this scope is not an fn/catch, and has no params');
@@ -89,7 +89,7 @@ function(mname) {
     this.argMap[mname] : null;
 };
 
-this.declareLexical_m =
+cls.declareLexical_m =
 function(mname, t) {
   var existing = this.findDeclAny_m(mname);
   if (!existing) {
@@ -106,7 +106,7 @@ function(mname, t) {
   return newDecl;
 };
 
-this.decl_m = function(mname, dt) {
+cls.decl_m = function(mname, dt) {
   var decl = null;
   switch (dt & ~DT_EXPORTED) {
   case DT_LET:
@@ -140,34 +140,34 @@ this.decl_m = function(mname, dt) {
   return decl;
 };
 
-this.decl_let_m =
+cls.decl_let_m =
 function(mname, t) {
   return this.declareLexical_m(mname, t);
 };
 
-this.decl_fn_m =
+cls.decl_fn_m =
 function(mname, t) {
   return this.isLexicalLike() ?
     this.declareLexical_m(mname, t) :
     this.declareHoisted_m(mname, t);
 };
 
-this.decl_const_m =
+cls.decl_const_m =
 function(mname, t) {
   return this.declareLexical_m(mname, t);
 };
 
-this.decl_var_m =
+cls.decl_var_m =
 function(mname, t) {
   return this.declareHoisted_m(mname, t);
 };
 
-this.decl_cls_m =
+cls.decl_cls_m =
 function(mname, t) {
   return this.declareLexical_m(mname, t);
 };
 
-this.decl_catchArg_m =
+cls.decl_catchArg_m =
 function(mname, t) {
   ASSERT.call(this, this.isCatch() && !this.inBody,
     'only catch heads are allowed to declare args');
@@ -186,7 +186,7 @@ function(mname, t) {
   return newDecl;
 };
 
-this.decl_fnArg_m =
+cls.decl_fnArg_m =
 function(mname, t) {
   ASSERT.call(this, this.isAnyFn() && !this.inBody,
     'only fn heads are allowed to declare args');
@@ -214,8 +214,9 @@ function(mname, t) {
   return newDecl;
 };
 
-this.insertDecl_m =
+cls.insertDecl_m =
 function(mname, newDecl) {
   this.defs.set(mname, newDecl);
 };
+
 

@@ -3,7 +3,7 @@
   import {CH_LSQBRACKET, CH_LPAREN, CH_LCURLY, ASSERT, CH_RCURLY, CH_BACK_SLASH, CH_$, CH_XOR, CH_QUESTION, CH_ADD, CH_MUL, CH_OR, CH_RPAREN, CH_SINGLEDOT} from '../other/constants.js';
   import {cls} from './cls.js';
 
-this.regBranch =
+cls.regBranch =
 function() {
   this.regErr = null;
   this.regIsQuantifiable = false;
@@ -42,7 +42,7 @@ function() {
   };
 };
 
-this.regTryMix =
+cls.regTryMix =
 function(list, elem) {
   if (list.length === 0) 
     return elem;
@@ -58,7 +58,7 @@ function(list, elem) {
   return elem;
 };
 
-this.regBareElem =
+cls.regBareElem =
 function() {
   var c = this.c, s = this.src, l = this.regLastOffset;
   if (c >= l)
@@ -106,4 +106,5 @@ function() {
     return this.regChar(false);
   }
 };
+
 

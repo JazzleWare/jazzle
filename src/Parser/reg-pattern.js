@@ -1,7 +1,7 @@
   import {CH_OR} from '../other/constants.js';
   import {cls} from './cls.js';
 
-this.regPattern =
+cls.regPattern =
 function() {
   var c0 = this.c, li0 = this.li, col0 = this.col;
   var l = this.resetLastRegexElem();
@@ -40,7 +40,7 @@ function() {
   };
 };
 
-this.regDot =
+cls.regDot =
 function() {
   var c0 = this.c, loc0 = this.loc();
   this.setsimpoff(c0+1);
@@ -52,4 +52,5 @@ function() {
     end: this.c
   };
 };
+
 

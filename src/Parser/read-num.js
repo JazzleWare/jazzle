@@ -8,7 +8,7 @@ var NUM0_NONDEC = 0,
     NUM0_DEC = 1,
     NUM0_ZERO = 2;
 
-this.readNum_raw = function(ch) {
+cls.readNum_raw = function(ch) {
   var c = this.c+1, s = this.src, l = s.length;
   var legacy = false, deci = false, fl = false;
   if (ch === CH_0) {
@@ -58,7 +58,7 @@ this.readNum_raw = function(ch) {
   }
 };
 
-this.readNum_0 =
+cls.readNum_0 =
 function() {
   var ch = this.scat(this.c+1);
   switch (ch) {
@@ -83,7 +83,7 @@ function() {
   }
 };
 
-this.readNum_0b =
+cls.readNum_0b =
 function() {
   var c = this.c+2, // '0b'
       s = this.src,
@@ -119,7 +119,7 @@ function() {
   this.ltraw = this.c0_to_c();
 };
 
-this.readNum_octLegacy =
+cls.readNum_octLegacy =
 function(ch) {
   if (this.scope.insideStrict())
     this.err('oct.legacy.num.in.strict');
@@ -144,7 +144,7 @@ function(ch) {
   return NUM0_DEC;
 };
 
-this.readNum_tail =
+cls.readNum_tail =
 function(fl) {
   var c = this.c,
       s = this.src,
@@ -191,7 +191,7 @@ function(fl) {
   this.setsimpoff(c);
 };
 
-this.readNum_0x =
+cls.readNum_0x =
 function() {
   var c = this.c+2, // '0x'
       s = this.src,
@@ -222,7 +222,7 @@ function() {
   this.ltval = v;
 };
 
-this.readNum_0o =
+cls.readNum_0o =
 function() {
   var c = this.c+2,
       s = this.src,
@@ -254,4 +254,5 @@ function() {
   this.ltraw = this.c0_to_c();
   this.ltval = v;
 };
+
 

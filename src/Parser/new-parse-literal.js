@@ -1,6 +1,6 @@
   import {cls} from './cls.js';
 
-this.getLit_true = function() {
+cls.getLit_true = function() {
   this.resvchk();
   var cb = {}; this.suc(cb, 'bef' );
   var n = {
@@ -13,7 +13,7 @@ this.getLit_true = function() {
   return n;
 };
 
-this.getLit_false = function() {
+cls.getLit_false = function() {
   this.resvchk();
   var cb = {}; this.suc(cb, 'bef');
   var n = {
@@ -26,7 +26,7 @@ this.getLit_false = function() {
   return n;
 };
 
-this.getLit_null = function() {
+cls.getLit_null = function() {
   this.resvchk();
   var cb = {}; this.suc(cb, 'bef');
   var n = {
@@ -39,7 +39,7 @@ this.getLit_null = function() {
   return n;
 };
 
-this.getLit_num = function () {
+cls.getLit_num = function () {
   var cb = {}; this.suc(cb, 'bef' );
   var n = {
     type: 'Literal', value: this.ltval,
@@ -50,4 +50,5 @@ this.getLit_num = function () {
   this.next();
   return n;
 };
+
 

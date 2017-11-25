@@ -2,7 +2,7 @@
   import Ref from '../Ref/cls.js';
   import {cls} from './cls.js';
 
-this.refDirect_m = 
+cls.refDirect_m = 
 function(mname, childRef) {
   var ref = this.focRefAny_m(mname);
   if (childRef === null) {
@@ -14,13 +14,13 @@ function(mname, childRef) {
   return ref;
 };
 
-this.findRefU_m = this.fRo_m =
+cls.findRefU_m = this.fRo_m =
 function(mname) {
   return this.refs.has(mname) ? 
     this.refs.get(mname) : null;
 };
 
-this.findRefAny_m = this.fRa_m =
+cls.findRefAny_m = this.fRa_m =
 function(mname) {
   var ref = this.findRefU_m(mname);
   if (ref)
@@ -40,7 +40,7 @@ function(mname) {
   return null;
 };
 
-this.removeRefU_m =
+cls.removeRefU_m =
 function(mname) {
   var ref = this.findRefU_m(mname);
   if (ref)
@@ -51,7 +51,7 @@ function(mname) {
   return ref;
 };
 
-this.rocRefU_m =
+cls.rocRefU_m =
 function(mname) {
   var ref = this.removeRefU_m(mname);
   if (!ref)
@@ -60,7 +60,7 @@ function(mname) {
   return ref;
 };
 
-this.focRefAny_m = this.focRa_m =
+cls.focRefAny_m = this.focRa_m =
 function(mname) {
   var ref = this.findRefAny_m(mname);
   if (!ref) {
@@ -70,12 +70,12 @@ function(mname) {
   return ref;
 };
 
-this.insertRef_m =
+cls.insertRef_m =
 function(mname, ref) {
   this.refs.set(mname, ref);
 };
 
-this.refIndirect_m =
+cls.refIndirect_m =
 function(mname, childRef) {
   var ref = this.focRefAny_m(mname);
   ASSERT.call(this, childRef !== null,
@@ -84,4 +84,5 @@ function(mname, childRef) {
   ref.absorbIndirect(childRef);
   return ref;
 };
+
 

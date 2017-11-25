@@ -2,10 +2,10 @@
   import {ASSERT} from '../other/constants.js';
   import {cls} from './cls.js';
 
-this.insideUniqueArgs =
+cls.insideUniqueArgs =
 function() { return this.flags & SF_UNIQUE; };
 
-this.exitUniqueArgs =
+cls.exitUniqueArgs =
 function() {
   ASSERT.call(this, !this.inBody,
     'must be in args');
@@ -14,7 +14,7 @@ function() {
   this.flags &= ~SF_UNIQUE;
 };
 
-this.enterUniqueArgs =
+cls.enterUniqueArgs =
 function() {
   if (!this.canDup())
     return;
@@ -23,6 +23,7 @@ function() {
   this.flags |= SF_UNIQUE;
 };
 
-this.verifyUniqueArgs =
+cls.verifyUniqueArgs =
 function() { this.firstDup && this.parser.err('argsdup'); };
+
 

@@ -2,7 +2,7 @@
   import {core} from '../other/util.js';
   import {cls} from './cls.js';
 
-this.parseTemplate =
+cls.parseTemplate =
 function() {
   this.v<=5 && this.err('ver.temp');
 
@@ -140,4 +140,5 @@ function() {
 
   return n;
 };
+
 

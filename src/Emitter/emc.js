@@ -2,7 +2,7 @@
   import {wcb_afterLineComment} from '../other/wcb.js';
   import {cls} from './cls.js';
 
-this.emc =
+cls.emc =
 function(cb, i) {
   if (HAS.call(cb, i)) {
     var e = cb[i];
@@ -12,7 +12,7 @@ function(cb, i) {
   return false;
 };
 
-this.emce = // emc erase
+cls.emce = // emc erase
 function(cb, i) {
   if (this.emc(cb, i)) {
     cb[i] = null;
@@ -21,7 +21,7 @@ function(cb, i) {
   return false;
 };
 
-this.emcim =
+cls.emcim =
 function(comments) { // emc -- immediate
   if (comments === null)
     return false;
@@ -63,4 +63,5 @@ function(comments) { // emc -- immediate
 
   return true;
 };
+
 

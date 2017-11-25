@@ -2,7 +2,7 @@
   import {core} from '../other/util.js';
   import {cls} from './cls.js';
 
-this.parseReturn = function () {
+cls.parseReturn = function () {
   this.resvchk();
   this.testStmt() || this.err('not.stmt');
   this.fixupLabels(false ) ;
@@ -38,4 +38,5 @@ this.parseReturn = function () {
     '#y': this.Y0(r)
   };
 };
+
 

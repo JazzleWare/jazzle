@@ -3,7 +3,7 @@
   import {core} from '../other/util.js';
   import {cls} from './cls.js';
 
-this.parsePat_assig = 
+cls.parsePat_assig = 
 function (head) {
   if (this.v <= 5)
     this.err('ver.assig');
@@ -23,4 +23,5 @@ function (head) {
     '#y': this.Y(head,e), '#c': {}
   };
 };
+
 

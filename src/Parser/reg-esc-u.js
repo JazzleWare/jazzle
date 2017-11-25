@@ -3,7 +3,7 @@
   import {cls} from './cls.js';
 
 // errors pertaining to u escapes will first check for pending semi ranges at the start of their corresponding routines
-this.regEsc_u =
+cls.regEsc_u =
 function(ce) {
   if (ce && this.regSemiRange &&
     this.regSemiRange.max.escape !== 'hex4' && !this.regTryCompleteSemiRange())
@@ -50,7 +50,7 @@ function(ce) {
   return this.regChar_VECI(String.fromCharCode(ch), c, ch, ce);
 };
 
-this.regEsc_uCurly =
+cls.regEsc_uCurly =
 function(ce) {
   if (ce && this.testSRerr())
     return null;
@@ -110,6 +110,7 @@ function(ce) {
     c1: null, c2: null
   };
 };
+
 
 
 

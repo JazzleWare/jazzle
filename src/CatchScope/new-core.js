@@ -6,7 +6,7 @@
   import {_m} from '../other/scope-util.js';
   import {cls} from './cls.js';
 
-this.synth_boot =
+cls.synth_boot =
 function(r) {
   ASSERT.call(this, !this.isBooted, 'boot' );
   if (this.renamer === null) this.renamer = r;
@@ -18,7 +18,7 @@ function(r) {
   this.synth_defs_to(this.synthBase);
 };
 
-this.synth_boot_init =
+cls.synth_boot_init =
 function() {
   ASSERT.call(this, !this.isBooted, 'boot' );
   if (this.synthNamesUntilNow === null)
@@ -26,36 +26,36 @@ function() {
   this.isBooted = true;
 };
 
-this.synth_start =
+cls.synth_start =
 function(r) {
   this.isBooted || this.synth_boot(r);
 
   FunScope.prototype.synth_externals.call(this);
 };
 
-this.synth_ref_may_escape_m =
+cls.synth_ref_may_escape_m =
 function(mname) { return true; };
 
-this.insertSynth_m = 
+cls.insertSynth_m = 
 function(mname, synth) {
   return ConcreteScope.prototype.insertSynth_m.call(this, mname, synth);
 };
 
-this.rename =
+cls.rename =
 function(base, n) { return ConcreteScope.prototype.rename.call(this, base, n); };
 
-this.synth_ref_find_homonym_m =
+cls.synth_ref_find_homonym_m =
 function(mname, r) {
   this.isBooted || this.synth_boot(r);
   return this.findSynth_m(mname);
 };
 
-this.findSynth_m =
+cls.findSynth_m =
 function(mname) {
   return ConcreteScope.prototype.findSynth_m.call(this, mname);
 };
 
-this.synth_rcv =
+cls.synth_rcv =
 function() {
   var c = this.defs.at(0), list = c.ref.rsList, num = 0;
   ASSERT.call(this, c.isCatchArg(), 'catch' );
@@ -83,7 +83,7 @@ function() {
   this.insertSynth_m(mname, c);
 };
 
-this.synth_lcv =
+cls.synth_lcv =
 function() {
   var liq = this.catchVar;
   var baseName = liq.name;
@@ -100,4 +100,5 @@ function() {
   liq.synthName = synthName;
   this.insertSynth_m(mname, liq);
 };
+
 

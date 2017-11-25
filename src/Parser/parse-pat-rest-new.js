@@ -1,7 +1,7 @@
   import {TK_ID} from '../other/lexer-constants.js';
   import {cls} from './cls.js';
 
-this.parsePat_rest =
+cls.parsePat_rest =
 function() {
   this.v<=5 && this.err('ver.spread.rest');
   var c0 = this.c0, cb = {}, loc0 = this.loc0();
@@ -29,4 +29,5 @@ function() {
     '#y': this.Y(arg)
   };
 };
+
 

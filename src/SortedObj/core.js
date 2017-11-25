@@ -1,21 +1,21 @@
   import {HAS, ASSERT} from '../other/constants.js';
   import {cls} from './cls.js';
 
-this.set = function(name, val) {
+cls.set = function(name, val) {
   if (!HAS.call(this.obj, name))
     this.keys.push(name);
   return this.obj[name] = val;
 };
 
-this.at = function(i) {
+cls.at = function(i) {
   return i < this.keys.length ? this.obj[this.keys[i]] : void 0;
 };
 
-this.get = function(name) {
+cls.get = function(name) {
   return this.obj[name]; 
 };
 
-this.remove = function(name) {
+cls.remove = function(name) {
   if (!HAS.call(this.obj, name))
     return false;
   delete this.obj[name];
@@ -35,15 +35,15 @@ this.remove = function(name) {
   return true;
 };
 
-this.has = function(name) {
+cls.has = function(name) {
   return HAS.call(this.obj, name);
 };
 
-this.length = function() {
+cls.length = function() {
   return this.keys.length;
 };
 
-this.pop = function(out) {
+cls.pop = function(out) {
   var list = this.keys;
   ASSERT.call(this, list.length, 'len' );
   var name = list.pop();
@@ -52,4 +52,5 @@ this.pop = function(out) {
   else out = elem;
   return out;
 };
+
 

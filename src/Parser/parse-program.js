@@ -5,7 +5,7 @@
   import {TK_EOF} from '../other/lexer-constants.js';
   import {cls} from './cls.js';
 
-this.parseProgram = function () {
+cls.parseProgram = function () {
   var c0 = this.c, li0 = this.li, col0 = this.col;
   var ec = -1, eloc = null;
 
@@ -59,4 +59,5 @@ this.parseProgram = function () {
 
   return n;
 };
+
 

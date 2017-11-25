@@ -3,7 +3,7 @@
   import {_m} from '../other/scope-util.js';
   import {cls} from './cls.js';
 
-this.declare = function(id) {
+cls.declare = function(id) {
   ASSERT.call(this, this.declMode !== DT_NONE, 'Unknown declMode');
   if (this.declMode & (DT_LET|DT_CONST)) {
     if (id.name === 'let')
@@ -32,18 +32,19 @@ this.declare = function(id) {
   }
 };
 
-this.enterScope = function(scope) {
+cls.enterScope = function(scope) {
   this.scope = scope;
 };
 
-this.exitScope = function() {
+cls.exitScope = function() {
   var scope = this.scope;
   scope.finish();
   this.scope = this.scope.parent;
   return scope;
 };
 
-this.allow = function(allowedActions) {
+cls.allow = function(allowedActions) {
   this.scope.actions |= allowedActions;
 };
+
 

@@ -1,7 +1,7 @@
   import {TK_ID} from '../other/lexer-constants.js';
   import {cls} from './cls.js';
 
-this.parseTryStatement = function () {
+cls.parseTryStatement = function () {
   this.resvchk();
   this.testStmt() || this.err('not.stmt');
   this.fixupLabels(false);
@@ -57,4 +57,5 @@ this.parseTryStatement = function () {
 
   };
 };
+
 

@@ -1,7 +1,6 @@
   import {Transformers} from '../other/globals.js';
   import {RS_THIS} from '../other/scope-constants.js';
   import {ASSERT, THS_NEEDS_CHK, THS_IS_REACHED} from '../other/constants.js';
-  import {cls} from './cls.js';
 
 Transformers['ThisExpression'] =
 function(n, isVal) {

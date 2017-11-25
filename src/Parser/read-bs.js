@@ -2,7 +2,7 @@
   import {hex2num} from '../other/util.js';
   import {cls} from './cls.js';
 
-this.readBS = function() {
+cls.readBS = function() {
   var c = this.c, s = this.src, l = s.length;
   c++; // \
   if (c >= l)
@@ -34,7 +34,7 @@ this.readBS = function() {
   return val;
 };
 
-this.readBS_lcurly =
+cls.readBS_lcurly =
 function(c) {
   var s = this.src, l = s.length;
   c++; // {
@@ -73,4 +73,5 @@ function(c) {
 
   return val;
 };
+
 

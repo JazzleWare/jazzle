@@ -21,7 +21,7 @@ function(n, isVal) {
   return n;
 };
 
-this.transformCatch =
+cls.transformCatch =
 function(n) {
   var a = null, s = this.setScope(n['#scope']);
   ASSERT.call(this, !this.inBody, 'inside catch' );
@@ -43,11 +43,12 @@ function(n) {
   return n;
 };
 
-this.transformCatchArgs =
+cls.transformCatchArgs =
 function(n) {
   ASSERT.call(this, !this.cur.argIsSimple, 'catch' );
   var l = this.synth_SynthAssig(n.param, this.synth_SynthName(this.cur.catchVar), true);
 
   return this.tr(l, false);
 };
+
 

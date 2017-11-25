@@ -2,16 +2,16 @@
   import {ASSERT} from '../other/constants.js';
   import {cls} from './cls.js';
 
-this.canSmem =
+cls.canSmem =
 function() { return this.actions & SA_MEMSUPER; };
 
-this.canAwait = 
+cls.canAwait = 
 function() { return this.actions & SA_AWAIT; };
 
-this.canBreak = 
+cls.canBreak = 
 function() { return this.actions & SA_BREAK; };
 
-this.canDeclareLexical =
+cls.canDeclareLexical =
 function() {
   if (this.isBlock() ||
     this.isModule() ||
@@ -24,10 +24,10 @@ function() {
   return this.insideForInit();
 };
 
-this.canScall = 
+cls.canScall = 
 function() { return this.actions & SA_CALLSUPER; };
 
-this.canDeclareFn =
+cls.canDeclareFn =
 function(st) {
   if (this.isBlock() ||
     this.isModule() ||
@@ -47,25 +47,26 @@ function(st) {
   return this.insideIf();
 };
 
-this.canYield = 
+cls.canYield = 
 function() { return this.actions & SA_YIELD; };
 
-this.canMakeThis =
+cls.canMakeThis =
 function() {
   if (this.isAnyFn())
     return !this.isArrow();
   return this.isSourceLevel();
 };
 
-this.canReturn = 
+cls.canReturn = 
 function() { return this.actions & SA_RETURN; };
 
-this.canContinue = 
+cls.canContinue = 
 function() { return this.actions & SA_CONTINUE; };
 
-this.canAccessNewTarget =
+cls.canAccessNewTarget =
 function() { return this.actions & SA_NEW_TARGET; };
 
-this.canHaveName =
+cls.canHaveName =
 function() { return this.isAnyFn() || this.isClass(); };
+
 

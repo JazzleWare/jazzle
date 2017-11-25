@@ -3,7 +3,7 @@
 
 // characters do not test for early semi-ranges, because that makes things needlessly complicated -- after all, we are only a single character away
 // from telling whether the semi range is deterministically erroneous, which is not much of a calculation
-this.regChar =
+cls.regChar =
 function(ce) { // class elem
   var c0 = this.c; 
   var s = this.src;
@@ -20,7 +20,7 @@ function(ce) { // class elem
   return l;
 };
 
-this.regChar_VECI =
+cls.regChar_VECI =
 function(value, offset, ch, ce) {
   var s = this.src, c0 = this.c;
   var loc0 = this.loc(), raw = s.substring(c0, offset);
@@ -53,6 +53,7 @@ function(value, offset, ch, ce) {
     value: value,
   };
 };
+
 
 
 

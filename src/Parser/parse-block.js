@@ -1,7 +1,7 @@
   import {CH_RCURLY} from '../other/constants.js';
   import {cls} from './cls.js';
 
-this.parseBlock = function () {
+cls.parseBlock = function () {
   this.fixupLabels(false);
 
   this.enterScope(this.scope.spawnBlock()); 
@@ -34,4 +34,5 @@ this.parseBlock = function () {
 
   return n;
 };
+
 

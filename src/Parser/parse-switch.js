@@ -3,7 +3,7 @@
   import {SA_BREAK} from '../other/scope-constants.js';
   import {cls} from './cls.js';
 
-this.parseSwitch = function () {
+cls.parseSwitch = function () {
   this.resvchk();
   !this.testStmt() && this.err('not.stmt');
   this.fixupLabels(false) ;
@@ -64,4 +64,5 @@ this.parseSwitch = function () {
 
   return n;
 };
+
 

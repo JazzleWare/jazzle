@@ -1,6 +1,5 @@
   import {Transformers} from '../other/globals.js';
   import {ASSERT_EQ} from '../other/constants.js';
-  import {cls} from './cls.js';
 
 Transformers['SwitchStatement'] =
 function(n, isVal) {

@@ -2,7 +2,6 @@
   import {EC_ATTACHED, ASSERT_EQ} from '../other/constants.js';
   import {CB} from '../other/util.js';
   import {wcb_afterStmt} from '../other/wcb.js';
-  import {cls} from './cls.js';
 
 Emitters['BlockStatement'] =
 function(n, flags, isStmt) {
