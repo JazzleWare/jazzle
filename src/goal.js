@@ -27,7 +27,7 @@
     define(['exports'], exporter);
   else
     exporter(golbal.jazzle = global.jazzle || {});
-)(this, function exporter(exports) { 
+})(this, function exporter(exports) { 
 
   exports.parse = function(src, isModule ) {
     var newp = new Parser(src, isModule);

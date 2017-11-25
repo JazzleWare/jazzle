@@ -48,7 +48,7 @@ bundler.rootNode = rootNode;
 
 // create a transformer, and transform the bundler into something emittable
 var transformer = new Transformer();
-var transformedBundleNode = tansformer.transform(bundler, false);
+var transformedBundleNode = transformer.tr(bundler, false);
 
 // create an emitter
 var emitter = new Emitter();

@@ -6106,9 +6106,14 @@ function() {
   ASSERT.call(this, !this.inBody, 'inBody');
   var list = this.argRefs, e = 0, len = list.length();
   while (e < len) {
+    var itemName = list.keys[e];
+    // console.error('synth-externals', itemName);
     var item = list.at(e++);
     if (item) {
+      // console.error('getting nearest for', itemName);
       var target = item.getDecl_nearest(), mname = "";
+      // console.error('got nearest for', itemName+'\n');
+
       if (target.isLiquid()) {
         ASSERT.call(this, target.category === '<this>' ||
           target.category === '<arguments>' || target.category === 'scall', 'liq');
@@ -15461,7 +15466,7 @@ function(mname, ref) {
   if (globalBinding) {
     ASSERT.call(this, this.isBundle(), 'not');
     globalBinding.refreshRSListWithList(ref.rsList);
-    ref.parentRef = this;
+    ref.parentRef = globalBinding.ref;
   }
   else {
     globalBinding = new Decl().t(DT_GLOBAL).r(ref).n(_u(mname));
@@ -17792,7 +17797,8 @@ Transformers['ExportNamedDeclaration'] =
 function(n, isVal) {
   // TODO: transform local names to rns when bundling is not active
 
-  if (n.declatarion !== null)
+  // console.error('transform#ExportNamedDeclaration', n);
+  if (n.declaration !== null)
     n.declaration = this.tr(n.declaration, false);
 
   n.type = '#' + n.type ;
@@ -18075,6 +18081,7 @@ function(n, isVal) {
 this.transformBundleItem =
 function(n) {
 //n['#scope'].setSynthBase(this.bundleScope);
+  // console.error('transforming', n);
   var list = n['#imports'], len = list ? list.length : 0, l = 0;
 
   while (l < len) {
