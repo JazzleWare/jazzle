@@ -5,4 +5,4 @@ function ResourceResolver() {
 }
 
  export default ResourceResolver;
- export var cls = ResourceResolver.prototype = ;
+ export var cls = ResourceResolver.prototype;

@@ -10,4 +10,4 @@ function AutoImex() {
 }
 
  export default AutoImex;
- export var cls = AutoImex.prototype = ;
+ export var cls = AutoImex.prototype;

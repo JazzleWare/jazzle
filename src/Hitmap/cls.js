@@ -10,4 +10,4 @@ function Hitmap() {
 }
 
  export default Hitmap;
- export var cls = Hitmap.prototype = ;
+ export var cls = Hitmap.prototype;

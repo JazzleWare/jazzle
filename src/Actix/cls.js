@@ -11,4 +11,4 @@ function Actix(role) { // activity ctx
 }
 
  export default Actix;
- export var cls = Actix.prototype = ;
+ export var cls = Actix.prototype;

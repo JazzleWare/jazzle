@@ -6,4 +6,4 @@ function Comments() {
 }
 
  export default Comments;
- export var cls = Comments.prototype = ;
+ export var cls = Comments.prototype;

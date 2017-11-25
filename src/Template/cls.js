@@ -80,4 +80,4 @@ Template.from = function(str, i, eof) {
 };
 
  export default Template;
- export var cls = Template.prototype = ;
+ export var cls = Template.prototype;

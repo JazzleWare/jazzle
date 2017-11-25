@@ -74,4 +74,4 @@ function Emitter() {
 }
 
  export default Emitter;
- export var cls = Emitter.prototype = ;
+ export var cls = Emitter.prototype;

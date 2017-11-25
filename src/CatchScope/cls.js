@@ -22,4 +22,6 @@ function CatchScope(sParent) {
 }
 
  export default CatchScope;
- export var cls = CatchScope.prototype = ;
+
+ import {createObj} from '../other/util.js';
+ export var cls = CatchScope.prototype = createObj(Scope.prototype);

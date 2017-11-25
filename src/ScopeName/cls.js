@@ -8,4 +8,6 @@ function ScopeName(name, src) {
 }
 
  export default ScopeName;
- export var cls = ScopeName.prototype = ;
+
+ import {createObj} from '../other/util.js';
+ export var cls = ScopeName.prototype = createObj(Decl.prototype);

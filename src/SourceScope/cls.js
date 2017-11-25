@@ -14,4 +14,6 @@ function SourceScope(parent, st) {
 }
 
  export default SourceScope;
- export var cls = SourceScope.prototype = ;
+
+ import {createObj} from '../other/util.js';
+ export var cls = SourceScope.prototype = createObj(ConcreteScope.prototype);

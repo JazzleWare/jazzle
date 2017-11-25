@@ -4,4 +4,6 @@
 function BundleScope() { ConcreteScope.call(this, null, ST_BUNDLE); }
 
  export default BundleScope;
- export var cls = BundleScope.prototype = ;
+
+ import {createObj} from '../other/util.js';
+ export var cls = BundleScope.prototype = createObj(ConcreteScope.prototype);

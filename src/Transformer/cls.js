@@ -28,4 +28,4 @@ function Transformer() {
 }
 
  export default Transformer;
- export var cls = Transformer.prototype = ;
+ export var cls = Transformer.prototype;

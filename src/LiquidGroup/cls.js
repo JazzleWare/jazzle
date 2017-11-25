@@ -8,4 +8,4 @@ function LiquidGroup(cat, scope) {
 }
 
  export default LiquidGroup;
- export var cls = LiquidGroup.prototype = ;
+ export var cls = LiquidGroup.prototype;

@@ -18,4 +18,6 @@ function Decl() {
 }
 
  export default Decl;
- export var cls = Decl.prototype = ;
+
+ import {createObj} from '../other/util.js';
+ export var cls = Decl.prototype = createObj(Actix.prototype);

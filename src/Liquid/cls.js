@@ -8,4 +8,6 @@ function Liquid(category) {
 }
 
  export default Liquid;
- export var cls = Liquid.prototype = ;
+
+ import {createObj} from '../other/util.js';
+ export var cls = Liquid.prototype = createObj(Decl.prototype);

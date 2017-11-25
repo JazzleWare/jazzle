@@ -6,4 +6,6 @@ function VirtualResourceResolver(pathMan) {
 }
 
  export default VirtualResourceResolver;
- export var cls = VirtualResourceResolver.prototype = ;
+
+ import {createObj} from '../other/util.js';
+ export var cls = VirtualResourceResolver.prototype = createObj(ResourceResolver.prototype);

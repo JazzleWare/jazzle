@@ -8,4 +8,6 @@ function GlobalScope() {
 
 
  export default GlobalScope;
- export var cls = GlobalScope.prototype = ;
+
+ import {createObj} from '../other/util.js';
+ export var cls = GlobalScope.prototype = createObj(ConcreteScope.prototype);

@@ -7,4 +7,6 @@ function ClassScope(sParent, sType) {
 }
 
  export default ClassScope;
- export var cls = ClassScope.prototype = ;
+
+ import {createObj} from '../other/util.js';
+ export var cls = ClassScope.prototype = createObj(Scope.prototype);

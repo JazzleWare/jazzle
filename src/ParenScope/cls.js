@@ -9,4 +9,6 @@ function ParenScope(sParent) {
 }
 
  export default ParenScope;
- export var cls = ParenScope.prototype = ;
+
+ import {createObj} from '../other/util.js';
+ export var cls = ParenScope.prototype = createObj(Scope.prototype);

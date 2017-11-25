@@ -14,4 +14,6 @@ function ConcreteScope(parent, type) {
 }
 
  export default ConcreteScope;
- export var cls = ConcreteScope.prototype = ;
+
+ import {createObj} from '../other/util.js';
+ export var cls = ConcreteScope.prototype = createObj(Scope.prototype);

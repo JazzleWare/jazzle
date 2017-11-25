@@ -11,4 +11,4 @@ function Ref(scope) {
 }
 
  export default Ref;
- export var cls = Ref.prototype = ;
+ export var cls = Ref.prototype;

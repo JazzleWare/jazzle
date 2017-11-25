@@ -56,4 +56,4 @@ function Scope(sParent, type) {
 }
 
  export default Scope;
- export var cls = Scope.prototype = ;
+ export var cls = Scope.prototype = createObj(Actix.prototype);

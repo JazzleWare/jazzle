@@ -27,4 +27,6 @@ function FunScope(parent, type) {
 }
 
  export default FunScope;
- export var cls = FunScope.prototype = ;
+
+ import {createObj} from '../other/util.js';
+ export var cls = FunScope.prototype = createObj(ConcreteScope.prototype);

@@ -16,18 +16,18 @@
   import VirtualResourceResolver from '../VirtualResourceResolver/cls.js';
   import ResourceResolver from '../ResourceResolver/cls.js';
 
- Scope.prototype = createObj(Actix.prototype);
- ConcreteScope.prototype = createObj(Scope.prototype);
- GlobalScope.prototype = createObj(ConcreteScope.prototype);
-   Decl.prototype = createObj(Actix.prototype);
- FunScope.prototype = createObj(ConcreteScope.prototype);
- ModuleScope.prototype = createObj(ConcreteScope.prototype);
- ClassScope.prototype = createObj(Scope.prototype);
- CatchScope.prototype = createObj(Scope.prototype);
- ParenScope.prototype = createObj(Scope.prototype);
- ScopeName.prototype = createObj(Decl.prototype);
- Liquid.prototype = createObj(Decl.prototype);
- SourceScope.prototype = createObj(ConcreteScope.prototype);
- BundleScope.prototype = createObj(ConcreteScope.prototype);
- VirtualResourceResolver.prototype = createObj(ResourceResolver.prototype);
+//Scope.prototype = createObj(Actix.prototype);
+//ConcreteScope.prototype = createObj(Scope.prototype);
+//GlobalScope.prototype = createObj(ConcreteScope.prototype);
+//  Decl.prototype = createObj(Actix.prototype);
+  FunScope.prototype = createObj(ConcreteScope.prototype);
+//ModuleScope.prototype = createObj(ConcreteScope.prototype);
+//ClassScope.prototype = createObj(Scope.prototype);
+//CatchScope.prototype = createObj(Scope.prototype);
+//ParenScope.prototype = createObj(Scope.prototype);
+//ScopeName.prototype = createObj(Decl.prototype);
+//Liquid.prototype = createObj(Decl.prototype);
+//SourceScope.prototype = createObj(ConcreteScope.prototype);
+//BundleScope.prototype = createObj(ConcreteScope.prototype);
+//VirtualResourceResolver.prototype = createObj(ResourceResolver.prototype);
 

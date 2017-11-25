@@ -12,4 +12,4 @@ function Bundler(pathMan) {
 }
 
  export default Bundler;
- export var cls = Bundler.prototype = ;
+ export var cls = Bundler.prototype;

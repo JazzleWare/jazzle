@@ -10,4 +10,4 @@ SortedObj.from = function(parent) {
 };
 
  export default SortedObj;
- export var cls = SortedObj.prototype = ;
+ export var cls = SortedObj.prototype;

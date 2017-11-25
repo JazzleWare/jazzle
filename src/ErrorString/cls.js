@@ -48,4 +48,4 @@ ErrorString.from = function(str) {
 };
 
  export default ErrorString;
- export var cls = ErrorString.prototype = ;
+ export var cls = ErrorString.prototype;

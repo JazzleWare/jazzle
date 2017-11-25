@@ -98,4 +98,4 @@ var Parser = function (src, o) {
 };
 
  export default Parser;
- export var cls = Parser.prototype = ;
+ export var cls = Parser.prototype;
