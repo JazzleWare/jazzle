@@ -1,77 +1,77 @@
-  import {SP_NONE, ETK_NONE} from '../other/constants.js';
-  import SortedObj from '../SortedObj/cls.js';
-  import {createObj} from '../other/util.js';
-  import {Emitters} from '../other/globals.js';
-
-function Emitter() {
-  this.indentCache = [""];
-  this.indentString = '  ';
-  this.indentLevel = 0;
-
-  this.wrapLimit = 0;
-
-  this.curLineIndent = 0;
-  this.curLineHasLineBreakBefore = false;
-  this.curLine = "";
-
-  this.pendingSpace = SP_NONE;
-
-  this.nextLineIndent = 0;
-  this.nextLineHasLineBreakBefore = false;
-
-  this.finishingLine = false;
-
-  this.guard = null;
-  this.guardArg = null;
-  this.guardListener = null;
-  this.defaultGuardListener = {v: false};
-  this.runningGuard = false;
-
-  this.ttype = ETK_NONE;
-
-  // <sourcemap-related>
-  this.emcol_cur = 0;
-  this.emcol_latestRec = 0;
-
-  this.emline_cur = 0;
-  this.emline_latestRec = 0;
-
-  this.srci_cur = 0; // -1;
-  this.srci_latestRec = 0; // -1;
-
-  this.namei_cur = -1;
-  this.namei_latestRec = -1;
-
-  this.loc_latestRec = {line: 1, column: 0};
-
-  this.sm = "";
-  this.lm = "";
-
-  this.ln_vlq_tail = "";
-  this.ln_emcol_cur = 0;
-  this.ln_emcol_latestRec = 0;
-
-  this.pendingSrcLoc = null;
-
-  this.hasRecorded_SMLinkpoint = false;
-  this.hasRecorded_emcol_latestRec = false;
-
-  this.smNameList = new SortedObj();
-  this.smSrcList = new SortedObj();
-  // </sourcemap-related>
-
-  this.smLen = 0;
-  this.smLineStart = false;
-
-  this.outLen = 0;
-
-  this.emitters = createObj(Emitters);
-  this.allow = { space: true, nl: true, comments: { l: true, m: true }, elemShake: false };
-  this.out = "";
-  this.outActive = false;
-
-  this.jzcalls = new SortedObj();
-}
-
- export default Emitter;
- export var cls = Emitter.prototype;
+  import './new-emit-TryStatement.js';
+  import './new-uemit-synth-u.js';
+  import './new-emit-UpdateExpression.js';
+  import './new-uemit-synth-tval.js';
+  import './new-emit-CallExpression.js';
+  import './new-emit-AssignmentExpression.js';
+  import './new-emit-break.js';
+  import './new-uemit-synth-arg.js';
+  import './emitter2-brevity.js';
+  import './new-uemit-synth-temp.js';
+  import './new-uemit-synth-call.js';
+  import './new-emit-ConditionalExpression.js';
+  import './new-uemit-synth-heritage.js';
+  import './new-uemit-synth-literal.js';
+  import './new-uemit-synth-arr-iter.js';
+  import './new-uemit-bundler.js';
+  import './new-uemit-export.js';
+  import './new-uemit-synth-assig-list.js';
+  import './new-emit-EmptyStatement.js';
+  import './new-emit-BinaryExpression.js';
+  import './new-emit-Untransformed.js';
+  import './new-emit-ThrowStatement.js';
+  import './new-emit-NewExpression.js';
+  import './new-emit-whole-prog.js';
+  import './new-uemit-synth-cls.js';
+  import './new-emit-ExpressionStatement.js';
+  import './emitter2-base.js';
+  import './emitter2-util.js';
+  import './new-uemit-synth-skip.js';
+  import './new-uemit-synth-sname.js';
+  import './new-emit-fn.js';
+  import './emitter2-write.js';
+  import './new-emit-IfStatement.js';
+  import './emitter2-tt.js';
+  import './emitter2-guard.js';
+  import './new-emit-ObjectExpression.js';
+  import './emitter2-wrap.js';
+  import './new-uemit-synth-ucond.js';
+  import './emitter2-out.js';
+  import './new-uemit-for-in-stmt.js';
+  import './new-uemit-for-of-stmt.js';
+  import './new-uemit-synth-tc.js';
+  import './newer.js';
+  import './emitter2-line.js';
+  import './new-emit-TemplateLiteral.js';
+  import './new-uemit-synth-resolved-name.js';
+  import './head.js';
+  import './new-emit-BreakStatement.js';
+  import './new-uemit-synth-obj-iter.js';
+  import './emitter2-sm.js';
+  import './emitter2-indent.js';
+  import './new-emit-MemberExpression.js';
+  import './new-uemit-synth-global-update.js';
+  import './new-emit-UnaryExpression.js';
+  import './new-uemit-synth-mem-list.js';
+  import './emc.js';
+  import './emitter2-space.js';
+  import './new-uemit-synth-resolved-this.js';
+  import './new-emit-ContinueStatement.js';
+  import './new-emit-SequenceExpression.js';
+  import './new-uemit-synth-llinosa-names.js';
+  import './new-emit-ReturnStatement.js';
+  import './new-emit-WhileStatement.js';
+  import './new-uemit-synth-ctor.js';
+  import './new-uemit-synth-transformed-fn.js';
+  import './new-emit2-Literal.js';
+  import './new-emit-LabeledStatement.js';
+  import './new-emit-SwitchStatement.js';
+  import './new-uemit-synth-tzchk.js';
+  import './new-emit-BlockStatement.js';
+  import './new-emit-while-do.js';
+  import './new-emit-ArrayExpression.js';
+  import './new-emit-TaggedTemplateExpression.js';
+  import './new-uemit-synth-rcheck.js';
+  import {Emitter, cls} from './ctor.js';
+  export default Emitter;
+  export {cls};

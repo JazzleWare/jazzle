@@ -1,13 +1,4 @@
-  import {createObj} from '../other/util.js';
-
-function SortedObj(obj) {
-  this.keys = [];
-  this.obj = obj || {};
-}
-
-SortedObj.from = function(parent) {
-  return new SortedObj(createObj(parent.obj));
-};
-
- export default SortedObj;
- export var cls = SortedObj.prototype;
+  import './core.js';
+  import {SortedObj, cls} from './ctor.js';
+  export default SortedObj;
+  export {cls};

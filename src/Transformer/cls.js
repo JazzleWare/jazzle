@@ -1,31 +1,45 @@
-  import {THS_NONE} from '../other/constants.js';
-  import {renamer_incremental} from '../other/renamer.js';
-
-function Transformer() {
-  // TODO: `inGen or `flag for more contextual info (doesn't `cur have all that, anyway?)
-  // CRUCIAL SCOPES:
-  this.global = null;
-  this.script = null;
-  this.cur = null;
-
-  // this could be per scope (i.e., a scope attibute),
-  this.tempStack = [];
-
-  this.reachedRef = {v: true};
-  this.cvtz = {};
-  this.thisState = THS_NONE;
-
-  // name.activeIf[`cur.scopeID] = `cur if set
-  this.activeIfScope = false;
-
-  // for var n in.ls `activeIfNames: name.activeIf[n#getID] = n
-  this.activeIfNames = null; // TODO: should rename to activeIfOther, because it can actually contain name-, scope-, or bare actices (actixes)
-
-  this.curNS = 0; // sinde-effencts
-  this.curAT = null; // activation target in use (mostly, it is just the same thing as this.cur)
-
-  this.renamer = renamer_incremental;
-}
-
- export default Transformer;
- export var cls = Transformer.prototype;
+  import './new-transform-AssignmentExpression.js';
+  import './new-transform-ContinueStatement.js';
+  import './new-transform-while-do.js';
+  import './new-transform-CallExpression.js';
+  import './core.js';
+  import './new-transform-BlockStatement.js';
+  import './new-transform-synth-Bundler.js';
+  import './new-transform-ThisExpression.js';
+  import './new-transform-ArrayExpression.js';
+  import './transform-utils.js';
+  import './new-transform-cls.js';
+  import './new-transform-BinaryExpression.js';
+  import './nsynth.js';
+  import './new-transform-whole-prog.js';
+  import './new-transform-exim.js';
+  import './new-transform-BreakStatement.js';
+  import './new-transform-fn.js';
+  import './new-transform-MemberExpression.js';
+  import './names.js';
+  import './temp.js';
+  import './new-transform-ConditionalExpression.js';
+  import './new-transform-IfStatement.js';
+  import './new-transform-ExpressionStatement.js';
+  import './new-transform-SwitchStatement.js';
+  import './new-transform-SpreadElement.js';
+  import './new-transform-Identifier.js';
+  import './new-transform-NewExpression.js';
+  import './new-transform-UnaryExpression.js';
+  import './new-transform-LabeledStatement.js';
+  import './new-transform-for.js';
+  import './new-transform-ThrowStatement.js';
+  import './new-transform-ReturnStatement.js';
+  import './new-transform-TaggedTemplateExpression.js';
+  import './new-transform-ObjectExpression.js';
+  import './new-transform-For.js';
+  import './new-transform-UpdateExpression.js';
+  import './comment-helpers.js';
+  import './new-transform-TemplateLiteral.js';
+  import './new-transform-SequenceExpression.js';
+  import './new-transform-VariableDeclaration.js';
+  import './new-transform-WhileStatement.js';
+  import './new-transform-TryStatement.js';
+  import {Transformer, cls} from './ctor.js';
+  export default Transformer;
+  export {cls};

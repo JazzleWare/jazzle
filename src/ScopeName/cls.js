@@ -1,13 +1,4 @@
-  import Decl from '../Decl/cls.js';
-
-function ScopeName(name, src) {
-  Decl.call(this);
-
-  this.name = name;
-  this.source = src;
-}
-
- export default ScopeName;
-
- import {createObj} from '../other/util.js';
- export var cls = ScopeName.prototype = createObj(Decl.prototype);
+  import './new-core.js';
+  import {ScopeName, cls} from './ctor.js';
+  export default ScopeName;
+  export {cls};

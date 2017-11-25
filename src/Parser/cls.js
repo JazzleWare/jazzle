@@ -1,101 +1,127 @@
-  import {VDT_NONE} from '../other/lexer-constants.js';
-  import {DT_NONE} from '../other/scope-constants.js';
-  import {ERR_NONE_YET} from '../other/error-constants.js';
-
-var Parser = function (src, o) {
-
-  this.src = src;
-  this.unsatisfiedLabel = null;
-  this.nl = false;
-
-  this.ltval = null;
-  this.lttype= "";
-  this.ltraw = "" ;
-  this.prec = 0 ;
-  this.vdt = VDT_NONE;
-
-  this.labels = {};
-
-  this.li0 = 0;
-  this.col0 = 0;
-  this.c0 = 0;
-
-  this.li = 1;
-  this.col = 0;
-  this.c = 0;
-
-  this.luo = 0; // latest used offset
- 
-  this.canBeStatement = false;
-  this.foundStatement = false;
-
-  this.isScript = !o || o.sourceType === 'script';
-  this.v = 7;
-
-  this.first__proto__ = false;
-
-  this.scope = null;
-  this.declMode = DT_NONE;
- 
-  this.exprHead = null;
-
-  // ERROR TYPE           CORE ERROR NODE    OWNER NODE
-  this.pt = ERR_NONE_YET; this.pe = null; this.po = null; // paramErr info
-  this.at = ERR_NONE_YET; this.ae = null; this.ao = null; // assigErr info
-  this.st = ERR_NONE_YET; this.se = null; this.so = null; // simpleErr info
-
-  this.suspys = null;
-  this.missingInit = false;
-
-  this.yc= -1; // occasionally used to put yield counts in
-  this.ex = DT_NONE;
-
-  this.bundleScope = null;
-
-  this.bundler = null;
-  this.chkDirective = false;
-  this.alreadyApplied = false;
-  // "pin" location; for errors that might not have been precisely caused by a syntax node, like:
-  // function l() { '\12'; 'use strict' }
-  //                 ^
-  // 
-  // for (a i\u0074 e) break;
-  //         ^
-  //
-  // var e = [a -= 12] = 5
-  //            ^
-  this.ct = ERR_NONE_YET;
-  this.pin = {
-    c: { c:-1, li:-1, col:-1 },
-    a: { c:-1, li:-1, col:-1 },
-    s: { c:-1, li:-1, col:-1 },
-    p: { c:-1, li:-1, col:-1 }
-  };
-
-  this.cb = null;
-  this.parenAsync = null; // so that things like (async)(a,b)=>12 will not get to parse.
-  this.commentBuf = null;
-  this.errorListener = this; // any object with an `onErr(errType "string", errParams {*})` will do
-  this.parenScope = null;  
-
-  this.regPendingBQ = null;
-  this.regPendingCQ = false;
-  this.regLastBareElem = null;
-  this.regErr = null;
-  this.regIsQuantifiable = false;
-  this.regSemiRange = null;
-  this.regCurlyChar = false;
-  this.regLastOffset = -1;
-  this.regNC = -1;
-
-  this.regexFlags = this.rf = {};
-
-  this.commentCallback = null;
-
-  this.argploc = null;
-
-  this.pure = false; // pure-ness
-};
-
- export default Parser;
- export var cls = Parser.prototype;
+  import './parse-cond.js';
+  import './count-y.js';
+  import './read-char.js';
+  import './assig-helpers.js';
+  import './parse-top-level-expr.js';
+  import './parse-do.js';
+  import './parse-return.js';
+  import './skip-ws.js';
+  import './read-num.js';
+  import './reg-surrogate.js';
+  import './parse-switch-case.js';
+  import './new-import.js';
+  import './new-parse-expr-head.js';
+  import './parse-assig.js';
+  import './new-parse-stmt.js';
+  import './read-op-exclam.js';
+  import './core.js';
+  import './read-op-and.js';
+  import './new-parse-continue.js';
+  import './read-id-bs.js';
+  import './reg-curly.js';
+  import './loc.js';
+  import './reg-quantifier.js';
+  import './new-parse-meth.js';
+  import './reg-helpers.js';
+  import './parse-class.js';
+  import './parse-meta.js';
+  import './parse-empty.js';
+  import './new-parse-non-seq.js';
+  import './new-semi.js';
+  import './parse-pat-rest-new.js';
+  import './read-op-add.js';
+  import './read-op-or.js';
+  import './read-op-mul.js';
+  import './new-parse-this.js';
+  import './new-parse-mem.js';
+  import './read-bs.js';
+  import './new-get-name.js';
+  import './parse-pattern.js';
+  import './reg-esc-u.js';
+  import './stmt-helpers.js';
+  import './parse-for.js';
+  import './lautils.js';
+  import './new-next.js';
+  import './conv-assig.js';
+  import './read-op-gt.js';
+  import './read-op-mod.js';
+  import './new-parse-var.js';
+  import './read-ellipsis.js';
+  import './reg-branch.js';
+  import './parse-id.js';
+  import './parse-labelled-stmt.js';
+  import './parse-block.js';
+  import './parse-if.js';
+  import './reg-err.js';
+  import './parse-aamm.js';
+  import './read-op-compl.js';
+  import './new-parse-tail.js';
+  import './parse-tryblock.js';
+  import './new-parse-literal.js';
+  import './new-parse-fn-body.js';
+  import './err.js';
+  import './parse-dependent-block.js';
+  import './reg-char.js';
+  import './read-id-simple.js';
+  import './parse-string.js';
+  import './read-quote.js';
+  import './new-parse-template.js';
+  import './new-parse-new.js';
+  import './reg-pattern.js';
+  import './parse-switch.js';
+  import './parse-catch.js';
+  import './parse-throw.js';
+  import './conv-arrow.js';
+  import './new-export.js';
+  import './reg-anchor.js';
+  import './directive.js';
+  import './parse-arrow.js';
+  import './parse-paren.js';
+  import './parse-debugger.js';
+  import './surrogate.js';
+  import './read-id-surrogate.js';
+  import './parse-pat-assig.js';
+  import './errt.js';
+  import './parse-while.js';
+  import './read-id-raw.js';
+  import './reg-esc.js';
+  import './let.js';
+  import './parse-regex.js';
+  import './parse-pat-array.js';
+  import './testers.js';
+  import './parse-arglist.js';
+  import './new-parse-fn.js';
+  import './parse-spread.js';
+  import './read-op-min.js';
+  import './parse-memname.js';
+  import './comment-helpers.js';
+  import './parse-obj.js';
+  import './parse-program.js';
+  import './scope.js';
+  import './new-validate.js';
+  import './parse-pat-obj-new.js';
+  import './new-parse-async.js';
+  import './err-listener.js';
+  import './reg-class.js';
+  import './parse-with.js';
+  import './reg-paren.js';
+  import './parse-yield.js';
+  import './read-op-lt.js';
+  import './regex.js';
+  import './peek.js';
+  import './prepare-op.js';
+  import './read-esc.js';
+  import './read-dot.js';
+  import './read-op-xor.js';
+  import './read-comment.js';
+  import './new-parse-break.js';
+  import './parse-array.js';
+  import './new-parse-id-expr-head.js';
+  import './offman.js';
+  import './new-parse-list-params.js';
+  import './read-op-eq.js';
+  import './parse-unary.js';
+  import './read-div.js';
+  import {Parser, cls} from './ctor.js';
+  export default Parser;
+  export {cls};

@@ -2,7 +2,10 @@
  export default Constructor() {}
  export var cls = Constructor.prototype;
 
-// cls
- import Constructor, {cls} from './ctor';
- export {Constructor, cls};
+// whole.js
+ import Constructor from './ctor';
+ export default Constructor;
  import './sub1' ... './subn'
+
+// subm-n.js
+ import Constructor from './ctor'

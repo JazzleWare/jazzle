@@ -1,11 +1,4 @@
-
-function LiquidGroup(cat, scope) {
-  this.category = cat;
-  this.scope = scope;
-  this.list = [];
-  this.hasSeal = false;
-  this.length = 0;
-}
-
- export default LiquidGroup;
- export var cls = LiquidGroup.prototype;
+  import './new-core.js';
+  import {LiquidGroup, cls} from './ctor.js';
+  export default LiquidGroup;
+  export {cls};

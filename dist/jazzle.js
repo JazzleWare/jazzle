@@ -9156,12 +9156,14 @@ function() {
     head['#ref'] = this.scope.refDirect_m(_m(head.name), null);
 
   var inner = core(head), elem = null;
+  var argloc = null;
 
   LOOP:
   while (true)
   switch (this.lttype) {
   case CH_SINGLEDOT:
     this.spc(inner, 'aft');
+    argloc = this.loc0();
     this.next();
     if (this.lttype !== TK_ID)
       this.err('mem.name.not.id');
@@ -9178,12 +9180,13 @@ function() {
         start: head.loc.start,
         end: elem.loc.end },
       computed: false,
-      '#y': this.Y(head), '#c': {}
+      '#y': this.Y(head), '#acloc': argloc, '#c': {}
     };
     continue;
 
   case CH_LSQBRACKET:
     this.spc(inner, 'aft');
+    argloc = this.loc0();
     this.next();
     elem = this.parseExpr(PREC_NONE, CTX_NONE);
     head = inner = {
@@ -9196,7 +9199,7 @@ function() {
         start: head.loc.start,
         end: this.loc() },
       computed: true,
-      '#y': this.Y(head)+this.Y(elem), '#c': {}
+      '#y': this.Y(head)+this.Y(elem), '#acloc': argloc, '#c': {}
     };
     this.spc(core(elem), 'aft');
     if (!this.expectT(CH_RSQBRACKET))
