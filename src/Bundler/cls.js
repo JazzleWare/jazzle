@@ -1,3 +1,4 @@
+  import BundleScope from '../BundleScope/cls.js';
 
 function Bundler(pathMan) {
   this.type = '#Bundler';
@@ -8,7 +9,7 @@ function Bundler(pathMan) {
   this.freshSources = [];
   this['#scope'] = null;
   this.rootNode = null;
-  this.bundleScope = null;
+  this.bundleScope = new BundleScope();
 }
 
  export default Bundler;

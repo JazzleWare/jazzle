@@ -18716,6 +18716,7 @@ this.ST_CATCH = ST_BARE << 1,
 this.ST_PAREN = ST_CATCH << 1,
 this.ST_NONE = 0; 
 
+this.ResourceResolver = ResourceResolver;
 this. VirtualResourceResolver = VirtualResourceResolver;
 this. Bundler = Bundler;
 

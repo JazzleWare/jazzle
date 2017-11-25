@@ -1,148 +1,71 @@
 'use strict';
+var DIST_OUTPUT_LOCATION = './dist/jazzle.js';
+var ROOT_PATH = './src';
+var ROOT_FILE = './src/goal.js';
 
-var fs = require( 'fs' );
-var macro = require('../common/macro.js');
-var src = './src';
-var dist = './dist/jazzle';
+var jazzle = require('../dist/jazzle.js');
+var fs = require('fs');
 
-var buildMacro = require('./bm.js').buildMacro;
+var FileResourceResolver = require('./FileResourceResolver.js').FileResourceResolver;
 
-function Builder() {
-  this.moduleNames = {};
-  this.moduleList = [];
-  this.strExports = "";  
-  this.str = "";
-}
+var PathMan = jazzle.PathMan;
+var Transformer = jazzle.Transformer;
+var Emitter = jazzle.Emitter;
+var Parser = jazzle.Parser;
+var Bundler = jazzle.Bundler;
 
-Builder.prototype.addModule = function(name, path) {
-  var entry = this.moduleNames[name];
-  if ( entry ) entry.path = path;
-  else {
-     this.moduleNames[name] = entry = { path: path, submodules: [], name: name };
-     this.moduleList.push(entry);
-  }
-};
+var rootSource = fs.readFileSync(ROOT_FILE, 'utf-8').toString();
 
-Builder.prototype.subModuleFor = function(name, path) {
-   if ( !this.moduleNames[name] )
-         this.addModule(name, null);
+// set up a path manager for the bundler to use
+var pathMan = new PathMan();
 
-   this.moduleNames[name].submodules.push(path);
-};
+// set up a bundler, and give it a path manager to use
+var bundler = new Bundler(pathMan);
 
-Builder.prototype.setExports = function(strExports) {
-   this.strExports = strExports;
-};
+// set up a resolver so the bundler can find the contents of 'import's
+var resolver = new FileResourceResolver();
 
-Builder.prototype.build = function() {
-   this.  write_string(  '(function(){\n"use strict";\n' );
-   
-   var e = 0;
-   while ( e < this.moduleList.length )
-      this.writeModule(  this.moduleList[e++ ] );
+// give the bundler the resolver we set a few lines ago
+bundler.resolver = resolver;
 
-   this. write_string( ';\n (function(){\n' +
-                       '       var i = 0;\n' +
-                       '       while(i < this.length){\n' +
-                       '          var def = this[i++];\n' +
-                       '          if ( !def ) continue;\n' +
-                       '          var e = 0;\n' +
-                       '          while ( e < def[1].length )\n' +
-                       '             def[1][e++].call(def[0]);\n' +
-                       '       }\n' +
-                       '     }).call([\n' );
-   var e = 0;
-   while ( e < this.moduleList.length ) {
-      if ( e ) this.write_string( ',\n' );
-      this.writeSubmodules( this.moduleList[e++ ] );
-   }
+// tell the bundler where to start from
+bundler.setURIAndDir(ROOT_FILE, ROOT_PATH);
 
-   this. write_string(  ']);\n' + this.strExports + ';}).call (function(){try{return module.exports;}catch(e){return this;}}.call(this))' );
-};  
+// set up a parser for the root source
+var parser = new Parser(rootSource, {sourceType: 'module'});
 
-Builder.prototype.write = function(output) {
-   console.log("WRITING MODULES");
-   fs .writeSync(output, this.str, 0, this.str.length);
-   fs .closeSync(output);
+// tell parser what bundler to use for managing its import/export declarations
+parser.bundler = bundler;
 
-   console.log("FINISHED ALL.");
-};
+// tell the resolver and the parser what master-scope the sources they deal with
+// is contained in. TODO: this is unnecessary, and should be eliminated ASAP
+parser.bundleScope = bundler.bundleScope;
+resolver.bundleScope = bundler.bundleScope;
 
-Builder.prototype.writeFileString = function(str) {
-  var fragments = buildMacro.callOn(str), e = 0;
-  while (e < fragments.length) this.write_string(fragments[e++]);
-};
+// parse the root source, and give that to the bundler
+var rootNode = parser.parseProgram();
+bundler.rootNode = rootNode;
 
-Builder.prototype.writeModule = function(  module ) {
-   console.log( "--WRITING MODULE", module.name, "ON", module.path );
-   this. write_string(  ';\n');
-   this. writeFileString(  fs .readFileSync( module.path ) );
-   console.log( "--FINISHED MODULE" );
-};          
-  
-Builder.prototype.writeSubmodules = function(module) {
-   if ( module.submodules.length === 0 ) {
-     console.log( "----(NO SUBMODULES FOR ", module.name + " )\n" ) ;
-     this.write_string( 'null' );
-     return;
+// create a transformer, and transform the bundler into something emittable
+var transformer = new Transformer();
+var transformedBundleNode = tansformer.transform(bundler, false);
 
-   }
+// create an emitter
+var emitter = new Emitter();
 
-   console.log( "----", module.name + " SUBMODULES" );
+// kickstart the emitter; TODO: eliminate
+emitter.startFreshLine();
 
-   this. write_string(  '[' );
-   this. write_string( (module.name) + '.prototype, [' ); 
+// emit! this is what we have come all the way for!
+emitter.emitStmt(transformedBundleNode);
 
-   var e = 0;
+// flush anything that might still be pending in the emitter
+emitter.flushCurrentLine();
 
-   while ( e < module.submodules.length ) {
-     console.log( "----WRITING SUBMODULE", module.submodules[e] );
-     if ( e ) this. write_string( ',\n' );
-     this.write_string( 'function(){\n' );
-     this.writeFileString( fs .readFileSync(module.submodules[e] ) );
-     this.write_string( '\n}')   ;
- 
-     console.log( "----FINISHED", module.submodules[e] );
-     e++;
-   }
+// YAY! SHOW IT TO THE WORLD!
+console.log(emitter.out);
 
-   this.write_string( ']  ]' );
-
-   console.log( "----(FINISHED SUBMODULES)\n" );
-};   
-
-Builder.prototype.write_string = function ( str) {
-  this.str += str;
-
-};
-
-var builder = new Builder();
-var files = fs .readdirSync(src);
-
-var e = 0;
-while ( e < files.length ) {
-  if ( fs .statSync(src+'/'+files[e]).isFile() ) {
-    var name = files[e];
-    name = name.substring(0, name.indexOf('.js') );
-    if ( name.charAt(0) === '@' )
-      builder.addModule(name.substring(1),src + '/' + files[e]);
-
-    else if ( name === 'mexport' )
-      builder.setExports(fs. readFileSync(src + '/' + files[e]) );
-
-    else {
-        var l = name.indexOf('@');
-        if ( l >= 0 ) 
-          builder.subModuleFor (name.substring( l +  1 ), src + '/' + files[e] );
-        
-        else
-           builder.addModule(name, src + '/' + files[e] ) ;
-    }
-  }
-  
-  e ++ ;
-}
-
+if (0) {
 var exports = {};
 
 console.log("BUILD STARTED");
@@ -182,4 +105,4 @@ catch (e) {
 
 // builder.write(fs .openSync(dist+'.js', 'w+'));
 console.log("BUILDING COMPLETE.");
-
+}
