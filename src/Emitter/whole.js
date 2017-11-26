@@ -72,6 +72,3 @@
   import './new-emit-ArrayExpression.js';
   import './new-emit-TaggedTemplateExpression.js';
   import './new-uemit-synth-rcheck.js';
-  import {Emitter, cls} from './cls.js';
-  export default Emitter;
-  export {cls};

@@ -122,6 +122,3 @@
   import './read-op-eq.js';
   import './parse-unary.js';
   import './read-div.js';
-  import {Parser, cls} from './cls.js';
-  export default Parser;
-  export {cls};

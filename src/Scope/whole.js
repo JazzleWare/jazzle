@@ -14,6 +14,3 @@
   import './inside.js';
   import './global.js';
   import './spawn.js';
-  import {Scope, cls} from './cls.js';
-  export default Scope;
-  export {cls};

@@ -40,6 +40,3 @@
   import './new-transform-VariableDeclaration.js';
   import './new-transform-WhileStatement.js';
   import './new-transform-TryStatement.js';
-  import {Transformer, cls} from './cls.js';
-  export default Transformer;
-  export {cls};

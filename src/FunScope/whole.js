@@ -6,6 +6,3 @@
   import './strict.js';
   import './can.js';
   import './args-unique.js';
-  import {FunScope, cls} from './cls.js';
-  export default FunScope;
-  export {cls};
