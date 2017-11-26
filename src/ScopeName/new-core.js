@@ -1,6 +1,6 @@
   import {_m} from '../other/scope-util.js';
   import {ATS_DISTINCT, ATS_UNSURE, ATS_SAME} from '../other/scope-constants.js';
-  import {cls} from './ctor.js';
+  import {cls} from './cls.js';
 
 cls.hasName_m =
 function(mname) {

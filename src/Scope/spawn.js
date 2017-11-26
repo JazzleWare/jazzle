@@ -4,7 +4,7 @@
   import CatchScope from '../CatchScope/cls.js';
   import ParenScope from '../ParenScope/cls.js';
   import ClassScope from '../ClassScope/cls.js';
-  import {cls} from './ctor.js';
+  import {cls} from './cls.js';
 
 cls.spawnBlock =
 function() { return new Scope(this, ST_BLOCK); };

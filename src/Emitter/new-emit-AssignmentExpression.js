@@ -2,7 +2,7 @@
   import {isResolvedName, tg} from '../other/util.js';
   import {Emitters} from '../other/globals.js';
   import {wcb_afterVar} from '../other/wcb.js';
-  import {cls} from './ctor.js';
+  import {cls} from './cls.js';
 
 cls.emitAssignment_ex =
 function(n, flags, isStmt) {

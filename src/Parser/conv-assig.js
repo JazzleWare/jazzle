@@ -1,6 +1,6 @@
   import {arorev, core} from '../other/util.js';
   import {ERR_ARGUMENTS_OR_EVAL_DEFAULT, ERR_NONE_YET, ERR_ARGUMENTS_OR_EVAL_ASSIGNED} from '../other/error-constants.js';
-  import {cls} from './ctor.js';
+  import {cls} from './cls.js';
 
 cls.toAssig = function(head, context) {
   if (head === this.ao)

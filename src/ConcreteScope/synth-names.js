@@ -2,7 +2,7 @@
   import {_m} from '../other/scope-util.js';
   import SortedObj from '../SortedObj/cls.js';
   import {ATS_DISTINCT} from '../other/scope-constants.js';
-  import {cls} from './ctor.js';
+  import {cls} from './cls.js';
 
 cls.synth_boot =
 function(r) {

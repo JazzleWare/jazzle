@@ -1,5 +1,5 @@
   import {TK_ID} from '../other/lexer-constants.js';
-  import {cls} from './ctor.js';
+  import {cls} from './cls.js';
 
 cls.parsePat_rest =
 function() {

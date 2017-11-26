@@ -1,5 +1,5 @@
   import {ASSERT, STRING_TYPE, ETK_NONE, ETK_NL} from '../other/constants.js';
-  import {cls} from './ctor.js';
+  import {cls} from './cls.js';
 
 cls.writeToCurrentLine_checked =
 function(rawStr) {

@@ -1,5 +1,5 @@
   import {CH_OR} from '../other/constants.js';
-  import {cls} from './ctor.js';
+  import {cls} from './cls.js';
 
 cls.regPattern =
 function() {

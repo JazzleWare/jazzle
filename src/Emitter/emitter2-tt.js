@@ -1,5 +1,5 @@
   import {ASSERT, ETK_NONE} from '../other/constants.js';
-  import {cls} from './ctor.js';
+  import {cls} from './cls.js';
 
 cls.tt =
 function(tt) {

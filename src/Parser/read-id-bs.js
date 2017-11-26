@@ -1,7 +1,7 @@
   import {ERR_NONE_YET, ERR_PIN_UNICODE_IN_RESV} from '../other/error-constants.js';
   import {isIDHead} from '../other/ctype.js';
   import {cp2sp} from '../other/util.js';
-  import {cls} from './ctor.js';
+  import {cls} from './cls.js';
 
 cls.readID_bs =
 function() {

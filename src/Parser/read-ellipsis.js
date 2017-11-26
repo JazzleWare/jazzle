@@ -1,6 +1,6 @@
   import {CH_SINGLEDOT} from '../other/constants.js';
   import {TK_ELLIPSIS} from '../other/lexer-constants.js';
-  import {cls} from './ctor.js';
+  import {cls} from './cls.js';
 
 cls.read_ellipsis =
 function() {

@@ -3,7 +3,7 @@
   import {errt_ptrack, errt_atrack} from '../other/errt.js';
   import {ERR_PAREN_UNBINDABLE} from '../other/error-constants.js';
   import {core} from '../other/util.js';
-  import {cls} from './ctor.js';
+  import {cls} from './cls.js';
 
 cls.parseSpread = 
 function(ctx) {

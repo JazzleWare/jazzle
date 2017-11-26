@@ -1,7 +1,7 @@
   import {ASSERT, HAS} from '../other/constants.js';
   import Parser from '../Parser/cls.js';
   import {_m} from '../other/scope-util.js';
-  import {cls} from './ctor.js';
+  import {cls} from './cls.js';
 
 cls.asNode =
 function(uri) {

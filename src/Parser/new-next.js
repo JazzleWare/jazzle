@@ -1,7 +1,7 @@
   import {TK_EOF} from '../other/lexer-constants.js';
   import {isIDHead, isNum} from '../other/ctype.js';
   import {CH_MIN, CH_ADD, CH_MULTI_QUOTE, CH_SINGLE_QUOTE, CH_SINGLEDOT, CH_EQUALITY_SIGN, CH_LESS_THAN, CH_GREATER_THAN, CH_MUL, CH_MODULO, CH_EXCLAMATION, CH_COMPLEMENT, CH_OR, CH_AND, CH_XOR, CH_BACK_SLASH, CH_DIV} from '../other/constants.js';
-  import {cls} from './ctor.js';
+  import {cls} from './cls.js';
 
 cls.next =
 function() {

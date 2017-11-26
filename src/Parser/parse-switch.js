@@ -1,7 +1,7 @@
   import {CH_LPAREN, CTX_TOP, CH_RPAREN, CH_LCURLY, CH_RCURLY} from '../other/constants.js';
   import {core} from '../other/util.js';
   import {SA_BREAK} from '../other/scope-constants.js';
-  import {cls} from './ctor.js';
+  import {cls} from './cls.js';
 
 cls.parseSwitch = function () {
   this.resvchk();

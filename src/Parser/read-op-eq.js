@@ -1,6 +1,6 @@
   import {CH_EQUALITY_SIGN, CH_GREATER_THAN} from '../other/constants.js';
   import {TK_SIMP_BINARY, PREC_EQ, TK_SIMP_ASSIG} from '../other/lexer-constants.js';
-  import {cls} from './ctor.js';
+  import {cls} from './cls.js';
 
 cls.readOp_eq =
 function() {

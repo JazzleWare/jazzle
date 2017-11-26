@@ -2,7 +2,7 @@
   import {TK_ID} from '../other/lexer-constants.js';
   import {_m} from '../other/scope-util.js';
   import {CTX_DEFAULT, CTX_NONE, CH_LCURLY, CH_SEMI, CTX_CTOR_NOT_ALLOWED, CH_RCURLY, CH_LPAREN, CH_SINGLEDOT, CH_LSQBRACKET} from '../other/constants.js';
-  import {cls} from './ctor.js';
+  import {cls} from './cls.js';
 
 cls.parseClass = 
 function(ctx) {

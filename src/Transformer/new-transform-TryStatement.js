@@ -1,6 +1,6 @@
   import {Transformers} from '../other/globals.js';
   import {ASSERT} from '../other/constants.js';
-  import {cls} from './ctor.js';
+  import {cls} from './cls.js';
 
 Transformers['TryStatement'] =
 function(n, isVal) {

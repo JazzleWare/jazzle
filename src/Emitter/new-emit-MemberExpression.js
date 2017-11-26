@@ -1,7 +1,7 @@
   import {CB} from '../other/util.js';
   import {EC_NONE} from '../other/constants.js';
   import {Emitters} from '../other/globals.js';
-  import {cls} from './ctor.js';
+  import {cls} from './cls.js';
 
 cls.emitMemex =
 function(n, flags, isStmt, len) {

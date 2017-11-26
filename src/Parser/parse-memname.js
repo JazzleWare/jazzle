@@ -1,7 +1,7 @@
   import {PREC_NONE} from '../other/lexer-constants.js';
   import {CTX_NULLABLE, CTX_TOP, PAREN, CH_RSQBRACKET} from '../other/constants.js';
   import {CB, core} from '../other/util.js';
-  import {cls} from './ctor.js';
+  import {cls} from './cls.js';
 
 cls.mem_id = 
 function() {

@@ -6,7 +6,7 @@
   import {ERR_NONE_YET, ERR_PAREN_UNBINDABLE, ERR_SHORTHAND_UNASSIGNED} from '../other/error-constants.js';
   import {_m} from '../other/scope-util.js';
   import Comments from '../Comments/cls.js';
-  import {cls} from './ctor.js';
+  import {cls} from './cls.js';
 
 cls.parseMem =
 function(ctx, st) {

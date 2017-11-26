@@ -1,6 +1,6 @@
   import {surrogate} from '../other/util.js';
   import {isIDHead} from '../other/ctype.js';
-  import {cls} from './ctor.js';
+  import {cls} from './cls.js';
 
 cls.readID_surrogate =
 function(sc) {

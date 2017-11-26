@@ -1,7 +1,7 @@
   import {ERR_NONE_YET, agtb, ERR_PAREN_UNBINDABLE, ERR_SHORTHAND_UNASSIGNED, ERR_NON_TAIL_REST, ERR_ARGUMENTS_OR_EVAL_ASSIGNED, ERR_YIELD_OR_SUPER, ERR_UNEXPECTED_REST, ERR_EMPTY_LIST_MISSING_ARROW, ERR_NON_TAIL_EXPR, ERR_INTERMEDIATE_ASYNC, ERR_ASYNC_NEWLINE_BEFORE_PAREN, ERR_PIN_NOT_AN_EQ, ERR_ARGUMENTS_OR_EVAL_DEFAULT, ERR_PIN_OCTAL_IN_STRICT} from '../other/error-constants.js';
   import {ASSERT, HAS} from '../other/constants.js';
   import {errt_pin} from '../other/errt.js';
-  import {cls} from './ctor.js';
+  import {cls} from './cls.js';
 
 cls.pt_override =
 function(pt) {

@@ -1,5 +1,5 @@
   import {CH_RCURLY} from '../other/constants.js';
-  import {cls} from './ctor.js';
+  import {cls} from './cls.js';
 
 cls.parseBlock = function () {
   this.fixupLabels(false);

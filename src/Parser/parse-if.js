@@ -2,7 +2,7 @@
   import {CH_LPAREN, CTX_TOP, CH_RPAREN} from '../other/constants.js';
   import {core} from '../other/util.js';
   import {TK_ID} from '../other/lexer-constants.js';
-  import {cls} from './ctor.js';
+  import {cls} from './cls.js';
 
 cls.parseIf = function () {
   this.resvchk();

@@ -2,7 +2,7 @@
   import {wcb_afterStmt} from '../other/wcb.js';
   import {ATS_SAME} from '../other/scope-constants.js';
   import {CB} from '../other/util.js';
-  import {cls} from './ctor.js';
+  import {cls} from './cls.js';
 
 cls.emitSourceHead =
 function(n) {

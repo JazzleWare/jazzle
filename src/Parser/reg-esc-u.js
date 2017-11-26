@@ -1,6 +1,6 @@
   import {CH_LCURLY, CH_RCURLY} from '../other/constants.js';
   import {hex2num} from '../other/util.js';
-  import {cls} from './ctor.js';
+  import {cls} from './cls.js';
 
 // errors pertaining to u escapes will first check for pending semi ranges at the start of their corresponding routines
 cls.regEsc_u =

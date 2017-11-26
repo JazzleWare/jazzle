@@ -1,6 +1,6 @@
   import {TK_ID, TK_NUM, TK_UNBIN, PREC_UNARY} from '../other/lexer-constants.js';
   import {CH_LSQBRACKET, CH_LPAREN, CH_LCURLY, CH_MULTI_QUOTE, CH_SINGLE_QUOTE, CH_DIV, CH_BACKTICK} from '../other/constants.js';
-  import {cls} from './ctor.js';
+  import {cls} from './cls.js';
 
 cls.parseExprHead =
 function(ctx) {

@@ -1,7 +1,7 @@
   import {CH_SINGLEDOT} from '../other/constants.js';
   import {isNum} from '../other/ctype.js';
   import {FL_HEADLESS_FLOAT, TK_NUM} from '../other/lexer-constants.js';
-  import {cls} from './ctor.js';
+  import {cls} from './cls.js';
 
 cls.read_dot =
 function() {

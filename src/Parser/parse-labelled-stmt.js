@@ -1,5 +1,5 @@
   import {_m} from '../other/scope-util.js';
-  import {cls} from './ctor.js';
+  import {cls} from './cls.js';
 
 cls.parseLabel = function(label, allowNull) {
   var ref = this.scope.findRefAny_m(_m(label.name));

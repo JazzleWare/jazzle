@@ -1,6 +1,6 @@
   import {ATS_DISTINCT} from '../other/scope-constants.js';
   import {_m} from '../other/scope-util.js';
-  import {cls} from './ctor.js';
+  import {cls} from './cls.js';
 
 cls.mustSynth =
 function() {

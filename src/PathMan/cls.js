@@ -1,4 +1,4 @@
-  import './new-core.js';
-  import {PathMan, cls} from './ctor.js';
-  export default PathMan;
-  export {cls};
+
+export default function PathMan() {}
+
+ export var cls = PathMan.prototype;

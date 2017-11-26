@@ -1,6 +1,6 @@
   import {SF_FORINIT, SF_INSIDEPROLOGUE} from '../other/scope-constants.js';
   import {ASSERT} from '../other/constants.js';
-  import {cls} from './ctor.js';
+  import {cls} from './cls.js';
 
 cls.enterForInit =
 function() { this.flags |= SF_FORINIT; };

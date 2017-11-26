@@ -1,7 +1,7 @@
   import {_m} from '../other/scope-util.js';
   import SortedObj from '../SortedObj/cls.js';
   import Decl from '../Decl/cls.js';
-  import {cls} from './ctor.js';
+  import {cls} from './cls.js';
 
 cls.regulateImports_sl =
 function(src, list) {

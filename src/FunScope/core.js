@@ -1,6 +1,6 @@
   import {ASSERT} from '../other/constants.js';
   import {_m} from '../other/scope-util.js';
-  import {cls} from './ctor.js';
+  import {cls} from './cls.js';
 
 cls.setRefsAndArgRefs =
 function(refs) {

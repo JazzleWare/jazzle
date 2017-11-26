@@ -1,7 +1,17 @@
-  import './new-core.js';
-  import './ex.js';
-  import './im.js';
-  import './satisfy.js';
-  import {SourceScope, cls} from './ctor.js';
-  export default SourceScope;
-  export {cls};
+  import ConcreteScope from '../ConcreteScope/cls.js';
+  import SortedObj from '../SortedObj/cls.js';
+
+export default function SourceScope(parent, st) {
+  ConcreteScope.call(this, parent, st);
+  this.spThis = null;
+
+  this.allSourcesImported = this.asi = new SortedObj();
+  this.allNamesExported = this.ane = new SortedObj();
+  this.allSourcesForwarded = this.asf = new SortedObj();
+
+  this.latestUnresolvedExportTarget = null;
+  this.allUnresolvedExports = this.aue = new SortedObj();
+}
+
+ import {createObj} from '../other/util.js';
+ export var cls = SourceScope.prototype = createObj(ConcreteScope.prototype);

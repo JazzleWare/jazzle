@@ -1,6 +1,6 @@
   import {HAS} from '../other/constants.js';
   import {Transformers} from '../other/globals.js';
-  import {cls} from './ctor.js';
+  import {cls} from './cls.js';
 
 cls.setCVTZ =
 function(cvtz) {

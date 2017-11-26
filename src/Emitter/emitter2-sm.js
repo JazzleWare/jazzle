@@ -1,7 +1,7 @@
   import {_m} from '../other/scope-util.js';
   import {ASSERT} from '../other/constants.js';
   import {vlq} from '../other/util.js';
-  import {cls} from './ctor.js';
+  import {cls} from './cls.js';
 
 cls.smSetName_str =
 function(name) {

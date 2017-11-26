@@ -1,6 +1,6 @@
   import {ASSERT} from '../other/constants.js';
   import Liquid from '../Liquid/cls.js';
-  import {cls} from './ctor.js';
+  import {cls} from './cls.js';
 
 cls.spCreate_arguments =
 function(ref) {

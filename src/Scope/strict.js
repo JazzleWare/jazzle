@@ -1,5 +1,5 @@
   import {SF_STRICT} from '../other/scope-constants.js';
-  import {cls} from './ctor.js';
+  import {cls} from './cls.js';
 
 cls.makeStrict =
 function() {

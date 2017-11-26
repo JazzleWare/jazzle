@@ -1,4 +1,8 @@
-  import './new-core.js';
-  import {Comments, cls} from './ctor.js';
-  export default Comments;
-  export {cls};
+
+export default function Comments() {
+  this.c = [];
+  this.n = false;
+  this.firstLen = 0;
+}
+
+ export var cls = Comments.prototype;

@@ -1,6 +1,6 @@
   import {ASSERT} from '../other/constants.js';
   import {vlq} from '../other/util.js';
-  import {cls} from './ctor.js';
+  import {cls} from './cls.js';
 
 cls.flushCurrentLine =
 function() {

@@ -1,7 +1,7 @@
   import {core} from '../other/util.js';
   import {PREC_NONE} from '../other/lexer-constants.js';
   import {CTX_TOP, CH_COLON, CTX_FOR} from '../other/constants.js';
-  import {cls} from './ctor.js';
+  import {cls} from './cls.js';
 
 cls.parseCond = function(cond, ctx) {
   this.spc(core(cond), 'aft');

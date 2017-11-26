@@ -3,7 +3,7 @@
   import {errt_track, errt_ptrack, errt_atrack, errt_strack, errt_pin, errt_psyn, errt_asyn, errt_ssyn, errt_perr, errt_aerr, errt_serr} from '../other/errt.js';
   import {ST_OBJMEM} from '../other/scope-constants.js';
   import {core} from '../other/util.js';
-  import {cls} from './ctor.js';
+  import {cls} from './cls.js';
 
 cls.parseObj = function(ctx) {
   var c0 = this.c0, loc0 = this.loc0(),

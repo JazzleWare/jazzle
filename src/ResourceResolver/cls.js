@@ -1,4 +1,7 @@
-  import './new-core.js';
-  import {ResourceResolver, cls} from './ctor.js';
-  export default ResourceResolver;
-  export {cls};
+
+export default function ResourceResolver() {
+  this.savedNodes = {}; 
+  this.bundleScope = null;
+}
+
+ export var cls = ResourceResolver.prototype;

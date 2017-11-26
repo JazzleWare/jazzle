@@ -1,6 +1,6 @@
   import {ASSERT} from '../other/constants.js';
   import {ref_this_m} from '../other/ref-cat.js';
-  import {cls} from './ctor.js';
+  import {cls} from './cls.js';
 
 cls.handOverRefList =
 function(list) {

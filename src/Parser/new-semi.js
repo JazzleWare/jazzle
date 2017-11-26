@@ -1,6 +1,6 @@
   import {CH_SEMI, CH_RCURLY} from '../other/constants.js';
   import {TK_EOF} from '../other/lexer-constants.js';
-  import {cls} from './ctor.js';
+  import {cls} from './cls.js';
 
 cls.semi =
 function(cb, i) {

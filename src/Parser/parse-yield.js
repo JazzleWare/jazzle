@@ -1,7 +1,7 @@
   import {PREC_NONE} from '../other/lexer-constants.js';
   import {CTX_FOR, CTX_NULLABLE} from '../other/constants.js';
   import {core} from '../other/util.js';
-  import {cls} from './ctor.js';
+  import {cls} from './cls.js';
 
 cls.parseYield = 
 function(ctx) {

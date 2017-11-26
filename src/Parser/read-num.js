@@ -2,7 +2,7 @@
   import {isNum, isIDHead} from '../other/ctype.js';
   import {FL_SIMPLE_FLOAT, FL_GET_E, TK_NUM, FL_HEADLESS_FLOAT} from '../other/lexer-constants.js';
   import {octStr2num, hex2num} from '../other/util.js';
-  import {cls} from './ctor.js';
+  import {cls} from './cls.js';
 
 var NUM0_NONDEC = 0,
     NUM0_DEC = 1,

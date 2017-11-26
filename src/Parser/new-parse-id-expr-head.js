@@ -2,7 +2,7 @@
   import {TK_UNARY, VDT_VOID, TK_YIELD, VDT_AWAIT, VDT_DELETE} from '../other/lexer-constants.js';
   import {CTX_NONE, CTX_FOR, ASSERT} from '../other/constants.js';
   import {ERR_NONE_YET, ERR_PIN_UNICODE_IN_RESV} from '../other/error-constants.js';
-  import {cls} from './ctor.js';
+  import {cls} from './cls.js';
 
 cls.parseIDExprHead =
 function(ctx) {

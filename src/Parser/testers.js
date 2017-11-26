@@ -1,6 +1,6 @@
   import {arorev} from '../other/util.js';
   import {ASSERT, PE_NO_NONVAR, PE_NO_LABEL, PE_NONE} from '../other/constants.js';
-  import {cls} from './ctor.js';
+  import {cls} from './cls.js';
 
 cls.ensureSAT =
 function(left) {
