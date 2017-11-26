@@ -28,11 +28,14 @@ function() {
 
   var inner = core(head), elem = null;
 
+  var argloc = null;
+
   LOOP:
   while (true)
   switch (this.lttype) {
   case CH_SINGLEDOT:
     this.spc(inner, 'aft');
+    argloc = this.loc0();
     this.next();
     if (this.lttype !== TK_ID)
       this.err('mem.name.not.id');
@@ -49,7 +52,7 @@ function() {
         start: head.loc.start,
         end: elem.loc.end },
       computed: false,
-      '#y': this.Y(head), '#c': {}
+      '#y': this.Y(head), '#acloc': argloc, '#c': {}
     };
     continue;
 
@@ -67,7 +70,7 @@ function() {
         start: head.loc.start,
         end: this.loc() },
       computed: true,
-      '#y': this.Y(head)+this.Y(elem), '#c': {}
+      '#y': this.Y(head)+this.Y(elem), '#acloc': argloc, '#c': {}
     };
     this.spc(core(elem), 'aft');
     if (!this.expectT(CH_RSQBRACKET))
@@ -76,6 +79,7 @@ function() {
 
   case CH_LPAREN:
     this.spc(inner, 'aft');
+    argloc = this.loc0();
     elem = this.parseArgList();
     this.suc(cb, 'inner');
     head = inner = {
@@ -87,7 +91,7 @@ function() {
       loc: {
         start: loc0,
         end: this.loc() },
-      '#y': this.Y(head)+this.y, '#c': cb,
+      '#y': this.Y(head)+this.y, '#argloc': argloc, '#c': cb,
     };
     if (!this.expectT(CH_RPAREN))
       this.err('new.args.is.unfinished');
