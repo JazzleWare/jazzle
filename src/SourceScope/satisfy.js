@@ -68,7 +68,7 @@ function(name) {
   var entry = this.allNamesExported.has(mname) ?
     this.allNamesExported.get(mname) : null;
   if (entry) {
-    ASSERT.call(this, entry.target.v, 'entry' );
+    ASSERT.call(this, entry.target.v, 'entry ['+name+'] in ['+this['#uri']+']' );
     return entry.target.v;
   }
   return null;

@@ -11,7 +11,7 @@ function(mname, ref) {
   if (globalBinding) {
     ASSERT.call(this, this.isBundle(), 'not');
     globalBinding.refreshRSListWithList(ref.rsList);
-    ref.parentRef = this;
+    ref.parentRef = globalBinding.ref;
   }
   else {
     globalBinding = new Decl().t(DT_GLOBAL).r(ref).n(_u(mname));

@@ -1,12 +1,13 @@
   import {Emitters} from '../other/globals.js';
   import {CB, isInteger} from '../other/util.js';
-  import {ETK_ID, STRING_TYPE, ETK_NONE, BOOL_TYPE, NUMBER_TYPE, ETK_NUM, ASSERT} from '../other/constants.js';
+  import {ETK_ID, STRING_TYPE, ETK_NONE, BOOL_TYPE, NUMBER_TYPE, ETK_NUM, ASSERT, HAS} from '../other/constants.js';
   import {wcb_intDotGuard} from '../other/wcb.js';
 
 Emitters['Literal'] =
 function(n, flags, isStmt) {
   var cb = CB(n); this.emc(cb, 'bef' );
-  if (n.value === null)
+  var isRegex = HAS.call(n, 'regex');
+  if (n.value === null && !isRegex)
     this.wt('null',ETK_ID);
   else
   switch (typeof n.value) {
@@ -23,7 +24,10 @@ function(n, flags, isStmt) {
       this.gu(wcb_intDotGuard );
     break;
   default:
-    ASSERT.call(this, false, 'unknown value');
+    if (isRegex)
+      this.wt(n.raw,ETK_DIV);
+    else
+      ASSERT.call(this, false, 'unknown value');
     break;
   }
   this.emc(cb, 'aft');
@@ -31,4 +35,3 @@ function(n, flags, isStmt) {
 
   return true;
 };
-

@@ -1,4 +1,5 @@
-  import {CH_0, CH_9, CH_z, CH_a, CH_Z, CH_A, CH_UNDERLINE, CH_$, D_INTBITLEN, M_INTBITLEN, CH_f, CH_F} from './constants.js';
+  import {CH_0, CH_9, CH_z, CH_a, CH_Z, CH_A, CH_UNDERLINE, CH_$, CH_f, CH_F} from './constants.js';
+  import {D_INTBITLEN, M_INTBITLEN} from './int-constants.js';
   import {IDS_, IDC_} from './unicode.js';
 
 function isNum(c) {

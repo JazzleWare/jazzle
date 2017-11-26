@@ -4,7 +4,7 @@ Transformers['ExportNamedDeclaration'] =
 function(n, isVal) {
   // TODO: transform local names to rns when bundling is not active
 
-  if (n.declatarion !== null)
+  if (n.declaration !== null)
     n.declaration = this.tr(n.declaration, false);
 
   n.type = '#' + n.type ;

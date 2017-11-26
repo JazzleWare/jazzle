@@ -5157,7 +5157,8 @@ function(){
 Emitters['Literal'] =
 function(n, flags, isStmt) {
   var cb = CB(n); this.emc(cb, 'bef' );
-  if (n.value === null)
+  var isRegex = HAS.call(n, 'regex');
+  if (n.value === null && !isRegex)
     this.wt('null',ETK_ID);
   else
   switch (typeof n.value) {
@@ -5174,7 +5175,10 @@ function(n, flags, isStmt) {
       this.gu(wcb_intDotGuard );
     break;
   default:
-    ASSERT.call(this, false, 'unknown value');
+    if (isRegex)
+      this.wt(n.raw,ETK_DIV  );
+    else
+      ASSERT.call(this, false, 'unknown value');
     break;
   }
   this.emc(cb, 'aft');
@@ -16544,7 +16548,11 @@ this.satisfyBindingWithName =
 function(binding, name) {
   var ex = this.searchExports(name, null);
 
-  ex || this.err('unresolved.name');
+  if (!ex) {
+    console.error('Unresoved ['+name+'] in ['+this['#uri']+']');
+    this.err('unresolved.name');
+  }
+
   this.resolve1to2(binding, ex.ref.getDecl_real());
 };
 
@@ -16554,7 +16562,7 @@ function(name) {
   var entry = this.allNamesExported.has(mname) ?
     this.allNamesExported.get(mname) : null;
   if (entry) {
-    ASSERT.call(this, entry.target.v, 'entry' );
+    ASSERT.call(this, entry.target.v, 'entry ['+name+'] in ['+this['#uri']+']'  );
     return entry.target.v;
   }
   return null;
