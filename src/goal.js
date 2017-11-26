@@ -48,13 +48,15 @@
   import Bundler from './Bundler/cls.js';
   import {renamer_incremental, renamer_minify} from './other/renamer.js';
 
+  import ResourceResolver from './ResourceResolver/cls.js';
+
 (function(global, exporter) {
   if (typeof exports === 'object' && typeof module !== 'undefined')
     exporter(exports);
   else if (typeof define === 'function' && define.amd)
     define(['exports'], exporter);
   else
-    exporter(golbal.jazzle = global.jazzle || {});
+    exporter(global.jazzle = global.jazzle || {});
 })(this, function exporter(exports) { 
 
   exports.parse = function(src, isModule ) {
@@ -122,13 +124,9 @@
 
   exports. VirtualResourceResolver = VirtualResourceResolver;
   exports. Bundler = Bundler;
-
-  exports. makeAcceptor = makeAcceptor;
-
-// this.cd = cd;
-// this.pathFor = pathFor;
-// this.tailFor = tailFor;
+  exports.ResourceResolver = ResourceResolver;
 
   exports.renamer_incremental = renamer_incremental;
+
   exports.renamer_minify = renamer_minify;
 });

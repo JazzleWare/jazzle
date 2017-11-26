@@ -3,6 +3,7 @@ var DIST_OUTPUT_LOCATION = './dist/jazzle.js';
 var ROOT_PATH = './src';
 var ROOT_FILE = './src/goal.js';
 
+console.error("--------------------BUILD STARTED------------------------");
 var jazzle = require('../dist/jazzle.js');
 var fs = require('fs');
 
@@ -63,22 +64,21 @@ emitter.emitStmt(transformedBundleNode);
 emitter.flushCurrentLine();
 
 // YAY! SHOW IT TO THE WORLD!
-console.log(emitter.out);
+// console.log(emitter.out);
 
-if (0) {
 var exports = {};
 
-console.log("BUILD STARTED");
-builder.build();
-
 console.log("<WRITING FIRST>");
-builder.write(fs .openSync(dist+'.js', 'w+'));
+fs.writeFileSync(DIST_OUTPUT_LOCATION, emitter.out);
 console.log("<WRITING COMPLETE>");
 
 console.log("TESTING.....");
 
 try {
-   new Function(builder.str).call(exports);
+   new Function(emitter.out).call(exports);
+
+   console.error('E', exports); exports = exports.jazzle;
+
    var ts = require('../test/testers/parser.js')
      .createParserTester(exports.Parser, './test/assets/test-esprima','.ignore');
    ts.runAll();
@@ -104,5 +104,4 @@ catch (e) {
 }
 
 // builder.write(fs .openSync(dist+'.js', 'w+'));
-console.log("BUILDING COMPLETE.");
-}
+console.log("---------------------BUILDING COMPLETE.-----------------------------");

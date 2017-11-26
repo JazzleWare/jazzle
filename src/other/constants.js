@@ -80,21 +80,6 @@ var CH_1 = char2int('1'),
     CH_GREATER_THAN = char2int('>')
  ;
 
-var INTBITLEN = (function() {
-  var allOnes = ~0;
-  var i = 0;
-  while (allOnes) {
-    allOnes >>>= 1;
-    i++;
-  }
-
-  return i;
-}());
-
-
-var D_INTBITLEN = 0, M_INTBITLEN = INTBITLEN - 1;
-while ( M_INTBITLEN >> (++D_INTBITLEN) );
-
 var PAREN = 'paren';
 var PAREN_NODE = PAREN;
 

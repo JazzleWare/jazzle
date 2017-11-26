@@ -1,6 +1,0 @@
-FunScope#core.js by FuncScope#cls.js by Scope#spawn.js by Scope#cls.js by RealScope#ctor.js
-
-
-the rules outlined below can lead to a successful build most of the times:
-  './whole' must only be used in the goal file
-  './ctor' is the file to use for importing classes

@@ -22,7 +22,7 @@ function _m(name) { return name+'%'; }
 
 function ASSERT(cond, message) {
   if (cond) return;
-  throw new Error(messge);
+  throw new Error(message);
 }
 
 tesu.add =
@@ -268,7 +268,10 @@ function() {
   if (this.asExpected()) geci += 'e';
   if (this.contrary()) geci += 'c';
   if (this.incompatible()) geci += 'i';
-  ASSERT.call(this, geci.length === 1, 'unknown geci');
+  if (geci.length !== 1) {
+    console.error(this);   
+    ASSERT.call(this, false, 'unknown geci');
+  }
 
   return geci;
 };

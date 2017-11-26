@@ -1,9 +1,10 @@
   import {Emitters} from '../other/globals.js';
   import {tg, cvc, tzc, CB, isResolvedName} from '../other/util.js';
   import {EC_CALL_HEAD, ASSERT_EQ, EC_EXPR_HEAD, EC_NON_SEQ, EC_NONE, ETK_ID, ASSERT} from '../other/constants.js';
+  import {cls} from './cls.js';
 
-Emitters['#-ResolvedName.ex'] = this.emitRName_ex =
-Emitters['#-ResolvedName.sat'] = this.emitRName_SAT =
+Emitters['#-ResolvedName.ex'] = cls.emitRName_ex =
+Emitters['#-ResolvedName.sat'] = cls.emitRName_SAT =
 function(n, flags, isStmt) {
   var hasParen = false;
   var hasZero = false;
@@ -45,7 +46,7 @@ function(n, flags, isStmt) {
   return true;
 };
 
-Emitters['#-ResolvedName.binding'] = this.emitRName_binding =
+Emitters['#-ResolvedName.binding'] = cls.emitRName_binding =
 function(n, flags, isStmt) {
   ASSERT.call(this, isResolvedName(n), 'rn');
   var cb = CB(n); this.emc(cb, 'bef' );

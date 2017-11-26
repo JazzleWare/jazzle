@@ -1,5 +1,5 @@
   import {fromRunLenCodes} from './util.js';
-  import {D_INTBITLEN, M_INTBITLEN} from './constants.js';
+  import {D_INTBITLEN, M_INTBITLEN} from './int-constants.js';
 
 var IDS_ = fromRunLenCodes([0,8472,1,21,1,3948,2],
  fromRunLenCodes([0,65,26,6,26,47,1,10,1,4,1,5,23,1,31,1,458,4,12,14,5,7,1,1,1,129,

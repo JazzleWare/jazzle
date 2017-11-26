@@ -14,13 +14,13 @@ function(mname, childRef) {
   return ref;
 };
 
-cls.findRefU_m = this.fRo_m =
+cls.findRefU_m = cls.fRo_m =
 function(mname) {
   return this.refs.has(mname) ? 
     this.refs.get(mname) : null;
 };
 
-cls.findRefAny_m = this.fRa_m =
+cls.findRefAny_m = cls.fRa_m =
 function(mname) {
   var ref = this.findRefU_m(mname);
   if (ref)
@@ -60,7 +60,7 @@ function(mname) {
   return ref;
 };
 
-cls.focRefAny_m = this.focRa_m =
+cls.focRefAny_m = cls.focRa_m =
 function(mname) {
   var ref = this.findRefAny_m(mname);
   if (!ref) {

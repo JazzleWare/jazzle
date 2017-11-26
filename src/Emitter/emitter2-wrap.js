@@ -17,7 +17,7 @@ function() {
 };
 
 cls.overflowLength =
-this.ol =
+cls.ol =
 function(len) {
   var wl = this.wrapLimit;
   return wl <= 0 ? 0 : this.emcol_cur + len - wl;
