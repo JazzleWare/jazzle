@@ -1,6 +1,6 @@
   import {CH_LPAREN, CTX_TOP, CH_RPAREN} from '../other/constants.js';
   import {core} from '../other/util.js';
-  import {cls} from './cls.js';
+  import {cls} from './ctor.js';
 
 cls.parseWith = 
 function() {

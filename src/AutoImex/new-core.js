@@ -2,7 +2,7 @@
   import {_m, _u} from '../other/scope-util.js';
   import {ASSERT, HAS} from '../other/constants.js';
   import SortedObj from '../SortedObj/cls.js';
-  import {cls} from './cls.js';
+  import {cls} from './ctor.js';
 
 /* @<name>.js: 
  *   export default <name>

@@ -1,6 +1,6 @@
   import {CH_EQUALITY_SIGN, CH_AND} from '../other/constants.js';
   import {TK_OP_ASSIG, TK_SIMP_BINARY, PREC_LOG_AND, PREC_BIT_AND} from '../other/lexer-constants.js';
-  import {cls} from './cls.js';
+  import {cls} from './ctor.js';
 
 cls.readOp_and = 
 function() {

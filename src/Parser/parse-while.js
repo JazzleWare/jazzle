@@ -1,7 +1,7 @@
   import {SA_BREAK, SA_CONTINUE, SF_LOOP} from '../other/scope-constants.js';
   import {CH_LPAREN, CTX_TOP, CH_RPAREN} from '../other/constants.js';
   import {core} from '../other/util.js';
-  import {cls} from './cls.js';
+  import {cls} from './ctor.js';
 
 cls.parseWhile = 
 function () {

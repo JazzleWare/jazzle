@@ -1,6 +1,6 @@
   import {ASSERT_EQ, HAS, ASSERT} from '../other/constants.js';
   import {DT_NONE} from '../other/scope-constants.js';
-  import {cls} from './cls.js';
+  import {cls} from './ctor.js';
 
 cls.s =
 function(s) {

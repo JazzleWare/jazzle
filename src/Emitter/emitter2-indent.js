@@ -1,5 +1,5 @@
   import {ASSERT} from '../other/constants.js';
-  import {cls} from './cls.js';
+  import {cls} from './ctor.js';
 
 cls.findIndentStringWithIdealLength =
 function(idealLength) {

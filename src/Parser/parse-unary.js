@@ -1,7 +1,7 @@
   import {VDT_NONE, PREC_UNARY, VDT_DELETE, VDT_AWAIT} from '../other/lexer-constants.js';
   import {CTX_FOR} from '../other/constants.js';
   import {core} from '../other/util.js';
-  import {cls} from './cls.js';
+  import {cls} from './ctor.js';
 
 cls.parseUnary =
 function(ctx) {

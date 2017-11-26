@@ -1,5 +1,5 @@
   import {CH_BACK_SLASH, CH_CARRIAGE_RETURN, CH_LINE_FEED, CH_0} from '../other/constants.js';
-  import {cls} from './cls.js';
+  import {cls} from './ctor.js';
 
 cls.parseString =
 function(startChar) {

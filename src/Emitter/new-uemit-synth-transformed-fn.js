@@ -2,7 +2,7 @@
   import {CB} from '../other/util.js';
   import {ETK_ID} from '../other/constants.js';
   import {wcb_afterStmt} from '../other/wcb.js';
-  import {cls} from './cls.js';
+  import {cls} from './ctor.js';
 
 UntransformedEmitters['transformed-fn'] =
 function(n, flags, isStmt) {

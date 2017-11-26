@@ -2,7 +2,7 @@
   import {ASSERT_EQ, EC_NONE, ETK_ID} from '../other/constants.js';
   import {tg} from '../other/util.js';
   import {wcb_idNumGuard} from '../other/wcb.js';
-  import {cls} from './cls.js';
+  import {cls} from './ctor.js';
 
 Emitters['#ForInStatementWithDeclarationHead' ] =
 function(n, flags, isStmt) {

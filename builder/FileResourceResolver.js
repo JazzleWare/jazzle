@@ -38,7 +38,10 @@ function(uri) {
   var src = fs.readFileSync(uri, 'utf-8').toString();
   var newParser = new Parser(src, {sourceType: 'module'});
   newParser.bundleScope = this.bundleScope;
-  return newParser.parseProgram();
+  var n = newParser.parseProgram();
+  n['#scope']['#uri'] = uri;
+  n['#scope']['#loader'] = "";
+  return n;
 }
 
 cls.hasInCache =

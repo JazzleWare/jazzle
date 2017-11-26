@@ -1,7 +1,7 @@
   import {ref_arguments_m} from '../other/ref-cat.js';
   import {ASSERT, HAS} from '../other/constants.js';
   import {_m} from '../other/scope-util.js';
-  import {cls} from './cls.js';
+  import {cls} from './ctor.js';
 
 cls.synth_ref_may_escape_m =
 function(mname) { return !ref_arguments_m(mname); };

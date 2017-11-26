@@ -1,6 +1,6 @@
   import {TK_SIMP_BINARY, TK_AA_MM, TK_UNBIN, PREC_ADD, TK_OP_ASSIG, PREC_MUL, TK_ID, PREC_COMP, PREC_COND} from '../other/lexer-constants.js';
   import {CH_DIV, CH_EQUALITY_SIGN, CTX_FOR, CH_QUESTION} from '../other/constants.js';
-  import {cls} from './cls.js';
+  import {cls} from './ctor.js';
 
 cls.getOp = 
 function(ctx) {

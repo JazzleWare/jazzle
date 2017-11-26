@@ -1,5 +1,5 @@
   import {HAS, ASSERT} from '../other/constants.js';
-  import {cls} from './cls.js';
+  import {cls} from './ctor.js';
 
 cls.set = function(name, val) {
   if (!HAS.call(this.obj, name))

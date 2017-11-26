@@ -1,7 +1,7 @@
   import {CH_LCURLY, CH_SEMI, CTX_PAT, CH_SINGLE_QUOTE, CH_MULTI_QUOTE, CTX_NULLABLE, CTX_TOP, CH_COLON} from '../other/constants.js';
   import {TK_ID, TK_EOF} from '../other/lexer-constants.js';
   import {isDirective, core} from '../other/util.js';
-  import {cls} from './cls.js';
+  import {cls} from './ctor.js';
 
 cls.parseStatement =
 function(allowNull) {

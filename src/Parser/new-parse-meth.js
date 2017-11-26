@@ -1,7 +1,7 @@
   import {CH_LPAREN, PAREN, CTX_HASPROTOTYPE, CTX_CTOR_NOT_ALLOWED, CTX_NONE} from '../other/constants.js';
   import {ST_CLSMEM, ST_STATICMEM, ST_CTOR, ST_GETTER, ST_SETTER, ST_ACCESSOR} from '../other/scope-constants.js';
   import {core} from '../other/util.js';
-  import {cls} from './cls.js';
+  import {cls} from './ctor.js';
 
 cls.parseMeth =
 function(memName, ctx, st) {

@@ -1,5 +1,5 @@
   import {CVTZ_NONE} from '../other/constants.js';
-  import {cls} from './cls.js';
+  import {cls} from './ctor.js';
 
 cls.id = function() {
   var id = {

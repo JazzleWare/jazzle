@@ -4,7 +4,7 @@
   import FunScope from '../FunScope/cls.js';
   import ConcreteScope from '../ConcreteScope/cls.js';
   import {_m} from '../other/scope-util.js';
-  import {cls} from './cls.js';
+  import {cls} from './ctor.js';
 
 cls.synth_boot =
 function(r) {

@@ -1,5 +1,5 @@
   import {CH_ADD, CH_QUESTION, CH_MUL, CH_LCURLY, ASSERT} from '../other/constants.js';
-  import {cls} from './cls.js';
+  import {cls} from './ctor.js';
 
 cls.regPrepareQ =
 function() {

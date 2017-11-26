@@ -1,5 +1,5 @@
   import {ASSERT} from '../other/constants.js';
-  import {cls} from './cls.js';
+  import {cls} from './ctor.js';
 
 // the only names that are checked via hasClosureLLINOSA_m are the ones already known to be external refs
 // this is because the routine below is only called during getLoopLexicals. while there, the LLINOSA names

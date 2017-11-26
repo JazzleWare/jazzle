@@ -1,5 +1,5 @@
   import {EC_EXPR_HEAD, EC_NON_SEQ, EC_NEW_HEAD, EC_CALL_HEAD} from '../other/constants.js';
-  import {cls} from './cls.js';
+  import {cls} from './ctor.js';
 
 cls.emitAny =
 function(n, flags, isStmt) {

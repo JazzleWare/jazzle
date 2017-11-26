@@ -2,7 +2,7 @@
   import {_m} from '../other/scope-util.js';
   import {core} from '../other/util.js';
   import {TK_ID, PREC_NONE} from '../other/lexer-constants.js';
-  import {cls} from './cls.js';
+  import {cls} from './ctor.js';
 
 cls.parseNew =
 function() {

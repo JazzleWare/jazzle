@@ -1,5 +1,5 @@
   import {ST_FN, ST_CATCH, ST_SCRIPT, ST_MODULE, ST_CLS, ST_GEN, ST_ASYNC, ST_GETTER, ST_SETTER, ST_CLSMEM, ST_STATICMEM, ST_OBJMEM, ST_ARROW, ST_BLOCK, ST_BARE, ST_CTOR, ST_DECL, ST_PAREN, ST_EXPR, ST_BUNDLE, ST_GLOBAL} from '../other/scope-constants.js';
-  import {cls} from './cls.js';
+  import {cls} from './ctor.js';
 
 cls.isAnyFn = 
 function() { return this.type & ST_FN; };

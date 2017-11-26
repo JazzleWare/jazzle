@@ -1,5 +1,5 @@
   import {HAS, ASSERT} from '../other/constants.js';
-  import {cls} from './cls.js';
+  import {cls} from './ctor.js';
 
 // TODO: liquids leave no signs in any scope the don't belong to --
 //       they record it in their list of referencing scopes if they

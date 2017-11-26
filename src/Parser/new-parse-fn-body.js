@@ -1,5 +1,5 @@
   import {CH_LCURLY, CH_RCURLY} from '../other/constants.js';
-  import {cls} from './cls.js';
+  import {cls} from './ctor.js';
 
 cls.parseFunBody =
 function() {

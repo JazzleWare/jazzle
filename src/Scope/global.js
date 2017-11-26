@@ -2,7 +2,7 @@
   import Decl from '../Decl/cls.js';
   import {DT_GLOBAL} from '../other/scope-constants.js';
   import {_u} from '../other/scope-util.js';
-  import {cls} from './cls.js';
+  import {cls} from './ctor.js';
 
 cls.spReportGlobal_m =
 function(mname, ref) {

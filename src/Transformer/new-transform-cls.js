@@ -5,7 +5,7 @@
   import Ref from '../Ref/cls.js';
   import {Transformers} from '../other/globals.js';
   import {tg} from '../other/util.js';
-  import {cls} from './cls.js';
+  import {cls} from './ctor.js';
 
 cls.transformCls =
 function(n, isVal, oBinding) { // o -> outer

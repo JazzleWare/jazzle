@@ -1,6 +1,6 @@
   import {_m} from '../other/scope-util.js';
   import {ASSERT} from '../other/constants.js';
-  import {cls} from './cls.js';
+  import {cls} from './ctor.js';
 
 cls.forwardsSource =
 function(src) {

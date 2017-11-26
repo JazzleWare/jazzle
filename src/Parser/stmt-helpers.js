@@ -1,5 +1,5 @@
   import {HAS} from '../other/constants.js';
-  import {cls} from './cls.js';
+  import {cls} from './ctor.js';
 
 cls.findLabel_m = 
 function(mname) {

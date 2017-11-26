@@ -1,5 +1,5 @@
   import {SA_NEW_TARGET} from '../other/scope-constants.js';
-  import {cls} from './cls.js';
+  import {cls} from './ctor.js';
 
 cls.hasNewTarget =
 function() { return this.allowed & SA_NEW_TARGET; };

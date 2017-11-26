@@ -3,7 +3,7 @@
   import {ERR_NONE_YET, ERR_PIN_UNICODE_IN_RESV} from '../other/error-constants.js';
   import {cp2sp, surrogate} from '../other/util.js';
   import {TK_ID} from '../other/lexer-constants.js';
-  import {cls} from './cls.js';
+  import {cls} from './ctor.js';
 
 cls.readID_withHead = 
 function(v) {

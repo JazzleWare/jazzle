@@ -1,7 +1,7 @@
   import {_u, _m} from '../other/scope-util.js';
   import {ASSERT, HAS} from '../other/constants.js';
   import {DT_EFW} from '../other/scope-constants.js';
-  import {cls} from './cls.js';
+  import {cls} from './ctor.js';
 
 cls.satisfyWithBundler =
 function(bundler) {

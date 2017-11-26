@@ -1,6 +1,6 @@
   import {SA_MEMSUPER, SA_AWAIT, SA_BREAK, SA_CALLSUPER, ST_GEN, ST_ASYNC, SA_YIELD, SA_RETURN, SA_CONTINUE, SA_NEW_TARGET} from '../other/scope-constants.js';
   import {ASSERT} from '../other/constants.js';
-  import {cls} from './cls.js';
+  import {cls} from './ctor.js';
 
 cls.canSmem =
 function() { return this.actions & SA_MEMSUPER; };

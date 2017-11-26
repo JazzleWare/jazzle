@@ -3,7 +3,7 @@
   import {core} from '../other/util.js';
   import {errt_top, errt_pin, errt_track, errt_param, errt_pat} from '../other/errt.js';
   import {PREC_NONE} from '../other/lexer-constants.js';
-  import {cls} from './cls.js';
+  import {cls} from './ctor.js';
 
 cls.parseAssignment = function(head, ctx) {
   var o = this.ltraw;

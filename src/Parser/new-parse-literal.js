@@ -1,4 +1,4 @@
-  import {cls} from './cls.js';
+  import {cls} from './ctor.js';
 
 cls.getLit_true = function() {
   this.resvchk();

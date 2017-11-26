@@ -1,7 +1,7 @@
   import {TK_ID} from '../other/lexer-constants.js';
   import {arorev} from '../other/util.js';
   import {CH_LSQBRACKET, CH_LCURLY} from '../other/constants.js';
-  import {cls} from './cls.js';
+  import {cls} from './ctor.js';
 
 cls.parsePat = 
 function() {

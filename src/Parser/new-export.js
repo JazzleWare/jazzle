@@ -3,7 +3,7 @@
   import {CTX_NONE, CH_COMMA, CH_RCURLY, ASSERT, CTX_TOP, CTX_DEFAULT, CH_LCURLY} from '../other/constants.js';
   import {_m} from '../other/scope-util.js';
   import {core} from '../other/util.js';
-  import {cls} from './cls.js';
+  import {cls} from './ctor.js';
 
 cls.parseExport_elemOther =
 function(c0,loc0) {

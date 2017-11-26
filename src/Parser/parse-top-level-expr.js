@@ -1,7 +1,7 @@
   import {PREC_NONE} from '../other/lexer-constants.js';
   import {CH_COMMA, CTX_FOR, CTX_TOP} from '../other/constants.js';
   import {core} from '../other/util.js';
-  import {cls} from './cls.js';
+  import {cls} from './ctor.js';
 
 cls.parseExpr =
 function(ctx) {

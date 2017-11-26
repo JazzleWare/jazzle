@@ -1,6 +1,6 @@
   import {CH_$, CH_LCURLY, CTX_TOP, CH_RCURLY, CH_CARRIAGE_RETURN, CH_LINE_FEED, CH_BACK_SLASH, CH_BACKTICK} from '../other/constants.js';
   import {core} from '../other/util.js';
-  import {cls} from './cls.js';
+  import {cls} from './ctor.js';
 
 cls.parseTemplate =
 function() {

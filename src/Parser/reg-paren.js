@@ -1,5 +1,5 @@
   import {CH_QUESTION, CH_RPAREN, CH_EQUALITY_SIGN, CH_EXCLAMATION, CH_COLON} from '../other/constants.js';
-  import {cls} from './cls.js';
+  import {cls} from './ctor.js';
 
 cls.regParen =
 function() {

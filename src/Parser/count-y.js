@@ -1,6 +1,6 @@
   import {PAREN, HAS, ASSERT} from '../other/constants.js';
   import {core} from '../other/util.js';
-  import {cls} from './cls.js';
+  import {cls} from './ctor.js';
 
 function base_Y0(n) {
   if (!this.scope.canYield() || n === null)

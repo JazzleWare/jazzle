@@ -1,5 +1,5 @@
   import {Transformers} from '../other/globals.js';
-  import {cls} from './cls.js';
+  import {cls} from './ctor.js';
 
 Transformers['Identifier'] =
 function(n, isVal) {

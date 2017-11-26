@@ -1,5 +1,5 @@
   import {ASSERT} from '../other/constants.js';
-  import {cls} from './cls.js';
+  import {cls} from './ctor.js';
 
 // TODO: add a mechanism to react to cases where latestVal does not have a property (own or inherited)
 // whose name has the same value as idx

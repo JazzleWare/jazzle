@@ -1,5 +1,5 @@
   import {ASSERT, ETK_NL} from '../other/constants.js';
-  import {cls} from './cls.js';
+  import {cls} from './ctor.js';
 
 cls.wrapCurrentLine =
 function() {

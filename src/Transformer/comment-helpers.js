@@ -1,5 +1,5 @@
   import {ASSERT, HAS} from '../other/constants.js';
-  import {cls} from './cls.js';
+  import {cls} from './ctor.js';
 
 cls.ac =
 function(to, name, from) {

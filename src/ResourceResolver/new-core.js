@@ -1,6 +1,6 @@
   import {HAS, ASSERT} from '../other/constants.js';
   import {_m} from '../other/scope-util.js';
-  import {cls} from './cls.js';
+  import {cls} from './ctor.js';
 
 // TODO: fetch nodes based on id's, such that, in case the uri's 'a/b' and 'l/e' both point to the same file on a disk, and we have only saved 'a/b', this.get('l/e') returns the 
 // same node saved under 'a/b' (by the way, this is more of a bundler's job than a resource loader's)

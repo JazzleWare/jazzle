@@ -2,7 +2,7 @@
   import {CTX_NULLABLE, CH_QUESTION, CTX_FOR} from '../other/constants.js';
   import {errt_pat, errt_noLeak} from '../other/errt.js';
   import {core} from '../other/util.js';
-  import {cls} from './cls.js';
+  import {cls} from './ctor.js';
 
 cls.parseNonSeq =
 function(prec, ctx) {

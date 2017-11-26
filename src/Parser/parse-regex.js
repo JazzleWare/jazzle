@@ -1,6 +1,6 @@
   import {CH_LSQBRACKET, CH_BACK_SLASH, CH_RSQBRACKET, CH_DIV, CH_LPAREN, CH_QUESTION, CH_CARRIAGE_RETURN, CH_LINE_FEED} from '../other/constants.js';
   import {isIDBody} from '../other/ctype.js';
-  import {cls} from './cls.js';
+  import {cls} from './ctor.js';
 
 // /\1200(*followed by 1200 ()'s)/ becomes /(*backref=\1200)(*1200 ()'s)/; but, /\1200(*followed by 1199 ()'s)/ becomes /(*legacyEsc=\120)(*ch='0')(*1199 ()'s);
 // this means any captureP had better get tracked below, rather than in `parseRegex`

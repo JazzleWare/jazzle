@@ -1,7 +1,7 @@
   import {ASSERT} from '../other/constants.js';
   import {DT_NONE, DT_LET, DT_CONST} from '../other/scope-constants.js';
   import {_m} from '../other/scope-util.js';
-  import {cls} from './cls.js';
+  import {cls} from './ctor.js';
 
 cls.declare = function(id) {
   ASSERT.call(this, this.declMode !== DT_NONE, 'Unknown declMode');

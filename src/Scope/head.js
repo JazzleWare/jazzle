@@ -1,5 +1,5 @@
   import {ASSERT, ASSERT_EQ} from '../other/constants.js';
-  import {cls} from './cls.js';
+  import {cls} from './ctor.js';
 
 cls.activateBody =
 function() {

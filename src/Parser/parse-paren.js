@@ -3,7 +3,7 @@
   import {PREC_NONE, TK_ELLIPSIS} from '../other/lexer-constants.js';
   import {errt_param, errt_ptrack, errt_pin, errt_psyn, errt_strack, errt_ssyn, errt_pat} from '../other/errt.js';
   import {core, CB} from '../other/util.js';
-  import {cls} from './cls.js';
+  import {cls} from './ctor.js';
 
 cls.parseParen = function(ctx) {
   var c0 = this.c0, loc0 = this.loc0(),

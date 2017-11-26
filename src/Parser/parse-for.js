@@ -2,7 +2,7 @@
   import {TK_ID, PREC_NONE} from '../other/lexer-constants.js';
   import {DT_LET, DT_VAR, DT_CONST, SA_CONTINUE, SA_BREAK, SF_LOOP} from '../other/scope-constants.js';
   import {core} from '../other/util.js';
-  import {cls} from './cls.js';
+  import {cls} from './ctor.js';
 
 cls.parseFor = function() {
   this.resvchk();

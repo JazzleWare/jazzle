@@ -3,7 +3,7 @@
   import {_m} from '../other/scope-util.js';
   import {DT_FNARG} from '../other/scope-constants.js';
   import {Transformers} from '../other/globals.js';
-  import {cls} from './cls.js';
+  import {cls} from './ctor.js';
 
 cls.transformRawFn =
 function(n, isVal) {

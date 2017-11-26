@@ -1,6 +1,6 @@
   import {_m} from '../other/scope-util.js';
   import {HAS, CHK_NONE, CHK_T, ASSERT, CVTZ_T} from '../other/constants.js';
-  import {cls} from './cls.js';
+  import {cls} from './ctor.js';
 
 cls.getTCCache =
 function(decl) {

@@ -3,7 +3,7 @@
   import {ERR_NONE_YET, ERR_PAREN_UNBINDABLE, ERR_NON_TAIL_REST} from '../other/error-constants.js';
   import {PREC_NONE, TK_ELLIPSIS} from '../other/lexer-constants.js';
   import {core} from '../other/util.js';
-  import {cls} from './cls.js';
+  import {cls} from './ctor.js';
 
 cls.parseArray = 
 function(ctx) {

@@ -1,6 +1,6 @@
   import {CH_LPAREN, CH_COMMA, ARGLEN_ANY, CH_RPAREN} from '../other/constants.js';
   import {TK_ELLIPSIS} from '../other/lexer-constants.js';
-  import {cls} from './cls.js';
+  import {cls} from './ctor.js';
 
 cls.parseParams =
 function(argLen) {

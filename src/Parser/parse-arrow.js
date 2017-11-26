@@ -4,7 +4,7 @@
   import {_m} from '../other/scope-util.js';
   import {cmn, core} from '../other/util.js';
   import {PREC_NONE} from '../other/lexer-constants.js';
-  import {cls} from './cls.js';
+  import {cls} from './ctor.js';
 
 cls.parseArrow = function(arg, ctx)   {
   if (this.v <= 5)

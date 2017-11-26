@@ -1,7 +1,7 @@
   import {HAS} from '../other/constants.js';
   import ErrorString from '../ErrorString/cls.js';
   import Template from '../Template/cls.js';
-  import {cls} from './cls.js';
+  import {cls} from './ctor.js';
 
 cls.onErr = function(errorType, errParams) {
    var message = "";

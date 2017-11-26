@@ -4,7 +4,7 @@
   import Ref from '../Ref/cls.js';
   import {_m} from '../other/scope-util.js';
   import Liquid from '../Liquid/cls.js';
-  import {cls} from './cls.js';
+  import {cls} from './ctor.js';
 
 cls.determineActions =
 function() {

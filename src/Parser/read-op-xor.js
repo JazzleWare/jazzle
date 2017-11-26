@@ -1,6 +1,6 @@
   import {CH_EQUALITY_SIGN} from '../other/constants.js';
   import {TK_OP_ASSIG, PREC_BIT_XOR, TK_SIMP_BINARY} from '../other/lexer-constants.js';
-  import {cls} from './cls.js';
+  import {cls} from './ctor.js';
 
 cls.readOp_xor =
 function() {

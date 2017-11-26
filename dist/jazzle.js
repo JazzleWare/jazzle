@@ -5190,8 +5190,18 @@ function(n, flags, isStmt) {
   return this.emitBundleItem(n.rootNode);
 };
 
+function ws(n) {
+  var str = "";
+  while (n--) str += '| ';
+  return str;
+}
+
+var wslen = 0;
+
 this.emitBundleItem =
 function(n) {
+  var WS = ws(wslen++);
+  console.error(WS+'starting ['+n['#scope']['#uri']+']');
   var list = n['#imports'], len = list === null ? 0 : list.length, l = 0;
   var lsn = null;
   var own = {used: false};
@@ -5206,8 +5216,11 @@ function(n) {
     }
   }
 
+  console.error(WS+'Emitting ['+n['#scope']['#uri']+'] loaded from ['+n['#scope']['#loader']+']');
   this.emitStmt(n);
 
+  console.error(WS+'finish ['+n['#scope']['#uri']+']');
+  wslen--;
   own.used || this.grmif(own);
 };
 
@@ -11875,7 +11888,9 @@ this.parseProgram = function () {
     '#scope': this.scope,
     '#c': cb,
     '#y': 0, 
-    '#imports': null
+    '#imports': null,
+    '#uri': "", // uri of the program's source, if any such uri exists
+    '#loader': "" // uri of the very first source importing this program, if any such source exists and has a uri
   };
 
   if (!this.expectT(TK_EOF))
@@ -16488,6 +16503,7 @@ function(bundler) {
     var isNew = false;
     if (src === null) {
       src = bundler.loadNewSource();
+      src['#scope']['#loader'] = this['#uri'];
       isNew = true;
     }
     ASSERT.call(this, src, 'source not found: "'+sourcePath+'"' );
@@ -18631,7 +18647,8 @@ function(uri) {
   ASSERT.call(this, this.has(uri), 'resource not found ('+uri+')');
   var newParser = new Parser(this.fsMap[_m(uri)], {sourceType: 'module'});
   newParser.bundleScope = this.bundleScope;
-  return newParser.parseProgram();
+  var n = newParser.parseProgram();
+  return n;
 };
 
 this.has =

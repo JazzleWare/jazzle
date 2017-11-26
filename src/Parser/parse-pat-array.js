@@ -1,6 +1,6 @@
   import {TK_ELLIPSIS} from '../other/lexer-constants.js';
   import {CH_COMMA, CH_RSQBRACKET} from '../other/constants.js';
-  import {cls} from './cls.js';
+  import {cls} from './ctor.js';
 
 cls.parsePat_array = 
 function() {

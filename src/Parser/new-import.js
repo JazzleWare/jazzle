@@ -1,7 +1,7 @@
   import {TK_ID} from '../other/lexer-constants.js';
   import {DT_IDEFAULT, DT_IALIASED, DT_INAMESPACE} from '../other/scope-constants.js';
   import {CH_COMMA, CH_LCURLY, ASSERT, CH_RCURLY} from '../other/constants.js';
-  import {cls} from './cls.js';
+  import {cls} from './ctor.js';
 
 cls.parseImport =
 function() {

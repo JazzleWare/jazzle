@@ -1,6 +1,6 @@
   import {CTX_FOR} from '../other/constants.js';
   import {core} from '../other/util.js';
-  import {cls} from './cls.js';
+  import {cls} from './ctor.js';
 
 cls.parseUpdate = function(arg, ctx) {
   var c = 0, loc = null, u = this.ltraw;

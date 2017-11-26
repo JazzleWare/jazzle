@@ -2,7 +2,7 @@
   import {CB, tg, tzc, cvc} from '../other/util.js';
   import {ASSERT, ASSERT_EQ, CVTZ_C, CHK_V, CHK_NONE} from '../other/constants.js';
   import {_m} from '../other/scope-util.js';
-  import {cls} from './cls.js';
+  import {cls} from './ctor.js';
 
 TransformByLeft['ArrayPattern'] =
 function(n, isVal, isB) {

@@ -1,4 +1,4 @@
-  import {cls} from './cls.js';
+  import {cls} from './ctor.js';
 
 cls.regUnitAssertion =
 function() {

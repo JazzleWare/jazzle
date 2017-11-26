@@ -2,7 +2,7 @@
   import {CTX_FOR, PE_NO_NONVAR, PE_NO_LABEL, CTX_TOP, CH_COMMA} from '../other/constants.js';
   import {PREC_NONE} from '../other/lexer-constants.js';
   import {core} from '../other/util.js';
-  import {cls} from './cls.js';
+  import {cls} from './ctor.js';
 
 cls.parseVar =
 function(dt, ctx) {

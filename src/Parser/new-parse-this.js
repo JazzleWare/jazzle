@@ -1,5 +1,5 @@
   import {RS_THIS} from '../other/scope-constants.js';
-  import {cls} from './cls.js';
+  import {cls} from './ctor.js';
 
 cls.parseThis = function() {
   this.resvchk();

@@ -1,6 +1,6 @@
   import {ASSERT, ASSERT_EQ} from '../other/constants.js';
   import {guard_simpleListener} from '../other/wcb.js';
-  import {cls} from './cls.js';
+  import {cls} from './ctor.js';
 
 cls.insertGuard =
 function(guard) {
