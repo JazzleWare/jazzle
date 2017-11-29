@@ -49,6 +49,7 @@
   import {renamer_incremental, renamer_minify} from './other/renamer.js';
 
   import ResourceResolver from './ResourceResolver/cls.js';
+  import JZMap from './JZMap/cls.js';
 
 (function(global, exporter) {
   if (typeof exports === 'object' && typeof module !== 'undefined')
@@ -129,4 +130,6 @@
   exports.renamer_incremental = renamer_incremental;
 
   exports.renamer_minify = renamer_minify;
+
+  exports.JZMap = JZMap;
 });

@@ -1,4 +1,6 @@
-var jazzle = require('../dist/jazzle.js');
+function inject(jazzle) {
+
+
 var ResourceResolver = jazzle.ResourceResolver;
 var fs = require('fs');
 var Parser = jazzle.Parser;
@@ -68,4 +70,9 @@ function(uri) {
   return RRcls.loadNew.call(this, uri);
 };
 
- module.exports.FileResourceResolver = FileResourceResolver;
+
+ return {FileResourceResolver: FileResourceResolver};
+ 
+}
+
+ module.exports.inject = inject;

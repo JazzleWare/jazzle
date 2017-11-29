@@ -4,10 +4,29 @@ var ROOT_PATH = './src';
 var ROOT_FILE = './src/goal.js';
 
 console.error("--------------------BUILD STARTED------------------------");
-var jazzle = require('../dist/jazzle.js');
+var jazzle = null;
+
+try {
+  console.error('----------BOOTSTRAPPING-------');
+  jazzle = require('../dist/jazzle.js');
+  console.error('----------FOUND JAZZLE--------');
+} 
+catch (e) {
+  console.error('---------COULD NOT FIND JAZZLE; FALLING BACK TO EMERGENCY ONE-----------');
+  try {
+    jazzle = require('../emergency-bootstrapping/jazzle.js');
+    console.error('FOUND JAZZLE FOR EMERGENCY');
+  }
+  catch (e) {
+    throw new Error('COULD NOT FIND JAZZLE; STOPPING');
+  }
+}
+
+console.error('LOADING JAZZLE COMPLETE.');
+
 var fs = require('fs');
 
-var FileResourceResolver = require('./FileResourceResolver.js').FileResourceResolver;
+var FileResourceResolver = require('./FileResourceResolver.js').inject(jazzle).FileResourceResolver;
 
 var PathMan = jazzle.PathMan;
 var Transformer = jazzle.Transformer;

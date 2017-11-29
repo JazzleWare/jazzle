@@ -58,7 +58,7 @@ cls.satisfyBindingWithName =
 function(binding, name) {
   var ex = this.searchExports(name, null);
 
-  ex || this.err('unresolved.name');
+  if (!ex) this.parser.err('unresolved.name');
   this.resolve1to2(binding, ex.ref.getDecl_real());
 };
 

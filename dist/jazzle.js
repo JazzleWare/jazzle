@@ -13246,7 +13246,8 @@ cls13.satisfyEntries = function(list) {
 cls13.satisfyBindingWithName = function(binding, name) {
   var ex;
   ex = this.searchExports(name, null);
-  ex || this.err('unresolved.name');
+  if (!ex)
+    this.parser.err('unresolved.name');
   this.resolve1to2(binding, ex.ref.getDecl_real());
 };
 cls13.searchInOwnExports = function(name) {
@@ -14840,6 +14841,43 @@ cls21.set = function(uri, value) {
   ASSERT.call(this, !this.has(uri), 'has');
   this.fsMap[_m(uri)] = value;
 };
+function JZMap(helpers) {
+  var len, l, h;
+  this.jzmap = new SortedObj();
+  this.active = new SortedObj();
+  len = helpers.length;
+  l = 0;
+  while (l < len) {
+    h = helpers[l++];
+    ASSERT.call(this, !HAS.call(this.jzmap, h.id), 'helper ' + h.id + ' exists');
+    this.jzmap.set(h.id, h);
+  }
+}
+var jcl;
+jcl = JZMap.prototype;
+jcl.use = function(id) {
+  var list, l;
+  ASSERT.call(this, this.jzmap.has(id), 'no such name: ' + id);
+  if (!HAS.call(this.active, id)) {
+    this.active.set(id, true);
+    list = this.jzmap.get(id).uses;
+    l = 0;
+    while (l < list.length)
+      this.use(list[l++]);
+  }
+};
+jcl.asCode = function() {
+  var list, l, len, str, name;
+  list = this.active;
+  l = 0;
+  len = list.length();
+  str = '';
+  while (l < len) {
+    name = list.keys[l++];
+    str += this.jzmap.get(name).codeString;
+  }
+  return str;
+};
 (function(global, exporter) {
   if (typeof exports === 'object' && typeof module !== 'undefined')
     exporter(exports);
@@ -14882,4 +14920,5 @@ cls21.set = function(uri, value) {
   exports.ResourceResolver = ResourceResolver;
   exports.renamer_incremental = renamer_incremental;
   exports.renamer_minify = renamer_minify;
+  exports.JZMap = JZMap;
 });
