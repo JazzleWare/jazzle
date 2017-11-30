@@ -25,7 +25,7 @@ cls.parseArrow = function(arg, ctx)   {
   case 'Identifier':
     this.scope.findRefAny_m(_m(arg.name)).d--;
     this.enterScope(this.scope.spawnFn(sc));
-    this.scope.refDirect_m(_m(arg.name), null);
+    arg['#ref'] = this.scope.refDirect_m(_m(arg.name), null);
     this.asArrowFuncArg(arg);
     this.spc(arg, 'aft');
     loc = arg.loc.start;
@@ -73,7 +73,7 @@ cls.parseArrow = function(arg, ctx)   {
     async = true;
     sc |= ST_ASYNC;
     this.enterScope(this.scope.spawnFn(sc));
-    this.scope.refDirect_m(_m(arg.id.name), null);
+    arg.id['#ref'] = this.scope.refDirect_m(_m(arg.id.name), null);
     this.asArrowFuncArg(arg.id);
     cb.bef = arg.asyncID['#c'].bef;
     this.spc(arg.id, 'aft');
