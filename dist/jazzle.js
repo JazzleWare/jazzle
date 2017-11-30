@@ -639,9 +639,9 @@ function Actix(role) {
   this.role = role;
   this.inactiveIf = null;
 }
-var cls16;
-cls16 = Actix.prototype;
-cls16.ii = function(inactiveIf) {
+var cls17;
+cls17 = Actix.prototype;
+cls17.ii = function(inactiveIf) {
   ASSERT.call(this, this.inactiveIf === null, 'inactiveIf');
   this.inactiveIf = inactiveIf;
   return this;
@@ -980,8 +980,8 @@ function Scope(sParent, type) {
   if (this.parent && this.parent.isParen())
     this.parent.ch.push(this);
 }
-var cls15;
-cls15 = Scope.prototype = createObj(Actix.prototype);
+var cls16;
+cls16 = Scope.prototype = createObj(Actix.prototype);
 function ConcreteScope(parent, type) {
   Scope.call(this, parent, type);
   this.liquidDefs = new SortedObj();
@@ -990,8 +990,8 @@ function ConcreteScope(parent, type) {
   this.isBooted = false;
   this.renamer = null;
 }
-var cls14;
-cls14 = ConcreteScope.prototype = createObj(Scope.prototype);
+var cls15;
+cls15 = ConcreteScope.prototype = createObj(Scope.prototype);
 var ST_GLOBAL, ST_MODULE, ST_SCRIPT, ST_EXPR, ST_DECL, ST_OBJ, ST_FN, ST_CLS, ST_CLSMEM, ST_STATICMEM, ST_OBJMEM, ST_METH, ST_CTOR, ST_SETTER, ST_GETTER, ST_ACCESSOR, ST_ARROW, ST_BUNDLE, ST_GEN, ST_ASYNC, ST_BLOCK, ST_BARE, ST_CATCH, ST_PAREN, ST_NONE, SA_THROW, SA_AWAIT, SA_BREAK, SA_YIELD, SA_RETURN, SA_CONTINUE, SA_NEW_TARGET, SA_CALLSUPER, SA_MEMSUPER, SA_NONE, SF_LOOP, SF_UNIQUE, SF_STRICT, SF_ARGS, SF_INSIDEIF, SF_COND, SF_FORINIT, SF_WITH_SCALL, SF_HERITAGE, SF_WITH_SMEM, SF_INSIDEPROLOGUE, SF_NONE, DT_CLS, DT_FN, DT_CONST, DT_VAR, DT_CATCHARG, DT_SPECIAL, DT_LIQUID, DT_LET, DT_ARGUMENTS, DT_FNARG, DT_CLSNAME, DT_IDEFAULT, DT_IALIASED, DT_INAMESPACE, DT_INFERRED, DT_GLOBAL, DT_FNNAME, DT_EDEFAULT, DT_EALIASED, DT_ESELF, DT_EFW, DT_BOMB, DT_EXPORTED, DT_IMPORTED, DT_NONE, RS_ARGUMENTS, RS_SCALL, RS_THIS, ATS_DISTINCT, ATS_UNSURE, ATS_SAME;
 ST_GLOBAL = 1;
 ST_MODULE = ST_GLOBAL << 1;
@@ -1317,12 +1317,12 @@ function LiquidGroup(cat, scope) {
 }
 var cls24;
 cls24 = LiquidGroup.prototype;
-cls14.gocLG = function(gName) {
+cls15.gocLG = function(gName) {
   var lg;
   lg = this.getLG(gName);
   return lg || this.createLG(gName);
 };
-cls14.getLG = function(gName) {
+cls15.getLG = function(gName) {
   var mname;
   mname = _m(gName);
   if (this.liquidDefs.has(mname)) {
@@ -1330,7 +1330,7 @@ cls14.getLG = function(gName) {
   }
   return null;
 };
-cls14.createLG = function(gName) {
+cls15.createLG = function(gName) {
   var mname, group;
   mname = _m(gName);
   ASSERT.call(this, this.getLG(gName) === null, 'LGr exists');
@@ -1339,7 +1339,7 @@ cls14.createLG = function(gName) {
   //group.newL();
   return this.liquidDefs.set(mname, group);
 };
-cls14.synth_boot = function(r) {
+cls15.synth_boot = function(r) {
   if (this.renamer === null)
     this.renamer = r;
   ASSERT.call(this, this.isSourceLevel(), 'script m');
@@ -1349,14 +1349,14 @@ cls14.synth_boot = function(r) {
   this.synth_boot_init();
   this.synth_defs_to(this.synthBase);
 };
-cls14.synth_finish = function() {
+cls15.synth_finish = function() {
   this.synth_liquids_to(this.synthBase);
 };
-cls14.synth_start = function(r) {
+cls15.synth_start = function(r) {
   ASSERT.call(this, this.isSourceLevel(), 'script m');
   this.isBooted || this.synth_boot(r);
 };
-cls14.synth_liquids_to = function(targetScope) {
+cls15.synth_liquids_to = function(targetScope) {
   var list, e, len;
   if (this.spThis !== null && this.spThis.ref.i)
     targetScope.synthLiquid(this.spThis);
@@ -1374,7 +1374,7 @@ cls14.synth_liquids_to = function(targetScope) {
   while (e < len)
     this.synth_lg_to(list.at(e++), targetScope);
 };
-cls14.synth_externals = function() {
+cls15.synth_externals = function() {
   var list, e, len;
   ASSERT.call(this, this.isSourceLevel(), 'script m');
   list = this.parent.defs;
@@ -1383,21 +1383,21 @@ cls14.synth_externals = function() {
   while (e < len)
     this.synthGlobal(list.at(e++));
 };
-cls14.synth_lg_to = function(lg, target) {
+cls15.synth_lg_to = function(lg, target) {
   var list, e;
   list = lg.list;
   e = 0;
   while (e < list.length)
     target.synthLiquid(list[e++]);
 };
-cls14.synth_boot_init = function() {
+cls15.synth_boot_init = function() {
   ASSERT.call(this, this.isBootable(), 'not bootable');
   ASSERT.call(this, !this.isBooted, 'scope has been already booted');
   if (this.synthNamesUntilNow === null)
     this.synthNamesUntilNow = new SortedObj();
   this.isBooted = true;
 };
-cls14.findSynth_m = function(mname) {
+cls15.findSynth_m = function(mname) {
   var sn;
   sn = this.synthNamesUntilNow;
   return sn.has(mname) ? sn.get(mname) : null;
@@ -1405,34 +1405,34 @@ cls14.findSynth_m = function(mname) {
 // can this name escape the current scope anyway?
 // there is a difference between 'can' and 'do', of course -- a name could potentially escape a scope but still remain there because of a synth homonym.
 // on the other hand, some names never escape a scope -- for example, an `arguments` never escapes an emitted function
-cls14.synth_ref_may_escape_m = function(mname) {
+cls15.synth_ref_may_escape_m = function(mname) {
   ASSERT.call(this, this.isSourceLevel(), 'script m');
   return true;
 };
 // can this name get bound in the current scope anyway?
 // there is a difference between being a valid binding name and being a valid binding -- any name that is not an `eval/arguments` (when strict) and is not reserved
 // can be a valid binding name; but even then, they might remain invalid bindings, for example because they may be duplicates of an existing binding
-cls14.synth_name_is_valid_binding_m = function(mname) {
+cls15.synth_name_is_valid_binding_m = function(mname) {
   return true;
 };
-cls14.synth_ref_find_homonym_m = function(mname, r) {
+cls15.synth_ref_find_homonym_m = function(mname, r) {
   ASSERT.call(this, this.isSourceLevel(), 'script m');
   this.isBooted || this.synth_boot(r);
   return this.findSynth_m(mname);
 };
-cls14.synth_decl_find_homonym_m = function(mname) {
+cls15.synth_decl_find_homonym_m = function(mname) {
   ASSERT.call(this, this.isSourceLevel(), 'script m');
   this.isBooted || this.synth_boot(r);
   return this.findSynth_m(mname);
 };
-cls14.insertSynth_m = function(mname, synth) {
+cls15.insertSynth_m = function(mname, synth) {
   var sn;
   sn = this.synthNamesUntilNow || (this.synthNamesUntilNow = new SortedObj());
   // for msynth which uses it before the scope is booted
   ASSERT.call(this, !sn.has(mname), '\"' + mname + '\" exists');
   return sn.set(mname, synth);
 };
-cls14.synth_globals = function(r) {
+cls15.synth_globals = function(r) {
   var list, len, l;
   this.synth_boot_init();
   ASSERT.call(this, this.isGlobal() || this.isBundle(), 'global/bundler');
@@ -1444,7 +1444,7 @@ cls14.synth_globals = function(r) {
   while (l < len)
     this.synthGlobal(list.at(l++));
 };
-cls14.synthDecl = function(decl) {
+cls15.synthDecl = function(decl) {
   var rsList, num, baseName, mname, synthName, l, synth, scope;
   ASSERT.call(this, decl.isFnArg() || decl.isLet() || decl.isConst() || decl.isVar() || decl.isCls() || decl.isFn() || decl.isCatchArg() && decl.ref.scope.argIsSimple === false, 'fun/let/const/var/fnarg');
   ASSERT.call(this, decl.synthName === '', 'has synth');
@@ -1488,7 +1488,7 @@ cls14.synthDecl = function(decl) {
   decl.synthName = synthName;
   this.insertSynth_m(mname, decl);
 };
-cls14.synthGlobal = function(global) {
+cls15.synthGlobal = function(global) {
   var rsList, num, name, synthNames, m, mname, l, scope, synth;
   ASSERT.call(this, this.isGlobal() || this.isBundle(), 'script m');
   ASSERT.call(this, global.isGlobal(), 'not g');
@@ -1534,7 +1534,7 @@ cls14.synthGlobal = function(global) {
   if (num > 0)
     this.insertSynth_m(_m(synthNames[1]), global/* TODO: s/global/null/ */);
 };
-cls14.synthLiquid = function(liquid) {
+cls15.synthLiquid = function(liquid) {
   var rsList, num, baseName, mname, synthName, l, scope;
   ASSERT.call(this, liquid.isLiquid(), 'not liquid');
   ASSERT.call(this, liquid.synthName === '', 'has init');
@@ -1567,7 +1567,7 @@ cls14.synthLiquid = function(liquid) {
   liquid.synthName = synthName;
   this.insertSynth_m(mname, liquid);
 };
-cls14.rename = function(base, i) {
+cls15.rename = function(base, i) {
   return this.renamer(base, i);
 };
 cls9.s = function(s) {
@@ -1981,6 +1981,45 @@ function wcb_wrap(rawStr, tt) {
   this.insertLineBreak(true);
 }
 function guard_simpleListener(rawStr, tt) {}
+function JZMap(helpers) {
+  var len, l, h;
+  this.jzmap = new SortedObj();
+  this.active = new SortedObj();
+  len = helpers.length;
+  l = 0;
+  while (l < len) {
+    h = helpers[l++];
+    ASSERT.call(this, !HAS.call(this.jzmap, h.id), 'helper ' + h.id + ' exists');
+    this.jzmap.set(h.id, h);
+  }
+}
+var jcl;
+jcl = JZMap.prototype;
+jcl.use = function(id) {
+  var list, l;
+  ASSERT.call(this, this.jzmap.has(id), 'no such name: ' + id);
+  if (!HAS.call(this.active, id)) {
+    this.active.set(id, true);
+    list = this.jzmap.get(id).uses;
+    l = 0;
+    while (l < list.length)
+      this.use(list[l++]);
+  }
+};
+jcl.asCode = function() {
+  var list, l, len, str, name;
+  list = this.active;
+  l = 0;
+  len = list.length();
+  str = '';
+  while (l < len) {
+    name = list.keys[l++];
+    str += this.jzmap.get(name).codeString;
+  }
+  return str;
+};
+var HELPERS;
+HELPERS = [];
 function Emitter() {
   this.indentCache = [''];
   this.indentString = '  ';
@@ -1999,6 +2038,7 @@ function Emitter() {
   this.defaultGuardListener = {v: false};
   this.runningGuard = false;
   this.ttype = ETK_NONE;
+  this.jzHelpers = new JZMap(HELPERS);
   // <sourcemap-related>
   this.emcol_cur = 0;
   this.emcol_latestRec = 0;
@@ -2031,9 +2071,9 @@ function Emitter() {
   this.outActive = false;
   this.jzcalls = new SortedObj();
 }
-var cls17;
-cls17 = Emitter.prototype;
-cls17.emitAssignment_ex = function(n, flags, isStmt) {
+var cls13;
+cls13 = Emitter.prototype;
+cls13.emitAssignment_ex = function(n, flags, isStmt) {
   var hasParen, left, target, cb;
   hasParen = flags & EC_EXPR_HEAD;
   left = n.left;
@@ -2070,7 +2110,7 @@ Emitters['#SynthAssig'] = function(n, flags, isStmt) {
   }
   return this.emitAssignment_ex(n, flags, isStmt);
 };
-cls17.emitAssignment_binding = function(n, flags, isStmt) {
+cls13.emitAssignment_binding = function(n, flags, isStmt) {
   var cb, l;
   ASSERT.call(this, isResolvedName(n.left), 'name');
   cb = n['#c'];
@@ -2110,22 +2150,24 @@ UntransformedEmitters['arg-rest'] = function(n, flags, isStmt) {
   this.emc(cb, 'aft');
   return true;
 };
-cls17.w = function(str) {
+cls13.w = function(str) {
   this.writeToCurrentLine_checked(str);
   return this;
 };
-cls17.i = function() {
+cls13.i = function() {
   this.indentNextLine();
   return this;
 };
-cls17.l = function() {
+cls13.l = function() {
   this.flushCurrentLine();
   return this;
 };
-cls17.jz = function(str) {
+cls13.jz = function(str) {
+  // TODO: helpers should be tracked in the transformer
+  // this.jzHelpers.use('#'+str)
   return this.w('jz').w('.').w(str);
 };
-cls17.wm = function() {
+cls13.wm = function() {
   var len, l, str;
   len = arguments.length;
   l = 0;
@@ -2144,62 +2186,62 @@ cls17.wm = function() {
   }
   return this;
 };
-cls17.wt = function(str, t) {
+cls13.wt = function(str, t) {
   this.tt(t);
   return this.w(str);
 };
-cls17.os = function() {
+cls13.os = function() {
   this.enqueueOmittableSpace();
   return this;
 };
-cls17.bs = function() {
+cls13.bs = function() {
   this.enqueueBreakingSpace();
   return this;
 };
-cls17.u = function() {
+cls13.u = function() {
   this.unindentNextLine();
   return this;
 };
-cls17.hs = function() {
+cls13.hs = function() {
   this.writeToCurrentLine_space();
   return this;
 };
-cls17.gu = function(guard) {
+cls13.gu = function(guard) {
   this.insertGuard(guard);
   return this;
 };
-cls17.gar = function(arg) {
+cls13.gar = function(arg) {
   this.setGuardArg(arg);
   return this;
 };
-cls17.gmon = function(listener) {
+cls13.gmon = function(listener) {
   this.monitorGuard(listener);
   return this;
 };
-cls17.grmif = function(listener) {
+cls13.grmif = function(listener) {
   this.removeGuard_if(listener);
   return this;
 };
-cls17.trygu = function(guard, listener) {
+cls13.trygu = function(guard, listener) {
   if (this.insertGuard_try(guard)) {
     this.monitorGuard(listener);
     return true;
   }
   return false;
 };
-cls17.sl = function(srcLoc) {
+cls13.sl = function(srcLoc) {
   this.setSourceLocTo(srcLoc);
   return this;
 };
-cls17.eA = function(n, flags, isStmt) {
+cls13.eA = function(n, flags, isStmt) {
   this.emitAny(n, flags, isStmt);
   return this;
 };
-cls17.eH = function(n, flags, isStmt) {
+cls13.eH = function(n, flags, isStmt) {
   this.emitHead(n, flags, isStmt);
   return this;
 };
-cls17.eN = function(n, flags, isStmt) {
+cls13.eN = function(n, flags, isStmt) {
   this.emitNonSeq(n, flags, isStmt);
   return this;
 };
@@ -2270,7 +2312,7 @@ Emitters['ConditionalExpression'] = function(n, flags, isStmt) {
   this.emc(cb, 'aft');
   isStmt && this.w(';');
 };
-cls17.emitCondTest = function(n, prec, flags) {
+cls13.emitCondTest = function(n, prec, flags) {
   var hasParen;
   hasParen = false;
   switch (n.type) {
@@ -2326,7 +2368,7 @@ UntransformedEmitters['arr-iter-get-rest'] = function(n, flags, isStmt) {
 Emitters['#Bundler'] = function(n, flags, isStmt) {
   return this.emitBundleItem(n.rootNode);
 };
-cls17.emitBundleItem = function(n) {
+cls13.emitBundleItem = function(n) {
   var list, len, l, lsn, own, im;
   list = n['#imports'];
   len = list === null ? 0 : list.length;
@@ -2475,7 +2517,7 @@ function isBLE(n) {
     return false;
   }
 }
-cls17.emitBLE = Emitters['LogicalExpression'] = Emitters['BinaryExpression'] = function(n, flags, isStmt) {
+cls13.emitBLE = Emitters['LogicalExpression'] = Emitters['BinaryExpression'] = function(n, flags, isStmt) {
   var cb, hasParen, o, left, right;
   cb = CB(n);
   this.emc(cb, 'bef');
@@ -2524,7 +2566,7 @@ cls17.emitBLE = Emitters['LogicalExpression'] = Emitters['BinaryExpression'] = f
   isStmt && this.w(';');
   return true;// something was actually emitted
 };
-cls17.emitRight = function(n, o, flags) {
+cls13.emitRight = function(n, o, flags) {
   var hasParen, rp, lp, cb, aft;
   hasParen = false;
   rp = bp(n.operator);
@@ -2544,7 +2586,7 @@ cls17.emitRight = function(n, o, flags) {
   hasParen && this.w(')');
   this.emcim(aft);
 };
-cls17.emitLeft = function(n, o, flags) {
+cls13.emitLeft = function(n, o, flags) {
   var hasParen, rp, lp, cb, aft;
   hasParen = false;
   rp = bp(o);
@@ -2564,7 +2606,7 @@ cls17.emitLeft = function(n, o, flags) {
   hasParen && this.w(')');
   this.emcim(aft);
 };
-cls17.emitBLEP = function(n, flags) {
+cls13.emitBLEP = function(n, flags) {
   switch (n.type) {
   case'UnaryExpression':// it has a higher pr than any other op
   case'UpdateExpression':
@@ -2572,7 +2614,7 @@ cls17.emitBLEP = function(n, flags) {
   }
   return this.emitHead(n, flags, false);
 };
-cls17.emitPow = function(n, flags, isStmt) {
+cls13.emitPow = function(n, flags, isStmt) {
   var hasParen;
   hasParen = flags & EC_NEW_HEAD;
   if (hasParen) {
@@ -2673,7 +2715,7 @@ Emitters['ExpressionStatement'] = function(n, flags, isStmt) {
   this.emc(cb, 'aft');
   return true;
 };
-cls17.emitAny = function(n, flags, isStmt) {
+cls13.emitAny = function(n, flags, isStmt) {
   var emitters, t;
   emitters = this.emitters;
   t = n.type;
@@ -2682,19 +2724,19 @@ cls17.emitAny = function(n, flags, isStmt) {
   }
   this.err('unknown.node');
 };
-cls17.emitHead = function(n, flags, isStmt) {
+cls13.emitHead = function(n, flags, isStmt) {
   return this.emitAny(n, flags | EC_EXPR_HEAD | EC_NON_SEQ, isStmt);
 };
-cls17.emitNonSeq = function(n, flags, isStmt) {
+cls13.emitNonSeq = function(n, flags, isStmt) {
   return this.emitAny(n, flags | EC_NON_SEQ, isStmt);
 };
-cls17.emitNewHead = function(n, flags, isStmt) {
+cls13.emitNewHead = function(n, flags, isStmt) {
   return this.emitHead(n, EC_NEW_HEAD, false);
 };
-cls17.emitCallHead = function(n, flags, isStmt) {
+cls13.emitCallHead = function(n, flags, isStmt) {
   return this.emitHead(n, flags | EC_CALL_HEAD, false);
 };
-cls17.writeStringValue = function(sv, ql) {
+cls13.writeStringValue = function(sv, ql) {
   var ch, len, c, v, vLen;
   ch = -1;
   len = sv.length;
@@ -2716,7 +2758,7 @@ cls17.writeStringValue = function(sv, ql) {
     c++;
   }
 };
-cls17.isNormalCh = function(ch) {
+cls13.isNormalCh = function(ch) {
   switch (ch) {
   case CH_BACK_SLASH:
   case CH_SINGLE_QUOTE:
@@ -2725,7 +2767,7 @@ cls17.isNormalCh = function(ch) {
   }
   return ch <= CH_COMPLEMENT && ch >= CH_WHITESPACE;
 };
-cls17.stringEscapeFor = function(ch) {
+cls13.stringEscapeFor = function(ch) {
   switch (ch) {
   case CH_BACK_SLASH:
     return '\\\\';
@@ -2753,7 +2795,7 @@ cls17.stringEscapeFor = function(ch) {
     return '\\u' + hex(ch);
   }
 };
-cls17.writeString = function(sv, quotation) {
+cls13.writeString = function(sv, quotation) {
   this.tt(ETK_STR);
   this.writeToCurrentLine_checked(quotation);
   // must take care of wrapping for the quotation
@@ -2761,7 +2803,7 @@ cls17.writeString = function(sv, quotation) {
   // raw because the wrapping has been taken care of when in the writeStringValue routine
   this.writeToCurrentLine_raw(quotation);
 };
-cls17.emitCommaList = function(list, flags) {
+cls13.emitCommaList = function(list, flags) {
   var e;
   e = 0;
   while (e < list.length) {
@@ -2773,7 +2815,7 @@ cls17.emitCommaList = function(list, flags) {
     e++;
   }
 };
-cls17.emitStmtList = function(list) {
+cls13.emitStmtList = function(list) {
   var own, lsn, l;
   own = {used: false};
   lsn = this.listenForEmits(own);
@@ -2788,16 +2830,16 @@ cls17.emitStmtList = function(list) {
   }
   own.used || this.grmif(own);
 };
-cls17.emitStmt = function(stmt) {
+cls13.emitStmt = function(stmt) {
   return this.emitAny(stmt, EC_START_STMT, true);
 };
-cls17.emitTZCheckPoint = function(l) {
+cls13.emitTZCheckPoint = function(l) {
   var tz;
   ASSERT_EQ.call(this, l.hasTZCheck, true);
   tz = l.ref.scope.scs.getLG('tz').getL(0);
   this.wm(tz.synthName, '', '=', '', l.idx + '', ';');
 };
-cls17.wsndl = function(list) {
+cls13.wsndl = function(list) {
   var e;
   e = 0;
   while (e < list.length) {
@@ -2807,7 +2849,7 @@ cls17.wsndl = function(list) {
   }
   return true;
 };
-cls17.emitAttached = function(stmt) {
+cls13.emitAttached = function(stmt) {
   var ex, own, lsn;
   switch (stmt.type) {
   case'BlockStatement':
@@ -2838,7 +2880,7 @@ cls17.emitAttached = function(stmt) {
 };
 // a, b, e, ...l -> [a,b,e],sp(l)
 // a, b, e, l -> a,b,e,l
-cls17.emitElems = function(list, selem/* i.e., it contains a spread element */, cb) {
+cls13.emitElems = function(list, selem/* i.e., it contains a spread element */, cb) {
   var e, em, elem, br;
   e = 0;
   em = 0;
@@ -2860,14 +2902,14 @@ cls17.emitElems = function(list, selem/* i.e., it contains a spread element */, 
     ++em;
   }
 };
-cls17.emitSpread = function(n) {
+cls13.emitSpread = function(n) {
   var cb;
   cb = CB(n);
   this.emc(cb, 'bef');
   this.jz('sp').sl(n.loc.start);
   this.w('(').eN(n.argument, EC_NONE, false).w(')').emc(cb, 'aft');
 };
-cls17.emitElems_toRest = function(list, s, cb) {
+cls13.emitElems_toRest = function(list, s, cb) {
   var e, elem, holeComments;
   e = s;
   while (e < list.length) {
@@ -2891,7 +2933,7 @@ cls17.emitElems_toRest = function(list, s, cb) {
   }
   return e;
 };
-cls17.writeMemName = function(memName, asStr) {
+cls13.writeMemName = function(memName, asStr) {
   var cb;
   switch (memName.type) {
   case'Literal':
@@ -2899,6 +2941,8 @@ cls17.writeMemName = function(memName, asStr) {
     return this;
   case'Identifier':
   case'#-ResolvedName.ex':
+  case'#-ResolvedName.sat':
+  case'#-ResolvedName.binding':
     cb = CB(memName);
     this.emc(cb, 'bef');
     asStr ? this.writeString(memName.name, '\'') : this.writeIDName(memName.name);
@@ -2907,10 +2951,10 @@ cls17.writeMemName = function(memName, asStr) {
   }
   ASSERT.call(this, false, 'unknown name');
 };
-cls17.writeIDName = function(nameStr) {
+cls13.writeIDName = function(nameStr) {
   return this.writeToCurrentLine_checked(nameStr);
 };
-cls17.emitSAT = function(n, flags, olen) {
+cls13.emitSAT = function(n, flags, olen) {
   if (n.type === 'MemberExpression') {
     return this.emitSAT_mem(n, flags, olen);
   }
@@ -2919,7 +2963,7 @@ cls17.emitSAT = function(n, flags, olen) {
   }
   ASSERT.call(this, false, 'got <' + n.type + '>');
 };
-cls17.emitAccessChk_tz = function(nd, loc) {
+cls13.emitAccessChk_tz = function(nd, loc) {
   var scope, tz;
   ASSERT.call(this, nd.hasTZCheck, 'unnecessary tz');
   scope = nd.ref.scope;
@@ -2931,7 +2975,7 @@ cls17.emitAccessChk_tz = function(nd, loc) {
   this.w(')');
   return true;
 };
-cls17.emitAccessChk_invalidSAT = function(nd, loc) {
+cls13.emitAccessChk_invalidSAT = function(nd, loc) {
   this.jz('cc');
   loc && this.sl(loc);
   this.w('(').writeString(nd.name, '\'');
@@ -2945,7 +2989,7 @@ UntransformedEmitters['synth-name'] = function(n, flags, isStmt) {
   this.wt(n.liq.synthName, ETK_ID);
   return true;
 };
-cls17.emitExprFn = function(n, flags, isStmt) {
+cls13.emitExprFn = function(n, flags, isStmt) {
   var hasParen, raw, scope, scopeName, lonll, isRenamed, hasWrapper, em, l;
   hasParen = flags & EC_START_STMT;
   raw = n.fun;
@@ -3016,7 +3060,7 @@ cls17.emitExprFn = function(n, flags, isStmt) {
   hasParen && this.w(')');
   isStmt && this.w(';');
 };
-cls17.writeToCurrentLine_checked = function(rawStr) {
+cls13.writeToCurrentLine_checked = function(rawStr) {
   var srcLoc, curEmCol, tt;
   ASSERT.call(this, arguments.length === 1, 'write must have only one single argument');
   ASSERT.call(this, typeof rawStr === STRING_TYPE, 'str');
@@ -3044,11 +3088,11 @@ cls17.writeToCurrentLine_checked = function(rawStr) {
   srcLoc && this.refreshTheCurrentLineLevelSourceMapWith(srcLoc);
   this.writeToCurrentLine_raw(rawStr);
 };
-cls17.writeToCurrentLine_raw = function(rawStr) {
+cls13.writeToCurrentLine_raw = function(rawStr) {
   this.emcol_cur += rawStr.length;
   this.curLine += rawStr;
 };
-cls17.writeToCurrentLine_space = function() {
+cls13.writeToCurrentLine_space = function() {
   this.ensureNoSpace();
   if (this.guard)
     this.runGuard(' ', ETK_NONE);
@@ -3056,7 +3100,7 @@ cls17.writeToCurrentLine_space = function() {
   this.ensureNoSpace();
   this.writeToCurrentLine_raw(' ');
 };
-cls17.writeToCurrentLine_virtualLineBreak = function() {
+cls13.writeToCurrentLine_virtualLineBreak = function() {
   this.ensureNoSpace();
   this.guard && this.runGuard('\n', ETK_NL);
 };
@@ -3073,7 +3117,7 @@ Emitters['IfStatement'] = function(n, flags, isStmt) {
   this.emc(cb, 'aft');
   return true;
 };
-cls17.emitIfBody = function(stmt) {
+cls13.emitIfBody = function(stmt) {
   var own;
   switch (stmt.type) {
   case'BlockStatement':
@@ -3102,37 +3146,37 @@ cls17.emitIfBody = function(stmt) {
   }
   this.u().w('}');
 };
-cls17.emitElseBody = function(stmt) {
+cls13.emitElseBody = function(stmt) {
   return stmt.type === 'IfStatement' ? this.emitStmt(stmt) : this.emitAttached(stmt);
 };
-cls17.tt = function(tt) {
+cls13.tt = function(tt) {
   ASSERT.call(this, this.ttype === ETK_NONE, 'none');
   this.ttype = tt;
 };
-cls17.nott = function() {
+cls13.nott = function() {
   ASSERT.call(this, this.ttype !== ETK_NONE, 'none');
   this.ttype = ETK_NONE;
 };
-cls17.nott_ifAny = function() {
+cls13.nott_ifAny = function() {
   if (this.ttype === ETK_NONE) {
     return false;
   }
   this.nott();
   return true;
 };
-cls17.insertGuard = function(guard) {
+cls13.insertGuard = function(guard) {
   ASSERT.call(this, this.guard === null, 'existing guard');
   ASSERT.call(this, this.guardArg === null, 'existing guardArg');
   ASSERT.call(this, this.guardListener === null, 'existing guardListener');
   ASSERT.call(this, !this.runningGuard, 'running');
   this.guard = guard;
 };
-cls17.monitorGuard = function(listener) {
+cls13.monitorGuard = function(listener) {
   ASSERT.call(this, this.guard !== null, 'no');
   ASSERT.call(this, this.guardListener === null, 'listener');
   this.guardListener = listener;
 };
-cls17.runGuard = function(str, t) {
+cls13.runGuard = function(str, t) {
   var guard, guardListener;
   guard = this.guard;
   guardListener = this.guardListener;
@@ -3146,7 +3190,7 @@ cls17.runGuard = function(str, t) {
   this.guardArg = null;
   this.runningGuard = false;
 };
-cls17.listenForEmits = function(fallbackListener) {
+cls13.listenForEmits = function(fallbackListener) {
   var l;
   l = null;
   if (this.guard === null) {
@@ -3164,11 +3208,11 @@ cls17.listenForEmits = function(fallbackListener) {
   }
   return l;
 };
-cls17.removeGuard_any = function() {
+cls13.removeGuard_any = function() {
   ASSERT.call(this, this.guard !== null, 'no');
   this.guard = this.guardListener = null;
 };
-cls17.removeGuard_if = function(listener) {
+cls13.removeGuard_if = function(listener) {
   var guardListener;
   // TODO: uncomment below
   // ASSERT.call(this, this.guard !== null, 'no');
@@ -3188,12 +3232,12 @@ cls17.removeGuard_if = function(listener) {
   this.removeGuard_any();
   return true;
 };
-cls17.setGuardArg = function(arg) {
+cls13.setGuardArg = function(arg) {
   ASSERT.call(this, arg === null || this.guard !== null, 'no');
   ASSERT.call(this, (arg === null ? this.guard : this.guardArg) === null, 'n');
   this.guardArg = arg;
 };
-cls17.insertGuard_try = function(guard) {
+cls13.insertGuard_try = function(guard) {
   if (this.guard !== null) {
     return false;
   }
@@ -3253,7 +3297,7 @@ Emitters['ObjectExpression'] = function(n, flags, isStmt) {
   isStmt && this.w(';');
   return true;
 };
-cls17.wrapCurrentLine = function() {
+cls13.wrapCurrentLine = function() {
   this.hasPendingSpace() && this.removePendingSpace();
   this.nextLineHasLineBreakBefore = true;
   if (this.lineBlank()) {
@@ -3266,7 +3310,7 @@ cls17.wrapCurrentLine = function() {
   else
     this.finishCurrentLine();
 };
-cls17.overflowLength = cls17.ol = function(len) {
+cls13.overflowLength = cls13.ol = function(len) {
   var wl;
   wl = this.wrapLimit;
   return wl <= 0 ? 0 : this.emcol_cur + len - wl;
@@ -3278,11 +3322,11 @@ UntransformedEmitters['ucond'] = function(n, flags, isStmt) {
   Emitters['ConditionalExpression'].call(this, n, flags, isStmt);
   this.emc(cb, 'aft');
 };
-cls17.writeToOut_nonLineBreak = function(str) {
+cls13.writeToOut_nonLineBreak = function(str) {
   this.ensureOutActive();
   this.writeToOut_raw(str);
 };
-cls17.writeToOut_lineBreak = function() {
+cls13.writeToOut_lineBreak = function() {
   this.ensureOutActive();
   this.emline_cur++;
   //this.emcol_cur = 0;
@@ -3290,15 +3334,15 @@ cls17.writeToOut_lineBreak = function() {
   // TODO: ensure we are allowed to actually write to SM; we must have actually committed anything in lm beforehands
   this.writeToOut_raw('\n');
 };
-cls17.writeToOut_raw = function(str) {
+cls13.writeToOut_raw = function(str) {
   this.out = this.out.concat(str);
   this.outLen += str.length;
 };
-cls17.useOut = function(use) {
+cls13.useOut = function(use) {
   ASSERT_EQ.call(this, !this.outActive, use);
   this.outActive = use;
 };
-cls17.ensureOutActive = function() {
+cls13.ensureOutActive = function() {
   ASSERT.call(this, this.outActive, 'out is not in use');
 };
 Emitters['#ForInStatementWithDeclarationHead'] = function(n, flags, isStmt) {
@@ -3309,7 +3353,7 @@ Emitters['#ForInStatementWithExHead'] = function(n, flags, isStmt) {
   ASSERT_EQ.call(this, isStmt, true);
   return this.emitEnumeration(n, flags, 'eh');
 };
-cls17.emitEnumeration = function(n, flags, t) {
+cls13.emitEnumeration = function(n, flags, t) {
   var b, l;
   b = t === 'dh';
   l = n.left;
@@ -3363,17 +3407,17 @@ UntransformedEmitters['cvtz'] = function(n, flags, isStmt) {
     this.w(',').os().emitAccessChk_invalidSAT(tg(n.rn), n.rn.loc.start);
   this.w(')');
 };
-cls17.flushCurrentLine = function() {
+cls13.flushCurrentLine = function() {
   if (this.curLine.length) {
     this.finishCurrentLine();
     return true;
   }
   return false;
 };
-cls17.lineBlank = function() {
+cls13.lineBlank = function() {
   return this.curLine.length === 0;
 };
-cls17.finishCurrentLine = function() {
+cls13.finishCurrentLine = function() {
   var line, optimalIndentLevel, tailLineBreak, optimalIndentString, optimalIndentStrLength, overflow;
   line = this.curLine;
   ASSERT.call(this, !this.finishingLine, 'finishing');
@@ -3407,7 +3451,7 @@ cls17.finishCurrentLine = function() {
   this.startFreshLine();
   this.finishingLine = false;
 };
-cls17.adjustColumns = function(lindLen) {
+cls13.adjustColumns = function(lindLen) {
   // line indentation length
   if (this.hasRecorded_SMLinkpoint)
     this.ln_emcol_cur += lindLen;
@@ -3418,7 +3462,7 @@ cls17.adjustColumns = function(lindLen) {
   else
     this.emcol_cur += lindLen;
 };
-cls17.startFreshLine = function() {
+cls13.startFreshLine = function() {
   this.curLineHasLineBreakBefore = this.nextLineHasLineBreakBefore;
   this.curLineIndent = this.nextLineIndent;
   this.curLine = '';
@@ -3433,7 +3477,7 @@ cls17.startFreshLine = function() {
   this.ln_vlq_tail = '';
   this.nextLineHasLineBreakBefore = this.allow.nl;
 };
-cls17.refreshSMOutWithLM = function() {
+cls13.refreshSMOutWithLM = function() {
   var lm0, lm;
   lm0 = '';
   lm = this.lm;
@@ -3485,7 +3529,7 @@ Emitters['TemplateLiteral'] = function(n, flags, isStmt) {
   this.w(')');
   isStmt && this.w(';');
 };
-Emitters['#-ResolvedName.ex'] = cls17.emitRName_ex = Emitters['#-ResolvedName.sat'] = cls17.emitRName_SAT = function(n, flags, isStmt) {
+Emitters['#-ResolvedName.ex'] = cls13.emitRName_ex = Emitters['#-ResolvedName.sat'] = cls13.emitRName_SAT = function(n, flags, isStmt) {
   var hasParen, hasZero, tv, tz, cb;
   hasParen = false;
   hasZero = false;
@@ -3528,7 +3572,7 @@ Emitters['#-ResolvedName.ex'] = cls17.emitRName_ex = Emitters['#-ResolvedName.sa
   isStmt && this.w(';');
   return true;
 };
-Emitters['#-ResolvedName.binding'] = cls17.emitRName_binding = function(n, flags, isStmt) {
+Emitters['#-ResolvedName.binding'] = cls13.emitRName_binding = function(n, flags, isStmt) {
   var cb;
   ASSERT.call(this, isResolvedName(n), 'rn');
   cb = CB(n);
@@ -3537,7 +3581,7 @@ Emitters['#-ResolvedName.binding'] = cls17.emitRName_binding = function(n, flags
   this.emc(cb, 'aft');
   return true;
 };
-cls17.emitSourceHead = function(n) {
+cls13.emitSourceHead = function(n) {
   var scope, em;
   scope = n['#scope'];
   em = 0;
@@ -3549,7 +3593,7 @@ cls17.emitSourceHead = function(n) {
   this.emitTempList(scope, em) && em++;
   return em;
 };
-cls17.emitFnHead = function(n) {
+cls13.emitFnHead = function(n) {
   var scope, em;
   scope = n.fun['#scope'];
   em = 0;
@@ -3564,7 +3608,7 @@ cls17.emitFnHead = function(n) {
   this.emitVarList(scope, em) && em++;
   return em;
 };
-cls17.emitSimpleHead = function(n) {
+cls13.emitSimpleHead = function(n) {
   var scope, em;
   scope = n['#scope'];
   em = 0;
@@ -3573,7 +3617,7 @@ cls17.emitSimpleHead = function(n) {
   this.emitFunLists(scope, false, em) && em++;
   return em;
 };
-cls17.emitVarList = function(scope, hasPrev) {
+cls13.emitVarList = function(scope, hasPrev) {
   var list, i, len, em, own, elem;
   ASSERT.call(this, scope.isSourceLevel() || scope.isAnyFn(), 'source/fn');
   list = scope.defs;
@@ -3598,7 +3642,7 @@ cls17.emitVarList = function(scope, hasPrev) {
   own.used || this.grmif(own);
   return em;
 };
-cls17.emitTempList = function(scope, hasPrev) {
+cls13.emitTempList = function(scope, hasPrev) {
   var list, i, len, own, elem;
   ASSERT.call(this, scope.isSourceLevel() || scope.isAnyFn(), 'source/fn');
   list = scope.getLG('<t>');
@@ -3616,7 +3660,7 @@ cls17.emitTempList = function(scope, hasPrev) {
   own.used || this.grmif(own);
   return i;
 };
-cls17.emitFunLists = function(scope, allowsDecl, hasPrev) {
+cls13.emitFunLists = function(scope, allowsDecl, hasPrev) {
   var list, i, len, em, own;
   list = scope.funLists;
   i = 0;
@@ -3629,7 +3673,7 @@ cls17.emitFunLists = function(scope, allowsDecl, hasPrev) {
   own.used || this.grmif(own);
   return em;
 };
-cls17.emitLLINOSAList = function(scope, hasPrev) {
+cls13.emitLLINOSAList = function(scope, hasPrev) {
   var list, i, len, em, own, elem;
   ASSERT.call(this, !scope.isSourceLevel() && !scope.isAnyFn(), 'scope/fn');
   list = scope.defs;
@@ -3651,7 +3695,7 @@ cls17.emitLLINOSAList = function(scope, hasPrev) {
   own.used || this.grmif(own);
   return em;
 };
-cls17.emitFunList_subList = function(funList, allowsDecl, hasPrev) {
+cls13.emitFunList_subList = function(funList, allowsDecl, hasPrev) {
   var i, em, own, lsn;
   i = 0;
   em = 0;
@@ -3665,7 +3709,7 @@ cls17.emitFunList_subList = function(funList, allowsDecl, hasPrev) {
   own.used || this.grmif(own);
   return em;
 };
-cls17.emitThisRef = function(scope, hasPrev) {
+cls13.emitThisRef = function(scope, hasPrev) {
   var th, own;
   th = scope.spThis;
   if (th === null) {
@@ -3680,7 +3724,7 @@ cls17.emitThisRef = function(scope, hasPrev) {
   own.used || this.grmif(own);
   return 1;
 };
-cls17.emitSingleFun = function(n, allowsDecl, i, hasPrev) {
+cls13.emitSingleFun = function(n, allowsDecl, i, hasPrev) {
   var scope, target, own, ll;
   scope = n.fun['#scope'];
   target = n.target;
@@ -3704,7 +3748,7 @@ cls17.emitSingleFun = function(n, allowsDecl, i, hasPrev) {
   own.used || this.grmif(own);
   return 1;
 };
-cls17.emitTCheckVar = function(scope, hasPrev) {
+cls13.emitTCheckVar = function(scope, hasPrev) {
   var tg, own;
   tg = scope.getLG('tz');
   if (tg === null) {
@@ -3717,7 +3761,7 @@ cls17.emitTCheckVar = function(scope, hasPrev) {
   own.used || this.grmif(own);
   return 1;
 };
-cls17.emitTransformedArgs = function(n, hasPrev) {
+cls13.emitTransformedArgs = function(n, hasPrev) {
   var ta, b, own;
   ta = n.argsPrologue;
   if (ta === null) {
@@ -3731,7 +3775,7 @@ cls17.emitTransformedArgs = function(n, hasPrev) {
   own.used || this.grmif(own);
   return 1;
 };
-cls17.emitTCHP = function(scope, hasPrev) {
+cls13.emitTCHP = function(scope, hasPrev) {
   var tg, own;
   tg = scope.scs.getLG('tz').getL(0);
   if (tg === null) {
@@ -3743,7 +3787,7 @@ cls17.emitTCHP = function(scope, hasPrev) {
   own.used || this.grmif(own);
   return 1;
 };
-cls17.emitArgumentsRef = function(scope, hasPrev) {
+cls13.emitArgumentsRef = function(scope, hasPrev) {
   var ar, own;
   ar = scope.spArguments;
   if (ar === null) {
@@ -3758,7 +3802,7 @@ cls17.emitArgumentsRef = function(scope, hasPrev) {
   own.used || this.grmif(own);
   return 1;
 };
-cls17.emitThisChk = function(scope, hasPrev) {
+cls13.emitThisChk = function(scope, hasPrev) {
   var ti, own;
   ti = scope.getLG('ti');
   if (ti === null) {
@@ -3774,7 +3818,7 @@ cls17.emitThisChk = function(scope, hasPrev) {
   own.used || this.grmif(own);
   return 1;
 };
-cls17.emitJ = function(scope, hasPrev) {
+cls13.emitJ = function(scope, hasPrev) {
   var own, u, o;
   return 0;
   own = false;
@@ -3818,7 +3862,7 @@ UntransformedEmitters['obj-iter-get'] = function(n, flags, isStmt) {
   else
     this.w('.').writeMemName(n.idx, false);
 };
-cls17.smSetName_str = function(name) {
+cls13.smSetName_str = function(name) {
   var nc, mname, list;
   nc = -1;
   if (name.length) {
@@ -3828,7 +3872,7 @@ cls17.smSetName_str = function(name) {
   }
   return this.smSetName_i(nc);
 };
-cls17.smSetName_i = function(i) {
+cls13.smSetName_i = function(i) {
   var list, nc;
   list = this.smNameList;
   ASSERT.call(this, i >= 0 ? i <= list.length() : i === -1, 'namei');
@@ -3836,7 +3880,7 @@ cls17.smSetName_i = function(i) {
   this.namei_cur = i;
   return nc;
 };
-cls17.smSetSrc_str = function(srcName) {
+cls13.smSetSrc_str = function(srcName) {
   var sc, mname, list;
   sc = -1;
   if (srcName.length) {
@@ -3846,7 +3890,7 @@ cls17.smSetSrc_str = function(srcName) {
   }
   return this.smSetSrc_i(sc);
 };
-cls17.smSetSrc_i = function(i) {
+cls13.smSetSrc_i = function(i) {
   var list, sc;
   list = this.smSrcList;
   ASSERT.call(this, i >= 0 ? i <= list.length() : i === -1, 'srci');
@@ -3854,11 +3898,11 @@ cls17.smSetSrc_i = function(i) {
   this.srci_cur = i;
   return sc;
 };
-cls17.writeToSMout = function(lm) {
+cls13.writeToSMout = function(lm) {
   this.sm = this.sm.concat(lm);
   this.smLen += lm.length;
 };
-cls17.refreshTheCurrentLineLevelSourceMapWith = function(srcLoc) {
+cls13.refreshTheCurrentLineLevelSourceMapWith = function(srcLoc) {
   var l, vlqTail, ll, lm;
   l = 0;
   vlqTail = '';
@@ -3890,11 +3934,11 @@ cls17.refreshTheCurrentLineLevelSourceMapWith = function(srcLoc) {
     this.hasRecorded_emcol_latestRec = true;
   this.emline_latestRec = this.emline_cur;
 };
-cls17.setSourceLocTo = function(srcLoc) {
+cls13.setSourceLocTo = function(srcLoc) {
   ASSERT.call(this, srcLoc, 'lw');
   this.pendingSrcLoc = srcLoc;
 };
-cls17.findIndentStringWithIdealLength = function(idealLength) {
+cls13.findIndentStringWithIdealLength = function(idealLength) {
   var INLEN, remaining, level, cache, l, str;
   INLEN = this.indentString.length;
   remaining = idealLength % INLEN;
@@ -3917,14 +3961,14 @@ cls17.findIndentStringWithIdealLength = function(idealLength) {
     str += this.indentString.substring(0, remaining);
   return str;
 };
-cls17.indentNextLine = function() {
+cls13.indentNextLine = function() {
   this.nextLineIndent++;
 };
-cls17.unindentNextLine = function() {
+cls13.unindentNextLine = function() {
   ASSERT.call(this, this.nextLineIndent > 0, 'line has a <1 indent');
   this.nextLineIndent--;
 };
-cls17.emitMemex = function(n, flags, isStmt, len) {
+cls13.emitMemex = function(n, flags, isStmt, len) {
   var cb;
   cb = CB(n);
   this.emc(cb, 'bef');
@@ -3945,7 +3989,7 @@ cls17.emitMemex = function(n, flags, isStmt, len) {
   isStmt && this.w(';');
   return true;
 };
-cls17.emitSAT_mem = function(n, flags, len) {
+cls13.emitSAT_mem = function(n, flags, len) {
   return this.emitMemex(n, flags, false, len);
 };
 Emitters['MemberExpression'] = function(n, flags, isStmt, len) {
@@ -3998,7 +4042,7 @@ Emitters['UnaryExpression'] = function(n, flags, isStmt) {
   isStmt && this.w(';');
   return true;
 };
-cls17.emitUA = function(n) {
+cls13.emitUA = function(n) {
   switch (n.type) {
   case'UnaryExpression':
   case'UpdateExpression':
@@ -4029,7 +4073,7 @@ UntransformedEmitters['memlist'] = function(n, flags, isStmt) {
   }
   isStmt && m && this.w(';');
 };
-cls17.emc = function(cb, i) {
+cls13.emc = function(cb, i) {
   var e;
   if (HAS.call(cb, i)) {
     e = cb[i];
@@ -4038,7 +4082,7 @@ cls17.emc = function(cb, i) {
   }
   return false;
 };
-cls17.emce = // emc erase
+cls13.emce = // emc erase
 function(cb, i) {
   if (this.emc(cb, i)) {
     cb[i] = null;
@@ -4046,7 +4090,7 @@ function(cb, i) {
   }
   return false;
 };
-cls17.emcim = function(comments) {
+cls13.emcim = function(comments) {
   var list, nl, e, l, elem, resume, wflag;
   // emc -- immediate
   if (comments === null) {
@@ -4085,29 +4129,29 @@ cls17.emcim = function(comments) {
   }
   return true;
 };
-cls17.ensureNoSpace = function() {
+cls13.ensureNoSpace = function() {
   ASSERT.call(this, !this.hasPendingSpace(), 'hasPendingSpace');
 };
-cls17.hasPendingSpace = function() {
+cls13.hasPendingSpace = function() {
   return this.pendingSpace !== SP_NONE;
 };
-cls17.enqueueOmittableSpace = function() {
+cls13.enqueueOmittableSpace = function() {
   this.ensureNoSpace();
   ASSERT.call(this, this.notJustAfterLineBreak(), 'leading');
   this.pendingSpace = SP_OMITTABLE;
 };
-cls17.enqueueBreakingSpace = function() {
+cls13.enqueueBreakingSpace = function() {
   this.ensureNoSpace();
   ASSERT.call(this, this.notJustAfterLineBreak(), 'leading');
   this.pendingSpace = SP_BREAKABLE;
 };
-cls17.removePendingSpace = function() {
+cls13.removePendingSpace = function() {
   var sp;
   sp = this.pendingSpace;
   this.pendingSpace = SP_NONE;
   return sp;
 };
-cls17.effectPendingSpace = function(len) {
+cls13.effectPendingSpace = function(len) {
   var pendingSpace;
   ASSERT.call(this, this.notJustAfterLineBreak(), 'leading');
   pendingSpace = this.removePendingSpace();
@@ -4127,10 +4171,10 @@ cls17.effectPendingSpace = function(len) {
     break;
   }
 };
-cls17.removePendingSpace_try = function() {
+cls13.removePendingSpace_try = function() {
   return this.hasPendingSpace() ? this.removePendingSpace() : SP_NONE;
 };
-cls17.notJustAfterLineBreak = function() {
+cls13.notJustAfterLineBreak = function() {
   return this.curLine.length || !this.curLineHasLineBreakBefore;
 };
 UntransformedEmitters['resolved-this'] = function(n, flags, isStmt) {
@@ -4238,7 +4282,7 @@ Emitters['WhileStatement'] = function(n, flags, isStmt) {
 UntransformedEmitters['transformed-fn'] = function(n, flags, isStmt) {
   return n.target ? this.emitDeclFn(n, flags, isStmt) : this.emitExprFn(n, flags, isStmt);
 };
-cls17.emitTransformedFn = function(n, flags, isStmt) {
+cls13.emitTransformedFn = function(n, flags, isStmt) {
   var raw, cb, scopeName, ni, name_cb, own, lsn, em;
   raw = n.fun;
   cb = CB(raw);
@@ -8942,6 +8986,10 @@ cls10.parseExport_elemDefault = function(c0, loc0) {
   entry.target.v = target || this.createDefaultLiq();
   if (!stmt)
     this.semi(core(elem)['#c'], 'aft') || this.err('no.semi');
+  else {
+    this.semiLoc = null;
+    this.semiC = 0;
+  }
   this.foundStatement = true;
   return {type: 'ExportDefaultDeclaration', start: c0, loc: {start: loc0, end: this.semiLoc || elem.loc.end}, end: this.semiC || elem.end, declaration: core(elem), '#y': 0, '#c': cb, '#binding': needsTarget ? entry.target.v : null};
 };
@@ -10264,8 +10312,8 @@ function SourceScope(parent, st) {
   this.latestUnresolvedExportTarget = null;
   this.allUnresolvedExports = this.aue = new SortedObj();
 }
-var cls13;
-cls13 = SourceScope.prototype = createObj(ConcreteScope.prototype);
+var cls14;
+cls14 = SourceScope.prototype = createObj(ConcreteScope.prototype);
 cls10.parseProgram = function() {
   var c0, li0, col0, ec, eloc, list, cb, n, bundler;
   c0 = this.c;
@@ -12335,14 +12383,14 @@ cls8.getAS = function() {
   }
   return ATS_DISTINCT;
 };
-cls15.addVarTarget_m = function(mname, newDecl) {
+cls16.addVarTarget_m = function(mname, newDecl) {
   ASSERT.call(this, !HAS.call(this.varTargets, mname), 'var target is not unique: <' + mname + '>');
   this.varTargets[mname] = newDecl;
 };
-cls15.findVarTarget_m = function(mname) {
+cls16.findVarTarget_m = function(mname) {
   return this.varTargets[mname];
 };
-cls15.determineActions = function() {
+cls16.determineActions = function() {
   var a;
   if (this.isParen()) {
     return this.parent.actions;
@@ -12371,7 +12419,7 @@ cls15.determineActions = function() {
   }
   return a;
 };
-cls15.activateTZ = function() {
+cls16.activateTZ = function() {
   var scope;
   scope = this.scs;
   if (scope.hasTZCheckPoint) {
@@ -12379,26 +12427,26 @@ cls15.activateTZ = function() {
   }
   return this.hasTZCheckPoint = true;
 };
-cls15.setName = function(name, source) {
+cls16.setName = function(name, source) {
   ASSERT.call(this, this.canHaveName(), 'only cls/fn can have a name');
   ASSERT_EQ.call(this, this.scopeName, null);
   this.scopeName = new ScopeName(name, source).r(new Ref(this));
   return this.scopeName;
 };
-cls15.getThisBase = function() {
+cls16.getThisBase = function() {
   return this.scs;
 };
-cls15.pushFun = function(name, transformedFn) {
+cls16.pushFun = function(name, transformedFn) {
   var mname, list;
   ASSERT.call(this, transformedFn.type === '#Untransformed' && transformedFn.kind === 'transformed-fn', 'transformed-fn');
   mname = _m(name);
   list = this.funLists.has(mname) ? this.funLists.get(mname) : this.funLists.set(mname, []);
   list.push(transformedFn);
 };
-cls15.owns = function(nd) {
+cls16.owns = function(nd) {
   return nd.ref.scope === this/* && (!nd.isImported()) */;
 };
-cls15.determineFlags = function() {
+cls16.determineFlags = function() {
   var fl;
   if (this.isParen()) {
     return this.parent.flags;
@@ -12416,7 +12464,7 @@ cls15.determineFlags = function() {
     fl |= SF_UNIQUE;
   return fl;
 };
-cls15.spCreate_this = function(ref) {
+cls16.spCreate_this = function(ref) {
   var spThis;
   ASSERT.call(this, this.canMakeThis(), 'this');
   if (!ref)
@@ -12425,12 +12473,12 @@ cls15.spCreate_this = function(ref) {
   spThis = new Liquid('<this>').r(ref).n('this_');
   return this.spThis = spThis;
 };
-cls15.setSynthBase = function(base) {
+cls16.setSynthBase = function(base) {
   ASSERT.call(this, this.synthBase === this.scs, 'synth-base is not intact');
   ASSERT.call(this, base.isConcrete(), 'base');
   this.synthBase = base;
 };
-cls15.getSourceLevelScope = function() {
+cls16.getSourceLevelScope = function() {
   var l, u;
   l = this.sourceScope;
   // up
@@ -12446,7 +12494,7 @@ cls15.getSourceLevelScope = function() {
   }
   return l;
 };
-cls15.handOverRefList = function(list) {
+cls16.handOverRefList = function(list) {
   var len, i, ref, mname;
   len = list.length();
   i = 0;
@@ -12460,7 +12508,7 @@ cls15.handOverRefList = function(list) {
     i++;
   }
 };
-cls15.handOver_m = function(mname, ref) {
+cls16.handOver_m = function(mname, ref) {
   if (this.isBlock() || this.isBare()) {
     return this.parent.refDirect_m(mname, ref);
   }
@@ -12481,12 +12529,12 @@ cls15.handOver_m = function(mname, ref) {
   }
   return this.parent.spReportGlobal_m(mname, ref);
 };
-cls15.finish = function() {
+cls16.finish = function() {
   if (this.isAnyFn() || this.isCatch())
     this.finishBody();
   return this.handOverRefList(this.refs);
 };
-cls15.finishBody = function() {
+cls16.finishBody = function() {
   var list, len, e, mname, ref, isCatch;
   ASSERT.call(this, this.inBody, 'finish must be in body');
   list = this.refs;
@@ -12510,97 +12558,97 @@ cls15.finishBody = function() {
   }
   this.inBody = false;
 };
-cls15.isAnyFn = function() {
+cls16.isAnyFn = function() {
   return this.type & ST_FN;
 };
-cls15.isCatch = function() {
+cls16.isCatch = function() {
   return this.type & ST_CATCH;
 };
-cls15.isScript = function() {
+cls16.isScript = function() {
   return this.type & ST_SCRIPT;
 };
-cls15.isModule = function() {
+cls16.isModule = function() {
   return this.type & ST_MODULE;
 };
-cls15.isClass = function() {
+cls16.isClass = function() {
   return this.type & ST_CLS;
 };
-cls15.isGen = function() {
+cls16.isGen = function() {
   return this.type & ST_GEN;
 };
-cls15.isAsync = function() {
+cls16.isAsync = function() {
   return this.type & ST_ASYNC;
 };
-cls15.isGetter = function() {
+cls16.isGetter = function() {
   return this.type & ST_GETTER;
 };
-cls15.isSetter = function() {
+cls16.isSetter = function() {
   return this.type & ST_SETTER;
 };
-cls15.isClassMem = function() {
+cls16.isClassMem = function() {
   return this.type & ST_CLSMEM;
 };
-cls15.isStaticMem = function() {
+cls16.isStaticMem = function() {
   return this.type & ST_STATICMEM;
 };
-cls15.isObjMem = function() {
+cls16.isObjMem = function() {
   return this.type & ST_OBJMEM;
 };
-cls15.isMem = function() {
+cls16.isMem = function() {
   return this.isClassMem() || this.isStaticMem() || this.isObjMem();
 };
-cls15.isArrow = function() {
+cls16.isArrow = function() {
   return this.type & ST_ARROW;
 };
-cls15.isBlock = function() {
+cls16.isBlock = function() {
   return this.type & ST_BLOCK;
 };
-cls15.isBare = function() {
+cls16.isBare = function() {
   return this.type & ST_BARE;
 };
-cls15.isCtor = function() {
+cls16.isCtor = function() {
   return this.type & ST_CTOR;
 };
-cls15.isLexicalLike = function() {
+cls16.isLexicalLike = function() {
   return this.isBlock() || this.isCatch();
 };
-cls15.isDecl = function() {
+cls16.isDecl = function() {
   return this.type & ST_DECL;
 };
-cls15.isParen = function() {
+cls16.isParen = function() {
   return this.type & ST_PAREN;
 };
-cls15.isHoisted = function() {
+cls16.isHoisted = function() {
   return this.isAnyFn() && this.isDecl();
 };
-cls15.isExpr = function() {
+cls16.isExpr = function() {
   return this.type & ST_EXPR;
 };
-cls15.isBootable = function() {
+cls16.isBootable = function() {
   return this.isScript() || this.isAnyFn() || this.isCatch() || this.isModule() || this.isBundle() || this.isGlobal();
 };
-cls15.isSourceLevel = function() {
+cls16.isSourceLevel = function() {
   return this.isScript() || this.isModule();
 };
-cls15.isSimpleFn = function() {
+cls16.isSimpleFn = function() {
   return this.type & (ST_EXPR | ST_DECL);
 };
-cls15.isBundle = function() {
+cls16.isBundle = function() {
   return this.type & ST_BUNDLE;
 };
-cls15.isGlobal = function() {
+cls16.isGlobal = function() {
   return this.type & ST_GLOBAL;
 };
-cls15.isConditional = function() {
+cls16.isConditional = function() {
   return this.flags & ST_COND;
 };
-cls15.isConcrete = function() {
+cls16.isConcrete = function() {
   return this.isModule() || this.isAnyFn() || this.isScript() || this.isBundle();
 };
-cls15.isSoft = function() {
+cls16.isSoft = function() {
   return this.isBlock() || this.isClass() || this.isCatch() || this.isParen() || this.isBare();
 };
-cls15.synth_defs_to = function(targetScope) {
+cls16.synth_defs_to = function(targetScope) {
   var list, e, len, insertSelf, tdclr;
   list = this.defs;
   e = 0;
@@ -12618,24 +12666,24 @@ cls15.synth_defs_to = function(targetScope) {
     }
   }
 };
-cls15.activateBody = function() {
+cls16.activateBody = function() {
   ASSERT.call(this, this.hasHead(), 'a scope with a head was expected');
   ASSERT_EQ.call(this, this.inBody, false);
   this.inBody = true;
   this.refs = this.bodyRefs;
 };
-cls15.deactivateBody = function() {
+cls16.deactivateBody = function() {
   ASSERT.call(this, this.hasHead(), 'a scope with a head was expected');
   ASSERT_EQ.call(this, this.inBody, true);
   this.inBody = false;
   this.refs = this.argRefs;
 };
-cls15.makeStrict = function() {
+cls16.makeStrict = function() {
   this.flags |= SF_STRICT;
   if (this.isAnyFn())
     this.verifyForStrictness();
 };
-cls15.refDirect_m = function(mname, childRef) {
+cls16.refDirect_m = function(mname, childRef) {
   var ref;
   ref = this.focRefAny_m(mname);
   if (childRef === null) {
@@ -12645,10 +12693,10 @@ cls15.refDirect_m = function(mname, childRef) {
   ref.absorbDirect(childRef);
   return ref;
 };
-cls15.findRefU_m = cls15.fRo_m = function(mname) {
+cls16.findRefU_m = cls16.fRo_m = function(mname) {
   return this.refs.has(mname) ? this.refs.get(mname) : null;
 };
-cls15.findRefAny_m = cls15.fRa_m = function(mname) {
+cls16.findRefAny_m = cls16.fRa_m = function(mname) {
   var ref, tdecl;
   ref = this.findRefU_m(mname);
   if (ref) {
@@ -12667,7 +12715,7 @@ cls15.findRefAny_m = cls15.fRa_m = function(mname) {
   }
   return null;
 };
-cls15.removeRefU_m = function(mname) {
+cls16.removeRefU_m = function(mname) {
   var ref;
   ref = this.findRefU_m(mname);
   if (ref)
@@ -12676,14 +12724,14 @@ cls15.removeRefU_m = function(mname) {
     ASSERT.call(this, !this.findDeclOwn_m(mname), 'unresolved ref has a decl with the same name?!');
   return ref;
 };
-cls15.rocRefU_m = function(mname) {
+cls16.rocRefU_m = function(mname) {
   var ref;
   ref = this.removeRefU_m(mname);
   if (!ref)
     ref = new Ref(this);
   return ref;
 };
-cls15.focRefAny_m = cls15.focRa_m = function(mname) {
+cls16.focRefAny_m = cls16.focRa_m = function(mname) {
   var ref;
   ref = this.findRefAny_m(mname);
   if (!ref) {
@@ -12692,23 +12740,23 @@ cls15.focRefAny_m = cls15.focRa_m = function(mname) {
   }
   return ref;
 };
-cls15.insertRef_m = function(mname, ref) {
+cls16.insertRef_m = function(mname, ref) {
   this.refs.set(mname, ref);
 };
-cls15.refIndirect_m = function(mname, childRef) {
+cls16.refIndirect_m = function(mname, childRef) {
   var ref;
   ref = this.focRefAny_m(mname);
   ASSERT.call(this, childRef !== null, 'childRef is not allowed to be null when in refIndirect');
   ref.absorbIndirect(childRef);
   return ref;
 };
-cls15.hasNewTarget = function() {
+cls16.hasNewTarget = function() {
   return this.allowed & SA_NEW_TARGET;
 };
-cls15.hasHead = function() {
+cls16.hasHead = function() {
   return this.isAnyFn() || this.isCatch();
 };
-cls15.hasSignificantNames = function() {
+cls16.hasSignificantNames = function() {
   if (this.isModule() || this.isScript()) {
     return true;
   }
@@ -12720,29 +12768,29 @@ cls15.hasSignificantNames = function() {
   }
   return false;
 };
-cls15.enterForInit = function() {
+cls16.enterForInit = function() {
   this.flags |= SF_FORINIT;
 };
-cls15.enterPrologue = function() {
+cls16.enterPrologue = function() {
   this.flags |= SF_INSIDEPROLOGUE;
 };
-cls15.exitForInit = function() {
+cls16.exitForInit = function() {
   ASSERT.call(this, this.insideForInit(), 'must be in a for');
   this.flags &= ~SF_FORINIT;
 };
-cls15.exitPrologue = function() {
+cls16.exitPrologue = function() {
   this.flags &= ~SF_INSIDEPROLOGUE;
 };
-cls15.canSmem = function() {
+cls16.canSmem = function() {
   return this.actions & SA_MEMSUPER;
 };
-cls15.canAwait = function() {
+cls16.canAwait = function() {
   return this.actions & SA_AWAIT;
 };
-cls15.canBreak = function() {
+cls16.canBreak = function() {
   return this.actions & SA_BREAK;
 };
-cls15.canDeclareLexical = function() {
+cls16.canDeclareLexical = function() {
   if (this.isBlock() || this.isModule() || this.isScript()) {
     return true;
   }
@@ -12751,10 +12799,10 @@ cls15.canDeclareLexical = function() {
   }
   return this.insideForInit();
 };
-cls15.canScall = function() {
+cls16.canScall = function() {
   return this.actions & SA_CALLSUPER;
 };
-cls15.canDeclareFn = function(st) {
+cls16.canDeclareFn = function(st) {
   if (this.isBlock() || this.isModule() || this.isScript()) {
     return true;
   }
@@ -12767,28 +12815,28 @@ cls15.canDeclareFn = function(st) {
   }
   return this.insideIf();
 };
-cls15.canYield = function() {
+cls16.canYield = function() {
   return this.actions & SA_YIELD;
 };
-cls15.canMakeThis = function() {
+cls16.canMakeThis = function() {
   if (this.isAnyFn()) {
     return !this.isArrow();
   }
   return this.isSourceLevel();
 };
-cls15.canReturn = function() {
+cls16.canReturn = function() {
   return this.actions & SA_RETURN;
 };
-cls15.canContinue = function() {
+cls16.canContinue = function() {
   return this.actions & SA_CONTINUE;
 };
-cls15.canAccessNewTarget = function() {
+cls16.canAccessNewTarget = function() {
   return this.actions & SA_NEW_TARGET;
 };
-cls15.canHaveName = function() {
+cls16.canHaveName = function() {
   return this.isAnyFn() || this.isClass();
 };
-cls15.declareHoisted_m = function(mname, t) {
+cls16.declareHoisted_m = function(mname, t) {
   var tdecl, tscope, isNew;
   tdecl = this.findDeclAny_m(mname);
   if (tdecl) {
@@ -12817,7 +12865,7 @@ cls15.declareHoisted_m = function(mname, t) {
   isNew && tscope.addVarTarget_m(mname, tdecl);
   return tdecl;
 };
-cls15.findDeclOwn_m = function(mname) {
+cls16.findDeclOwn_m = function(mname) {
   var tdecl;
   tdecl = this.findDeclAny_m(mname);
   if (tdecl && this.owns(tdecl)) {
@@ -12825,7 +12873,7 @@ cls15.findDeclOwn_m = function(mname) {
   }
   return null;
 };
-cls15.findDeclAny_m = function(mname) {
+cls16.findDeclAny_m = function(mname) {
   if (this.isAnyFn() && !this.inBody) {
     return this.findParam_m(mname);
   }
@@ -12834,7 +12882,7 @@ cls15.findDeclAny_m = function(mname) {
   //    this.args.get(mname) : null;
   return this.defs.has(mname) ? this.defs.get(mname) : null;
 };
-cls15.hoistName_m = function(mname, tdecl, tscope, isNew) {
+cls16.hoistName_m = function(mname, tdecl, tscope, isNew) {
   var cur, existing;
   cur = this;
   while (true) {
@@ -12853,11 +12901,11 @@ cls15.hoistName_m = function(mname, tdecl, tscope, isNew) {
     ASSERT.call(this, cur !== null, 'reached topmost before reaching target');
   }
 };
-cls15.findParam_m = function(mname) {
+cls16.findParam_m = function(mname) {
   ASSERT.call(this, this.isAnyFn() || this.isCatch(), 'this scope is not an fn/catch, and has no params');
   return HAS.call(this.argMap, mname) ? this.argMap[mname] : null;
 };
-cls15.declareLexical_m = function(mname, t) {
+cls16.declareLexical_m = function(mname, t) {
   var existing, newDecl;
   existing = this.findDeclAny_m(mname);
   if (!existing) {
@@ -12871,7 +12919,7 @@ cls15.declareLexical_m = function(mname, t) {
   this.insertDecl_m(mname, newDecl);
   return newDecl;
 };
-cls15.decl_m = function(mname, dt) {
+cls16.decl_m = function(mname, dt) {
   var decl;
   decl = null;
   switch (dt & ~DT_EXPORTED) {
@@ -12902,22 +12950,22 @@ cls15.decl_m = function(mname, dt) {
   decl.idx = decl.ref.scope.di_ref.v++;
   return decl;
 };
-cls15.decl_let_m = function(mname, t) {
+cls16.decl_let_m = function(mname, t) {
   return this.declareLexical_m(mname, t);
 };
-cls15.decl_fn_m = function(mname, t) {
+cls16.decl_fn_m = function(mname, t) {
   return this.isLexicalLike() ? this.declareLexical_m(mname, t) : this.declareHoisted_m(mname, t);
 };
-cls15.decl_const_m = function(mname, t) {
+cls16.decl_const_m = function(mname, t) {
   return this.declareLexical_m(mname, t);
 };
-cls15.decl_var_m = function(mname, t) {
+cls16.decl_var_m = function(mname, t) {
   return this.declareHoisted_m(mname, t);
 };
-cls15.decl_cls_m = function(mname, t) {
+cls16.decl_cls_m = function(mname, t) {
   return this.declareLexical_m(mname, t);
 };
-cls15.decl_catchArg_m = function(mname, t) {
+cls16.decl_catchArg_m = function(mname, t) {
   var existing, newDecl;
   ASSERT.call(this, this.isCatch() && !this.inBody, 'only catch heads are allowed to declare args');
   existing = this.findDeclAny_m(mname);
@@ -12929,7 +12977,7 @@ cls15.decl_catchArg_m = function(mname, t) {
   this.addVarTarget_m(mname, newDecl);
   return newDecl;
 };
-cls15.decl_fnArg_m = function(mname, t) {
+cls16.decl_fnArg_m = function(mname, t) {
   var ref, newDecl, existing;
   ASSERT.call(this, this.isAnyFn() && !this.inBody, 'only fn heads are allowed to declare args');
   ref = this.findRefAny_m(mname);
@@ -12950,28 +12998,28 @@ cls15.decl_fnArg_m = function(mname, t) {
   this.argList.push(newDecl);
   return newDecl;
 };
-cls15.insertDecl_m = function(mname, newDecl) {
+cls16.insertDecl_m = function(mname, newDecl) {
   this.defs.set(mname, newDecl);
 };
-cls15.insideIf = function() {
+cls16.insideIf = function() {
   return this.flags & SF_INSIDEIF;
 };
-cls15.insideLoop = function() {
+cls16.insideLoop = function() {
   return this.flags & SF_LOOP;
 };
-cls15.insideStrict = function() {
+cls16.insideStrict = function() {
   return this.flags & SF_STRICT;
 };
-cls15.insidePrologue = function() {
+cls16.insidePrologue = function() {
   return this.flags & SF_INSIDEPROLOGUE;
 };
-cls15.insideForInit = function() {
+cls16.insideForInit = function() {
   return this.flags & SF_FORINIT;
 };
-cls15.insideArgs = function() {
+cls16.insideArgs = function() {
   return this.isAnyFn() && !this.inBody;
 };
-cls15.spReportGlobal_m = function(mname, ref) {
+cls16.spReportGlobal_m = function(mname, ref) {
   var globalBinding;
   globalBinding = this.findGlobal_m(mname);
   if (globalBinding) {
@@ -12986,13 +13034,13 @@ cls15.spReportGlobal_m = function(mname, ref) {
   ref.scope = this;
   return globalBinding;
 };
-cls15.insertGlobal_m = function(mname, global) {
+cls16.insertGlobal_m = function(mname, global) {
   ASSERT.call(this, this.isGlobal() || this.isBundle(), 'global or bundler');
   ASSERT.call(this, global.isGlobal(), 'global');
   ASSERT.call(this, this.defs.has(mname) === false, 'existing');
   return this.defs.set(mname, global);
 };
-cls15.findGlobal_m = function(mname) {
+cls16.findGlobal_m = function(mname) {
   var global;
   global = null;
   if (this.defs.has(mname)) {
@@ -13001,22 +13049,22 @@ cls15.findGlobal_m = function(mname) {
   }
   return global;
 };
-cls15.spawnBlock = function() {
+cls16.spawnBlock = function() {
   return new Scope(this, ST_BLOCK);
 };
-cls15.spawnFn = function(st) {
+cls16.spawnFn = function(st) {
   return new FunScope(this, st | ST_FN);
 };
-cls15.spawnCatch = function() {
+cls16.spawnCatch = function() {
   return new CatchScope(this);
 };
-cls15.spawnParen = function() {
+cls16.spawnParen = function() {
   return new ParenScope(this);
 };
-cls15.spawnCls = function(st) {
+cls16.spawnCls = function(st) {
   return new ClassScope(this, st | ST_CLS);
 };
-cls15.spawnBare = function() {
+cls16.spawnBare = function() {
   return new Scope(this, ST_BARE);
 };
 cls20.set = function(name, val) {
@@ -13069,24 +13117,24 @@ cls20.pop = function(out) {
     out = elem;
   return out;
 };
-cls13.forwardsSource = function(src) {
+cls14.forwardsSource = function(src) {
   return this.allSourcesForwarded.has(_m(src));
 };
-cls13.fillForwardedSourceEntryWith = function(fw, scope) {
+cls14.fillForwardedSourceEntryWith = function(fw, scope) {
   var mname;
   mname = _m(fw);
   ASSERT.call(this, this.allSourcesForwarded.has(mname) && this.allSourcesForwarded.get(mname) === null, 'not null');
   ASSERT.call(this, this.allSourcesImported.has(mname), 'must also be in importsList');
   this.allSourcesForwarded.set(mname, scope);
 };
-cls13.regulateForwardExportList = function(list, src) {
+cls14.regulateForwardExportList = function(list, src) {
   var sourceImported, l;
   sourceImported = this.gocSourceImported(src.value);
   l = 0;
   while (l < list.length)
     this.regulateForwardExport(list[l++], sourceImported);
 };
-cls13.regulateForwardExport = function(ex, sourceImported) {
+cls14.regulateForwardExport = function(ex, sourceImported) {
   var entry, nd;
   entry = ex['#entry'];
   nd = this.createImportedBinding(ex.local, DT_EFW);
@@ -13094,19 +13142,19 @@ cls13.regulateForwardExport = function(ex, sourceImported) {
   ASSERT.call(this, entry.target === null, 'entry');
   entry.target = entry.target || {prev: null, v: nd, next: null};
 };
-cls13.regulateOwnExportList = function(list) {
+cls14.regulateOwnExportList = function(list) {
   var l;
   l = 0;
   while (l < list.length)
     this.regulateOwnExport(list[l++]['#entry']);
 };
-cls13.regulateOwnExport = function(entry) {
+cls14.regulateOwnExport = function(entry) {
   var mname, nd;
   mname = _m(entry.innerName);
   nd = this.findDeclAny_m(mname);
   entry.target = nd ? {p: null, v: nd, n: null} : this.focUnresolvedExportedTarget(entry.innerName);
 };
-cls13.registerForwardedSource = function(src) {
+cls14.registerForwardedSource = function(src) {
   var mname;
   mname = _m(src.value);
   if (this.allSourcesForwarded.has(mname)) {
@@ -13115,7 +13163,7 @@ cls13.registerForwardedSource = function(src) {
   this.allSourcesForwarded.set(mname, null);
   this.allSourcesImported.has(mname) || this.allSourcesImported.set(mname, null);
 };
-cls13.refreshUnresolvedExportsWith = function(n) {
+cls14.refreshUnresolvedExportsWith = function(n) {
   var mname, target, tp, tn;
   mname = _m(n.name);
   target = this.allUnresolvedExports.has(mname) ? this.allUnresolvedExports.get(mname) : null;
@@ -13133,14 +13181,14 @@ cls13.refreshUnresolvedExportsWith = function(n) {
   tn && (tn.prev = tp);
   target.next = target.prev = null;
 };
-cls13.registerExportedEntry_oi = function(outerName, outerID, innerName) {
+cls14.registerExportedEntry_oi = function(outerName, outerID, innerName) {
   var mname, entry;
   mname = _m(outerName);
   entry = this.allNamesExported.has(mname) ? this.allNamesExported.get(mname) : null;
   entry && this.err('existing.export');
   return this.allNamesExported.set(mname, {innerName: innerName, outerName: outerName, target: null, outerID: outerID});
 };
-cls13.focUnresolvedExportedTarget = function(name) {
+cls14.focUnresolvedExportedTarget = function(name) {
   var mname, target, luet;
   mname = _m(name);
   if (this.allUnresolvedExports.has(mname)) {
@@ -13156,7 +13204,7 @@ cls13.focUnresolvedExportedTarget = function(name) {
   }
   return this.allUnresolvedExports.set(mname, target);
 };
-cls13.regulateImports_sl = function(src, list) {
+cls14.regulateImports_sl = function(src, list) {
   var sourceImported, e, item, target;
   sourceImported = this.gocSourceImported(src.value);
   e = 0;
@@ -13166,18 +13214,18 @@ cls13.regulateImports_sl = function(src, list) {
     this.addImportedAlias_ios(target, target.isIAliased() ? item.imported.name : target.isIDefault() ? '*default*' : '*', sourceImported);
   }
 };
-cls13.addImportedAlias_ios = function(inner, outer, sourceImported) {
+cls14.addImportedAlias_ios = function(inner, outer, sourceImported) {
   var aliases;
   aliases = this.gocAliasesImported(sourceImported, outer);
   aliases.push(inner);
 };
-cls13.gocSourceImported = function(src) {
+cls14.gocSourceImported = function(src) {
   var mname, im;
   mname = _m(src);
   im = this.allSourcesImported.has(mname) ? this.allSourcesImported.get(mname) : null;
   return im || this.allSourcesImported.set(mname, new SortedObj());
 };
-cls13.declareImportedName = function(id, t) {
+cls14.declareImportedName = function(id, t) {
   var mname, existing, nd;
   mname = _m(id.name);
   existing = this.findDeclAny_m(mname);
@@ -13188,18 +13236,18 @@ cls13.declareImportedName = function(id, t) {
   this.refreshUnresolvedExportsWith(nd);
   return nd;
 };
-cls13.gocAliasesImported = function(sourceImported, outerName) {
+cls14.gocAliasesImported = function(sourceImported, outerName) {
   var mname;
   mname = _m(outerName);
   return sourceImported.has(mname) ? sourceImported.get(mname) : sourceImported.set(mname, []);
 };
-cls13.createImportedBinding = function(id, t) {
+cls14.createImportedBinding = function(id, t) {
   var nd;
   nd = new Decl();
   nd.t(t).s(id).n(id.name);
   return nd;
 };
-cls13.satisfyWithBundler = function(bundler) {
+cls14.satisfyWithBundler = function(bundler) {
   var bundlerSources, allSourcesImported, e, len, sourcePath, exitPath, src, isNew, satisfierScope, entriesImported, im;
   bundlerSources = bundler.freshSources;
   allSourcesImported = this.allSourcesImported;
@@ -13230,7 +13278,7 @@ cls13.satisfyWithBundler = function(bundler) {
   bundler.freshSources = bundlerSources;
   return im;
 };
-cls13.satisfyEntries = function(list) {
+cls14.satisfyEntries = function(list) {
   var len, l, name, bindingList, bi;
   len = list.length();
   l = 0;
@@ -13243,14 +13291,14 @@ cls13.satisfyEntries = function(list) {
     l++;
   }
 };
-cls13.satisfyBindingWithName = function(binding, name) {
+cls14.satisfyBindingWithName = function(binding, name) {
   var ex;
   ex = this.searchExports(name, null);
   if (!ex)
     this.parser.err('unresolved.name');
   this.resolve1to2(binding, ex.ref.getDecl_real());
 };
-cls13.searchInOwnExports = function(name) {
+cls14.searchInOwnExports = function(name) {
   var mname, entry;
   mname = _m(name);
   entry = this.allNamesExported.has(mname) ? this.allNamesExported.get(mname) : null;
@@ -13260,7 +13308,7 @@ cls13.searchInOwnExports = function(name) {
   }
   return null;
 };
-cls13.searchExports = function(name, soFar) {
+cls14.searchExports = function(name, soFar) {
   var ex;
   ex = this.searchInOwnExports(name);
   if (ex === null) {
@@ -13271,7 +13319,7 @@ cls13.searchExports = function(name, soFar) {
   }
   return ex;
 };
-cls13.searchInForwardedExports = function(name, soFar) {
+cls14.searchInForwardedExports = function(name, soFar) {
   var list, l, len, entry, satisfier;
   list = this.allSourcesForwarded;
   l = 0;
@@ -13288,7 +13336,7 @@ cls13.searchInForwardedExports = function(name, soFar) {
   }
   return entry;
 };
-cls13.resolve1to2 = function(slave, master) {
+cls14.resolve1to2 = function(slave, master) {
   var slaveRef, slaveRSList, l;
   ASSERT.call(this, master === master.ref.getDecl_real(), 'master');
   ASSERT.call(this, master !== slave, 'same');
@@ -14223,6 +14271,7 @@ cls18.transformRawFn = function(n, isVal) {
     s.reached = true;
   }
   this.setScope(s);
+  this.setTS(ts);
   this.setCVTZ(cvtz);
   this.thisState = th;
   return this.synth_TransformedFn(n, argsPrologue);
@@ -14840,43 +14889,6 @@ cls21.has = function(uri) {
 cls21.set = function(uri, value) {
   ASSERT.call(this, !this.has(uri), 'has');
   this.fsMap[_m(uri)] = value;
-};
-function JZMap(helpers) {
-  var len, l, h;
-  this.jzmap = new SortedObj();
-  this.active = new SortedObj();
-  len = helpers.length;
-  l = 0;
-  while (l < len) {
-    h = helpers[l++];
-    ASSERT.call(this, !HAS.call(this.jzmap, h.id), 'helper ' + h.id + ' exists');
-    this.jzmap.set(h.id, h);
-  }
-}
-var jcl;
-jcl = JZMap.prototype;
-jcl.use = function(id) {
-  var list, l;
-  ASSERT.call(this, this.jzmap.has(id), 'no such name: ' + id);
-  if (!HAS.call(this.active, id)) {
-    this.active.set(id, true);
-    list = this.jzmap.get(id).uses;
-    l = 0;
-    while (l < list.length)
-      this.use(list[l++]);
-  }
-};
-jcl.asCode = function() {
-  var list, l, len, str, name;
-  list = this.active;
-  l = 0;
-  len = list.length();
-  str = '';
-  while (l < len) {
-    name = list.keys[l++];
-    str += this.jzmap.get(name).codeString;
-  }
-  return str;
 };
 (function(global, exporter) {
   if (typeof exports === 'object' && typeof module !== 'undefined')

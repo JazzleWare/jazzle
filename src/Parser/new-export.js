@@ -241,6 +241,10 @@ function(c0,loc0) {
 
   if (!stmt)
     this.semi(core(elem)['#c'], 'aft') || this.err('no.semi');
+  else {
+    this.semiLoc = null;
+    this.semiC = 0;
+  }
 
   this.foundStatement = true;
   return {

@@ -14,6 +14,8 @@ function() { this.flushCurrentLine(); return this; };
 
 cls.jz =
 function(str) {
+  // TODO: helpers should be tracked in the transformer
+  // this.jzHelpers.use('#'+str)
   return this.w('jz').w('.').w(str);
 };
 

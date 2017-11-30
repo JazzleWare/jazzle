@@ -2,6 +2,8 @@
   import SortedObj from '../SortedObj/cls.js';
   import {createObj} from '../other/util.js';
   import {Emitters} from '../other/globals.js';
+  import JZMap from '../JZMap/cls.js';
+  import {HELPERS} from '../other/helpers.js';
 
 export default function Emitter() {
   this.indentCache = [""];
@@ -28,6 +30,8 @@ export default function Emitter() {
   this.runningGuard = false;
 
   this.ttype = ETK_NONE;
+
+  this.jzHelpers = new JZMap(HELPERS);
 
   // <sourcemap-related>
   this.emcol_cur = 0;

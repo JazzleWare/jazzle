@@ -212,6 +212,8 @@ function(memName, asStr) {
     return this;
   case 'Identifier':
   case '#-ResolvedName.ex':
+  case '#-ResolvedName.sat':
+  case '#-ResolvedName.binding':
     var cb = CB(memName); this.emc(cb, 'bef' );
     asStr ?
       this.writeString(memName.name,"'") :

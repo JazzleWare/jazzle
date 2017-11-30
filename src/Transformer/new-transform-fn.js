@@ -64,6 +64,7 @@ function(n, isVal) {
   }
 
   this.setScope(s);
+  this.setTS(ts);
 
   this.setCVTZ(cvtz) ;
   this.thisState = th;
