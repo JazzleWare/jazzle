@@ -22,6 +22,12 @@ function(n, flags, isStmt) {
     this.l().wm('}','(').writeJZHelpers();
     this.wm(')',')',';');
   }
+
+  console.error(
+    this.sm,
+    this.smSrcList.keys,
+    this.smNameList.keys
+  );
 };
 
 cls.emitBundleItem =
@@ -40,7 +46,10 @@ function(n) {
     }
   }
 
+  var nc = this.smSetSrc_str(n['#scope']['#uri']);
+
   this.emitStmt(n);
+  this.smSetSrc_i(nc);
 
   own.used || this.grmif(own);
 };

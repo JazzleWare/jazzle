@@ -11,6 +11,9 @@ export default function SourceScope(parent, st) {
 
   this.latestUnresolvedExportTarget = null;
   this.allUnresolvedExports = this.aue = new SortedObj();
+
+  this['#uri'] = "";
+  this['#loader'] = "";
 }
 
  import {createObj} from '../other/util.js';

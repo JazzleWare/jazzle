@@ -44,7 +44,8 @@ cls.parseProgram = function () {
     '#scope': this.scope,
     '#c': cb,
     '#y': 0, 
-    '#imports': null
+    '#imports': null,
+    '#uri': ""
   };
 
   if (!this.expectT(TK_EOF))

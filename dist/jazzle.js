@@ -1124,6 +1124,7 @@ cls3.setURIAndDir = function(uri, dir) {
   this.curDir = dir;
 };
 cls3.save = function(n) {
+  n['#scope']['#uri'] = this.curURI;
   this.resolver.cache(this.curURI, n);
 };
 cls3.getExistingSourceNode = function() {
@@ -2384,9 +2385,10 @@ Emitters['#Bundler'] = function(n, flags, isStmt) {
     this.l().wm('}', '(').writeJZHelpers();
     this.wm(')', ')', ';');
   }
+  console.error(this.sm, this.smSrcList.keys, this.smNameList.keys);
 };
 cls13.emitBundleItem = function(n) {
-  var list, len, l, lsn, own, im;
+  var list, len, l, lsn, own, im, nc;
   list = n['#imports'];
   len = list === null ? 0 : list.length;
   l = 0;
@@ -2401,7 +2403,9 @@ cls13.emitBundleItem = function(n) {
       this.trygu(wcb_afterStmt, own);
     }
   }
+  nc = this.smSetSrc_str(n['#scope']['#uri']);
   this.emitStmt(n);
+  this.smSetSrc_i(nc);
   own.used || this.grmif(own);
 };
 /*  TODO: Raw, for alternative bundlers */Emitters['#ExportNamedDeclaration'] = function(n, isVal) {
@@ -10415,6 +10419,8 @@ function SourceScope(parent, st) {
   this.allSourcesForwarded = this.asf = new SortedObj();
   this.latestUnresolvedExportTarget = null;
   this.allUnresolvedExports = this.aue = new SortedObj();
+  this['#uri'] = '';
+  this['#loader'] = '';
 }
 var cls14;
 cls14 = SourceScope.prototype = createObj(ConcreteScope.prototype);
@@ -10439,7 +10445,7 @@ cls10.parseProgram = function() {
   this.scope.finish();
   cb = {};
   list.length || this.suc(cb, 'inner');
-  n = {type: 'Program', body: list, start: 0, end: this.src.length, sourceType: !this.isScript ? 'module' : 'script', loc: {start: {line: li0, column: col0}, end: {line: this.li, column: this.col}}, '#scope': this.scope, '#c': cb, '#y': 0, '#imports': null};
+  n = {type: 'Program', body: list, start: 0, end: this.src.length, sourceType: !this.isScript ? 'module' : 'script', loc: {start: {line: li0, column: col0}, end: {line: this.li, column: this.col}}, '#scope': this.scope, '#c': cb, '#y': 0, '#imports': null, '#uri': ''};
   if (!this.expectT(TK_EOF))
     this.err('program.unfinished');
   bundler = this.bundler;

@@ -41,6 +41,7 @@ function(uri, dir) {
 
 cls.save =
 function(n) {
+  n['#scope']['#uri'] = this.curURI;
   this.resolver.cache(this.curURI, n);
 };
 

@@ -1,6 +1,6 @@
   import {Emitters} from '../other/globals.js';
   import {CB, isInteger} from '../other/util.js';
-  import {ETK_ID, STRING_TYPE, ETK_NONE, BOOL_TYPE, NUMBER_TYPE, ETK_NUM, ASSERT, HAS} from '../other/constants.js';
+  import {ETK_ID, ETK_NONE, ETK_NUM, ETK_DIV, BOOL_TYPE, NUMBER_TYPE, ASSERT, STRING_TYPE, HAS} from '../other/constants.js';
   import {wcb_intDotGuard} from '../other/wcb.js';
 
 Emitters['Literal'] =
