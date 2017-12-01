@@ -25,7 +25,7 @@ function(n, flags, isStmt) {
     .eA(l, EC_NONE, false).w('[').eA(l, EC_NONE, false).wm('.','length')
     .w(']')
     .wm('','=',' ','arguments','[').
-    eA(l, EC_NONE, false).wm('.','length','+',n.idx,']',';').u();
+    eA(l, EC_NONE, false).wm('.','length','+',n.idx+"",']',';').u();
   this.emc(cb, 'aft');
   return true;
 };

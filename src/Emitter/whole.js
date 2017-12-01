@@ -72,3 +72,4 @@
   import './new-emit-ArrayExpression.js';
   import './new-emit-TaggedTemplateExpression.js';
   import './new-uemit-synth-rcheck.js';
+  import './emit-jzhelpers.js';

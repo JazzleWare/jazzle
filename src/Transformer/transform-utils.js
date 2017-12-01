@@ -35,10 +35,15 @@ function(scope) {
 
 cls.accessJZ =
 function() {
+  var jzContainer = this.script;
+  if (jzContainer.parent.isBundle())
+    jzContainer = jzContainer.parent;
+
   var lg = this.script.gocLG('jz');
   var l = lg.getL(0);
   if (!l) {
     l = lg.newL();
+    l.name = 'jz' ;
     lg.seal();
   }
   return l.track(this.cur);

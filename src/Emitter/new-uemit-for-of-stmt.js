@@ -14,6 +14,5 @@ function(n, flags, isStmt) {
     this.wm(tz.synthName,' ','=',' ',scope.di0+"",',','');
   }
   this.eH(n.left, EC_NONE, false).w('.').wm('next','(',')',';',')');
-  this.emitBody(n.body);
+  this.emitAttached(n.body);
 };
-

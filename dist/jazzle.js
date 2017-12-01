@@ -2019,7 +2019,7 @@ jcl.asCode = function() {
   return str;
 };
 var HELPERS;
-HELPERS = [];
+HELPERS = [{id: '#arr', codeString: 'o.arr = function() { var a = [], l = 0; while (l < arguments.length) a = a.concat(arguments[l++]); return a; };', uses: []}, {id: '#tz', codeString: 'o.tz = function(n) { err(\'\"\'+n+\'\" is in the tdz -- it was used before its declaration was reached and evaluated\'); };', uses: ['#err']}, {id: '#c', codeString: 'o.c = function(c,a) { return c.apply(void 0, a); };', uses: []}, {id: '#sp', codeString: 'o.sp = function(v) { return [].concat(v); };', uses: []}, {id: '#n', codeString: 'o.n = function(ctor, a) { var l = 0, str = \"new ctor(\"; while (l < a.length) { if (l) str += \",\"; str += \"a[\"+l+\"]\"; l++; } return eval(str); };', uses: []}, {id: '#cm', codeString: 'o.cm = function(_this, c, a) { return c.apply(_this, a); };', uses: []}, {id: '#err', codeString: 'function err(str) { throw new Error(str); }', uses: []}, {id: '#obj', codeString: 'o.obj = function() { var obj = arguments[0], k = 1; while (k < arguments.length) { var v = k + 1; obj[arguments[k]] = arguments[v]; k += 2; } return obj; };', uses: []}, {id: '#ex', codeString: 'o.ex = function(base, p) { return Math.pow(base, p);};', uses: []}, {id: '#arrIter', codeString: 'o.arrIter = function(v) { return new arrIter0(v); };', uses: ['#arrIter0']}, {id: '#arrIter0', codeString: 'function arrIter0(v) { this.v = v; this.i = 0; }\nvar ac = arrIter0.prototype;\nac.get = function() { return this.v[this.i++]; };\nac.end = function() { return this.v; };', uses: []}, {id: '#u', codeString: 'o.u = function(n) { return n === void 0; }; ', uses: []}, {id: '#of', codeString: 'o.of = function(v) { return new arrIter0(v); };', uses: ['#arrIter0']}];
 function Emitter() {
   this.indentCache = [''];
   this.indentString = '  ';
@@ -2039,6 +2039,7 @@ function Emitter() {
   this.runningGuard = false;
   this.ttype = ETK_NONE;
   this.jzHelpers = new JZMap(HELPERS);
+  this.jzLiquid = null;
   // <sourcemap-related>
   this.emcol_cur = 0;
   this.emcol_latestRec = 0;
@@ -2066,10 +2067,9 @@ function Emitter() {
   this.smLineStart = false;
   this.outLen = 0;
   this.emitters = createObj(Emitters);
-  this.allow = {space: true, nl: true, comments: {l: true, m: true}, elemShake: false};
+  this.allow = {space: true, nl: true, comments: {l: true, m: true}, elemShake: false, jzWrapper: false};
   this.out = '';
   this.outActive = false;
-  this.jzcalls = new SortedObj();
 }
 var cls13;
 cls13 = Emitter.prototype;
@@ -2146,7 +2146,7 @@ UntransformedEmitters['arg-rest'] = function(n, flags, isStmt) {
   this.emc(cb, 'bef');
   l = n.left;
   ASSERT.call(this, isResolvedName(l) || isTemp(l), 'neither id nor temp');
-  this.eA(l, EC_NONE, false).wm('', '=', '', '[', ']', ';').l().wm('while', '', '(').eA(l, EC_NONE, false).wm('.', 'length').wm('+', n.idx + '', '', '<', '', 'arguments', '.', 'length', ')').i().l().eA(l, EC_NONE, false).w('[').eA(l, EC_NONE, false).wm('.', 'length').w(']').wm('', '=', ' ', 'arguments', '[').eA(l, EC_NONE, false).wm('.', 'length', '+', n.idx, ']', ';').u();
+  this.eA(l, EC_NONE, false).wm('', '=', '', '[', ']', ';').l().wm('while', '', '(').eA(l, EC_NONE, false).wm('.', 'length').wm('+', n.idx + '', '', '<', '', 'arguments', '.', 'length', ')').i().l().eA(l, EC_NONE, false).w('[').eA(l, EC_NONE, false).wm('.', 'length').w(']').wm('', '=', ' ', 'arguments', '[').eA(l, EC_NONE, false).wm('.', 'length', '+', n.idx + '', ']', ';').u();
   this.emc(cb, 'aft');
   return true;
 };
@@ -2163,9 +2163,11 @@ cls13.l = function() {
   return this;
 };
 cls13.jz = function(str) {
+  var jzLiquid;
   // TODO: helpers should be tracked in the transformer
-  // this.jzHelpers.use('#'+str)
-  return this.w('jz').w('.').w(str);
+  this.jzHelpers.use('#' + str);
+  jzLiquid = this.jzLiquid;
+  return this.w(jzLiquid.synthName).w('.').w(str);
 };
 cls13.wm = function() {
   var len, l, str;
@@ -2366,7 +2368,22 @@ UntransformedEmitters['arr-iter-get-rest'] = function(n, flags, isStmt) {
   return true;
 };
 Emitters['#Bundler'] = function(n, flags, isStmt) {
-  return this.emitBundleItem(n.rootNode);
+  var w, lg;
+  w = this.allow.jzWrapper;
+  if (this.jzLiquid === null) {
+    lg = n.bundleScope.getLG('jz');
+    if (lg)
+      this.jzLiquid = lg.getL(0);
+  }
+  if (w) {
+    this.wm('(', 'function', '(', n.bundleScope.getLG('jz').getL(0).synthName, ')', '{').l();
+    this.allow.jzWrapper = false;
+  }
+  this.emitBundleItem(n.rootNode);
+  if (w) {
+    this.l().wm('}', '(').writeJZHelpers();
+    this.wm(')', ')', ';');
+  }
 };
 cls13.emitBundleItem = function(n) {
   var list, len, l, lsn, own, im;
@@ -2669,8 +2686,18 @@ Emitters['NewExpression'] = function(n, flags, isStmt) {
   return true;
 };
 Emitters['Program'] = function(n, flags, isStmt) {
-  var main, lsn, own;
+  var main, w, lg, lsn, own;
   main = n['#scope'];
+  w = this.allow.jzWrapper;
+  if (this.jzLiquid === null) {
+    lg = main.getLG('jz');
+    if (lg)
+      this.jzLiquid = lg.getL(0);
+  }
+  if (w) {
+    this.wm('(', 'function', '(', main.getLG('jz').getL(0).synthName, ')', '{').l();
+    this.allow.jzWrapper = false;
+  }
   lsn = null;
   own = {used: false};
   lsn = this.listenForEmits(own);
@@ -2682,6 +2709,10 @@ Emitters['Program'] = function(n, flags, isStmt) {
   this.emitStmtList(n.body);
   this.emc(CB(n), 'inner');
   own.used || this.grmif(own);
+  if (w) {
+    this.l().wm('}', '(').writeJZHelpers();
+    this.wm(')', ')', ';');
+  }
 };
 UntransformedEmitters['cls'] = function(n, flags, isStmt) {
   this.jz('cls').w('(');
@@ -3396,7 +3427,7 @@ Emitters['#ForOfStatement'] = function(n, flags, isStmt) {
     this.wm(tz.synthName, ' ', '=', ' ', scope.di0 + '', ',', '');
   }
   this.eH(n.left, EC_NONE, false).w('.').wm('next', '(', ')', ';', ')');
-  this.emitBody(n.body);
+  this.emitAttached(n.body);
 };
 UntransformedEmitters['cvtz'] = function(n, flags, isStmt) {
   ASSERT_EQ.call(this, isStmt, false);
@@ -4556,6 +4587,211 @@ UntransformedEmitters['rcheck'] = function(n, flags, isStmt) {
   this.wm(n.th.synthName, ')');
   isStmt && this.w(';');
 };
+function newErr(flags) {
+  return ERR_I++ << ERR_FLAG_LEN | flags;
+}
+// if a new error is a syntactic error, and the current error is a semantic one, then replace
+function agtb(a, b) {
+  return a & ERR_SYN ? (b & ERR_SYN) === 0 : false;
+}
+var ERR_FLAG_LEN, ERR_P_SYN, ERR_A_SYN, ERR_S_SYN, ERR_P_SEM, ERR_A_SEM, ERR_S_SEM, ERR_PIN, ERR_SYN, ERR_SEM, ERR_I, ERR_NONE_YET, ERR_PAREN_UNBINDABLE, ERR_SHORTHAND_UNASSIGNED, ERR_NON_TAIL_REST, ERR_ARGUMENTS_OR_EVAL_ASSIGNED, ERR_YIELD_OR_SUPER, ERR_UNEXPECTED_REST, ERR_EMPTY_LIST_MISSING_ARROW, ERR_NON_TAIL_EXPR, ERR_INTERMEDIATE_ASYNC, ERR_ASYNC_NEWLINE_BEFORE_PAREN, ERR_ARGUMENTS_OR_EVAL_DEFAULT, ERR_PIN_OCTAL_IN_STRICT, ERR_PIN_UNICODE_IN_RESV, ERR_PIN_NOT_AN_EQ, NORMALIZE_COMMON;
+ERR_FLAG_LEN = 0;
+ERR_P_SYN = 1 << ERR_FLAG_LEN++;
+ERR_A_SYN = 1 << ERR_FLAG_LEN++;
+ERR_S_SYN = 1 << ERR_FLAG_LEN++;
+ERR_P_SEM = 1 << ERR_FLAG_LEN++;
+ERR_A_SEM = 1 << ERR_FLAG_LEN++;
+ERR_S_SEM = 1 << ERR_FLAG_LEN++;
+ERR_PIN = 1 << ERR_FLAG_LEN++;
+// looks like it need not have any sub-type yet
+ERR_SYN = ERR_P_SYN | ERR_A_SYN | ERR_S_SYN;
+ERR_SEM = ERR_P_SEM | ERR_A_SEM | ERR_S_SEM;
+ERR_I = 0;
+ERR_NONE_YET = 0;
+// [([a])] = 12; <p syntactic, a syntactic, s none>
+ERR_PAREN_UNBINDABLE = newErr(ERR_P_SYN | ERR_A_SYN);
+// { a = 12 }; <p none, a none, s syntactic>@pin@
+ERR_SHORTHAND_UNASSIGNED = newErr(ERR_S_SYN | ERR_PIN);
+// [...a, b] = [...e,] = 12 ; <p syntactic, a syntactic, s none>@pin@
+ERR_NON_TAIL_REST = newErr(ERR_P_SYN | ERR_PIN | ERR_A_SYN);
+// [arguments, [arguments=12], [arguments]=12, eval] = 'l'; <p none, a none, s semantic>
+ERR_ARGUMENTS_OR_EVAL_ASSIGNED = newErr(ERR_S_SEM);
+// function* l() { ([e=yield])=>12 }; <p semantic or syntactic, a semantic or syntactic, s none>
+ERR_YIELD_OR_SUPER = newErr(ERR_P_SEM | ERR_A_SEM);
+// (a, ...b); <p none, a none, s syntactic>
+ERR_UNEXPECTED_REST = newErr(ERR_S_SYN);
+// (); <p none, a none, s syntactic>
+ERR_EMPTY_LIST_MISSING_ARROW = newErr(ERR_S_SYN);
+// (a,); <p none, a none, s syntactic>@pin@
+ERR_NON_TAIL_EXPR = newErr(ERR_S_SYN | ERR_PIN);
+// async a
+ERR_INTERMEDIATE_ASYNC = newErr(ERR_S_SYN);
+/* async
+       (a)=>12 */ERR_ASYNC_NEWLINE_BEFORE_PAREN = newErr(ERR_P_SYN);
+ERR_ARGUMENTS_OR_EVAL_DEFAULT = newErr(ERR_S_SYN);
+// function l() { '\12'; 'use strict'; }
+ERR_PIN_OCTAL_IN_STRICT = newErr(ERR_S_SYN | ERR_PIN);
+// for (a i\u0074 e) break;
+ERR_PIN_UNICODE_IN_RESV = newErr(ERR_S_SYN | ERR_PIN);
+// [ a -= 12 ] = 12; <p syntactic, a syntactic, s none>@pin@
+ERR_PIN_NOT_AN_EQ = newErr(ERR_S_SYN | ERR_PIN);
+NORMALIZE_COMMON = ['li0', 'c0', 'col0', 'li', 'c', 'col', 'loc0', 'loc'];
+function Parser(src, o) {
+  this.src = src;
+  this.unsatisfiedLabel = null;
+  this.nl = false;
+  this.ltval = null;
+  this.lttype = '';
+  this.ltraw = '';
+  this.prec = 0;
+  this.vdt = VDT_NONE;
+  this.labels = {};
+  this.li0 = 0;
+  this.col0 = 0;
+  this.c0 = 0;
+  this.li = 1;
+  this.col = 0;
+  this.c = 0;
+  this.luo = 0;
+  // latest used offset
+  this.canBeStatement = false;
+  this.foundStatement = false;
+  this.isScript = !o || o.sourceType === 'script';
+  this.v = 7;
+  this.first__proto__ = false;
+  this.scope = null;
+  this.declMode = DT_NONE;
+  this.exprHead = null;
+  // ERROR TYPE           CORE ERROR NODE    OWNER NODE
+  this.pt = ERR_NONE_YET;
+  this.pe = null;
+  this.po = null;
+  // paramErr info
+  this.at = ERR_NONE_YET;
+  this.ae = null;
+  this.ao = null;
+  // assigErr info
+  this.st = ERR_NONE_YET;
+  this.se = null;
+  this.so = null;
+  // simpleErr info
+  this.suspys = null;
+  this.missingInit = false;
+  this.yc = -1;
+  // occasionally used to put yield counts in
+  this.ex = DT_NONE;
+  this.bundleScope = null;
+  this.bundler = null;
+  this.chkDirective = false;
+  this.alreadyApplied = false;
+  // "pin" location; for errors that might not have been precisely caused by a syntax node, like:
+  // function l() { '\12'; 'use strict' }
+  //                 ^
+  // 
+  // for (a i\u0074 e) break;
+  //         ^
+  //
+  // var e = [a -= 12] = 5
+  //            ^
+  this.ct = ERR_NONE_YET;
+  this.pin = {c: {c: -1, li: -1, col: -1}, a: {c: -1, li: -1, col: -1}, s: {c: -1, li: -1, col: -1}, p: {c: -1, li: -1, col: -1}};
+  this.cb = null;
+  this.parenAsync = null;
+  // so that things like (async)(a,b)=>12 will not get to parse.
+  this.commentBuf = null;
+  this.errorListener = this;
+  // any object with an `onErr(errType "string", errParams {*})` will do
+  this.parenScope = null;
+  this.regPendingBQ = null;
+  this.regPendingCQ = false;
+  this.regLastBareElem = null;
+  this.regErr = null;
+  this.regIsQuantifiable = false;
+  this.regSemiRange = null;
+  this.regCurlyChar = false;
+  this.regLastOffset = -1;
+  this.regNC = -1;
+  this.regexFlags = this.rf = {};
+  this.commentCallback = null;
+  this.argploc = null;
+  this.pure = false;// pure-ness
+}
+var cls10;
+;
+cls10 = Parser.prototype;
+function renamer_incremental(base, i) {
+  if (i === 0) {
+    return base;
+  }
+  return base + '' + i;
+}
+// naive minified names -- true minified names are shortest for the most used name, and longerst for the least used name
+function renamer_minify(base, i) {
+  var tail, name, m;
+  if (base.length === 1 && i === 0) {
+    return base;
+  }
+  tail = false;
+  name = '';
+  while (true) {
+    do {
+      m = -1;
+      if (tail) {
+        m = i % TAILLEN;
+        name += TAIL.charAt(m);
+        i = (i - m) / TAILLEN;
+      }
+      else {
+        m = i % HEADLEN;
+        name += HEAD.charAt(m);
+        i = (i - m) / HEADLEN;
+      }
+    } while (i > 0);
+    if (iskw(name)) {
+      name = '';
+      i++;
+      continue;
+    }
+    break;
+  }
+  return name;
+}
+var HEAD, TAIL, HEADLEN, TAILLEN;
+HEAD = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ_$';
+TAIL = HEAD + '1234567890';
+HEADLEN = HEAD.length;
+TAILLEN = TAIL.length;
+function Transformer() {
+  // TODO: `inGen or `flag for more contextual info (doesn't `cur have all that, anyway?)
+  // CRUCIAL SCOPES:
+  this.global = null;
+  this.script = null;
+  this.cur = null;
+  // this could be per scope (i.e., a scope attibute),
+  this.tempStack = [];
+  this.reachedRef = {v: true};
+  this.cvtz = {};
+  this.thisState = THS_NONE;
+  // name.activeIf[`cur.scopeID] = `cur if set
+  this.activeIfScope = false;
+  // for var n in.ls `activeIfNames: name.activeIf[n#getID] = n
+  this.activeIfNames = null;
+  // TODO: should rename to activeIfOther, because it can actually contain name-, scope-, or bare actices (actixes)
+  this.curNS = 0;
+  // sinde-effencts
+  this.curAT = null;
+  // activation target in use (mostly, it is just the same thing as this.cur)
+  this.renamer = renamer_incremental;
+}
+var cls18;
+cls18 = Transformer.prototype;
+cls13.writeJZHelpers = function() {
+  var helperSrc, helperNode, ntr;
+  helperSrc = '(function(){var o={};' + this.jzHelpers.asCode() + 'return o;}())|0';
+  helperNode = new Parser(helperSrc).parseProgram();
+  ntr = new Transformer().tr(helperNode, false);
+  this.emitAny(ntr.body[0].expression.left, EC_NONE, false);
+};
 function Template(idxList) {
   this.idxList = idxList;
   this.str = '';
@@ -5068,138 +5304,6 @@ cls6.updateParentForSubScopesTo = function(sParent) {
     i++;
   }
 };
-function newErr(flags) {
-  return ERR_I++ << ERR_FLAG_LEN | flags;
-}
-// if a new error is a syntactic error, and the current error is a semantic one, then replace
-function agtb(a, b) {
-  return a & ERR_SYN ? (b & ERR_SYN) === 0 : false;
-}
-var ERR_FLAG_LEN, ERR_P_SYN, ERR_A_SYN, ERR_S_SYN, ERR_P_SEM, ERR_A_SEM, ERR_S_SEM, ERR_PIN, ERR_SYN, ERR_SEM, ERR_I, ERR_NONE_YET, ERR_PAREN_UNBINDABLE, ERR_SHORTHAND_UNASSIGNED, ERR_NON_TAIL_REST, ERR_ARGUMENTS_OR_EVAL_ASSIGNED, ERR_YIELD_OR_SUPER, ERR_UNEXPECTED_REST, ERR_EMPTY_LIST_MISSING_ARROW, ERR_NON_TAIL_EXPR, ERR_INTERMEDIATE_ASYNC, ERR_ASYNC_NEWLINE_BEFORE_PAREN, ERR_ARGUMENTS_OR_EVAL_DEFAULT, ERR_PIN_OCTAL_IN_STRICT, ERR_PIN_UNICODE_IN_RESV, ERR_PIN_NOT_AN_EQ, NORMALIZE_COMMON;
-ERR_FLAG_LEN = 0;
-ERR_P_SYN = 1 << ERR_FLAG_LEN++;
-ERR_A_SYN = 1 << ERR_FLAG_LEN++;
-ERR_S_SYN = 1 << ERR_FLAG_LEN++;
-ERR_P_SEM = 1 << ERR_FLAG_LEN++;
-ERR_A_SEM = 1 << ERR_FLAG_LEN++;
-ERR_S_SEM = 1 << ERR_FLAG_LEN++;
-ERR_PIN = 1 << ERR_FLAG_LEN++;
-// looks like it need not have any sub-type yet
-ERR_SYN = ERR_P_SYN | ERR_A_SYN | ERR_S_SYN;
-ERR_SEM = ERR_P_SEM | ERR_A_SEM | ERR_S_SEM;
-ERR_I = 0;
-ERR_NONE_YET = 0;
-// [([a])] = 12; <p syntactic, a syntactic, s none>
-ERR_PAREN_UNBINDABLE = newErr(ERR_P_SYN | ERR_A_SYN);
-// { a = 12 }; <p none, a none, s syntactic>@pin@
-ERR_SHORTHAND_UNASSIGNED = newErr(ERR_S_SYN | ERR_PIN);
-// [...a, b] = [...e,] = 12 ; <p syntactic, a syntactic, s none>@pin@
-ERR_NON_TAIL_REST = newErr(ERR_P_SYN | ERR_PIN | ERR_A_SYN);
-// [arguments, [arguments=12], [arguments]=12, eval] = 'l'; <p none, a none, s semantic>
-ERR_ARGUMENTS_OR_EVAL_ASSIGNED = newErr(ERR_S_SEM);
-// function* l() { ([e=yield])=>12 }; <p semantic or syntactic, a semantic or syntactic, s none>
-ERR_YIELD_OR_SUPER = newErr(ERR_P_SEM | ERR_A_SEM);
-// (a, ...b); <p none, a none, s syntactic>
-ERR_UNEXPECTED_REST = newErr(ERR_S_SYN);
-// (); <p none, a none, s syntactic>
-ERR_EMPTY_LIST_MISSING_ARROW = newErr(ERR_S_SYN);
-// (a,); <p none, a none, s syntactic>@pin@
-ERR_NON_TAIL_EXPR = newErr(ERR_S_SYN | ERR_PIN);
-// async a
-ERR_INTERMEDIATE_ASYNC = newErr(ERR_S_SYN);
-/* async
-       (a)=>12 */ERR_ASYNC_NEWLINE_BEFORE_PAREN = newErr(ERR_P_SYN);
-ERR_ARGUMENTS_OR_EVAL_DEFAULT = newErr(ERR_S_SYN);
-// function l() { '\12'; 'use strict'; }
-ERR_PIN_OCTAL_IN_STRICT = newErr(ERR_S_SYN | ERR_PIN);
-// for (a i\u0074 e) break;
-ERR_PIN_UNICODE_IN_RESV = newErr(ERR_S_SYN | ERR_PIN);
-// [ a -= 12 ] = 12; <p syntactic, a syntactic, s none>@pin@
-ERR_PIN_NOT_AN_EQ = newErr(ERR_S_SYN | ERR_PIN);
-NORMALIZE_COMMON = ['li0', 'c0', 'col0', 'li', 'c', 'col', 'loc0', 'loc'];
-function Parser(src, o) {
-  this.src = src;
-  this.unsatisfiedLabel = null;
-  this.nl = false;
-  this.ltval = null;
-  this.lttype = '';
-  this.ltraw = '';
-  this.prec = 0;
-  this.vdt = VDT_NONE;
-  this.labels = {};
-  this.li0 = 0;
-  this.col0 = 0;
-  this.c0 = 0;
-  this.li = 1;
-  this.col = 0;
-  this.c = 0;
-  this.luo = 0;
-  // latest used offset
-  this.canBeStatement = false;
-  this.foundStatement = false;
-  this.isScript = !o || o.sourceType === 'script';
-  this.v = 7;
-  this.first__proto__ = false;
-  this.scope = null;
-  this.declMode = DT_NONE;
-  this.exprHead = null;
-  // ERROR TYPE           CORE ERROR NODE    OWNER NODE
-  this.pt = ERR_NONE_YET;
-  this.pe = null;
-  this.po = null;
-  // paramErr info
-  this.at = ERR_NONE_YET;
-  this.ae = null;
-  this.ao = null;
-  // assigErr info
-  this.st = ERR_NONE_YET;
-  this.se = null;
-  this.so = null;
-  // simpleErr info
-  this.suspys = null;
-  this.missingInit = false;
-  this.yc = -1;
-  // occasionally used to put yield counts in
-  this.ex = DT_NONE;
-  this.bundleScope = null;
-  this.bundler = null;
-  this.chkDirective = false;
-  this.alreadyApplied = false;
-  // "pin" location; for errors that might not have been precisely caused by a syntax node, like:
-  // function l() { '\12'; 'use strict' }
-  //                 ^
-  // 
-  // for (a i\u0074 e) break;
-  //         ^
-  //
-  // var e = [a -= 12] = 5
-  //            ^
-  this.ct = ERR_NONE_YET;
-  this.pin = {c: {c: -1, li: -1, col: -1}, a: {c: -1, li: -1, col: -1}, s: {c: -1, li: -1, col: -1}, p: {c: -1, li: -1, col: -1}};
-  this.cb = null;
-  this.parenAsync = null;
-  // so that things like (async)(a,b)=>12 will not get to parse.
-  this.commentBuf = null;
-  this.errorListener = this;
-  // any object with an `onErr(errType "string", errParams {*})` will do
-  this.parenScope = null;
-  this.regPendingBQ = null;
-  this.regPendingCQ = false;
-  this.regLastBareElem = null;
-  this.regErr = null;
-  this.regIsQuantifiable = false;
-  this.regSemiRange = null;
-  this.regCurlyChar = false;
-  this.regLastOffset = -1;
-  this.regNC = -1;
-  this.regexFlags = this.rf = {};
-  this.commentCallback = null;
-  this.argploc = null;
-  this.pure = false;// pure-ness
-}
-var cls10;
-;
-cls10 = Parser.prototype;
 cls10.parseCond = function(cond, ctx) {
   var seq, alt;
   this.spc(core(cond), 'aft');
@@ -13380,72 +13484,6 @@ cls12.applyTo = function(obj, noErrIfUndefNull) {
   }
   return latestVal;
 };
-function renamer_incremental(base, i) {
-  if (i === 0) {
-    return base;
-  }
-  return base + '' + i;
-}
-// naive minified names -- true minified names are shortest for the most used name, and longerst for the least used name
-function renamer_minify(base, i) {
-  var tail, name, m;
-  if (base.length === 1 && i === 0) {
-    return base;
-  }
-  tail = false;
-  name = '';
-  while (true) {
-    do {
-      m = -1;
-      if (tail) {
-        m = i % TAILLEN;
-        name += TAIL.charAt(m);
-        i = (i - m) / TAILLEN;
-      }
-      else {
-        m = i % HEADLEN;
-        name += HEAD.charAt(m);
-        i = (i - m) / HEADLEN;
-      }
-    } while (i > 0);
-    if (iskw(name)) {
-      name = '';
-      i++;
-      continue;
-    }
-    break;
-  }
-  return name;
-}
-var HEAD, TAIL, HEADLEN, TAILLEN;
-HEAD = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ_$';
-TAIL = HEAD + '1234567890';
-HEADLEN = HEAD.length;
-TAILLEN = TAIL.length;
-function Transformer() {
-  // TODO: `inGen or `flag for more contextual info (doesn't `cur have all that, anyway?)
-  // CRUCIAL SCOPES:
-  this.global = null;
-  this.script = null;
-  this.cur = null;
-  // this could be per scope (i.e., a scope attibute),
-  this.tempStack = [];
-  this.reachedRef = {v: true};
-  this.cvtz = {};
-  this.thisState = THS_NONE;
-  // name.activeIf[`cur.scopeID] = `cur if set
-  this.activeIfScope = false;
-  // for var n in.ls `activeIfNames: name.activeIf[n#getID] = n
-  this.activeIfNames = null;
-  // TODO: should rename to activeIfOther, because it can actually contain name-, scope-, or bare actices (actixes)
-  this.curNS = 0;
-  // sinde-effencts
-  this.curAT = null;
-  // activation target in use (mostly, it is just the same thing as this.cur)
-  this.renamer = renamer_incremental;
-}
-var cls18;
-cls18 = Transformer.prototype;
 TransformByLeft['ArrayPattern'] = function(n, isVal, isB) {
   var s, t, list, idx, tElem, cbl, elem, res, cb;
   n.right = this.tr(n.right, true);
@@ -13778,10 +13816,13 @@ Transformers['BlockStatement'] = function(n, isVal) {
   return n;
 };
 Transformers['#Bundler'] = function(n, isVal) {
-  var bs;
+  var bs, jzLG;
   bs = n.bundleScope;
   bs.synth_globals(this.renamer);
   n.rootNode = this.transformBundleItem(n.rootNode);
+  jzLG = bs.getLG('jz');
+  if (jzLG)
+    bs.synthLiquid(jzLG.getL(0));
   return n;
 };
 cls18.transformBundleItem = function(n) {
@@ -13849,11 +13890,15 @@ cls18.accessTZ = function(scope) {
   return l.track(this.cur);
 };
 cls18.accessJZ = function() {
-  var lg, l;
+  var jzContainer, lg, l;
+  jzContainer = this.script;
+  if (jzContainer.parent.isBundle())
+    jzContainer = jzContainer.parent;
   lg = this.script.gocLG('jz');
   l = lg.getL(0);
   if (!l) {
     l = lg.newL();
+    l.name = 'jz';
     lg.seal();
   }
   return l.track(this.cur);
@@ -14588,6 +14633,8 @@ Transformers['SwitchCase'] = function(n, isVal) {
 };
 Transformers['SpreadElement'] = function(n, isVal) {
   ASSERT_EQ.call(this, isVal, true);
+  this.accessJZ();
+  // jz.arr, jz.sp
   n.argument = this.tr(n.argument, isVal);
   return n;
 };
@@ -14658,8 +14705,11 @@ Transformers['ObjectExpression'] = function(n, isVal) {
   e = 0;
   while (e < list.length) {
     elem = list[e++];
-    if (elem.computed)
+    if (elem.computed) {
+      this.accessJZ();
+      // jz#obj
       elem.key = this.tr(elem.key, true);
+    }
     elem.value = this.tr(elem.value, true);
   }
   t && this.releaseTemp(t);

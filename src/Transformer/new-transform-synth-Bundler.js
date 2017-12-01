@@ -7,6 +7,10 @@ function(n, isVal) {
   bs.synth_globals(this.renamer);
   n.rootNode = this.transformBundleItem(n.rootNode);
 
+  var jzLG = bs.getLG('jz');
+  if (jzLG)
+    bs.synthLiquid(jzLG.getL(0));
+
   return n;
 };
 

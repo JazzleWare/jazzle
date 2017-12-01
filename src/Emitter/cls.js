@@ -32,6 +32,7 @@ export default function Emitter() {
   this.ttype = ETK_NONE;
 
   this.jzHelpers = new JZMap(HELPERS);
+  this.jzLiquid = null;
 
   // <sourcemap-related>
   this.emcol_cur = 0;
@@ -70,11 +71,9 @@ export default function Emitter() {
   this.outLen = 0;
 
   this.emitters = createObj(Emitters);
-  this.allow = { space: true, nl: true, comments: { l: true, m: true }, elemShake: false };
+  this.allow = { space: true, nl: true, comments: { l: true, m: true }, elemShake: false, jzWrapper: false };
   this.out = "";
   this.outActive = false;
-
-  this.jzcalls = new SortedObj();
 }
 
  export var cls = Emitter.prototype;

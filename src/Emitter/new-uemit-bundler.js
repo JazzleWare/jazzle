@@ -4,7 +4,24 @@
 
 Emitters['#Bundler'] =
 function(n, flags, isStmt) {
-  return this.emitBundleItem(n.rootNode);
+  var w = this.allow.jzWrapper /* && this.jzHelpers.active.length() > 0 */;
+
+  if (this.jzLiquid === null) {
+    var lg = n.bundleScope.getLG('jz');
+    if (lg) this.jzLiquid = lg.getL(0);
+  }
+
+  if (w) {
+    this.wm('(','function','(',n.bundleScope.getLG('jz').getL(0).synthName,')','{').l();
+    this.allow.jzWrapper = false;
+  }
+
+  this.emitBundleItem(n.rootNode);
+
+  if (w) {
+    this.l().wm('}','(').writeJZHelpers();
+    this.wm(')',')',';');
+  }
 };
 
 cls.emitBundleItem =
@@ -27,5 +44,3 @@ function(n) {
 
   own.used || this.grmif(own);
 };
-
-

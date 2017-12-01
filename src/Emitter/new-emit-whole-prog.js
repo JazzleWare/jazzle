@@ -4,7 +4,19 @@
 
 Emitters['Program'] =
 function(n, flags, isStmt) {
-  var main = n['#scope'];
+  var main = n['#scope'],
+      w = this.allow.jzWrapper /* && this.jzHelpers.active.length() > 0 */;
+  
+  if (this.jzLiquid === null) {
+    var lg = main.getLG('jz');
+    if (lg)
+      this.jzLiquid = lg.getL(0);
+  }
+
+  if (w) {
+    this.wm('(','function','(',main.getLG('jz').getL(0).synthName,')','{').l();
+    this.allow.jzWrapper = false;
+  }
 
   var lsn = null, own = {used: false};
   lsn = this.listenForEmits(own);
@@ -15,5 +27,9 @@ function(n, flags, isStmt) {
   this.emc(CB(n), 'inner');
 
   own.used || this.grmif(own);
-};
 
+  if (w) {
+    this.l().wm('}','(').writeJZHelpers();
+    this.wm(')',')',';');
+  }
+};
