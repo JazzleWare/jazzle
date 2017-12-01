@@ -20,6 +20,7 @@ function createTranspilerTester(Parser, Transformer, Emitter) {
         e++;
       }
     }
+
     return {
       n: n,
       e: new Emitter(),
@@ -30,8 +31,12 @@ function createTranspilerTester(Parser, Transformer, Emitter) {
 
   ts.tester.run =
   function(tester, test) {
-    var n = tester.n, e = tester.e, t = tester.t;
+    var n = tester.n, e = tester.e, t = tester.t, prog = tester.prog;
     t.tr(tester.prog, false);
+
+    var lg = prog['#scope'].getLG('jz');
+    if (lg) { e.jzLiquid = lg.getL(0); }
+
     e.startFreshLine();
     e.emitAny(n, test.get('stmt') ? 2 : 0, test.get('stmt') || false);
     return e.flushCurrentLine(), e.out;

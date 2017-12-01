@@ -13133,6 +13133,7 @@ cls16.spReportGlobal_m = function(mname, ref) {
   }
   else {
     globalBinding = new Decl().t(DT_GLOBAL).r(ref).n(_u(mname));
+    ref.rsList.push(this);
     this.insertGlobal_m(mname, globalBinding);
   }
   ref.scope = this;
@@ -13554,6 +13555,7 @@ TransformByLeft['MemberExpression'] = function(n, isVal, isB) {
   var mem, t1, t2, r, sm;
   ASSERT_EQ.call(this, isB, false);
   if (n.operator === '**=') {
+    this.accessJZ();
     mem = n.left;
     mem.object = this.tr(mem.object, true);
     t1 = this.allocTemp();
@@ -13585,6 +13587,8 @@ TransformByLeft['MemberExpression'] = function(n, isVal, isB) {
 };
 TransformByLeft['Identifier'] = function(n, isVal, isB) {
   var rn, l, target;
+  if (n.operator === '**=')
+    this.accessJZ();
   n.right = this.tr(n.right, true);
   rn = n.left = this.toResolvedName(n.left, isB ? 'binding' : 'sat', true);
   // target
@@ -14078,6 +14082,8 @@ Transformers['LogicalExpression'] = function(n, isVal) {
   return n;
 };
 Transformers['BinaryExpression'] = function(n, isVal) {
+  if (n.operator === '**')
+    this.accessJZ();
   n.left = this.tr(n.left, true);
   n.right = this.tr(n.right, true);
   return n;

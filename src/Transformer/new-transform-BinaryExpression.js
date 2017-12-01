@@ -14,6 +14,8 @@ function(n, isVal) {
 
 Transformers['BinaryExpression'] =
 function(n, isVal) {
+  if (n.operator === '**')
+    this.accessJZ();
   n.left = this.tr(n.left, true);
   n.right = this.tr(n.right, true);
   return n;

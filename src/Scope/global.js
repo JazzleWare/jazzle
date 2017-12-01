@@ -15,6 +15,7 @@ function(mname, ref) {
   }
   else {
     globalBinding = new Decl().t(DT_GLOBAL).r(ref).n(_u(mname));
+    ref.rsList.push(this);
     this.insertGlobal_m(mname, globalBinding);
   }
 

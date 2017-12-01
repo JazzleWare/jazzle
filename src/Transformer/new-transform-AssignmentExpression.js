@@ -104,6 +104,7 @@ TransformByLeft['MemberExpression'] =
 function(n, isVal, isB) {
   ASSERT_EQ.call(this, isB, false);
   if (n.operator === '**=') {
+    this.accessJZ();
     var mem = n.left;
     mem.object = this.tr(mem.object, true );
     var t1 = this.allocTemp();
@@ -138,6 +139,9 @@ function(n, isVal, isB) {
 
 TransformByLeft['Identifier'] =
 function(n, isVal, isB) {
+  if (n.operator === '**=')
+    this.accessJZ();
+
   n.right = this.tr(n.right, true);
   var rn = n.left = this.toResolvedName(n.left, isB ? 'binding' : 'sat', true); // target
   if (!isB) {
