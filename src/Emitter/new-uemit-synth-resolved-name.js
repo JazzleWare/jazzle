@@ -35,7 +35,7 @@ function(n, flags, isStmt) {
 
 //var ni = this.smSetName(n.id.name);
   this.wt(tg(n).synthName, ETK_ID );
-  tv && this.v();
+  tv && this.wm('.','v');
 //this.sl(n.id.loc.end);
 //this.namei_cur = ni;
 

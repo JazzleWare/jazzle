@@ -74,13 +74,13 @@ var transformedBundleNode = transformer.tr(bundler, false);
 var emitter = new Emitter();
 
 // kickstart the emitter; TODO: eliminate
-emitter.startFreshLine();
+emitter.start();
 
 // emit! this is what we have come all the way for!
 emitter.emitStmt(transformedBundleNode);
 
 // flush anything that might still be pending in the emitter
-emitter.flushCurrentLine();
+emitter.flushAll();
 
 // YAY! SHOW IT TO THE WORLD!
 // console.log(emitter.out);
@@ -89,6 +89,8 @@ var exports = {};
 
 console.log("<WRITING FIRST>");
 fs.writeFileSync(DIST_OUTPUT_LOCATION, emitter.out);
+
+console.error(emitter.sm);
 console.log("<WRITING COMPLETE>");
 
 console.log("TESTING.....");
@@ -96,7 +98,8 @@ console.log("TESTING.....");
 try {
    new Function(emitter.out).call(exports);
 
-   console.error('E', exports); exports = exports.jazzle;
+   // console.error('E', exports);
+   exports = exports.jazzle;
 
    var ts = require('../test/testers/parser.js')
      .createParserTester(exports.Parser, './test/assets/test-esprima','.ignore');

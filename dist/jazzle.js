@@ -2385,7 +2385,6 @@ Emitters['#Bundler'] = function(n, flags, isStmt) {
     this.l().wm('}', '(').writeJZHelpers();
     this.wm(')', ')', ';');
   }
-  console.error(this.sm, this.smSrcList.keys, this.smNameList.keys);
 };
 cls13.emitBundleItem = function(n) {
   var list, len, l, lsn, own, im, nc;
@@ -2770,6 +2769,33 @@ cls13.emitNewHead = function(n, flags, isStmt) {
 };
 cls13.emitCallHead = function(n, flags, isStmt) {
   return this.emitHead(n, flags | EC_CALL_HEAD, false);
+};
+cls13.start = function() {
+  this.writeToSMout('{\"version\":3,\"mappings\":\"');
+  this.startFreshLine();
+};
+cls13.flushAll = function() {
+  var list, l, len, str;
+  this.flushCurrentLine();
+  this.writeToSMout('\",\"names\":[');
+  list = this.smNameList;
+  l = 0;
+  len = list.length();
+  while (l < len) {
+    if (l)
+      this.writeToSMout(',');
+    str = _u(list.keys[l++]);
+    this.writeToSMout('\"' + str + '\"');
+  }
+  this.writeToSMout('],\"sources\":[');
+  list = this.smSrcList, l = 0, len = list.length();
+  while (l < len) {
+    if (l)
+      this.writeToSMout(',');
+    str = _u(list.keys[l++]);
+    this.writeToSMout('\"' + str + '\"');
+  }
+  this.writeToSMout(']}');
 };
 cls13.writeStringValue = function(sv, ql) {
   var ch, len, c, v, vLen;
@@ -3598,7 +3624,7 @@ Emitters['#-ResolvedName.ex'] = cls13.emitRName_ex = Emitters['#-ResolvedName.sa
   this.emc(cb, 'bef');
   //var ni = this.smSetName(n.id.name);
   this.wt(tg(n).synthName, ETK_ID);
-  tv && this.v();
+  tv && this.wm('.', 'v');
   //this.sl(n.id.loc.end);
   //this.namei_cur = ni;
   this.emc(cb, 'aft');
@@ -14740,7 +14766,7 @@ Transformers['ForOfStatement'] = function(n, isVal) {
   tval = this.synth_TVal(t);
   isVar = false;
   simp = true;
-  if (l.type === 'VariableDeclaration' && l.kind !== 'var') {
+  if (l.type === 'VariableDeclaration') {
     isVar = true;
     simp = l.declarations[0].id.type === 'Identifier';
     l.declarations[0].init = tval;

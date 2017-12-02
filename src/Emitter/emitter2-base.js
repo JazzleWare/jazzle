@@ -1,4 +1,5 @@
   import {EC_EXPR_HEAD, EC_NON_SEQ, EC_NEW_HEAD, EC_CALL_HEAD} from '../other/constants.js';
+  import {_u} from '../other/scope-util.js';
   import {cls} from './cls.js';
 
 cls.emitAny =
@@ -26,4 +27,31 @@ function(n, flags, isStmt) {
   return this.emitHead(n, flags|EC_CALL_HEAD, false);
 };
 
+cls.start =
+function() {
+  this.writeToSMout('{"version":3,"mappings":"');
+  this.startFreshLine();
+};
 
+cls.flushAll =
+function() {
+  this.flushCurrentLine();
+
+  this.writeToSMout('","names":[');
+  var list = this.smNameList, l = 0, len = list.length();
+  while (l < len) {
+    if (l) this.writeToSMout(',');
+    var str = _u(list.keys[l++]);
+    this.writeToSMout('"'+str+'"');
+  }
+
+  this.writeToSMout('],"sources":[');
+  list = this.smSrcList, l = 0, len = list.length();
+  while (l < len) {
+    if (l) this.writeToSMout(',');
+    var str = _u(list.keys[l++]);
+    this.writeToSMout('"'+str+'"');
+  }
+
+  this.writeToSMout(']}');
+};

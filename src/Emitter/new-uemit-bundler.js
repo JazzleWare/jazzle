@@ -22,12 +22,6 @@ function(n, flags, isStmt) {
     this.l().wm('}','(').writeJZHelpers();
     this.wm(')',')',';');
   }
-
-  console.error(
-    this.sm,
-    this.smSrcList.keys,
-    this.smNameList.keys
-  );
 };
 
 cls.emitBundleItem =
