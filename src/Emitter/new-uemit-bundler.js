@@ -8,11 +8,14 @@ function(n, flags, isStmt) {
 
   if (this.jzLiquid === null) {
     var lg = n.bundleScope.getLG('jz');
-    if (lg) this.jzLiquid = lg.getL(0);
+    if (lg)
+      this.jzLiquid = lg.getL(0);
+    if (w)
+      w = !!this.jzLiquid;
   }
 
   if (w) {
-    this.wm('(','function','(',n.bundleScope.getLG('jz').getL(0).synthName,')','{').l();
+    this.wm('(','function','(', this.jzLiquid.synthName,')','{').l();
     this.allow.jzWrapper = false;
   }
 

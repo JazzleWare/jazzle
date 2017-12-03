@@ -11,10 +11,12 @@ function(n, flags, isStmt) {
     var lg = main.getLG('jz');
     if (lg)
       this.jzLiquid = lg.getL(0);
+    if (w)
+      w = !!this.jzLiquid;
   }
 
-  if (w) {
-    this.wm('(','function','(',main.getLG('jz').getL(0).synthName,')','{').l();
+  if (w && this.jzLiquid) {
+    this.wm('(','function','(',this.jzLiquid.synthName,')','{').l();
     this.allow.jzWrapper = false;
   }
 

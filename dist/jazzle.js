@@ -2375,9 +2375,11 @@ Emitters['#Bundler'] = function(n, flags, isStmt) {
     lg = n.bundleScope.getLG('jz');
     if (lg)
       this.jzLiquid = lg.getL(0);
+    if (w)
+      w = !!this.jzLiquid;
   }
   if (w) {
-    this.wm('(', 'function', '(', n.bundleScope.getLG('jz').getL(0).synthName, ')', '{').l();
+    this.wm('(', 'function', '(', this.jzLiquid.synthName, ')', '{').l();
     this.allow.jzWrapper = false;
   }
   this.emitBundleItem(n.rootNode);
@@ -2696,9 +2698,11 @@ Emitters['Program'] = function(n, flags, isStmt) {
     lg = main.getLG('jz');
     if (lg)
       this.jzLiquid = lg.getL(0);
+    if (w)
+      w = !!this.jzLiquid;
   }
-  if (w) {
-    this.wm('(', 'function', '(', main.getLG('jz').getL(0).synthName, ')', '{').l();
+  if (w && this.jzLiquid) {
+    this.wm('(', 'function', '(', this.jzLiquid.synthName, ')', '{').l();
     this.allow.jzWrapper = false;
   }
   lsn = null;
@@ -4821,6 +4825,15 @@ cls13.writeJZHelpers = function() {
   helperNode = new Parser(helperSrc).parseProgram();
   ntr = new Transformer().tr(helperNode, false);
   this.emitAny(ntr.body[0].expression.left, EC_NONE, false);
+};
+Emitters['#ForStatement'] = function(n, flags, isStmt) {
+  this.w('for').os().w('(');
+  n.init && this.emitAny(n.init, EC_IN, false);
+  this.w(';');
+  n.test && this.emitAny(n.test, EC_NONE, false);
+  this.w(';');
+  n.update && this.emitAny(n.update, EC_NONE, false);
+  this.w(')').emitAttached(n.body);
 };
 function Template(idxList) {
   this.idxList = idxList;
@@ -14834,6 +14847,51 @@ Transformers['ForInStatement'] = function(n, isVal) {
   n.type = isVar && simp ? '#ForInStatementWithDeclarationHead' : '#ForInStatementWithExHead';
   if (isVar && simp)
     n = this.synth_AssigList([this.synth_NameList(this.cur, false), n]);
+  this.setScope(s);
+  return n;
+};
+// TODO: a better way to emit init's that are vardecls with tz has to exist
+Transformers['ForStatement'] = function(n, isVal) {
+  var s, lead, init, test, next, cutInit, list, l, tr;
+  s = this.setScope(n['#scope']);
+  lead = null;
+  init = n.init;
+  test = n.test;
+  next = n.update;
+  this.cur.synth_defs_to(this.cur.synthBase);
+  if (init === null);
+  else if (init.type === 'VariableDeclaration') {
+    cutInit = false;
+    if (init.kind !== 'var')
+      cutInit = true;
+    else {
+      list = init.declarations;
+      l = 0;
+      while (l < list.length)
+        if (list[l++].id.type !== 'Identifier') {
+          cutInit = true;
+          break;
+        }
+    }
+    tr = this.tr(init, false);
+    if (cutInit) {
+      n.init = null;
+      lead = tr;
+    }
+    else {
+      n.init = tr;
+    }
+  }
+  else {
+    n.init = n.tr(init, false);
+  }
+  if (test)
+    n.test = this.tr(test, false);
+  if (next)
+    n.update = this.tr(next, false);
+  if (lead)
+    n = this.synth_AssigList([lead, n]);
+  n.type = '#ForStatement';
   this.setScope(s);
   return n;
 };

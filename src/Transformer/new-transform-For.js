@@ -105,3 +105,48 @@ function(n, isVal) {
   return n;
 };
 
+// TODO: a better way to emit init's that are vardecls with tz has to exist
+Transformers['ForStatement'] =
+function(n, isVal) {
+  var s = this.setScope(n['#scope']), lead = null;
+  var init = n.init, test = n.test, next = n.update;
+
+  this.cur.synth_defs_to(this.cur.synthBase);
+
+  if (init === null);
+  else if (init.type === 'VariableDeclaration') {
+    var cutInit = false;
+    if (init.kind !== 'var')
+      cutInit = true;
+    else {
+      var list = init.declarations, l = 0;
+      while (l < list.length)
+        if (list[l++].id.type !== 'Identifier') {
+          cutInit = true;
+          break;
+        }
+    }
+    var tr = this.tr(init, false);
+    if (cutInit) {
+      n.init = null;
+      lead = tr;
+    }
+    else { n.init = tr; }
+  }
+  else { n.init = n.tr(init, false); }
+
+  if (test)
+    n.test = this.tr(test, false);
+
+  if (next)
+    n.update = this.tr(next, false);
+
+  if (lead)
+    n = this.synth_AssigList([lead, n]);
+
+  n.type = '#ForStatement';
+
+  this.setScope(s);
+
+  return n;
+};
