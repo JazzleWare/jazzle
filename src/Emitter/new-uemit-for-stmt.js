@@ -6,8 +6,8 @@
     this.w('for').os().w('(');
     n.init && this.emitAny(n.init, EC_IN, false);
     this.w(';');
-    n.test && this.emitAny(n.test, EC_NONE, false);
+    n.test && this.os().emitAny(n.test, EC_NONE, false);
     this.w(';');
-    n.update && this.emitAny(n.update, EC_NONE, false);
+    n.update && this.os().emitAny(n.update, EC_NONE, false);
     this.w(')').emitAttached(n.body);
   };

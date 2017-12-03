@@ -395,4 +395,12 @@ function(scope, vinit) {
 
 };
 
-
+cls.synth_TZCheckPoint =
+function(scope) {
+  ASSERT.call(this, scope.hasTZCheckPoint, 'can not create a synth tzchp for a scope that lacks one');
+  return {
+    type: '#Untransformed',
+    kind: 'tzcheckpoint',
+    scope: scope
+  };
+};

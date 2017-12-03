@@ -23,6 +23,7 @@ function(n, isVal) {
 
 cls.accessTZ =
 function(scope) {
+  this.accessJZ();
   var lg = scope.scs.gocLG('tz');
   var l = lg.getL(0);
   if (!l) {

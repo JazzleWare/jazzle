@@ -33,6 +33,9 @@ function(n, isVal) {
 
   this.releaseTemp(t);
 
+  if (this.cur.hasTZCheckPoint)
+    n = this.synth_AssigList([this.synth_TZCheckPoint(this.cur), n]);
+
   n.type = '#ForOfStatement';
 //if (isVar && simp)
 //  n = this.synth_AssigList([this.synth_NameList(this.cur, false), n]);
@@ -101,6 +104,9 @@ function(n, isVal) {
   if (isVar && simp)
     n = this.synth_AssigList([this.synth_NameList(this.cur, false), n]);
 
+  if (this.cur.hasTZCheckPoint)
+    n = this.synth_AssigList([this.synth_TZCheckPoint(this.cur), n]);
+
   this.setScope(s);
   return n;
 };
@@ -133,18 +139,23 @@ function(n, isVal) {
     }
     else { n.init = tr; }
   }
-  else { n.init = n.tr(init, false); }
+  else { n.init = this.tr(init, false); }
 
   if (test)
-    n.test = this.tr(test, false);
+    n.test = this.tr(test, true);
 
   if (next)
-    n.update = this.tr(next, false);
+    n.update = this.tr(next, true);
+
+  n.body = this.tr(n.body, false);
+
+  n.type = '#ForStatement';
 
   if (lead)
     n = this.synth_AssigList([lead, n]);
 
-  n.type = '#ForStatement';
+  if (this.cur.hasTZCheckPoint)
+    n = this.synth_AssigList([this.synth_TZCheckPoint(this.cur), n]);
 
   this.setScope(s);
 

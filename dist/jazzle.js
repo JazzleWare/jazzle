@@ -4481,6 +4481,12 @@ UntransformedEmitters['tzchk'] = function(n, flags, isStmt) {
   }
   else
     ASSERT.call(this, false, 'l');
+  isStmt && this.w(';');
+};
+UntransformedEmitters['tzcheckpoint'] = function(n, flags, isStmt) {
+  ASSERT.call(this, n.scope.hasTZCheckPoint, 'could not find a tzcheckpoint');
+  this.w(n.scope.scs.getLG('tz').getL(0).synthName).wm('', '=').wm('', n.scope.di0 + '');
+  isStmt && this.w(';');
 };
 Emitters['BlockStatement'] = function(n, flags, isStmt) {
   var attached, cb, lead, own, lsn, em;
@@ -4830,9 +4836,9 @@ Emitters['#ForStatement'] = function(n, flags, isStmt) {
   this.w('for').os().w('(');
   n.init && this.emitAny(n.init, EC_IN, false);
   this.w(';');
-  n.test && this.emitAny(n.test, EC_NONE, false);
+  n.test && this.os().emitAny(n.test, EC_NONE, false);
   this.w(';');
-  n.update && this.emitAny(n.update, EC_NONE, false);
+  n.update && this.os().emitAny(n.update, EC_NONE, false);
   this.w(')').emitAttached(n.body);
 };
 function Template(idxList) {
@@ -13929,6 +13935,7 @@ cls18.trSAT = function(n, isVal) {
 };
 cls18.accessTZ = function(scope) {
   var lg, l;
+  this.accessJZ();
   lg = scope.scs.gocLG('tz');
   l = lg.getL(0);
   if (!l) {
@@ -14255,6 +14262,10 @@ cls18.synth_TVal = function(ex) {
 };
 cls18.synth_NameList = function(scope, vinit) {
   return {type: '#Untransformed', kind: 'llinosa-names', scope: scope, withV: vinit};
+};
+cls18.synth_TZCheckPoint = function(scope) {
+  ASSERT.call(this, scope.hasTZCheckPoint, 'can not create a synth tzchp for a scope that lacks one');
+  return {type: '#Untransformed', kind: 'tzcheckpoint', scope: scope};
 };
 Transformers['Program'] = function(n, isVal) {
   var g, ps, ts;
@@ -14795,6 +14806,8 @@ Transformers['ForOfStatement'] = function(n, isVal) {
   else
     n.body = this.synth_AssigList([lead, n.body]);
   this.releaseTemp(t);
+  if (this.cur.hasTZCheckPoint)
+    n = this.synth_AssigList([this.synth_TZCheckPoint(this.cur), n]);
   n.type = '#ForOfStatement';
   //if (isVar && simp)
   //  n = this.synth_AssigList([this.synth_NameList(this.cur, false), n]);
@@ -14847,6 +14860,8 @@ Transformers['ForInStatement'] = function(n, isVal) {
   n.type = isVar && simp ? '#ForInStatementWithDeclarationHead' : '#ForInStatementWithExHead';
   if (isVar && simp)
     n = this.synth_AssigList([this.synth_NameList(this.cur, false), n]);
+  if (this.cur.hasTZCheckPoint)
+    n = this.synth_AssigList([this.synth_TZCheckPoint(this.cur), n]);
   this.setScope(s);
   return n;
 };
@@ -14883,15 +14898,18 @@ Transformers['ForStatement'] = function(n, isVal) {
     }
   }
   else {
-    n.init = n.tr(init, false);
+    n.init = this.tr(init, false);
   }
   if (test)
-    n.test = this.tr(test, false);
+    n.test = this.tr(test, true);
   if (next)
-    n.update = this.tr(next, false);
+    n.update = this.tr(next, true);
+  n.body = this.tr(n.body, false);
+  n.type = '#ForStatement';
   if (lead)
     n = this.synth_AssigList([lead, n]);
-  n.type = '#ForStatement';
+  if (this.cur.hasTZCheckPoint)
+    n = this.synth_AssigList([this.synth_TZCheckPoint(this.cur), n]);
   this.setScope(s);
   return n;
 };

@@ -11,5 +11,13 @@ function(n, flags, isStmt) {
   if (hasParen) { this.w('('); flags = EC_NONE; }
   if (n.liq === null) { this.jz('tz').w('(').writeString(n.target.name,"'"); this.w(')'); }
   else ASSERT.call(this, false,  'l');
+
+  isStmt && this.w(';');
 };
 
+UntransformedEmitters['tzcheckpoint'] =
+function(n, flags, isStmt) {
+  ASSERT.call(this, n.scope.hasTZCheckPoint, 'could not find a tzcheckpoint');
+  this.w(n.scope.scs.getLG('tz').getL(0).synthName).wm('','=').wm('',n.scope.di0+"");
+  isStmt && this.w(';');
+};
