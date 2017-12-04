@@ -26,7 +26,7 @@ console.error('LOADING JAZZLE COMPLETE.');
 
 var fs = require('fs');
 
-var FileResourceResolver = require('./FileResourceResolver.js').inject(jazzle).FileResourceResolver;
+var FileResourceResolver = jazzle.FileResourceResolver;
 
 var PathMan = jazzle.PathMan;
 var Transformer = jazzle.Transformer;
@@ -43,7 +43,7 @@ var pathMan = new PathMan();
 var bundler = new Bundler(pathMan);
 
 // set up a resolver so the bundler can find the contents of 'import's
-var resolver = new FileResourceResolver();
+var resolver = new FileResourceResolver(fs);
 
 // give the bundler the resolver we set a few lines ago
 bundler.resolver = resolver;

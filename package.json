@@ -1,32 +1,31 @@
 {
   "name": "jazzle",
   "main": "dist/jazzle.js",
-  "version": "0.5.880",
-  "description": "A dazzlingly fast ECMAScript parser written in vanilla ES3",
-  "homepage": "https://github.com/JazzleWare/jazzle-parser",
+  "version": "0.9.0",
+  "description": "Dazzlingly Fast ECMAScript transpiler with zero dependencies",
+  "homepage": "https://github.com/JazzleWare/jazzle",
   "engines": { "node": ">=6.20.0" },
   "author": {
     "name": "Neni Onoda",
-    "email": "neni.onoda@gmail.com"
+    "email": "icefapper@gmail.com"
   },
+  "files": [
+    "dist/jazzle.js",
+    "README.md"
+  ],
   "maintainers": [
     {
-      "name": "Neni Onoda",
-      "email": "neni.onoda@gmail.com",
-      "web": "https://github.com/nenionoda"
-    },
-    {
-      "name": "Ulolo Onoda",
-      "email": "icefapper@gmail.com",
-      "web": "https://github.com/icefapper"
+      "name": "Kelevi Ulohaniola",
+      "email": "failortwist@gmail.com",
+      "web": "https://github.com/FailorTwist"
     }
   ],
   "repository": {
     "type": "git",
-    "url": "https://github.com/JazzleWare/jazzle-parser.git"
+    "url": "https://github.com/JazzleWare/jazzle.git"
   },
   "bugs": {
-    "url": "https://github.com/JazzleWare/jazzle-parser/issues"
+    "url": "https://github.com/JazzleWare/jazzle/issues"
   },
   "license": "MIT",
   "keywords": [
@@ -34,18 +33,19 @@
     "ecmascript",
     "fast",
     "javascript",
-    "jsrube",
-    "parser",
-    "syntax"
+    "transpilation",
+    "compilation",
+    "syntax",
+    "performance",
+    "jazzle"
   ],
   "scripts": {
-    "test": "node test/run.js",
-    "benchmark": "node bench/run.js"
+    "prepublish": "npm run compile-and-test",
+    "compile-and-test": "node builder/run.js"
   },
   "devDependencies": {
     "acorn": "^3.2.0",
     "esprima": "^2.7.2",
-    "benchmark": "^2.1.0",
-    "microtime": "^2.1.1"
+    "benchmark": "^2.1.0"
   }
 }

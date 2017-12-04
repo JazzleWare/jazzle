@@ -1,24 +1,19 @@
+import Parser from '../Parser/cls.js';
+import {ASSERT} from '../other/constants.js';
+import {createObj} from '../other/util.js';
+import PathMan from '../PathMan/cls.js';
+import ResourceResolver from '../ResourceResolver/cls.js';
 
-var inject = function(jazzle) {
-var ResourceResolver = jazzle.ResourceResolver; // from '../ResourceResolver/cls.js';
-
-function ASSERT(cond, m) {
-  if (!cond) throw new Error(m);
-}
-
-function FileResourceResolver(fs) {
+export default function FileResourceResolver(fs) {
   ResourceResolver.call(this);
   this.fs = fs;
 }
 
 var RRcls = ResourceResolver.prototype;
-function thuporCwath() {}
-thuporCwath.prototype = RRcls;
-
-var cls = FileResourceResolver.prototype = new thuporCwath();
+var cls = FileResourceResolver.prototype = createObj(RRcls);
 
 function normalize(str) {
-  var list = [], start = 0, len = 0, manp = new jazzle.PathMan();
+  var list = [], start = 0, len = 0, manp = new PathMan();
   while (true) {
     len = manp.len(str, start);
     if (len === 0) 
@@ -35,7 +30,7 @@ cls.asNode =
 function(uri) {
   uri = normalize(uri);
   var src = this.fs.readFileSync(uri, 'utf-8').toString();
-  var newParser = new jazzle.Parser(src, {sourceType: 'module'});
+  var newParser = new Parser(src, {sourceType: 'module'});
   newParser.bundleScope = this.bundleScope;
   var n = newParser.parseProgram();
   n['#scope']['#uri'] = uri;
@@ -66,8 +61,3 @@ function(uri) {
   uri = normalize(uri);
   return RRcls.loadNew.call(this, uri);
 };
-
- return FileResourceResolver;
-};
-
- module.exports.inject = inject;
