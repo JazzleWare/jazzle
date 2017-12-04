@@ -162,6 +162,8 @@
       a.space = a.nl = a.comments.l = a.comments.m = false;
     }
 
+    emitter.allow.jzWrapper = true;
+
     emitter.start();
     emitter.emitStmt(transformedNode);
     emitter.flushAll();

@@ -326,6 +326,7 @@ mex.ej_adjust = function(e, j, name) {
   delete j['#cvtz'];
   delete j['#binding'];
   delete j['#uri'];
+  delete j['#emitted'];
 
   if (e.tokens) {
     e.tokens = mex.clearComments(e.tokens);

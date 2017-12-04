@@ -1,33 +1,31 @@
-**THIS IS THE ACTIVE BRANCH UNTIL ~~THINGS ARE MIGRATED TO ROLLUP~~ THE BUNDLER GETS WORKING; ADAPTING CODE TO USE IMPORT/EXPORT STARTS AFTER GETTING THE SCRIPT-LEVEL EMITTER TO WORK**
+# Jazzle -- Dazzlingly Fast ECMAScript Transpiler
 
-# Basic Usage:
-```js
-// assuming you are in repo's root
-var j = require('./dist/jazzle.js');
-var src = 'var a, b, l = {a, [b]: {l}} = ({A}=a) => a = ({B=b}) => b = ({L=l}=40) => l';
+## Intro
+Jazzle is a dazzingly fast, new transpiler for ECMAScript, making new features like destructuring (complex) assignments, classes, lexical variables, arrow functions, and template strings available in environments where they are not yet supported.
 
-// parse it
-var syntaxNode = new j.Parser(src).parseProgram();
+It uses a number of novel techniques to efficiently implement features not (efficiently, if at all) implemented in other transpilers, most notably temporal dead zones for lexical variables and super-bound this references.
 
-// transform what was parsed
-var transformer = new j.Transformer();
-var transformedNode = transformer.tr(syntaxNode, false);
+Oh, and it is still about **2x as fast as babel** on early benchmarks.
 
-// emit what was transformed
-var emitter = new j.Emitter();
-emitter.emitStmt(transformedNode);
-emitter.flush(); // flush whatever output that is still pending
+Give it a try and you will be surprised!
 
-// the compiled code:
-console.log(emitter.out);
-
-// along with the produced sourcemap:
-console.error(emitter.sm);
-
-// helpers
-// console.log(emitter.emitJFn());
+## Quickstart:
+installation:
+```sh
+npm install -g jazzle # you might need to be root (sudo) to use the -g flag
 ```
 
-**N.A.F.T.O.S [1]: this is still more of a work in progress; please check back in a month or so**
+usage:
+```js
+var src = 'let [myCoolSource] = ((a=myCoolSource) => [a])();',
+    jazzle = require('jazzle');
 
-[1]: notice aimed at aliens from the outer space (mostly)
+var result = jazzle.transform(src, {sourceType: 'module'});
+
+var fs = require('fs');
+
+fs.writeFileSync('output.js', result.code);
+fs.writeFileSync('output.js.sourcemap', result.sourceMap);
+```
+
+*** CLI is currently in the making, and will be up and running early next week; stay tuned! ***

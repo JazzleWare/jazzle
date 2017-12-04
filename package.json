@@ -10,12 +10,12 @@
     "email": "icefapper@gmail.com"
   },
   "files": [
-    "dist/jazzle.js",
+    "dist",
     "README.md"
   ],
   "maintainers": [
     {
-      "name": "Kelevi Ulohaniola",
+      "name": "Nenifarshi Mirmonoda",
       "email": "failortwist@gmail.com",
       "web": "https://github.com/FailorTwist"
     }

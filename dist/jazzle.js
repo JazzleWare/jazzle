@@ -14,8 +14,7 @@ M_INTBITLEN = INTBITLEN - 1;
 while (M_INTBITLEN >> ++D_INTBITLEN);
 var set1 = function set(bits, i) {
   bits[i >> D_INTBITLEN] |= 1 << (i & M_INTBITLEN);
-};
-var IDS_, IDC_;
+};var IDS_, IDC_;
 IDS_ = fromRunLenCodes([0, 8472, 1, 21, 1, 3948, 2], fromRunLenCodes([0, 65, 26, 6, 26, 47, 1, 10, 1, 4, 1, 5, 23, 1, 31, 1, 458, 4, 12, 14, 5, 7, 1, 1, 1, 129, 5, 1, 2, 2, 4, 1, 1, 6, 1, 1, 3, 1, 1, 1, 20, 1, 83, 1, 139, 8, 166, 1, 38, 2, 1, 7, 39, 72, 27, 5, 3, 45, 43, 35, 2, 1, 99, 1, 1, 15, 2, 7, 2, 10, 3, 2, 1, 16, 1, 1, 30, 29, 89, 11, 1, 24, 33, 9, 2, 4, 1, 5, 22, 4, 1, 9, 1, 3, 1, 23, 25, 71, 21, 79, 54, 3, 1, 18, 1, 7, 10, 15, 16, 4, 8, 2, 2, 2, 22, 1, 7, 1, 1, 3, 4, 3, 1, 16, 1, 13, 2, 1, 3, 14, 2, 19, 6, 4, 2, 2, 22, 1, 7, 1, 2, 1, 2, 1, 2, 31, 4, 1, 1, 19, 3, 16, 9, 1, 3, 1, 22, 1, 7, 1, 2, 1, 5, 3, 1, 18, 1, 15, 2, 23, 1, 11, 8, 2, 2, 2, 22, 1, 7, 1, 2, 1, 5, 3, 1, 30, 2, 1, 3, 15, 1, 17, 1, 1, 6, 3, 3, 1, 4, 3, 2, 1, 1, 1, 2, 3, 2, 3, 3, 3, 12, 22, 1, 52, 8, 1, 3, 1, 23, 1, 16, 3, 1, 26, 3, 5, 2, 35, 8, 1, 3, 1, 23, 1, 10, 1, 5, 3, 1, 32, 1, 1, 2, 15, 2, 18, 8, 1, 3, 1, 41, 2, 1, 16, 1, 16, 3, 24, 6, 5, 18, 3, 24, 1, 9, 1, 1, 2, 7, 58, 48, 1, 2, 12, 7, 58, 2, 1, 1, 2, 2, 1, 1, 2, 1, 6, 4, 1, 7, 1, 3, 1, 1, 1, 1, 2, 2, 1, 4, 1, 2, 9, 1, 2, 5, 1, 1, 21, 4, 32, 1, 63, 8, 1, 36, 27, 5, 115, 43, 20, 1, 16, 6, 4, 4, 3, 1, 3, 2, 7, 3, 4, 13, 12, 1, 17, 38, 1, 1, 5, 1, 2, 43, 1, 333, 1, 4, 2, 7, 1, 1, 1, 4, 2, 41, 1, 4, 2, 33, 1, 4, 2, 7, 1, 1, 1, 4, 2, 15, 1, 57, 1, 4, 2, 67, 37, 16, 16, 86, 2, 6, 3, 620, 2, 17, 1, 26, 5, 75, 3, 11, 7, 13, 1, 4, 14, 18, 14, 18, 14, 13, 1, 3, 15, 52, 35, 1, 4, 1, 67, 88, 8, 41, 1, 1, 5, 70, 10, 31, 49, 30, 2, 5, 11, 44, 4, 26, 54, 23, 9, 53, 82, 1, 93, 47, 17, 7, 55, 30, 13, 2, 10, 44, 26, 36, 41, 3, 10, 36, 107, 4, 1, 4, 3, 2, 9, 192, 64, 278, 2, 6, 2, 38, 2, 6, 2, 8, 1, 1, 1, 1, 1, 1, 1, 31, 2, 53, 1, 7, 1, 1, 3, 3, 1, 7, 3, 4, 2, 6, 4, 13, 5, 3, 1, 7, 116, 1, 13, 1, 16, 13, 101, 1, 4, 1, 2, 10, 1, 1, 2, 6, 6, 1, 1, 1, 1, 1, 1, 16, 2, 4, 5, 5, 4, 1, 17, 41, 2679, 47, 1, 47, 1, 133, 6, 4, 3, 2, 12, 38, 1, 1, 5, 1, 2, 56, 7, 1, 16, 23, 9, 7, 1, 7, 1, 7, 1, 7, 1, 7, 1, 7, 1, 7, 1, 7, 550, 3, 25, 9, 7, 5, 2, 5, 4, 86, 4, 5, 1, 90, 1, 4, 5, 41, 3, 94, 17, 27, 53, 16, 512, 6582, 74, 20950, 42, 1165, 67, 46, 2, 269, 3, 16, 10, 2, 20, 47, 16, 31, 2, 80, 39, 9, 2, 103, 2, 35, 2, 8, 63, 11, 1, 3, 1, 4, 1, 23, 29, 52, 14, 50, 62, 6, 3, 1, 1, 1, 12, 28, 10, 23, 25, 29, 7, 47, 28, 1, 16, 5, 1, 10, 10, 5, 1, 41, 23, 3, 1, 8, 20, 23, 3, 1, 3, 50, 1, 1, 3, 2, 2, 5, 2, 1, 1, 1, 24, 3, 2, 11, 7, 3, 12, 6, 2, 6, 2, 6, 9, 7, 1, 7, 1, 43, 1, 10, 10, 115, 29, 11172, 12, 23, 4, 49, 8452, 366, 2, 106, 38, 7, 12, 5, 5, 1, 1, 10, 1, 13, 1, 5, 1, 1, 1, 2, 1, 2, 1, 108, 33, 363, 18, 64, 2, 54, 40, 12, 116, 5, 1, 135, 36, 26, 6, 26, 11, 89, 3, 6, 2, 6, 2, 6, 2, 3, 35, 12, 1, 26, 1, 19, 1, 2, 1, 15, 2, 14, 34, 123, 69, 53, 267, 29, 3, 49, 47, 32, 16, 27, 5, 38, 10, 30, 2, 36, 4, 8, 1, 5, 42, 158, 98, 40, 8, 52, 156, 311, 9, 22, 10, 8, 152, 6, 2, 1, 1, 44, 1, 2, 3, 1, 2, 23, 10, 23, 9, 31, 65, 19, 1, 2, 10, 22, 10, 26, 70, 56, 6, 2, 64, 1, 15, 4, 1, 3, 1, 27, 44, 29, 3, 29, 35, 8, 1, 28, 27, 54, 10, 22, 10, 19, 13, 18, 110, 73, 55, 51, 13, 51, 784, 53, 75, 45, 32, 25, 26, 36, 41, 35, 3, 1, 12, 48, 14, 4, 21, 1, 1, 1, 35, 18, 1, 25, 84, 7, 1, 1, 1, 4, 1, 15, 1, 10, 7, 47, 38, 8, 2, 2, 2, 22, 1, 7, 1, 2, 1, 5, 3, 1, 18, 1, 12, 5, 286, 48, 20, 2, 1, 1, 184, 47, 41, 4, 36, 48, 20, 1, 59, 43, 85, 26, 390, 64, 31, 1, 448, 57, 1287, 922, 102, 111, 17, 196, 2748, 1071, 4049, 583, 8633, 569, 7, 31, 113, 30, 18, 48, 16, 4, 31, 21, 5, 19, 880, 69, 11, 1, 66, 13, 16480, 2, 3070, 107, 5, 13, 3, 9, 7, 10, 5990, 85, 1, 71, 1, 2, 2, 1, 2, 2, 2, 4, 1, 12, 1, 1, 1, 7, 1, 65, 1, 4, 2, 8, 1, 7, 1, 28, 1, 4, 1, 5, 1, 1, 3, 7, 1, 340, 2, 25, 1, 25, 1, 31, 1, 25, 1, 31, 1, 25, 1, 31, 1, 25, 1, 31, 1, 25, 1, 8, 4148, 197, 1339, 4, 1, 27, 1, 2, 1, 1, 2, 1, 1, 10, 1, 4, 1, 1, 1, 1, 6, 1, 4, 1, 1, 1, 1, 1, 1, 3, 1, 2, 1, 1, 2, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 1, 1, 2, 4, 1, 7, 1, 4, 1, 4, 1, 1, 1, 10, 1, 17, 5, 3, 1, 5, 1, 17, 4420, 42711, 41, 4149, 11, 222, 2, 5762, 10590, 542]));
 IDC_ = fromRunLenCodes([0, 183, 1, 719, 1, 4065, 9, 1640, 1], fromRunLenCodes([0, 48, 10, 7, 26, 4, 1, 1, 26, 47, 1, 10, 1, 1, 1, 2, 1, 5, 23, 1, 31, 1, 458, 4, 12, 14, 5, 7, 1, 1, 1, 17, 117, 1, 2, 2, 4, 1, 1, 6, 5, 1, 1, 1, 20, 1, 83, 1, 139, 1, 5, 2, 166, 1, 38, 2, 1, 7, 39, 9, 45, 1, 1, 1, 2, 1, 2, 1, 1, 8, 27, 5, 3, 29, 11, 5, 74, 4, 102, 1, 8, 2, 10, 1, 19, 2, 1, 16, 59, 2, 101, 14, 54, 4, 1, 5, 46, 18, 28, 68, 21, 46, 129, 2, 10, 1, 19, 1, 8, 2, 2, 2, 22, 1, 7, 1, 1, 3, 4, 2, 9, 2, 2, 2, 4, 8, 1, 4, 2, 1, 5, 2, 12, 15, 3, 1, 6, 4, 2, 2, 22, 1, 7, 1, 2, 1, 2, 1, 2, 2, 1, 1, 5, 4, 2, 2, 3, 3, 1, 7, 4, 1, 1, 7, 16, 11, 3, 1, 9, 1, 3, 1, 22, 1, 7, 1, 2, 1, 5, 2, 10, 1, 3, 1, 3, 2, 1, 15, 4, 2, 10, 9, 1, 7, 3, 1, 8, 2, 2, 2, 22, 1, 7, 1, 2, 1, 5, 2, 9, 2, 2, 2, 3, 8, 2, 4, 2, 1, 5, 2, 10, 1, 1, 16, 2, 1, 6, 3, 3, 1, 4, 3, 2, 1, 1, 1, 2, 3, 2, 3, 3, 3, 12, 4, 5, 3, 3, 1, 4, 2, 1, 6, 1, 14, 10, 16, 4, 1, 8, 1, 3, 1, 23, 1, 16, 3, 8, 1, 3, 1, 4, 7, 2, 1, 3, 5, 4, 2, 10, 17, 3, 1, 8, 1, 3, 1, 23, 1, 10, 1, 5, 2, 9, 1, 3, 1, 4, 7, 2, 7, 1, 1, 4, 2, 10, 1, 2, 14, 3, 1, 8, 1, 3, 1, 41, 2, 8, 1, 3, 1, 5, 8, 1, 7, 5, 2, 10, 10, 6, 2, 2, 1, 18, 3, 24, 1, 9, 1, 1, 2, 7, 3, 1, 4, 6, 1, 1, 1, 8, 6, 10, 2, 2, 13, 58, 5, 15, 1, 10, 39, 2, 1, 1, 2, 2, 1, 1, 2, 1, 6, 4, 1, 7, 1, 3, 1, 1, 1, 1, 2, 2, 1, 13, 1, 3, 2, 5, 1, 1, 1, 6, 2, 10, 2, 4, 32, 1, 23, 2, 6, 10, 11, 1, 1, 1, 1, 1, 4, 10, 1, 36, 4, 20, 1, 18, 1, 36, 9, 1, 57, 74, 6, 78, 2, 38, 1, 1, 5, 1, 2, 43, 1, 333, 1, 4, 2, 7, 1, 1, 1, 4, 2, 41, 1, 4, 2, 33, 1, 4, 2, 7, 1, 1, 1, 4, 2, 15, 1, 57, 1, 4, 2, 67, 2, 3, 9, 9, 14, 16, 16, 86, 2, 6, 3, 620, 2, 17, 1, 26, 5, 75, 3, 11, 7, 13, 1, 7, 11, 21, 11, 20, 12, 13, 1, 3, 1, 2, 12, 84, 3, 1, 4, 2, 2, 10, 33, 3, 2, 10, 6, 88, 8, 43, 5, 70, 10, 31, 1, 12, 4, 12, 10, 40, 2, 5, 11, 44, 4, 26, 6, 11, 37, 28, 4, 63, 1, 29, 2, 11, 6, 10, 13, 1, 8, 14, 66, 76, 4, 10, 17, 9, 12, 116, 12, 56, 8, 10, 3, 49, 82, 3, 1, 35, 1, 2, 6, 246, 6, 282, 2, 6, 2, 38, 2, 6, 2, 8, 1, 1, 1, 1, 1, 1, 1, 31, 2, 53, 1, 7, 1, 1, 3, 3, 1, 7, 3, 4, 2, 6, 4, 13, 5, 3, 1, 7, 66, 2, 19, 1, 28, 1, 13, 1, 16, 13, 51, 13, 4, 1, 3, 12, 17, 1, 4, 1, 2, 10, 1, 1, 2, 6, 6, 1, 1, 1, 1, 1, 1, 16, 2, 4, 5, 5, 4, 1, 17, 41, 2679, 47, 1, 47, 1, 133, 6, 9, 12, 38, 1, 1, 5, 1, 2, 56, 7, 1, 15, 24, 9, 7, 1, 7, 1, 7, 1, 7, 1, 7, 1, 7, 1, 7, 1, 7, 1, 32, 517, 3, 25, 15, 1, 5, 2, 5, 4, 86, 2, 7, 1, 90, 1, 4, 5, 41, 3, 94, 17, 27, 53, 16, 512, 6582, 74, 20950, 42, 1165, 67, 46, 2, 269, 3, 28, 20, 48, 4, 10, 1, 115, 37, 9, 2, 103, 2, 35, 2, 8, 63, 49, 24, 52, 12, 69, 11, 10, 6, 24, 3, 1, 1, 1, 2, 46, 2, 36, 12, 29, 3, 65, 14, 11, 6, 31, 1, 55, 9, 14, 2, 10, 6, 23, 3, 73, 24, 3, 2, 16, 2, 5, 10, 6, 2, 6, 2, 6, 9, 7, 1, 7, 1, 43, 1, 10, 10, 123, 1, 2, 2, 10, 6, 11172, 12, 23, 4, 49, 8452, 366, 2, 106, 38, 7, 12, 5, 5, 12, 1, 13, 1, 5, 1, 1, 1, 2, 1, 2, 1, 108, 33, 363, 18, 64, 2, 54, 40, 12, 4, 16, 16, 16, 3, 2, 24, 3, 32, 5, 1, 135, 19, 10, 7, 26, 4, 1, 1, 26, 11, 89, 3, 6, 2, 6, 2, 6, 2, 3, 35, 12, 1, 26, 1, 19, 1, 2, 1, 15, 2, 14, 34, 123, 69, 53, 136, 1, 130, 29, 3, 49, 15, 1, 31, 32, 16, 27, 5, 43, 5, 30, 2, 36, 4, 8, 1, 5, 42, 158, 2, 10, 86, 40, 8, 52, 156, 311, 9, 22, 10, 8, 152, 6, 2, 1, 1, 44, 1, 2, 3, 1, 2, 23, 10, 23, 9, 31, 65, 19, 1, 2, 10, 22, 10, 26, 70, 56, 6, 2, 64, 4, 1, 2, 5, 8, 1, 3, 1, 27, 4, 3, 4, 1, 32, 29, 3, 29, 35, 8, 1, 30, 25, 54, 10, 22, 10, 19, 13, 18, 110, 73, 55, 51, 13, 51, 781, 71, 31, 10, 15, 60, 21, 25, 7, 10, 6, 53, 1, 10, 16, 36, 2, 1, 9, 69, 5, 3, 3, 11, 1, 1, 35, 18, 1, 37, 72, 7, 1, 1, 1, 4, 1, 15, 1, 10, 7, 59, 5, 10, 6, 4, 1, 8, 2, 2, 2, 22, 1, 7, 1, 2, 1, 5, 2, 9, 2, 2, 2, 3, 2, 1, 6, 1, 5, 7, 2, 7, 3, 5, 267, 70, 1, 1, 8, 10, 166, 54, 2, 9, 23, 6, 34, 65, 3, 1, 11, 10, 38, 56, 8, 10, 54, 26, 3, 15, 4, 10, 358, 74, 21, 1, 448, 57, 1287, 922, 102, 111, 17, 196, 2748, 1071, 4049, 583, 8633, 569, 7, 31, 1, 10, 102, 30, 2, 5, 11, 55, 9, 4, 12, 10, 9, 21, 5, 19, 880, 69, 11, 47, 16, 17, 16480, 2, 3070, 107, 5, 13, 3, 9, 7, 10, 3, 2, 5318, 5, 3, 6, 8, 8, 2, 7, 30, 4, 148, 3, 443, 85, 1, 71, 1, 2, 2, 1, 2, 2, 2, 4, 1, 12, 1, 1, 1, 7, 1, 65, 1, 4, 2, 8, 1, 7, 1, 28, 1, 4, 1, 5, 1, 1, 3, 7, 1, 340, 2, 25, 1, 25, 1, 31, 1, 25, 1, 31, 1, 25, 1, 31, 1, 25, 1, 31, 1, 25, 1, 8, 2, 50, 512, 55, 4, 50, 8, 1, 14, 1, 22, 5, 1, 15, 3408, 197, 11, 7, 1321, 4, 1, 27, 1, 2, 1, 1, 2, 1, 1, 10, 1, 4, 1, 1, 1, 1, 6, 1, 4, 1, 1, 1, 1, 1, 1, 3, 1, 2, 1, 1, 2, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 1, 1, 2, 4, 1, 7, 1, 4, 1, 4, 1, 1, 1, 10, 1, 17, 5, 3, 1, 5, 1, 17, 4420, 42711, 41, 4149, 11, 222, 2, 5762, 10590, 542, 722658, 240]));
 set1(IDC_, 8204);
@@ -2388,11 +2387,47 @@ Emitters['#Bundler'] = function(n, flags, isStmt) {
     this.wm(')', ')', ';');
   }
 };
-cls14.emitBundleItem = function(n) {
-  var list, len, l, lsn, own, im, nc;
-  list = n['#imports'];
-  len = list === null ? 0 : list.length;
+cls14.emitRenamed = function(scope, total) {
+  var list, l, item;
+  list = scope.renamedHoisted;
   l = 0;
+  while (l < list.length) {
+    item = list[l];
+    switch (item.type) {
+    case'#ExportDefaultDeclaration':
+      ASSERT.call(this, item['#emitted'] === false, 'emitted');
+      this.emitStmt(item);
+      this.l();
+      break;
+    case'#Untransformed':
+      ASSERT.call(this, item.kind === 'transformed-fn', 'hoisted [' + item.kind + ']');
+      if (!item.emitted) {
+        this.emitSingleFun(item, true, 0, total > 0);
+        item.emitted = true;
+      }
+      break;
+    default:
+      ASSERT.call(this, 'rename hoisted is unknown: ' + n.type);
+    }
+    ++l;
+  }
+  scope.renamedHoisted = null;
+  return l;
+};
+cls14.emitBundleItem = function(n) {
+  var list, len, l, total, scope, lsn, own, im, nc;
+  list = n['#scope'].allImportedScopes;
+  len = list.length();
+  l = 0;
+  total = 0;
+  while (l < len) {
+    scope = list.at(l++);
+    if (scope.renamedHoisted) {
+      total += this.emitRenamed(scope, total);
+      scope.renamedHoisted = null;
+    }
+  }
+  list = n['#imports'], len = list === null ? 0 : list.length, l = 0;
   lsn = null;
   own = {used: false};
   while (l < len) {
@@ -2416,6 +2451,9 @@ cls14.emitBundleItem = function(n) {
 };
 /*  TODO: Raw, for alternative bundlers */Emitters['#ExportDefaultDeclaration'] = function(n, isVal) {
   var b, elem;
+  if (n['#emitted']) {
+    return;
+  }
   b = n['#binding'];
   elem = n.declaration;
   if (b !== null) {
@@ -2426,6 +2464,7 @@ cls14.emitBundleItem = function(n) {
   }
   else
     this.eA(elem, EC_START_STMT, true);
+  n['#emitted'] = true;
 };
 /*  TODO: Raw, for alternative bundlers */Emitters['#ImportDeclaration'] = function(n, isVal) {};
 UntransformedEmitters['assig-list'] = function(n, flags, isStmt) {
@@ -3791,6 +3830,10 @@ cls14.emitThisRef = function(scope, hasPrev) {
 };
 cls14.emitSingleFun = function(n, allowsDecl, i, hasPrev) {
   var scope, target, own, ll;
+  if (n.emitted) {
+    return 0;
+  }
+  ASSERT.call(this, n.emitted === false, 'n.emitted');
   scope = n.fun['#scope'];
   target = n.target;
   ASSERT.call(this, target, 'n.target');
@@ -4345,7 +4388,14 @@ Emitters['WhileStatement'] = function(n, flags, isStmt) {
   return true;
 };
 UntransformedEmitters['transformed-fn'] = function(n, flags, isStmt) {
-  return n.target ? this.emitDeclFn(n, flags, isStmt) : this.emitExprFn(n, flags, isStmt);
+  if (n.emitted) {
+    return;
+  }
+  if (n.target)
+    this.emitDeclFn(n, flags, isStmt);
+  else
+    this.emitExprFn(n, flags, isStmt);
+  n.emitted = true;
 };
 cls14.emitTransformedFn = function(n, flags, isStmt) {
   var raw, cb, scopeName, ni, name_cb, own, lsn, em;
@@ -9144,7 +9194,7 @@ cls11.parseExport_elemDefault = function(c0, loc0) {
     this.semiC = 0;
   }
   this.foundStatement = true;
-  return {type: 'ExportDefaultDeclaration', start: c0, loc: {start: loc0, end: this.semiLoc || elem.loc.end}, end: this.semiC || elem.end, declaration: core(elem), '#y': 0, '#c': cb, '#binding': needsTarget ? entry.target.v : null};
+  return {type: 'ExportDefaultDeclaration', start: c0, loc: {start: loc0, end: this.semiLoc || elem.loc.end}, end: this.semiC || elem.end, declaration: core(elem), '#y': 0, '#c': cb, '#binding': needsTarget ? entry.target.v : null, '#emitted': false};
 };
 cls11.parseExport_from = function() {
   var cb;
@@ -10464,6 +10514,8 @@ function SourceScope(parent, st) {
   this.allSourcesForwarded = this.asf = new SortedObj();
   this.latestUnresolvedExportTarget = null;
   this.allUnresolvedExports = this.aue = new SortedObj();
+  this.renamedHoisted = [];
+  this.allImportedScopes = new SortedObj();
   this['#uri'] = '';
   this['#loader'] = '';
 }
@@ -13329,6 +13381,7 @@ cls15.refreshUnresolvedExportsWith = function(n) {
   ASSERT.call(this, target.v === null, 'target');
   this.allUnresolvedExports.set(mname, null);
   target.v = n;
+  n.type = DT_EALIASED;
   tp = target.prev;
   tn = target.next;
   if (target === this.latestUnresolvedExportTarget)
@@ -13338,10 +13391,13 @@ cls15.refreshUnresolvedExportsWith = function(n) {
   target.next = target.prev = null;
 };
 cls15.registerExportedEntry_oi = function(outerName, outerID, innerName) {
-  var mname, entry;
+  var mname, entry, target;
   mname = _m(outerName);
   entry = this.allNamesExported.has(mname) ? this.allNamesExported.get(mname) : null;
   entry && this.err('existing.export');
+  target = this.findDeclAny_m(_m(innerName));
+  if (target)
+    target.type |= DT_EALIASED;
   return this.allNamesExported.set(mname, {innerName: innerName, outerName: outerName, target: null, outerID: outerID});
 };
 cls15.focUnresolvedExportedTarget = function(name) {
@@ -13421,6 +13477,7 @@ cls15.satisfyWithBundler = function(bundler) {
     }
     ASSERT.call(this, src, 'source not found: \"' + sourcePath + '\"');
     satisfierScope = src['#scope'];
+    this.registerImportedScope(sourcePath, src['#scope']);
     if (this.forwardsSource(sourcePath))
       this.fillForwardedSourceEntryWith(sourcePath, satisfierScope);
     if (isNew)
@@ -13513,6 +13570,12 @@ cls15.resolve1to2 = function(slave, master) {
   }
   master.ref.i += slaveRef.i;
   master.ref.d++;// TODO: must be exact
+};
+cls15.registerImportedScope = function(uri, scope) {
+  var mname;
+  mname = _m(uri);
+  ASSERT.call(this, !this.allImportedScopes.has(mname), 'have [' + uri + ']');
+  this.allImportedScopes.set(mname, scope);
 };
 // TODO: add a mechanism to react to cases where latestVal does not have a property (own or inherited)
 // whose name has the same value as idx
@@ -14210,7 +14273,7 @@ cls19.synth_node_MemberExpression = function(n, v) {
   return {loc: null, computed: true, object: n, property: v, '#y': 0, '#c': {}, type: 'MemberExpression'};
 };
 cls19.synth_TransformedFn = function(n, a) {
-  return {type: '#Untransformed', kind: 'transformed-fn', fun: n, argsPrologue: a, target: null, '#c': {}, scall: null, cls: null, loc: n.loc};
+  return {type: '#Untransformed', kind: 'transformed-fn', fun: n, argsPrologue: a, target: null, '#c': {}, scall: null, cls: null, loc: n.loc, emitted: false};
 };
 cls19.synth_GlobalUpdate = function(assig, isU) {
   return {isU: isU, kind: 'global-update', assig: assig, type: '#Untransformed', '#c': {}};
@@ -14293,13 +14356,16 @@ Transformers['ExportNamedDeclaration'] = function(n, isVal) {
   return n;
 };
 Transformers['ExportDefaultDeclaration'] = function(n, isVal) {
-  var elem;
+  var elem, renamedHoisted;
   elem = n.declaration;
   isVal = true;
+  renamedHoisted = false;
   switch (elem.type) {
   case'FunctionDeclaration':
-    if (elem.id === null)
+    if (elem.id === null) {
       elem.type = 'FunctionExpression';
+      renamedHoisted = true;
+    }
     else
       isVal = false;
     break;
@@ -14312,6 +14378,8 @@ Transformers['ExportDefaultDeclaration'] = function(n, isVal) {
   }
   n.declaration = this.tr(elem, isVal);
   n.type = '#' + n.type;
+  if (renamedHoisted)
+    this.cur.renamedHoisted.push(n);
   return n;
 };
 Transformers['ExportAllDeclaration'] = function(n, isVal) {
@@ -14432,8 +14500,15 @@ cls19.transformParams = function(list) {
   return null;
 };
 Transformers['FunctionDeclaration'] = function(n, isVal) {
+  var tr, scope;
   ASSERT_EQ.call(this, isVal, false);
-  this.cur.pushFun(n.id.name, this.transformDeclFn(n));
+  tr = this.transformDeclFn(n);
+  if (tr.target.isExported() && tr.target.name !== tr.target.synthName) {
+    scope = tr.target.ref.scope;
+    ASSERT.call(this, scope.isSourceLevel(), 'scope');
+    scope.renamedHoisted.push(tr);
+  }
+  this.cur.pushFun(n.id.name, tr);
   return this.synth_Skip();
 };
 Transformers['ArrowFunctionExpression'] = function(n, isVal) {
@@ -15206,9 +15281,11 @@ cls10.loadNew = function(uri) {
       a = emitter.allow;
       a.space = a.nl = a.comments.l = a.comments.m = false;
     }
+    emitter.allow.jzWrapper = true;
     emitter.start();
     emitter.emitStmt(transformedNode);
     emitter.flushAll();
     return {code: emitter.out, sourceMap: emitter.sm};
   };
 });
+//# sourceMappingURL=.././dist/jazzle.js.sourcemap

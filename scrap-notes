@@ -1,0 +1,7 @@
+if A uses L, all renamed exported fns in L have to come before A's source
+ emit-module-item(m) {
+   for each sub in m's imported modules {
+     emit the unemitted hoisted exports in sub
+   }
+   emit m's source
+ }
