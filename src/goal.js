@@ -114,12 +114,14 @@
         options.rootUri && options.rootUri !== "",
         'bundling requested but no "rootUri" found in the provided options'
       );
+      rootUri = options.rootUri;
+
       ASSERT.call(
         this, 
         HAS.call(options, 'resolver') && options.resolver,
         'bundling requested but no "resolver" found in the provided options'
       );
-      rootUri = options.rootUri;
+      resolver = options.resolver;
     }
 
     var pathMan = null, bundler = null;

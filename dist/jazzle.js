@@ -15171,8 +15171,9 @@ cls10.loadNew = function(uri) {
     }
     if (bundleAll) {
       ASSERT.call(this, HAS.call(options, 'rootUri') && options.rootUri && options.rootUri !== '', 'bundling requested but no \"rootUri\" found in the provided options');
-      ASSERT.call(this, HAS.call(options, 'resolver') && options.resolver, 'bundling requested but no \"resolver\" found in the provided options');
       rootUri = options.rootUri;
+      ASSERT.call(this, HAS.call(options, 'resolver') && options.resolver, 'bundling requested but no \"resolver\" found in the provided options');
+      resolver = options.resolver;
     }
     pathMan = null;
     bundler = null;
