@@ -50,5 +50,13 @@
    { id: '#of',
      codeString: 'o.of = function(v) { return new arrIter0(v); };',
      uses: ['#arrIter0']
-   } 
+   },
+   { id: '#o',
+     codeString: 'o.o = function() { return arguments[0]; };',
+     uses: []
+   },
+   { id: '#cv',
+     codeString: 'o.cv = function(n) { err(\'reassigning constant name "\'+n+\'"\'); };',
+     uses: ['#err']
+   }
  ];

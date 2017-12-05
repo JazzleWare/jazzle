@@ -252,7 +252,7 @@ function(nd, loc) {
 
 cls.emitAccessChk_invalidSAT =
 function(nd, loc) {
-  this.jz('cc');
+  this.jz('cv');
   loc && this.sl(loc);
   this.w('(').writeString(nd.name,"'");
   this.w(')');

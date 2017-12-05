@@ -71,6 +71,8 @@
   exports.transform =
   function transform(src, options) {
     var isScript = true, v = null;
+    if (!options) options = {};
+
     if (HAS.call(options, 'sourceType')) {
       switch (v = options.sourceType) {
       case 'module':

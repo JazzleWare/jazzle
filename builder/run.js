@@ -43,7 +43,7 @@ function build(targetFileName, minify) {
 
   console.log("<WRITING FIRST>");
   var outName = targetFileName+'.js', smName = outName + '.sourcemap';
-  fs.writeFileSync(outName, result.code+'\n//# sourceMappingURL=' + '../' + smName);
+  fs.writeFileSync(outName, result.code/*'\n//# sourceMappingURL=' + '../' + smName*/ );
   fs.writeFileSync(smName, result.sourceMap);
   console.log("<WRITING COMPLETE>");
   
