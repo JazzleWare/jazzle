@@ -30,12 +30,14 @@ function(n, flags, isStmt) {
 cls.start =
 function() {
   this.writeToSMout('{"version":3,"mappings":"');
+  this.inMapping = true;
   this.startFreshLine();
 };
 
 cls.flushAll =
 function() {
   this.flushCurrentLine();
+  this.inMapping = false;
 
   this.writeToSMout('","names":[');
   var list = this.smNameList, l = 0, len = list.length();

@@ -44,7 +44,10 @@ function(i) {
 };
 
 cls.writeToSMout =
-function(lm) { this.sm = this.sm.concat(lm); this.smLen += lm.length; };
+function(lm) {
+  this.sm = this.sm.concat(lm); 
+  if (this.inMapping) this.smLen += lm.length; 
+};
 
 cls.refreshTheCurrentLineLevelSourceMapWith =
 function(srcLoc) {

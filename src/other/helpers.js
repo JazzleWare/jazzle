@@ -58,5 +58,21 @@
    { id: '#cv',
      codeString: 'o.cv = function(n) { err(\'reassigning constant name "\'+n+\'"\'); };',
      uses: ['#err']
+   },
+   { id: '#cls',
+     codeString: 'o.cls = function() { var c = arguments[0], p = null; if (arguments.length === 2) c.prototype = cr(arguments[1].prototype); p = c.prototype; p.constructor = c; return p; };',
+     uses: ['#cr']
+   },
+   { id: '#cr',
+     codeString: 'function cr(o) { function l() {} l.prototype = o; return new l(); }' ,
+     uses: []
+   },
+   { id: '#h',
+     codeString: 'o.h = function(cls) { return cls; };',
+     uses: []
+   },
+   { id: '#r',
+     codeString: 'o.r = function() { arguments[arguments.length-1] || err("returning before calling super"); };',
+     uses: ['#err']
    }
  ];

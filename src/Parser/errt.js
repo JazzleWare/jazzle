@@ -81,6 +81,12 @@ function() {
   return this.err(tm[st], ep) ;
 };
 
+cls.throwTricky =
+function(name, t) { // TODO: eliminate
+  var core = name === 'p' ? this.pe : name === 'a' ? this.ae : this.se;
+  this.err(tm[t], {tn: core});
+};
+  
 cls.pt_teot =
 function(t,e,o) { this.pt = t; this.pe = e; this.po = o; };
 

@@ -312,6 +312,7 @@ function(th) {
 
 cls.synth_MakeClass =
 function(cls, herit, target) {
+  this.accessJZ();
   return {
     cls: cls,
     heritage: herit,
@@ -357,6 +358,7 @@ function(target, ctor) {
 };
 cls.synth_Heritage =
 function(h) {
+  this.accessJZ();
   return {
     type: '#Untransformed' ,
     heritage: h,

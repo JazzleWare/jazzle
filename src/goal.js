@@ -35,7 +35,7 @@
   import Bundler from './Bundler/cls.js';
   import {renamer_incremental, renamer_minify} from './other/renamer.js';
   import ResourceResolver from './ResourceResolver/cls.js';
-  import FileResourceResolver from './FileResourceResolver/cls.js';
+  import FileResourceResolver, {normalize} from './FileResourceResolver/cls.js';
   import JZMap from './JZMap/cls.js';
 
   import {HAS, ASSERT} from './other/constants.js';
@@ -157,9 +157,9 @@
     else
       transformedNode = transformer.tr(rootNode, false);
 
-    var emitter = new Emitter();
+    var emitter = options.emitter || new Emitter();
 
-    if (minify) {
+    if (minify && !options.emitter) {
       var a = emitter.allow;
       a.space = a.nl = a.comments.l = a.comments.m = false;
     }
@@ -174,5 +174,6 @@
       code: emitter.out,
       sourceMap: emitter.sm
     };
-  }
+  };
+  exports.normalize = normalize ;
 });

@@ -28,22 +28,24 @@ var fs = require('fs');
 
 var FileResourceResolver = jazzle.FileResourceResolver;
 
-
-function build(targetFileName, minify) {
+function build(targetFileName, minify, emitter) {
   var rootSource = fs.readFileSync(ROOT_FILE, 'utf-8').toString();
+
   var result = jazzle.transform(rootSource, {
     sourceType: 'module',
     rootUri: ROOT_FILE,
     resolver: new FileResourceResolver(fs),
     bundle: true,
-    minify: minify
+    minify: minify,
+    emitter: emitter
   });
   
   var exports = {};
 
   console.log("<WRITING FIRST>");
+
   var outName = targetFileName+'.js', smName = outName + '.sourcemap';
-  fs.writeFileSync(outName, result.code/*'\n//# sourceMappingURL=' + '../' + smName*/ );
+  fs.writeFileSync(outName, result.code + '\n//# sourceMappingURL=' + '../' + smName );
   fs.writeFileSync(smName, result.sourceMap);
   console.log("<WRITING COMPLETE>");
   
@@ -79,5 +81,19 @@ function build(targetFileName, minify) {
   console.log("---------------------BUILDING COMPLETE.-----------------------------");
 }
 
-build( DIST_OUTPUT_LOCATION, false);
-build( DIST_OUTPUT_LOCATION+'.min', true);
+var Emitter = null; Emitter = jazzle.Emitter;
+var emitter = null;
+
+emitter = new Emitter();
+build( DIST_OUTPUT_LOCATION, false, emitter);
+
+emitter = new Emitter();
+emitter.allow.space = false;
+emitter.allow.nl = false;
+emitter.allow.comments.l = false;
+emitter.allow.comments.m = false;
+build( DIST_OUTPUT_LOCATION+'.min', false, emitter);emitter = new Emitter();
+
+emitter.allow.comments.m = false;
+emitter.allow.comments.l = false;
+build( DIST_OUTPUT_LOCATION+'.nocomments', false, emitter);

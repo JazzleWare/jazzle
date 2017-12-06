@@ -12,7 +12,7 @@ export default function FileResourceResolver(fs) {
 var RRcls = ResourceResolver.prototype;
 var cls = FileResourceResolver.prototype = createObj(RRcls);
 
-function normalize(str) {
+export function normalize(str) {
   var list = [], start = 0, len = 0, manp = new PathMan();
   while (true) {
     len = manp.len(str, start);

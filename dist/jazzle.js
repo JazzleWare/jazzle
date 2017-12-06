@@ -2019,7 +2019,7 @@ jcl.asCode = function() {
   return str;
 };
 var HELPERS;
-HELPERS = [{id: '#arr', codeString: 'o.arr = function() { var a = [], l = 0; while (l < arguments.length) a = a.concat(arguments[l++]); return a; };', uses: []}, {id: '#tz', codeString: 'o.tz = function(n) { err(\'\"\'+n+\'\" is in the tdz -- it was used before its declaration was reached and evaluated\'); };', uses: ['#err']}, {id: '#c', codeString: 'o.c = function(c,a) { return c.apply(void 0, a); };', uses: []}, {id: '#sp', codeString: 'o.sp = function(v) { return [].concat(v); };', uses: []}, {id: '#n', codeString: 'o.n = function(ctor, a) { var l = 0, str = \"new ctor(\"; while (l < a.length) { if (l) str += \",\"; str += \"a[\"+l+\"]\"; l++; } return eval(str); };', uses: []}, {id: '#cm', codeString: 'o.cm = function(_this, c, a) { return c.apply(_this, a); };', uses: []}, {id: '#err', codeString: 'function err(str) { throw new Error(str); }', uses: []}, {id: '#obj', codeString: 'o.obj = function() { var obj = arguments[0], k = 1; while (k < arguments.length) { var v = k + 1; obj[arguments[k]] = arguments[v]; k += 2; } return obj; };', uses: []}, {id: '#ex', codeString: 'o.ex = function(base, p) { return Math.pow(base, p);};', uses: []}, {id: '#arrIter', codeString: 'o.arrIter = function(v) { return new arrIter0(v); };', uses: ['#arrIter0']}, {id: '#arrIter0', codeString: 'function arrIter0(v) { this.v = v; this.i = 0; }\nvar ac = arrIter0.prototype;\nac.get = function() { return this.v[this.i++]; };\nac.end = function() { return this.v; };', uses: []}, {id: '#u', codeString: 'o.u = function(n) { return n === void 0; }; ', uses: []}, {id: '#of', codeString: 'o.of = function(v) { return new arrIter0(v); };', uses: ['#arrIter0']}, {id: '#o', codeString: 'o.o = function() { return arguments[0]; };', uses: []}, {id: '#cv', codeString: 'o.cv = function(n) { err(\'reassigning constant name \"\'+n+\'\"\'); };', uses: ['#err']}];
+HELPERS = [{id: '#arr', codeString: 'o.arr = function() { var a = [], l = 0; while (l < arguments.length) a = a.concat(arguments[l++]); return a; };', uses: []}, {id: '#tz', codeString: 'o.tz = function(n) { err(\'\"\'+n+\'\" is in the tdz -- it was used before its declaration was reached and evaluated\'); };', uses: ['#err']}, {id: '#c', codeString: 'o.c = function(c,a) { return c.apply(void 0, a); };', uses: []}, {id: '#sp', codeString: 'o.sp = function(v) { return [].concat(v); };', uses: []}, {id: '#n', codeString: 'o.n = function(ctor, a) { var l = 0, str = \"new ctor(\"; while (l < a.length) { if (l) str += \",\"; str += \"a[\"+l+\"]\"; l++; } return eval(str); };', uses: []}, {id: '#cm', codeString: 'o.cm = function(_this, c, a) { return c.apply(_this, a); };', uses: []}, {id: '#err', codeString: 'function err(str) { throw new Error(str); }', uses: []}, {id: '#obj', codeString: 'o.obj = function() { var obj = arguments[0], k = 1; while (k < arguments.length) { var v = k + 1; obj[arguments[k]] = arguments[v]; k += 2; } return obj; };', uses: []}, {id: '#ex', codeString: 'o.ex = function(base, p) { return Math.pow(base, p);};', uses: []}, {id: '#arrIter', codeString: 'o.arrIter = function(v) { return new arrIter0(v); };', uses: ['#arrIter0']}, {id: '#arrIter0', codeString: 'function arrIter0(v) { this.v = v; this.i = 0; }\nvar ac = arrIter0.prototype;\nac.get = function() { return this.v[this.i++]; };\nac.end = function() { return this.v; };', uses: []}, {id: '#u', codeString: 'o.u = function(n) { return n === void 0; }; ', uses: []}, {id: '#of', codeString: 'o.of = function(v) { return new arrIter0(v); };', uses: ['#arrIter0']}, {id: '#o', codeString: 'o.o = function() { return arguments[0]; };', uses: []}, {id: '#cv', codeString: 'o.cv = function(n) { err(\'reassigning constant name \"\'+n+\'\"\'); };', uses: ['#err']}, {id: '#cls', codeString: 'o.cls = function() { var c = arguments[0], p = null; if (arguments.length === 2) c.prototype = cr(arguments[1].prototype); p = c.prototype; p.constructor = c; return p; };', uses: ['#cr']}, {id: '#cr', codeString: 'function cr(o) { function l() {} l.prototype = o; return new l(); }', uses: []}, {id: '#h', codeString: 'o.h = function(cls) { return cls; };', uses: []}, {id: '#r', codeString: 'o.r = function() { arguments[arguments.length-1] || err(\"returning before calling super\"); };', uses: ['#err']}];
 function Emitter() {
   this.indentCache = [''];
   this.indentString = '  ';
@@ -2043,6 +2043,8 @@ function Emitter() {
   // <sourcemap-related>
   this.emcol_cur = 0;
   this.emcol_latestRec = 0;
+  this.imMapping = false;
+  // are we emitting the "mappings" section?
   this.emline_cur = 0;
   this.emline_latestRec = 0;
   this.srci_cur = 0;
@@ -2064,7 +2066,7 @@ function Emitter() {
   this.smSrcList = new SortedObj();
   // </sourcemap-related>
   this.smLen = 0;
-  this.smLineStart = false;
+  this.smLineStart = true;
   this.outLen = 0;
   this.emitters = createObj(Emitters);
   this.allow = {space: true, nl: true, comments: {l: true, m: true}, elemShake: false, jzWrapper: false};
@@ -2815,11 +2817,13 @@ cls14.emitCallHead = function(n, flags, isStmt) {
 };
 cls14.start = function() {
   this.writeToSMout('{\"version\":3,\"mappings\":\"');
+  this.inMapping = true;
   this.startFreshLine();
 };
 cls14.flushAll = function() {
   var list, l, len, str;
   this.flushCurrentLine();
+  this.inMapping = false;
   this.writeToSMout('\",\"names\":[');
   list = this.smNameList;
   l = 0;
@@ -4008,7 +4012,8 @@ cls14.smSetSrc_i = function(i) {
 };
 cls14.writeToSMout = function(lm) {
   this.sm = this.sm.concat(lm);
-  this.smLen += lm.length;
+  if (this.inMapping)
+    this.smLen += lm.length;
 };
 cls14.refreshTheCurrentLineLevelSourceMapWith = function(srcLoc) {
   var l, vlqTail, ll, lm;
@@ -4890,6 +4895,36 @@ Emitters['#ForStatement'] = function(n, flags, isStmt) {
   this.w(';');
   n.update && this.os().emitAny(n.update, EC_NONE, false);
   this.w(')').emitAttached(n.body);
+};
+UntransformedEmitters['synthc'] = function(n, flags, isStmt) {
+  var s, base, num, name, obj;
+  ASSERT_EQ.call(this, isStmt, false);
+  s = 's';
+  if (n.heritage) {
+    base = 's';
+    num = 0;
+    if (n.name) {
+      name = n.name.name;
+      while (name === s)
+        s = base + ++num;
+    }
+    this.wt('function', ETK_ID);
+    this.wm('(', s, ')', '', '{', '', 'return').gu(wcb_afterRet);
+    obj = {hasParen: false};
+    this.gar(obj);
+    this.wt('function', ETK_ID);
+    if (n.name)
+      this.wm(' ', n.name.name);
+    this.wm('(', ')', '', '{', '', s, '.', 'apply', '(', 'this', ',', 'arguments', ')', ';', '', '}');
+    obj.hasParen && this.w(')');
+    this.wm(';', '', '}', '(').eN(n.heritage).w(')');
+  }
+  else {
+    this.w('function');
+    if (n.name)
+      this.wm(' ', n.name.name);
+    this.wm('(', ')', '', '{', '}');
+  }
 };
 function Template(idxList) {
   this.idxList = idxList;
@@ -9653,6 +9688,11 @@ cls11.st_flush = function() {
   }
   return this.err(tm[st], ep);
 };
+cls11.throwTricky = function(name, t) {
+  var core;
+  core = name === 'p' ? this.pe : name === 'a' ? this.ae : this.se;
+  this.err(tm[t], {tn: core});
+};
 cls11.pt_teot = function(t, e, o) {
   this.pt = t;
   this.pe = e;
@@ -14300,6 +14340,7 @@ cls19.synth_BareThis = function(th) {
   return {type: '#Untransformed', target: th, kind: 'bthis', plain: th.ref.scope === this.cur.getThisBase()};
 };
 cls19.synth_MakeClass = function(cls, herit, target) {
+  this.accessJZ();
   return {cls: cls, heritage: herit, kind: 'cls', type: '#Untransformed', target: target};
 };
 cls19.synth_RCheck = function(v, t) {
@@ -14313,6 +14354,7 @@ cls19.synth_ClassSave = function(target, ctor) {
   return {target: target, ctor: ctor, kind: 'cls-assig', type: '#Untransformed'};
 };
 cls19.synth_Heritage = function(h) {
+  this.accessJZ();
   return {type: '#Untransformed', heritage: h, kind: 'heritage'};
 };
 cls19.synth_TC = function(right, rn) {
@@ -15278,8 +15320,8 @@ cls10.loadNew = function(uri) {
     }
     else
       transformedNode = transformer.tr(rootNode, false);
-    emitter = new Emitter();
-    if (minify) {
+    emitter = options.emitter || new Emitter();
+    if (minify && !options.emitter) {
       a = emitter.allow;
       a.space = a.nl = a.comments.l = a.comments.m = false;
     }
@@ -15289,4 +15331,6 @@ cls10.loadNew = function(uri) {
     emitter.flushAll();
     return {code: emitter.out, sourceMap: emitter.sm};
   };
+  exports.normalize = normalize;
 });
+//# sourceMappingURL=.././dist/jazzle.js.sourcemap

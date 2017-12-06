@@ -15333,4 +15333,4 @@ cls10.loadNew = function(uri) {
   };
   exports.normalize = normalize;
 });
-//# sourceMappingURL=.././dist/jazzle.min.js.sourcemap
+//# sourceMappingURL=.././dist/jazzle.nocomments.js.sourcemap

@@ -38,6 +38,7 @@ export default function Emitter() {
   this.emcol_cur = 0;
   this.emcol_latestRec = 0;
 
+  this.imMapping = false; // are we emitting the "mappings" section?
   this.emline_cur = 0;
   this.emline_latestRec = 0;
 
@@ -66,7 +67,7 @@ export default function Emitter() {
   // </sourcemap-related>
 
   this.smLen = 0;
-  this.smLineStart = false;
+  this.smLineStart = true;
 
   this.outLen = 0;
 

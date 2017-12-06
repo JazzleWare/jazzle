@@ -13,8 +13,10 @@ function(n, flags, isStmt) {
       while (name === s)
         s = base + (++num);
     }  
-    this.wt('function',ETK_ID).wm('(',s,')','','{','','return').onw(wcb_afterRet,{hasParen: false});
-    var obj = this.wcbp;
+    this.wt('function',ETK_ID);
+    this.wm('(',s,')','','{','','return').gu(wcb_afterRet);
+    var obj = {hasParen: false};
+    this.gar(obj);
     this.wt('function',ETK_ID);
     if (n.name) this.wm(' ',n.name.name);
     this.wm('(',')','','{','', s,'.','apply','(',

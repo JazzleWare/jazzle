@@ -74,3 +74,4 @@
   import './new-uemit-synth-rcheck.js';
   import './emit-jzhelpers.js';
   import './new-uemit-for-stmt.js';
+  import './new-uemit-synth-ctor.js';
