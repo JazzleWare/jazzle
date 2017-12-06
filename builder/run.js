@@ -81,19 +81,5 @@ function build(targetFileName, minify, emitter) {
   console.log("---------------------BUILDING COMPLETE.-----------------------------");
 }
 
-var Emitter = null; Emitter = jazzle.Emitter;
-var emitter = null;
-
-emitter = new Emitter();
-build( DIST_OUTPUT_LOCATION, false, emitter);
-
-emitter = new Emitter();
-emitter.allow.space = false;
-emitter.allow.nl = false;
-emitter.allow.comments.l = false;
-emitter.allow.comments.m = false;
-build( DIST_OUTPUT_LOCATION+'.min', false, emitter);emitter = new Emitter();
-
-emitter.allow.comments.m = false;
-emitter.allow.comments.l = false;
-build( DIST_OUTPUT_LOCATION+'.nocomments', false, emitter);
+build(DIST_OUTPUT_LOCATION, false);
+build(DIST_OUTPUT_LOCATION+'.min', true);
