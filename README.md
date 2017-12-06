@@ -28,4 +28,4 @@ fs.writeFileSync('output.js', result.code);
 fs.writeFileSync('output.js.sourcemap', result.sourceMap);
 ```
 
-*** CLI is currently in the making, and will be up and running early next week; stay tuned! ***
+***CLI is currently in the making, and will be up and running early next week; stay tuned! ***
