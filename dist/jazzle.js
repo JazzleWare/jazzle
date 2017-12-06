@@ -6500,10 +6500,8 @@ cls11.parseContinue = function() {
 };
 cls11.readID_bs = function() {
   var bsc, ccode, head;
-  if (this.ct === ERR_NONE_YET) {
-    this.ct = ERR_PIN_UNICODE_IN_RESV;
-    this.pin_ct(this.c, this.li, this.col);
-  }
+  this.ct = ERR_PIN_UNICODE_IN_RESV;
+  this.pin_ct(this.c, this.li, this.col);
   bsc = this.readBS();
   ccode = bsc;
   if (bsc >= 55296 && bsc <= 56319)
@@ -8595,6 +8593,7 @@ cls11.regChar_VECI = function(value, offset, ch, ce) {
   return {type: '#Regex.CharSeq', raw: raw, start: c0, end: offset, cp: ch, charLength: 1, loc: {start: loc0, end: {line: li, column: col}}, value: value};
 };
 cls11.readID_simple = function() {
+  this.ct = ERR_NONE_YET;
   return this.readID_withHead(this.src.charAt(this.c++));
 };
 cls11.parseString = function(startChar) {
@@ -9608,6 +9607,7 @@ cls11.readID_surrogate = function(sc) {
   var surrogateTail, ccode;
   if (this.c + 1 >= this.src.length)
     this.err('id.head.got.eof.surrogate');
+  this.ct = ERR_NONE_YET;
   surrogateTail = this.src.charCodeAt(this.c + 1);
   ccode = surrogate(sc, surrogateTail);
   if (!isIDHead(ccode))
@@ -12438,7 +12438,7 @@ cls11.parseUnary = function(ctx) {
   this.suc(cb, 'bef');
   this.next();
   arg = this.parseNonSeq(PREC_UNARY, ctx & CTX_FOR);
-  if (this.scope.insideStrict() && vdt === VDT_DELETE && core(arg).type !== 'MemberExpression')
+  if (this.scope.insideStrict() && vdt === VDT_DELETE && core(arg).type === 'Identifier')
     this.err('delete.arg.not.a.mem', {tn: arg, extra: {c0: startc, loc0: startLoc, context: context}});
   if (vdt === VDT_AWAIT) {
     n = {type: 'AwaitExpression', argument: core(arg), start: c0, end: arg.end, loc: {start: loc0, end: arg.loc.end}, '#c': cb, '#y': this.Y(arg)};

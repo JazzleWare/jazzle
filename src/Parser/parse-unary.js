@@ -20,7 +20,7 @@ function(ctx) {
 
   if (this.scope.insideStrict() &&
     vdt === VDT_DELETE &&
-    core(arg).type !== 'MemberExpression')
+    core(arg).type === 'Identifier')
     this.err('delete.arg.not.a.mem',{tn:arg,extra:{c0:startc,loc0:startLoc,context:context}});
 
   if (vdt === VDT_AWAIT) {

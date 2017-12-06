@@ -1,14 +1,14 @@
-  import {ERR_NONE_YET, ERR_PIN_UNICODE_IN_RESV} from '../other/error-constants.js';
-  import {isIDHead} from '../other/ctype.js';
-  import {cp2sp} from '../other/util.js';
-  import {cls} from './cls.js';
+import {ERR_NONE_YET, ERR_PIN_UNICODE_IN_RESV} from '../other/error-constants.js';
+import {isIDHead} from '../other/ctype.js';
+import {cp2sp} from '../other/util.js';
+import {cls} from './cls.js';
 
 cls.readID_bs =
 function() {
-  if (this.ct === ERR_NONE_YET) {
-    this.ct = ERR_PIN_UNICODE_IN_RESV;
-    this.pin_ct(this.c,this.li,this.col);
-  }
+
+  this.ct = ERR_PIN_UNICODE_IN_RESV;
+  this.pin_ct(this.c,this.li,this.col);
+
   var bsc = this.readBS();
   var ccode = bsc;
   if (bsc >= 0x0D800 && bsc <= 0x0DBFF)
@@ -19,5 +19,4 @@ function() {
   var head = cp2sp(bsc);
   return this.readID_withHead(head);
 };
-
 
