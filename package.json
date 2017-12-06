@@ -1,9 +1,8 @@
 {
-  "name": "jazzle",
-  "main": "dist/jazzle.js",
-  "version": "0.9.2",
-  "description": "Dazzlingly Fast ECMAScript transpiler with zero dependencies",
-  "homepage": "https://github.com/JazzleWare/jazzle",
+  "name": "jazzle-cli",
+  "version": "0.0.0",
+  "description": "A Official Command-Line Interface For Jazzle Transpiler, https://github.com/JazzleWare/jazzle",
+  "homepage": "https://github.com/JazzleWare/jazzle-cli",
   "engines": { "node": ">=6.20.0" },
   "author": {
     "name": "Neni Onoda",
@@ -22,10 +21,10 @@
   ],
   "repository": {
     "type": "git",
-    "url": "https://github.com/JazzleWare/jazzle.git"
+    "url": "https://github.com/JazzleWare/jazzle-cli.git"
   },
   "bugs": {
-    "url": "https://github.com/JazzleWare/jazzle/issues"
+    "url": "https://github.com/JazzleWare/jazzle-cli/issues"
   },
   "license": "MIT",
   "keywords": [
@@ -33,19 +32,15 @@
     "ecmascript",
     "fast",
     "javascript",
+    "cli",
     "transpilation",
+    "jazzle",
     "compilation",
     "syntax",
-    "performance",
-    "jazzle"
+    "performance"
   ],
-  "scripts": {
-    "prepublish": "npm run compile-and-test",
-    "compile-and-test": "node builder/run.js"
-  },
-  "devDependencies": {
-    "acorn": "^3.2.0",
-    "esprima": "^2.7.2",
-    "benchmark": "^2.1.0"
+  "scripts": {},
+  "dependencies": {
+    "jazzle": "^0.9.2"
   }
 }
