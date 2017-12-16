@@ -1,7 +1,7 @@
 {
   "name": "jazzle",
   "main": "dist/jazzle.js",
-  "version": "0.9.5",
+  "version": "0.9.12",
   "description": "Dazzlingly Fast ECMAScript transpiler with zero dependencies",
   "homepage": "https://github.com/JazzleWare/jazzle",
   "engines": { "node": ">=6.20.0" },
