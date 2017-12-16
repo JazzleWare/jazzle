@@ -3,6 +3,7 @@
 Transformers['ForOfStatement'] =
 function(n, isVal) {
   var s = this.setScope(n['#scope']);
+  this.accessJZ();
   this.cur.synth_defs_to(this.cur.synthBase);
 
   var t = null;

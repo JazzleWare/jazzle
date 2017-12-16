@@ -40,7 +40,7 @@
      uses: ['#arrIter0']
    },
    { id: '#arrIter0',
-     codeString: 'function arrIter0(v) { this.v = v; this.i = 0; }\nvar ac = arrIter0.prototype;\nac.get = function() { return this.v[this.i++]; };\nac.end = function() { return this.v; };',
+     codeString: 'function arrIter0(v) { this.v = v; this.i = 0; this.val = void 0; }\nvar ac = arrIter0.prototype;\nac.get = function() { return this.v[this.i++]; };\nac.end = function() { return this.v; };',
      uses: []
    },
    { id: '#u',
@@ -48,7 +48,8 @@
      uses: []
    },
    { id: '#of',
-     codeString: 'o.of = function(v) { return new arrIter0(v); };',
+     codeString: 'o.of = function(v) { return new arrIter0(v); };\n'+
+                 'arrIter0.prototype.next = function() { if (this.i < this.v.length) { this.val = this.get(); return true } this.end(); return false; };',
      uses: ['#arrIter0']
    },
    { id: '#o',

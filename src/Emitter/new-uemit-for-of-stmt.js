@@ -13,6 +13,9 @@ function(n, flags, isStmt) {
     var tz = scope.scs.getLG('tz').getL(0);
     this.wm(tz.synthName,' ','=',' ',scope.di0+"",',','');
   }
-  this.eH(n.left, EC_NONE, false).w('.').wm('next','(',')',';',')');
+  this
+    .eH(n.left, EC_NONE, false).w('.').wm('next','(',')')//,'','||','').eH(n.left, EC_NONE, false).wm('.','end','(',')',
+    .wm(';',')');
+
   this.emitAttached(n.body);
 };
