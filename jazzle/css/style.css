@@ -1,0 +1,130 @@
+html, body, header, div,
+footer, section, nav, ul, p,
+li, h3, h2 {
+  margin: 0; padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: sans-serif;
+}
+
+body section#main {
+  max-width: 70%;
+  margin: 0 auto;
+  box-sizing: border-box;
+}
+
+section#main {
+  position:relative;
+  height: 100%;
+}
+
+header {
+}
+
+header::after {
+  content: " ";
+  display: block;
+  clear: both;
+}
+
+nav {
+  position: relative;
+  margin-bottom: 2em;
+  text-align: center;
+}
+
+ul.jazzle-nav {
+  height: 100%;
+  vertical-align: middle;
+  list-style: none;
+  display: inline-block;
+/*border-bottom: 2px whitesmoke solid;*/
+}
+
+
+.jazzle-heading {
+  text-align: center;
+  float: left;
+/*background-color: whitesmoke; */
+/*border-bottom-left-radius: 12px 12px; */
+/*border-bottom-right-radius: 12px 12px; */
+/*margin-top: 2em;*/
+/*margin-bottom: 2em;*/
+} 
+
+.jazzle-heading h2 {
+  font-size: 4em;
+}
+
+.jazzle-heading h3 {
+  font-size: 0.8em;
+}
+
+.jazzle-nav li {
+  display: inline-block;
+  padding: 10px 15px;
+  float: left;
+  background-color: whitesmoke;
+  margin: 12px;
+  border-radius: 12px 12px;
+}
+
+.jazzle-nav li a { text-decoration: none; }
+
+.jazzle-nav li#current {
+  color: black;
+  background-color: white;
+  border: 1px whitesmoke solid;
+}
+
+.jazzle-nav li.other {
+  color: white;
+  background-color: whitesmoke;
+  border-radius: 2px 2px;
+}
+
+.jazzle-intro {
+  margin: 0 auto;
+  max-width: 90%;
+}
+
+.jazzle-intro p {
+  margin-bottom: 1em;
+}
+
+#editor, #results {
+  right: 0;
+  bottom: 0;
+  left: 0;
+  position: absolute;
+  top: 0;
+  border-radius: 12px 12px;
+  border: 1px whitesmoke solid;
+}
+
+.install div {
+  padding-top: 2em;
+  font-size: 0.75em;
+}
+
+section.edit {
+  display: inline-block;
+  position: relative;
+  height: 400px;
+  width: 48%;
+}
+
+div.editors {
+  max-width: 90%;
+  margin: 0 auto;
+}
+
+footer {
+  font-size: 0.5em;
+  border-top: 1px whitesmoke solid;
+  text-align: center;
+  max-width: 40%;
+  margin: 1.25em auto;
+}

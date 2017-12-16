@@ -1,0 +1,77 @@
+<!doctype html>
+<html>
+  <head>
+  <!-- TODO: '<meta> content', etc. for better search engine detectability -->
+  <link rel="stylesheet" href="css/style.css">
+    <style>
+    </style>
+  </head>
+  <body>
+    <section id="main">
+      <header>
+        <div class="jazzle-heading">
+          <h2>Jazzle</h2>
+          <h3>the speedy transpiler, bundler, minifier, and more!</h3>
+        </div>
+    
+        <nav>
+          <ul class="jazzle-nav">
+            <li><a href="https://github.com/JazzleWare/jazzle">Contibute!</a></li>
+          </ul>
+        </nav>
+      </header>
+  </section>
+
+  <div class="editors">
+  <section class="edit">
+    <div id="editor"></div>
+  </section>
+  <section class="edit">
+    <div id="results"></div>
+  </section>
+  <section class="install">
+    <div>
+      install via node this way:
+      <h3>npm install -g jazzle</h3>
+    </div>
+    <div>
+      or clone the whole repository:
+      <h3>git clone https://github.com/JazzleWare/jazzle.git</h3>
+    </div>
+  </section>
+  </div>
+
+  <footer>
+   first created by Neni onoda &copy; 2015; maintained by Kelevi Ulohaniola &copy; 2017 and beyond
+  </footer>
+
+    <script src="assets/external/ace/src-noconflict/ace.js" type="text/javascript" charset="utf-8"></script>
+    <script src="https://raw.githubusercontent.com/JazzleWare/jazzle/master/dist/jazzle.min.js"></script>
+    <script>
+      (function() {
+        var j = jazzle;
+        function initEditor(editor, readonly) {
+          editor.setTheme('ace/theme/textmate');
+          editor.setBehavioursEnabled(false);
+          editor.setHighlightActiveLine(false);
+          editor.getSession().setMode('ace/mode/javascript');
+          editor.setShowPrintMargin(false); 
+          editor.getSession().setOption("useWorker", false);
+          editor.setReadOnly(readonly);
+          return editor;
+        }
+
+        var main = initEditor(ace.edit('editor'), false);
+        var out = initEditor(ace.edit('results'), true);
+
+        main.getSession().on('change', function(e) {
+          out.setValue("",1);
+          try {
+            out.setValue(j.transform(main.getValue(), {sourceType: 'script'}).code,1 );
+            out.clearSelection();
+          } catch (e) { console.error(e); }
+        });
+      })();
+    </script>
+  </body>
+</html>
