@@ -1,3 +1,4 @@
+(function(){
 var INTBITLEN, D_INTBITLEN, M_INTBITLEN;
 INTBITLEN = function() {
   var allOnes, i;
@@ -2379,15 +2380,18 @@ Emitters['#Bundler'] = function(n, flags, isStmt) {
     if (w)
       w = !!this.jzLiquid;
   }
+  this.wm('(', 'function', '(');
   if (w) {
-    this.wm('(', 'function', '(', this.jzLiquid.synthName, ')', '{').l();
+    this.w(this.jzLiquid.synthName);
     this.allow.jzWrapper = false;
   }
+  this.wm(')', '{').l();
   this.emitBundleItem(n.rootNode);
+  this.l().wm('}', '.', 'call', '(', 'this');
   if (w) {
-    this.l().wm('}', '(').writeJZHelpers();
-    this.wm(')', ')', ';');
+    this.w(',').writeJZHelpers();
   }
+  this.wm(')', ')', ';');
 };
 cls14.emitRenamed = function(scope, total) {
   var list, l, item;
@@ -15333,4 +15337,5 @@ cls10.loadNew = function(uri) {
   };
   exports.normalize = normalize;
 });
+}.call(this));
 //# sourceMappingURL=.././dist/jazzle.js.sourcemap

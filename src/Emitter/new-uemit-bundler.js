@@ -15,17 +15,19 @@ function(n, flags, isStmt) {
       w = !!this.jzLiquid;
   }
 
+
+  this.wm('(','function','(');
   if (w) {
-    this.wm('(','function','(', this.jzLiquid.synthName,')','{').l();
+    this.w(this.jzLiquid.synthName);
     this.allow.jzWrapper = false;
   }
+  this.wm(')','{').l();
 
   this.emitBundleItem(n.rootNode);
 
-  if (w) {
-    this.l().wm('}','(').writeJZHelpers();
-    this.wm(')',')',';');
-  }
+  this.l().wm('}','.','call','(','this');
+  if (w) { this.w(',').writeJZHelpers(); }
+  this.wm(')',')',';');
 };
 
 cls.emitRenamed =
