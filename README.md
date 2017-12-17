@@ -1,3 +1,5 @@
+# [Try Online!](https://jazzleware.github.io/jazzle)
+
 # Jazzle -- Dazzlingly Fast ECMAScript Transpiler
 
 ## Intro

@@ -3,6 +3,7 @@
   import {_m} from '../other/scope-util.js';
   import {CTX_DEFAULT, CTX_NONE, CH_LCURLY, CH_SEMI, CTX_CTOR_NOT_ALLOWED, CH_RCURLY, CH_LPAREN, CH_SINGLEDOT, CH_LSQBRACKET} from '../other/constants.js';
   import {cls} from './cls.js';
+  import {core} from '../other/util.js';
 
 cls.parseClass = 
 function(ctx) {
@@ -99,7 +100,7 @@ function(ctx) {
     id: name,
     start: c0,
     end: this.c,
-    superClass: superClass,
+    superClass: superClass && core(superClass),
     loc: { start: loc0, end: eloc },
     body: {
       type: 'ClassBody',

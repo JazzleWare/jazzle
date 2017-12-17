@@ -16,7 +16,7 @@
      uses: []
    },
    { id: '#n',
-     codeString: 'o.n = function(ctor, a) { var l = 0, str = "new ctor("; while (l < a.length) { if (l) str += ","; str += "a["+l+"]"; l++; } return eval(str); };',
+     codeString: 'o.n = function(ctor, a) { var l = 0, str = "new ctor("; while (l < a.length) { if (l) str += ","; str += "a["+l+"]"; l++; } str += ")"; return eval(str); };',
      uses: []
    },
    { id: '#cm',
