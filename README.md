@@ -1,4 +1,4 @@
-# [Try Online!](https://jazzleware.github.io/jazzle)
+## NOTE: this is a WIP, and I have not had time to maintain it for some-time; it can currently transpile basic constructs, but that is just about that. Please check back in a year or so; thanks a lot!
 
 # Jazzle -- Dazzlingly Fast ECMAScript Transpiler
 
@@ -19,7 +19,7 @@ npm install -g jazzle # you might need to be root (sudo) to use the -g flag
 
 usage:
 ```js
-var src = 'let [myCoolSource] = ((a=myCoolSource) => [a])();',
+var src = 'let [myCoolSource] = a => 12;',
     jazzle = require('jazzle');
 
 var result = jazzle.transform(src, {sourceType: 'module'});
@@ -31,3 +31,4 @@ fs.writeFileSync('output.js.sourcemap', result.sourceMap);
 ```
 
 ***CLI is currently in the making, and will be up and running early next week; stay tuned!***
+
