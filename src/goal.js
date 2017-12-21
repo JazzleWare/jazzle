@@ -1,5 +1,4 @@
   import './Actix/whole.js';
-  import './AutoImex/whole.js';
   import './Bundler/whole.js';
   import './BundleScope/whole.js';
   import './CatchScope/whole.js';
@@ -30,7 +29,6 @@
   import Emitter from './Emitter/cls.js';
   import Transformer from './Transformer/cls.js';
   import PathMan from './PathMan/cls.js';
-  import AutoImex from './AutoImex/cls.js';
   import VirtualResourceResolver from './VirtualResourceResolver/cls.js';
   import Bundler from './Bundler/cls.js';
   import {renamer_incremental, renamer_minify} from './other/renamer.js';
@@ -58,7 +56,6 @@
   exports.Emitter = Emitter;
   exports.Transformer = Transformer;
   exports.PathMan = PathMan;
-  exports.AutoImex = AutoImex;
   exports.VirtualResourceResolver = VirtualResourceResolver;
   exports.Bundler = Bundler;
   exports.ResourceResolver = ResourceResolver;

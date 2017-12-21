@@ -10,8 +10,10 @@ function(decl) {
 };
 
 cls.needsTZ =
-function(decl) {
-  if (!decl.isTemporal())
+function(decl, isImported) {
+  if (decl.isFn())
+    return false;
+  if (!decl.isTemporal() && !isImported)
     return false;
 
   var tc = this.getTCCache(decl) ;
@@ -20,10 +22,9 @@ function(decl) {
 
   TZ: {
     var tz = false;
-    if (!decl.isReached()) {
-      tz = true;
-      break TZ; 
-    }
+    if (!decl.isReached()) { tz = true; break TZ; } 
+    else if (isImported) { tz = false; break TZ; }
+
     if (decl.isClassName())
       return tz;
 
@@ -33,6 +34,12 @@ function(decl) {
       break TZ;
     }
     while (cur.parent !== ownerScope) {
+      if (cur.isSourceLevel() && isImported) {
+        // not asserting for source-scope inequality because a source may import something from itself actually
+        ASSERT.call(this, decl.ref.scope.isSourceLevel(), 'how can an imported decl come at a scope other than a source-scope');
+        tz = true;
+        break TZ;
+      }
       cur = cur.parent;
       ASSERT.call(this, cur, 'reached top before decl owner is reached -- tz test is only allowed in scopes that '+
         'can access the decl');
@@ -68,7 +75,7 @@ function(id, bes, manualActivation) {
 
   var isB = bes === 'binding';
 
-  var hasTZ = !isB && this.needsTZ(target);
+  var hasTZ = !isB && this.needsTZ(target, ref.getDecl_nearest().isImported());
   if (hasTZ) {
     if (target.isClassName())
       return this.synthCheckForTZ(target, null, -1);
@@ -109,5 +116,4 @@ function(target, t, num) {
   };
 
 };
-
 

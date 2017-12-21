@@ -40,7 +40,7 @@ function() {
   if (jzContainer.parent.isBundle())
     jzContainer = jzContainer.parent;
 
-  var lg = this.script.gocLG('jz');
+  var lg =jzContainer.gocLG('jz');
   var l = lg.getL(0);
   if (!l) {
     l = lg.newL();

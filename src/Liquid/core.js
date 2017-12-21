@@ -22,6 +22,12 @@ function(scope) {
     }
     if (cur === root)
       break;
+
+    // TODO: this is for inter-source liquid access (currently only for tz because others don't cross source boundaries);
+    // it is better to add a parameter to `track to assert the fact that this is a tracking that goes beyond the current source
+    if (cur.isSourceLevel() && root.isSourceLevel())
+      break;
+
     cur = cur.parent;
     ASSERT.call(this, cur,
       'reached topmost while pulling up a liquid');

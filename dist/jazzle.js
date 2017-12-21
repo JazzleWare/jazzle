@@ -1,4 +1,200 @@
 (function(){
+function char2int(c) {
+  return c.charCodeAt(0);
+}
+function allOnes(len) {
+  var n, s;
+  n = 0;
+  s = 0;
+  while (s < len)
+    n += 1 << s++;
+  return n;
+}
+function ASSERT(cond, message) {
+  if (!cond) {
+    throw new Error(message);
+  }
+}
+function ASSERT_EQ(val, ex) {
+  ASSERT.call(this, val === ex, 'val must be <' + ex + '>, not <' + val + '>');
+}
+function activeID_new() {
+  return ++ACTIVE_ID;
+}
+var CH_1, CH_2, CH_3, CH_4, CH_5, CH_6, CH_7, CH_8, CH_9, CH_0, CH_a, CH_A, CH_b, CH_B, CH_e, CH_E, CH_d, CH_D, CH_g, CH_f, CH_F, CH_c, CH_i, CH_m, CH_n, CH_o, CH_O, CH_r, CH_s, CH_S, CH_t, CH_u, CH_U, CH_v, CH_w, CH_W, CH_x, CH_X, CH_y, CH_z, CH_Z, CH_UNDERLINE, CH_$, CH_VTAB, CH_BACK, CH_FORM_FEED, CH_TAB, CH_CARRIAGE_RETURN, CH_LINE_FEED, CH_WHITESPACE, CH_BACKTICK, CH_SINGLE_QUOTE, CH_MULTI_QUOTE, CH_BACK_SLASH, CH_DIV, CH_MUL, CH_MIN, CH_ADD, CH_AND, CH_XOR, CH_MODULO, CH_OR, CH_EQUALITY_SIGN, CH_SEMI, CH_COMMA, CH_SINGLEDOT, CH_COLON, CH_QUESTION, CH_EXCLAMATION, CH_COMPLEMENT, CH_ATSIGN, CH_LPAREN, CH_RPAREN, CH_LSQBRACKET, CH_RSQBRACKET, CH_LCURLY, CH_RCURLY, CH_LESS_THAN, CH_GREATER_THAN, PAREN, PAREN_NODE, INTERMEDIATE_ASYNC, FUNCTION_TYPE, STRING_TYPE, NUMBER_TYPE, BOOL_TYPE, OPTIONS, HAS, B, I_31, ACTIVE_ID, CTX_NONE, CTX_PARAM, CTX_FOR, CTX_PAT, CTX_NULLABLE, CTX_HASPROTO, CTX_HASPROTOTYPE, CTX_CTOR_NOT_ALLOWED, CTX_DEFAULT, CTX_HAS_A_PARAM_ERR, CTX_HAS_AN_ASSIG_ERR, CTX_HAS_A_SIMPLE_ERR, CTX_NO_SIMPLE_ERR, CTX_ASYNC_NO_NEWLINE_FN, CTX_PARPAT, CTX_PARPAT_ERR, CTX_TOP, ARGLEN_GET, ARGLEN_SET, ARGLEN_ANY, EC_NONE, EC_NEW_HEAD, EC_START_STMT, EC_EXPR_HEAD, EC_CALL_HEAD, EC_NON_SEQ, EC_IN, EC_ATTACHED, EC_JZ, EST_BREAKABLE, EST_OMITTABLE, EST_NONE, SP_BREAKABLE, SP_OMITTABLE, SP_NONE, ETK_NONE, ETK_ID, ETK_MIN, ETK_DIV, ETK_ADD, ETK_NUM, ETK_STR, ETK_NL, ETK_COMMENT, PE_NO_NONVAR, PE_NO_LABEL, PE_LEXICAL, PE_NONE, CHK_T, CHK_V, CHK_NONE, THS_NEEDS_CHK, THS_IS_REACHED, THS_NONE, ANESS_UNKNOWN, ANESS_CHECKING, ANESS_INACTIVE, ANESS_ACTIVE, ACT_BARE, ACT_DECL, ACT_SCOPE, CVTZ_T, CVTZ_C, CVTZ_NONE;
+CH_1 = char2int('1');
+CH_2 = char2int('2');
+CH_3 = char2int('3');
+CH_4 = char2int('4');
+CH_5 = char2int('5');
+CH_6 = char2int('6');
+CH_7 = char2int('7');
+CH_8 = char2int('8');
+CH_9 = char2int('9');
+CH_0 = char2int('0');
+CH_a = char2int('a');
+CH_A = char2int('A');
+CH_b = char2int('b');
+CH_B = char2int('B');
+CH_e = char2int('e');
+CH_E = char2int('E');
+CH_d = char2int('d');
+CH_D = char2int('D');
+CH_g = char2int('g');
+CH_f = char2int('f');
+CH_F = char2int('F');
+CH_c = char2int('c');
+CH_i = char2int('i');
+CH_m = char2int('m');
+CH_n = char2int('n');
+CH_o = char2int('o');
+CH_O = char2int('O');
+CH_r = char2int('r');
+CH_s = char2int('s');
+CH_S = char2int('S');
+CH_t = char2int('t');
+CH_u = char2int('u');
+CH_U = char2int('U');
+CH_v = char2int('v');
+CH_w = char2int('w');
+CH_W = char2int('W');
+CH_x = char2int('x');
+CH_X = char2int('X');
+CH_y = char2int('y');
+CH_z = char2int('z');
+CH_Z = char2int('Z');
+CH_UNDERLINE = char2int('_');
+CH_$ = char2int('$');
+CH_VTAB = char2int('\v');
+CH_BACK = char2int('\b');
+CH_FORM_FEED = char2int('\f');
+CH_TAB = char2int('\t');
+CH_CARRIAGE_RETURN = char2int('\r');
+CH_LINE_FEED = char2int('\n');
+CH_WHITESPACE = char2int(' ');
+CH_BACKTICK = char2int('`');
+CH_SINGLE_QUOTE = char2int('\'');
+CH_MULTI_QUOTE = char2int('\"');
+CH_BACK_SLASH = char2int('\\');
+CH_DIV = char2int('/');
+CH_MUL = char2int('*');
+CH_MIN = char2int('-');
+CH_ADD = char2int('+');
+CH_AND = char2int('&');
+CH_XOR = char2int('^');
+CH_MODULO = char2int('%');
+CH_OR = char2int('|');
+CH_EQUALITY_SIGN = char2int('=');
+CH_SEMI = char2int(';');
+CH_COMMA = char2int(',');
+CH_SINGLEDOT = char2int('.');
+CH_COLON = char2int(':');
+CH_QUESTION = char2int('?');
+CH_EXCLAMATION = char2int('!');
+CH_COMPLEMENT = char2int('~');
+CH_ATSIGN = char2int('@');
+CH_LPAREN = char2int('(');
+CH_RPAREN = char2int(')');
+CH_LSQBRACKET = char2int('[');
+CH_RSQBRACKET = char2int(']');
+CH_LCURLY = char2int('{');
+CH_RCURLY = char2int('}');
+CH_LESS_THAN = char2int('<');
+CH_GREATER_THAN = char2int('>');
+PAREN = 'paren';
+PAREN_NODE = PAREN;
+INTERMEDIATE_ASYNC = 'intermediate-async';
+FUNCTION_TYPE = typeof function() {};
+STRING_TYPE = typeof'string';
+NUMBER_TYPE = typeof 0;
+BOOL_TYPE = typeof false;
+OPTIONS = ['ecmaVersion', 'sourceType', 'onToken', 'program', 'onComment', 'allowReturnOutsideFunction', 'allowImportExportEverywhere', 'sourceFile', 'directSourceFile', //'preserveParens',
+'allowHashBang'];
+HAS = {}.hasOwnProperty;
+B = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/';
+I_31 = allOnes(31);
+ACTIVE_ID = 0;
+CTX_NONE = 0;
+CTX_PARAM = 1;
+CTX_FOR = CTX_PARAM << 1;
+CTX_PAT = CTX_FOR << 1;
+CTX_NULLABLE = CTX_PAT << 1;
+CTX_HASPROTO = CTX_NULLABLE << 1;
+CTX_HASPROTOTYPE = CTX_HASPROTO << 1;
+CTX_CTOR_NOT_ALLOWED = CTX_HASPROTOTYPE << 1;
+CTX_DEFAULT = CTX_CTOR_NOT_ALLOWED << 1;
+CTX_HAS_A_PARAM_ERR = CTX_DEFAULT << 1;
+CTX_HAS_AN_ASSIG_ERR = CTX_HAS_A_PARAM_ERR << 1;
+CTX_HAS_A_SIMPLE_ERR = CTX_HAS_AN_ASSIG_ERR << 1;
+CTX_NO_SIMPLE_ERR = CTX_HAS_A_SIMPLE_ERR << 1;
+CTX_ASYNC_NO_NEWLINE_FN = CTX_NO_SIMPLE_ERR << 1;
+CTX_PARPAT = CTX_PARAM | CTX_PAT;
+CTX_PARPAT_ERR = CTX_HAS_A_PARAM_ERR | CTX_HAS_AN_ASSIG_ERR | CTX_HAS_A_SIMPLE_ERR;
+CTX_TOP = CTX_PAT | CTX_NO_SIMPLE_ERR;
+ARGLEN_GET = 0;
+ARGLEN_SET = 1;
+ARGLEN_ANY = -1;
+EC_NONE = 0;
+EC_NEW_HEAD = 1;
+EC_START_STMT = 2;
+EC_EXPR_HEAD = EC_START_STMT << 1;
+EC_CALL_HEAD = EC_EXPR_HEAD << 1;
+EC_NON_SEQ = EC_CALL_HEAD << 1;
+EC_IN = EC_NON_SEQ << 1;
+EC_ATTACHED = EC_IN << 1;
+EC_JZ = EC_ATTACHED << 1;
+EST_BREAKABLE = 1;
+EST_OMITTABLE = EST_BREAKABLE << 1;
+EST_NONE = 0;
+SP_BREAKABLE = 1;
+SP_OMITTABLE = SP_BREAKABLE << 1;
+SP_NONE = 0;
+ETK_NONE = 0;
+ETK_ID = 1;
+ETK_MIN = ETK_ID << 1;
+ETK_DIV = ETK_MIN << 1;
+ETK_ADD = ETK_DIV << 1;
+ETK_NUM = ETK_ADD << 1;
+ETK_STR = ETK_NUM << 1;
+ETK_NL = ETK_STR << 1;
+ETK_COMMENT = ETK_NL << 1;
+PE_NO_NONVAR = 1;
+PE_NO_LABEL = PE_NO_NONVAR << 1;
+PE_LEXICAL = PE_NO_NONVAR;
+PE_NONE = 0;
+CHK_T = 1;
+CHK_V = CHK_T << 1;
+CHK_NONE = 0;
+THS_NEEDS_CHK = 1;
+THS_IS_REACHED = THS_NEEDS_CHK << 1;
+THS_NONE = 0;
+ANESS_UNKNOWN = -2;
+ANESS_CHECKING = -1;
+ANESS_INACTIVE = 0;
+ANESS_ACTIVE = 1;
+ACT_BARE = 0;
+ACT_DECL = 1;
+ACT_SCOPE = 2;
+CVTZ_T = 1;
+CVTZ_C = CVTZ_T << 1;
+CVTZ_NONE = 0;
+function Actix(role) {
+  // activity ctx
+  ASSERT.call(this, arguments.length === 1, 'len');
+  this.ai = activeID_new();
+  this.activeIf = null;
+  this.activeness = ANESS_UNKNOWN;
+  this.ns = 0;
+  this.role = role;
+  this.inactiveIf = null;
+}
+var cls21;
+cls21 = Actix.prototype;
+cls21.ii = function(inactiveIf) {
+  ASSERT.call(this, this.inactiveIf === null, 'inactiveIf');
+  this.inactiveIf = inactiveIf;
+  return this;
+};
 var INTBITLEN, D_INTBITLEN, M_INTBITLEN;
 INTBITLEN = function() {
   var allOnes, i;
@@ -13,13 +209,14 @@ INTBITLEN = function() {
 D_INTBITLEN = 0;
 M_INTBITLEN = INTBITLEN - 1;
 while (M_INTBITLEN >> ++D_INTBITLEN);
-var set1 = function set(bits, i) {
+function set(bits, i) {
   bits[i >> D_INTBITLEN] |= 1 << (i & M_INTBITLEN);
-};var IDS_, IDC_;
+}
+var IDS_, IDC_;
 IDS_ = fromRunLenCodes([0, 8472, 1, 21, 1, 3948, 2], fromRunLenCodes([0, 65, 26, 6, 26, 47, 1, 10, 1, 4, 1, 5, 23, 1, 31, 1, 458, 4, 12, 14, 5, 7, 1, 1, 1, 129, 5, 1, 2, 2, 4, 1, 1, 6, 1, 1, 3, 1, 1, 1, 20, 1, 83, 1, 139, 8, 166, 1, 38, 2, 1, 7, 39, 72, 27, 5, 3, 45, 43, 35, 2, 1, 99, 1, 1, 15, 2, 7, 2, 10, 3, 2, 1, 16, 1, 1, 30, 29, 89, 11, 1, 24, 33, 9, 2, 4, 1, 5, 22, 4, 1, 9, 1, 3, 1, 23, 25, 71, 21, 79, 54, 3, 1, 18, 1, 7, 10, 15, 16, 4, 8, 2, 2, 2, 22, 1, 7, 1, 1, 3, 4, 3, 1, 16, 1, 13, 2, 1, 3, 14, 2, 19, 6, 4, 2, 2, 22, 1, 7, 1, 2, 1, 2, 1, 2, 31, 4, 1, 1, 19, 3, 16, 9, 1, 3, 1, 22, 1, 7, 1, 2, 1, 5, 3, 1, 18, 1, 15, 2, 23, 1, 11, 8, 2, 2, 2, 22, 1, 7, 1, 2, 1, 5, 3, 1, 30, 2, 1, 3, 15, 1, 17, 1, 1, 6, 3, 3, 1, 4, 3, 2, 1, 1, 1, 2, 3, 2, 3, 3, 3, 12, 22, 1, 52, 8, 1, 3, 1, 23, 1, 16, 3, 1, 26, 3, 5, 2, 35, 8, 1, 3, 1, 23, 1, 10, 1, 5, 3, 1, 32, 1, 1, 2, 15, 2, 18, 8, 1, 3, 1, 41, 2, 1, 16, 1, 16, 3, 24, 6, 5, 18, 3, 24, 1, 9, 1, 1, 2, 7, 58, 48, 1, 2, 12, 7, 58, 2, 1, 1, 2, 2, 1, 1, 2, 1, 6, 4, 1, 7, 1, 3, 1, 1, 1, 1, 2, 2, 1, 4, 1, 2, 9, 1, 2, 5, 1, 1, 21, 4, 32, 1, 63, 8, 1, 36, 27, 5, 115, 43, 20, 1, 16, 6, 4, 4, 3, 1, 3, 2, 7, 3, 4, 13, 12, 1, 17, 38, 1, 1, 5, 1, 2, 43, 1, 333, 1, 4, 2, 7, 1, 1, 1, 4, 2, 41, 1, 4, 2, 33, 1, 4, 2, 7, 1, 1, 1, 4, 2, 15, 1, 57, 1, 4, 2, 67, 37, 16, 16, 86, 2, 6, 3, 620, 2, 17, 1, 26, 5, 75, 3, 11, 7, 13, 1, 4, 14, 18, 14, 18, 14, 13, 1, 3, 15, 52, 35, 1, 4, 1, 67, 88, 8, 41, 1, 1, 5, 70, 10, 31, 49, 30, 2, 5, 11, 44, 4, 26, 54, 23, 9, 53, 82, 1, 93, 47, 17, 7, 55, 30, 13, 2, 10, 44, 26, 36, 41, 3, 10, 36, 107, 4, 1, 4, 3, 2, 9, 192, 64, 278, 2, 6, 2, 38, 2, 6, 2, 8, 1, 1, 1, 1, 1, 1, 1, 31, 2, 53, 1, 7, 1, 1, 3, 3, 1, 7, 3, 4, 2, 6, 4, 13, 5, 3, 1, 7, 116, 1, 13, 1, 16, 13, 101, 1, 4, 1, 2, 10, 1, 1, 2, 6, 6, 1, 1, 1, 1, 1, 1, 16, 2, 4, 5, 5, 4, 1, 17, 41, 2679, 47, 1, 47, 1, 133, 6, 4, 3, 2, 12, 38, 1, 1, 5, 1, 2, 56, 7, 1, 16, 23, 9, 7, 1, 7, 1, 7, 1, 7, 1, 7, 1, 7, 1, 7, 1, 7, 550, 3, 25, 9, 7, 5, 2, 5, 4, 86, 4, 5, 1, 90, 1, 4, 5, 41, 3, 94, 17, 27, 53, 16, 512, 6582, 74, 20950, 42, 1165, 67, 46, 2, 269, 3, 16, 10, 2, 20, 47, 16, 31, 2, 80, 39, 9, 2, 103, 2, 35, 2, 8, 63, 11, 1, 3, 1, 4, 1, 23, 29, 52, 14, 50, 62, 6, 3, 1, 1, 1, 12, 28, 10, 23, 25, 29, 7, 47, 28, 1, 16, 5, 1, 10, 10, 5, 1, 41, 23, 3, 1, 8, 20, 23, 3, 1, 3, 50, 1, 1, 3, 2, 2, 5, 2, 1, 1, 1, 24, 3, 2, 11, 7, 3, 12, 6, 2, 6, 2, 6, 9, 7, 1, 7, 1, 43, 1, 10, 10, 115, 29, 11172, 12, 23, 4, 49, 8452, 366, 2, 106, 38, 7, 12, 5, 5, 1, 1, 10, 1, 13, 1, 5, 1, 1, 1, 2, 1, 2, 1, 108, 33, 363, 18, 64, 2, 54, 40, 12, 116, 5, 1, 135, 36, 26, 6, 26, 11, 89, 3, 6, 2, 6, 2, 6, 2, 3, 35, 12, 1, 26, 1, 19, 1, 2, 1, 15, 2, 14, 34, 123, 69, 53, 267, 29, 3, 49, 47, 32, 16, 27, 5, 38, 10, 30, 2, 36, 4, 8, 1, 5, 42, 158, 98, 40, 8, 52, 156, 311, 9, 22, 10, 8, 152, 6, 2, 1, 1, 44, 1, 2, 3, 1, 2, 23, 10, 23, 9, 31, 65, 19, 1, 2, 10, 22, 10, 26, 70, 56, 6, 2, 64, 1, 15, 4, 1, 3, 1, 27, 44, 29, 3, 29, 35, 8, 1, 28, 27, 54, 10, 22, 10, 19, 13, 18, 110, 73, 55, 51, 13, 51, 784, 53, 75, 45, 32, 25, 26, 36, 41, 35, 3, 1, 12, 48, 14, 4, 21, 1, 1, 1, 35, 18, 1, 25, 84, 7, 1, 1, 1, 4, 1, 15, 1, 10, 7, 47, 38, 8, 2, 2, 2, 22, 1, 7, 1, 2, 1, 5, 3, 1, 18, 1, 12, 5, 286, 48, 20, 2, 1, 1, 184, 47, 41, 4, 36, 48, 20, 1, 59, 43, 85, 26, 390, 64, 31, 1, 448, 57, 1287, 922, 102, 111, 17, 196, 2748, 1071, 4049, 583, 8633, 569, 7, 31, 113, 30, 18, 48, 16, 4, 31, 21, 5, 19, 880, 69, 11, 1, 66, 13, 16480, 2, 3070, 107, 5, 13, 3, 9, 7, 10, 5990, 85, 1, 71, 1, 2, 2, 1, 2, 2, 2, 4, 1, 12, 1, 1, 1, 7, 1, 65, 1, 4, 2, 8, 1, 7, 1, 28, 1, 4, 1, 5, 1, 1, 3, 7, 1, 340, 2, 25, 1, 25, 1, 31, 1, 25, 1, 31, 1, 25, 1, 31, 1, 25, 1, 31, 1, 25, 1, 8, 4148, 197, 1339, 4, 1, 27, 1, 2, 1, 1, 2, 1, 1, 10, 1, 4, 1, 1, 1, 1, 6, 1, 4, 1, 1, 1, 1, 1, 1, 3, 1, 2, 1, 1, 2, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 1, 1, 2, 4, 1, 7, 1, 4, 1, 4, 1, 1, 1, 10, 1, 17, 5, 3, 1, 5, 1, 17, 4420, 42711, 41, 4149, 11, 222, 2, 5762, 10590, 542]));
 IDC_ = fromRunLenCodes([0, 183, 1, 719, 1, 4065, 9, 1640, 1], fromRunLenCodes([0, 48, 10, 7, 26, 4, 1, 1, 26, 47, 1, 10, 1, 1, 1, 2, 1, 5, 23, 1, 31, 1, 458, 4, 12, 14, 5, 7, 1, 1, 1, 17, 117, 1, 2, 2, 4, 1, 1, 6, 5, 1, 1, 1, 20, 1, 83, 1, 139, 1, 5, 2, 166, 1, 38, 2, 1, 7, 39, 9, 45, 1, 1, 1, 2, 1, 2, 1, 1, 8, 27, 5, 3, 29, 11, 5, 74, 4, 102, 1, 8, 2, 10, 1, 19, 2, 1, 16, 59, 2, 101, 14, 54, 4, 1, 5, 46, 18, 28, 68, 21, 46, 129, 2, 10, 1, 19, 1, 8, 2, 2, 2, 22, 1, 7, 1, 1, 3, 4, 2, 9, 2, 2, 2, 4, 8, 1, 4, 2, 1, 5, 2, 12, 15, 3, 1, 6, 4, 2, 2, 22, 1, 7, 1, 2, 1, 2, 1, 2, 2, 1, 1, 5, 4, 2, 2, 3, 3, 1, 7, 4, 1, 1, 7, 16, 11, 3, 1, 9, 1, 3, 1, 22, 1, 7, 1, 2, 1, 5, 2, 10, 1, 3, 1, 3, 2, 1, 15, 4, 2, 10, 9, 1, 7, 3, 1, 8, 2, 2, 2, 22, 1, 7, 1, 2, 1, 5, 2, 9, 2, 2, 2, 3, 8, 2, 4, 2, 1, 5, 2, 10, 1, 1, 16, 2, 1, 6, 3, 3, 1, 4, 3, 2, 1, 1, 1, 2, 3, 2, 3, 3, 3, 12, 4, 5, 3, 3, 1, 4, 2, 1, 6, 1, 14, 10, 16, 4, 1, 8, 1, 3, 1, 23, 1, 16, 3, 8, 1, 3, 1, 4, 7, 2, 1, 3, 5, 4, 2, 10, 17, 3, 1, 8, 1, 3, 1, 23, 1, 10, 1, 5, 2, 9, 1, 3, 1, 4, 7, 2, 7, 1, 1, 4, 2, 10, 1, 2, 14, 3, 1, 8, 1, 3, 1, 41, 2, 8, 1, 3, 1, 5, 8, 1, 7, 5, 2, 10, 10, 6, 2, 2, 1, 18, 3, 24, 1, 9, 1, 1, 2, 7, 3, 1, 4, 6, 1, 1, 1, 8, 6, 10, 2, 2, 13, 58, 5, 15, 1, 10, 39, 2, 1, 1, 2, 2, 1, 1, 2, 1, 6, 4, 1, 7, 1, 3, 1, 1, 1, 1, 2, 2, 1, 13, 1, 3, 2, 5, 1, 1, 1, 6, 2, 10, 2, 4, 32, 1, 23, 2, 6, 10, 11, 1, 1, 1, 1, 1, 4, 10, 1, 36, 4, 20, 1, 18, 1, 36, 9, 1, 57, 74, 6, 78, 2, 38, 1, 1, 5, 1, 2, 43, 1, 333, 1, 4, 2, 7, 1, 1, 1, 4, 2, 41, 1, 4, 2, 33, 1, 4, 2, 7, 1, 1, 1, 4, 2, 15, 1, 57, 1, 4, 2, 67, 2, 3, 9, 9, 14, 16, 16, 86, 2, 6, 3, 620, 2, 17, 1, 26, 5, 75, 3, 11, 7, 13, 1, 7, 11, 21, 11, 20, 12, 13, 1, 3, 1, 2, 12, 84, 3, 1, 4, 2, 2, 10, 33, 3, 2, 10, 6, 88, 8, 43, 5, 70, 10, 31, 1, 12, 4, 12, 10, 40, 2, 5, 11, 44, 4, 26, 6, 11, 37, 28, 4, 63, 1, 29, 2, 11, 6, 10, 13, 1, 8, 14, 66, 76, 4, 10, 17, 9, 12, 116, 12, 56, 8, 10, 3, 49, 82, 3, 1, 35, 1, 2, 6, 246, 6, 282, 2, 6, 2, 38, 2, 6, 2, 8, 1, 1, 1, 1, 1, 1, 1, 31, 2, 53, 1, 7, 1, 1, 3, 3, 1, 7, 3, 4, 2, 6, 4, 13, 5, 3, 1, 7, 66, 2, 19, 1, 28, 1, 13, 1, 16, 13, 51, 13, 4, 1, 3, 12, 17, 1, 4, 1, 2, 10, 1, 1, 2, 6, 6, 1, 1, 1, 1, 1, 1, 16, 2, 4, 5, 5, 4, 1, 17, 41, 2679, 47, 1, 47, 1, 133, 6, 9, 12, 38, 1, 1, 5, 1, 2, 56, 7, 1, 15, 24, 9, 7, 1, 7, 1, 7, 1, 7, 1, 7, 1, 7, 1, 7, 1, 7, 1, 32, 517, 3, 25, 15, 1, 5, 2, 5, 4, 86, 2, 7, 1, 90, 1, 4, 5, 41, 3, 94, 17, 27, 53, 16, 512, 6582, 74, 20950, 42, 1165, 67, 46, 2, 269, 3, 28, 20, 48, 4, 10, 1, 115, 37, 9, 2, 103, 2, 35, 2, 8, 63, 49, 24, 52, 12, 69, 11, 10, 6, 24, 3, 1, 1, 1, 2, 46, 2, 36, 12, 29, 3, 65, 14, 11, 6, 31, 1, 55, 9, 14, 2, 10, 6, 23, 3, 73, 24, 3, 2, 16, 2, 5, 10, 6, 2, 6, 2, 6, 9, 7, 1, 7, 1, 43, 1, 10, 10, 123, 1, 2, 2, 10, 6, 11172, 12, 23, 4, 49, 8452, 366, 2, 106, 38, 7, 12, 5, 5, 12, 1, 13, 1, 5, 1, 1, 1, 2, 1, 2, 1, 108, 33, 363, 18, 64, 2, 54, 40, 12, 4, 16, 16, 16, 3, 2, 24, 3, 32, 5, 1, 135, 19, 10, 7, 26, 4, 1, 1, 26, 11, 89, 3, 6, 2, 6, 2, 6, 2, 3, 35, 12, 1, 26, 1, 19, 1, 2, 1, 15, 2, 14, 34, 123, 69, 53, 136, 1, 130, 29, 3, 49, 15, 1, 31, 32, 16, 27, 5, 43, 5, 30, 2, 36, 4, 8, 1, 5, 42, 158, 2, 10, 86, 40, 8, 52, 156, 311, 9, 22, 10, 8, 152, 6, 2, 1, 1, 44, 1, 2, 3, 1, 2, 23, 10, 23, 9, 31, 65, 19, 1, 2, 10, 22, 10, 26, 70, 56, 6, 2, 64, 4, 1, 2, 5, 8, 1, 3, 1, 27, 4, 3, 4, 1, 32, 29, 3, 29, 35, 8, 1, 30, 25, 54, 10, 22, 10, 19, 13, 18, 110, 73, 55, 51, 13, 51, 781, 71, 31, 10, 15, 60, 21, 25, 7, 10, 6, 53, 1, 10, 16, 36, 2, 1, 9, 69, 5, 3, 3, 11, 1, 1, 35, 18, 1, 37, 72, 7, 1, 1, 1, 4, 1, 15, 1, 10, 7, 59, 5, 10, 6, 4, 1, 8, 2, 2, 2, 22, 1, 7, 1, 2, 1, 5, 2, 9, 2, 2, 2, 3, 2, 1, 6, 1, 5, 7, 2, 7, 3, 5, 267, 70, 1, 1, 8, 10, 166, 54, 2, 9, 23, 6, 34, 65, 3, 1, 11, 10, 38, 56, 8, 10, 54, 26, 3, 15, 4, 10, 358, 74, 21, 1, 448, 57, 1287, 922, 102, 111, 17, 196, 2748, 1071, 4049, 583, 8633, 569, 7, 31, 1, 10, 102, 30, 2, 5, 11, 55, 9, 4, 12, 10, 9, 21, 5, 19, 880, 69, 11, 47, 16, 17, 16480, 2, 3070, 107, 5, 13, 3, 9, 7, 10, 3, 2, 5318, 5, 3, 6, 8, 8, 2, 7, 30, 4, 148, 3, 443, 85, 1, 71, 1, 2, 2, 1, 2, 2, 2, 4, 1, 12, 1, 1, 1, 7, 1, 65, 1, 4, 2, 8, 1, 7, 1, 28, 1, 4, 1, 5, 1, 1, 3, 7, 1, 340, 2, 25, 1, 25, 1, 31, 1, 25, 1, 31, 1, 25, 1, 31, 1, 25, 1, 31, 1, 25, 1, 8, 2, 50, 512, 55, 4, 50, 8, 1, 14, 1, 22, 5, 1, 15, 3408, 197, 11, 7, 1321, 4, 1, 27, 1, 2, 1, 1, 2, 1, 1, 10, 1, 4, 1, 1, 1, 1, 6, 1, 4, 1, 1, 1, 1, 1, 1, 3, 1, 2, 1, 1, 2, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 1, 1, 2, 4, 1, 7, 1, 4, 1, 4, 1, 1, 1, 10, 1, 17, 5, 3, 1, 5, 1, 17, 4420, 42711, 41, 4149, 11, 222, 2, 5762, 10590, 542, 722658, 240]));
-set1(IDC_, 8204);
-set1(IDC_, 8205);
+set(IDC_, 8204);
+set(IDC_, 8205);
 function isNum(c) {
   return c >= CH_0 && c <= CH_9;
 }
@@ -31,9 +228,6 @@ function isIDBody(c) {
 }
 function isHex(e) {
   return e >= CH_a && e <= CH_f || e >= CH_0 && e <= CH_9 || e >= CH_A && e <= CH_F;
-}
-function char2int(c) {
-  return c.charCodeAt(0);
 }
 function hex(number) {
   var str;
@@ -453,509 +647,12 @@ hexD = ['0'].concat(hexD);
 ;
 ;
 ;
-function allOnes(len) {
-  var n, s;
-  n = 0;
-  s = 0;
-  while (s < len)
-    n += 1 << s++;
-  return n;
-}
-function ASSERT(cond, message) {
-  if (!cond) {
-    throw new Error(message);
-  }
-}
-function ASSERT_EQ(val, ex) {
-  ASSERT.call(this, val === ex, 'val must be <' + ex + '>, not <' + val + '>');
-}
-function activeID_new() {
-  return ++ACTIVE_ID;
-}
-var CH_1, CH_2, CH_3, CH_4, CH_5, CH_6, CH_7, CH_8, CH_9, CH_0, CH_a, CH_A, CH_b, CH_B, CH_e, CH_E, CH_d, CH_D, CH_g, CH_f, CH_F, CH_c, CH_i, CH_m, CH_n, CH_o, CH_O, CH_r, CH_s, CH_S, CH_t, CH_u, CH_U, CH_v, CH_w, CH_W, CH_x, CH_X, CH_y, CH_z, CH_Z, CH_UNDERLINE, CH_$, CH_VTAB, CH_BACK, CH_FORM_FEED, CH_TAB, CH_CARRIAGE_RETURN, CH_LINE_FEED, CH_WHITESPACE, CH_BACKTICK, CH_SINGLE_QUOTE, CH_MULTI_QUOTE, CH_BACK_SLASH, CH_DIV, CH_MUL, CH_MIN, CH_ADD, CH_AND, CH_XOR, CH_MODULO, CH_OR, CH_EQUALITY_SIGN, CH_SEMI, CH_COMMA, CH_SINGLEDOT, CH_COLON, CH_QUESTION, CH_EXCLAMATION, CH_COMPLEMENT, CH_ATSIGN, CH_LPAREN, CH_RPAREN, CH_LSQBRACKET, CH_RSQBRACKET, CH_LCURLY, CH_RCURLY, CH_LESS_THAN, CH_GREATER_THAN, PAREN, PAREN_NODE, INTERMEDIATE_ASYNC, FUNCTION_TYPE, STRING_TYPE, NUMBER_TYPE, BOOL_TYPE, OPTIONS, HAS, B, I_31, ACTIVE_ID, CTX_NONE, CTX_PARAM, CTX_FOR, CTX_PAT, CTX_NULLABLE, CTX_HASPROTO, CTX_HASPROTOTYPE, CTX_CTOR_NOT_ALLOWED, CTX_DEFAULT, CTX_HAS_A_PARAM_ERR, CTX_HAS_AN_ASSIG_ERR, CTX_HAS_A_SIMPLE_ERR, CTX_NO_SIMPLE_ERR, CTX_ASYNC_NO_NEWLINE_FN, CTX_PARPAT, CTX_PARPAT_ERR, CTX_TOP, ARGLEN_GET, ARGLEN_SET, ARGLEN_ANY, EC_NONE, EC_NEW_HEAD, EC_START_STMT, EC_EXPR_HEAD, EC_CALL_HEAD, EC_NON_SEQ, EC_IN, EC_ATTACHED, EC_JZ, EST_BREAKABLE, EST_OMITTABLE, EST_NONE, SP_BREAKABLE, SP_OMITTABLE, SP_NONE, ETK_NONE, ETK_ID, ETK_MIN, ETK_DIV, ETK_ADD, ETK_NUM, ETK_STR, ETK_NL, ETK_COMMENT, PE_NO_NONVAR, PE_NO_LABEL, PE_LEXICAL, PE_NONE, CHK_T, CHK_V, CHK_NONE, THS_NEEDS_CHK, THS_IS_REACHED, THS_NONE, ANESS_UNKNOWN, ANESS_CHECKING, ANESS_INACTIVE, ANESS_ACTIVE, ACT_BARE, ACT_DECL, ACT_SCOPE, CVTZ_T, CVTZ_C, CVTZ_NONE;
-CH_1 = char2int('1');
-CH_2 = char2int('2');
-CH_3 = char2int('3');
-CH_4 = char2int('4');
-CH_5 = char2int('5');
-CH_6 = char2int('6');
-CH_7 = char2int('7');
-CH_8 = char2int('8');
-CH_9 = char2int('9');
-CH_0 = char2int('0');
-CH_a = char2int('a');
-CH_A = char2int('A');
-CH_b = char2int('b');
-CH_B = char2int('B');
-CH_e = char2int('e');
-CH_E = char2int('E');
-CH_d = char2int('d');
-CH_D = char2int('D');
-CH_g = char2int('g');
-CH_f = char2int('f');
-CH_F = char2int('F');
-CH_c = char2int('c');
-CH_i = char2int('i');
-CH_m = char2int('m');
-CH_n = char2int('n');
-CH_o = char2int('o');
-CH_O = char2int('O');
-CH_r = char2int('r');
-CH_s = char2int('s');
-CH_S = char2int('S');
-CH_t = char2int('t');
-CH_u = char2int('u');
-CH_U = char2int('U');
-CH_v = char2int('v');
-CH_w = char2int('w');
-CH_W = char2int('W');
-CH_x = char2int('x');
-CH_X = char2int('X');
-CH_y = char2int('y');
-CH_z = char2int('z');
-CH_Z = char2int('Z');
-CH_UNDERLINE = char2int('_');
-CH_$ = char2int('$');
-CH_VTAB = char2int('\v');
-CH_BACK = char2int('\b');
-CH_FORM_FEED = char2int('\f');
-CH_TAB = char2int('\t');
-CH_CARRIAGE_RETURN = char2int('\r');
-CH_LINE_FEED = char2int('\n');
-CH_WHITESPACE = char2int(' ');
-CH_BACKTICK = char2int('`');
-CH_SINGLE_QUOTE = char2int('\'');
-CH_MULTI_QUOTE = char2int('\"');
-CH_BACK_SLASH = char2int('\\');
-CH_DIV = char2int('/');
-CH_MUL = char2int('*');
-CH_MIN = char2int('-');
-CH_ADD = char2int('+');
-CH_AND = char2int('&');
-CH_XOR = char2int('^');
-CH_MODULO = char2int('%');
-CH_OR = char2int('|');
-CH_EQUALITY_SIGN = char2int('=');
-CH_SEMI = char2int(';');
-CH_COMMA = char2int(',');
-CH_SINGLEDOT = char2int('.');
-CH_COLON = char2int(':');
-CH_QUESTION = char2int('?');
-CH_EXCLAMATION = char2int('!');
-CH_COMPLEMENT = char2int('~');
-CH_ATSIGN = char2int('@');
-CH_LPAREN = char2int('(');
-CH_RPAREN = char2int(')');
-CH_LSQBRACKET = char2int('[');
-CH_RSQBRACKET = char2int(']');
-CH_LCURLY = char2int('{');
-CH_RCURLY = char2int('}');
-CH_LESS_THAN = char2int('<');
-CH_GREATER_THAN = char2int('>');
-PAREN = 'paren';
-PAREN_NODE = PAREN;
-INTERMEDIATE_ASYNC = 'intermediate-async';
-FUNCTION_TYPE = typeof function() {};
-STRING_TYPE = typeof'string';
-NUMBER_TYPE = typeof 0;
-BOOL_TYPE = typeof false;
-OPTIONS = ['ecmaVersion', 'sourceType', 'onToken', 'program', 'onComment', 'allowReturnOutsideFunction', 'allowImportExportEverywhere', 'sourceFile', 'directSourceFile', //'preserveParens',
-'allowHashBang'];
-HAS = {}.hasOwnProperty;
-B = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/';
-I_31 = allOnes(31);
-ACTIVE_ID = 0;
-CTX_NONE = 0;
-CTX_PARAM = 1;
-CTX_FOR = CTX_PARAM << 1;
-CTX_PAT = CTX_FOR << 1;
-CTX_NULLABLE = CTX_PAT << 1;
-CTX_HASPROTO = CTX_NULLABLE << 1;
-CTX_HASPROTOTYPE = CTX_HASPROTO << 1;
-CTX_CTOR_NOT_ALLOWED = CTX_HASPROTOTYPE << 1;
-CTX_DEFAULT = CTX_CTOR_NOT_ALLOWED << 1;
-CTX_HAS_A_PARAM_ERR = CTX_DEFAULT << 1;
-CTX_HAS_AN_ASSIG_ERR = CTX_HAS_A_PARAM_ERR << 1;
-CTX_HAS_A_SIMPLE_ERR = CTX_HAS_AN_ASSIG_ERR << 1;
-CTX_NO_SIMPLE_ERR = CTX_HAS_A_SIMPLE_ERR << 1;
-CTX_ASYNC_NO_NEWLINE_FN = CTX_NO_SIMPLE_ERR << 1;
-CTX_PARPAT = CTX_PARAM | CTX_PAT;
-CTX_PARPAT_ERR = CTX_HAS_A_PARAM_ERR | CTX_HAS_AN_ASSIG_ERR | CTX_HAS_A_SIMPLE_ERR;
-CTX_TOP = CTX_PAT | CTX_NO_SIMPLE_ERR;
-ARGLEN_GET = 0;
-ARGLEN_SET = 1;
-ARGLEN_ANY = -1;
-EC_NONE = 0;
-EC_NEW_HEAD = 1;
-EC_START_STMT = 2;
-EC_EXPR_HEAD = EC_START_STMT << 1;
-EC_CALL_HEAD = EC_EXPR_HEAD << 1;
-EC_NON_SEQ = EC_CALL_HEAD << 1;
-EC_IN = EC_NON_SEQ << 1;
-EC_ATTACHED = EC_IN << 1;
-EC_JZ = EC_ATTACHED << 1;
-EST_BREAKABLE = 1;
-EST_OMITTABLE = EST_BREAKABLE << 1;
-EST_NONE = 0;
-SP_BREAKABLE = 1;
-SP_OMITTABLE = SP_BREAKABLE << 1;
-SP_NONE = 0;
-ETK_NONE = 0;
-ETK_ID = 1;
-ETK_MIN = ETK_ID << 1;
-ETK_DIV = ETK_MIN << 1;
-ETK_ADD = ETK_DIV << 1;
-ETK_NUM = ETK_ADD << 1;
-ETK_STR = ETK_NUM << 1;
-ETK_NL = ETK_STR << 1;
-ETK_COMMENT = ETK_NL << 1;
-PE_NO_NONVAR = 1;
-PE_NO_LABEL = PE_NO_NONVAR << 1;
-PE_LEXICAL = PE_NO_NONVAR;
-PE_NONE = 0;
-CHK_T = 1;
-CHK_V = CHK_T << 1;
-CHK_NONE = 0;
-THS_NEEDS_CHK = 1;
-THS_IS_REACHED = THS_NEEDS_CHK << 1;
-THS_NONE = 0;
-ANESS_UNKNOWN = -2;
-ANESS_CHECKING = -1;
-ANESS_INACTIVE = 0;
-ANESS_ACTIVE = 1;
-ACT_BARE = 0;
-ACT_DECL = 1;
-ACT_SCOPE = 2;
-CVTZ_T = 1;
-CVTZ_C = CVTZ_T << 1;
-CVTZ_NONE = 0;
-function Actix(role) {
-  // activity ctx
-  ASSERT.call(this, arguments.length === 1, 'len');
-  this.ai = activeID_new();
-  this.activeIf = null;
-  this.activeness = ANESS_UNKNOWN;
-  this.ns = 0;
-  this.role = role;
-  this.inactiveIf = null;
-}
-var cls18;
-cls18 = Actix.prototype;
-cls18.ii = function(inactiveIf) {
-  ASSERT.call(this, this.inactiveIf === null, 'inactiveIf');
-  this.inactiveIf = inactiveIf;
-  return this;
-};
-function PathMan() {}
-var cls23;
-cls23 = PathMan.prototype;
-function _m(name) {
-  return name + '%';
-}
-function _u(name) {
-  ASSERT.call(this, name.charCodeAt(name.length - 1) === CH_MODULO, 'only mangled names are allowed to get unmangled');
-  return name.substring(0, name.length - 1);
-}
-function _full(nameSpace, name) {
-  return nameSpace + ':' + name;
-}
 function SortedObj(obj) {
   this.keys = [];
   this.obj = obj || {};
 }
-var cls21;
-cls21 = SortedObj.prototype;
-function AutoImex() {
-  this.Parser = null;
-  this.Emitter = null;
-  this.sources = new SortedObj();
-  this.unresolvedNames = new SortedObj();
-  this.bundleBindings = new SortedObj();
-  this.clsUriList = {};
-}
-var cls20;
-cls20 = AutoImex.prototype;
-var pathMan;
-pathMan = new PathMan();
-cls20.insertSourceByURI = function(uri) {
-  var m, src, n, scope, subName, at, name, binding, cul, mname, list, l, elem, len;
-  m = _m(uri);
-  ASSERT.call(this, !this.sources.has(m), 'existing [' + uri + ']');
-  src = this.loadSource(uri);
-  n = new this.Parser(src).parseProgram();
-  scope = n['#scope'];
-  n['#uri'] = uri;
-  scope['#importList'] = {ns: null, names: []};
-  scope['#exportList'] = {bindings: [], defaultExpr: '', cls: ''};
-  subName = pathMan.tail(uri);
-  at = subName.indexOf('@');
-  if (at === 0) {
-    name = subName.substring(1, subName.indexOf('.'));
-    binding = scope.findDeclAny_m(_m(name));
-    ASSERT.call(this, binding, 'no [' + name + '] in [' + uri + ']');
-    scope['#exportList'].defaultExpr = name;
-    this.logBinding(name, '*default*', uri);
-    this.insertBundleBinding(uri, binding);
-    ASSERT.call(this, scope.findDeclAny_m(_m('cls')) === null, 'cls exists in ' + uri);
-    scope['#exportList'].cls = 'cls';
-    cul = this.clsUriList;
-    mname = _m(name);
-    ASSERT.call(this, !HAS.call(cul, mname), 'class has been registered: [' + name + ']<==[' + uri + ']');
-    cul[mname] = uri;
-    this.logBinding(name, '<<cls>>', uri);
-  }
-  else if (at > 0) {
-    scope['#clsThisList'] = [];
-    list = n.body;
-    l = 0;
-    this.logE('stmts', list.length);
-    while (l < list.length) {
-      elem = list[l++];
-      this.logE('[uri-' + uri + ';' + elem.type + ']');
-      if (elem.type !== 'ExpressionStatement') {
-        continue;
-      }
-      elem = elem.expression;
-      this.logE('[uri-' + uri + ';' + elem.type + ']');
-      if (elem.type !== 'AssignmentExpression') {
-        continue;
-      }
-      elem = elem.left;
-      this.logE('[uri-' + uri + ';' + elem.type + ']');
-      if (elem.type !== 'MemberExpression') {
-        continue;
-      }
-      elem = elem.object;
-      this.logE('[uri-' + uri + ';' + elem.type + ']');
-      if (elem.type !== 'ThisExpression') {
-        continue;
-      }
-      scope['#clsThisList'].push(elem);
-    }
-  }
-  else {
-    list = scope.defs;
-    l = 0;
-    len = list.length();
-    while (l < len) {
-      elem = list.at(l++);
-      scope['#exportList'].bindings.push({real: elem.name, outer: elem.name});
-      this.logBinding(elem.name, elem.name, uri);
-      this.insertBundleBinding(uri, elem);
-    }
-  }
-  //this.handleSourceLevelBindings(uri, n['#scope']);
-  n['#src'] = src;
-  return this.sources.set(m, n);
-};
-cls20.resolveAll = function() {
-  var list, l, len, elem;
-  list = this.sources;
-  l = 0;
-  len = list.length();
-  this.logE(' --------- [' + len + '] sources ----------; START');
-  while (l < len) {
-    elem = list.at(l++);
-    this.tryResolveExternals(elem);
-  }
-  this.logE(' --------- [' + l + '/' + len + '] complete ---------');
-};
-cls20.tryResolveExternals = function(n) {
-  var sourceScope, globalScope, list, l, len, name, b;
-  sourceScope = n['#scope'];
-  globalScope = sourceScope.parent;
-  list = globalScope.defs;
-  l = 0;
-  len = list.length();
-  while (l < len) {
-    name = list.at(l++);
-    b = this.findBundleBinding(name.name);
-    if (b) {
-      sourceScope['#importList'].names.push({name: name.name, target: b});
-      this.logE('  [' + n['#uri'] + ']:import [' + name.name + '] from [' + b.uri + '] ' + (name.name === b.binding.ref.scope['#exportList'].defaultExpr ? 'default' : 'raw'));
-    }
-  }
-};
-cls20.insertBundleBinding = function(uri, elem) {
-  var name, b;
-  name = elem.name;
-  b = this.findBundleBinding(name);
-  if (b)
-    ASSERT.call(this, false, 'name [' + name + '] exists @[' + b.uri + ']');
-  return this.bundleBindings.set(_m(name), {uri: uri, binding: elem});
-};
-cls20.findBundleBinding = function(name) {
-  var mname, bb;
-  mname = _m(name);
-  bb = this.bundleBindings;
-  return bb.has(mname) ? bb.get(mname) : null;
-};
-cls20.flush = function() {
-  var list, l, len, elem;
-  list = this.sources;
-  l = 0;
-  len = list.length();
-  while (l < len) {
-    elem = list.at(l++);
-    this.onStartImports(elem);
-    this.writeImports(elem);
-    this.onFinishImports(elem);
-    this.onStartExports(elem);
-    this.writeExports(elem);
-    this.onFinishExports(elem);
-  }
-};
-cls20.writeImports = function writeImports(n) {
-  var scope, uri, im, usedSources, len, l, elem, name, target, targetUri, binding, mname, entry, sourceBindings, sourceUri, str, bindings, b;
-  scope = n['#scope'];
-  uri = n['#uri'];
-  this.logE('writing imports for [' + uri + ']');
-  im = scope['#importList'].names;
-  usedSources = new SortedObj();
-  len = im.length;
-  l = 0;
-  while (l < len) {
-    elem = im[l++];
-    name = elem.name;
-    target = elem.target;
-    targetUri = target.uri;
-    binding = target.binding;
-    mname = _m(targetUri);
-    entry = usedSources.has(mname) ? usedSources.get(mname) : null;
-    if (entry === null)
-      entry = usedSources.set(mname, {bindings: [], defaultName: '', wholeNS: ''});
-    if (name === binding.ref.scope['#exportList'].defaultExpr) {
-      ASSERT.call(this, entry.defaultName === '', '[' + targetUri + '] default');
-      entry.defaultName = name;
-    }
-    else {
-      entry.bindings.push(name);
-    }
-  }
-  len = usedSources.length(), l = 0;
-  while (l < len) {
-    sourceBindings = usedSources.at(l);
-    sourceUri = _u(usedSources.keys[l]);
-    str = '';
-    if (sourceBindings.defaultName !== '')
-      str += sourceBindings.defaultName;
-    if (sourceBindings.bindings.length) {
-      if (str.length)
-        str += ', ';
-      str += '{';
-      bindings = sourceBindings.bindings;
-      b = 0;
-      while (b < bindings.length) {
-        if (b)
-          str += ', ';
-        str += bindings[b];
-        b++;
-      }
-      str += '}';
-    }
-    this.onImport({str: str, to: uri, from: sourceUri, usedSources: usedSources});
-    l++;
-  }
-};
-cls20.writeExports = function(elem) {
-  var scope, ex, str, list, l;
-  scope = elem['#scope'];
-  ex = scope['#exportList'];
-  str = '';
-  if (ex.defaultExpr !== '')
-    this.onExport(' export default ' + ex.defaultExpr + ';');
-  list = ex.bindings;
-  l = 0;
-  str = '';
-  while (l < list.length) {
-    if (l)
-      str += ', ';
-    else {
-      str = '{';
-    }
-    elem = list[l++];
-    ASSERT.call(this, elem.real && elem.real === elem.outer, '[real-' + elem.real + '; outer-' + elem.outer + ']');
-    str += elem.real;
-  }
-  if (l) {
-    str += '}';
-    this.onExport(' export ' + str + ';');
-  }
-  if (ex.cls !== '') {
-    ASSERT.call(this, ex.defaultExpr !== '', 'cls but no default');
-    this.onExport(' export var cls = ' + ex.defaultExpr + '.prototype = ;');
-  }
-};
-cls20.pathThatLeads2to1 = function(from, to) {
-  var fromNum, toNum, fromStart, toStart, fromElemLen, toElemLen, manp, str, hasLeadingToElem, fromElem, toElem;
-  fromNum = 0;
-  toNum = 0;
-  fromStart = 0;
-  toStart = 0;
-  fromElemLen = 0;
-  toElemLen = 0;
-  manp = new PathMan();
-  str = '';
-  hasLeadingToElem = false;
-  while (true) {
-    fromElemLen = manp.len(from, fromStart);
-    if (fromElemLen === 0) {
-      ASSERT.call(this, fromNum > 0, '[' + from + '] -- from has no elems');
-      break;
-    }
-    toElemLen = manp.len(to, toStart);
-    if (toElemLen === 0) {
-      ASSERT.call(this, toNum > 0, '[' + to + '] to has no elems');
-      break;
-    }
-    fromElem = manp.trimSlash(from.substr(fromStart, fromElemLen));
-    fromNum++;
-    fromStart += fromElemLen;
-    toElem = manp.trimSlash(to.substr(toStart, toElemLen));
-    toNum++;
-    toStart += toElemLen;
-    if (fromElem !== toElem) {
-      str = '..';
-      hasLeadingToElem = true;
-      break;
-    }
-  }
-  while (true) {
-    fromElemLen = manp.len(from, fromStart);
-    if (fromElemLen === 0) {
-      break;
-    }
-    if (str.length)
-      str += '/';
-    str += '..';
-    fromStart += fromElemLen;
-  }
-  if (hasLeadingToElem) {
-    ASSERT.call(this, str.length, 'str must not be empty if hasLeadingToElem is set to on');
-    str += '/' + toElem;
-  }
-  while (true) {
-    toElemLen = manp.len(to, toStart);
-    if (toElemLen === 0) {
-      break;
-    }
-    toElem = manp.trimSlash(to.substr(toStart, toElemLen));
-    if (str.length)
-      str += '/';
-    else
-      str = './';
-    str += toElem;
-    toStart += toElemLen;
-  }
-  console.error('[' + from + ']*[' + str + ']->[' + to + ']');
-  return str;
-};
-cls20.logE = function() {
-  return console.error.apply(console, arguments);
-};
-cls20.logBinding = function(real, outer, uri) {
-  this.logE('  [' + uri + ']:export {[' + real + '] as [' + outer + ']}');
-};
+var cls11;
+cls11 = SortedObj.prototype;
 function Scope(sParent, type) {
   Actix.call(this, ACT_SCOPE);
   this.parent = sParent;
@@ -980,8 +677,8 @@ function Scope(sParent, type) {
   if (this.parent && this.parent.isParen())
     this.parent.ch.push(this);
 }
-var cls17;
-cls17 = Scope.prototype = createObj(Actix.prototype);
+var cls9;
+cls9 = Scope.prototype = createObj(Actix.prototype);
 function ConcreteScope(parent, type) {
   Scope.call(this, parent, type);
   this.liquidDefs = new SortedObj();
@@ -990,8 +687,18 @@ function ConcreteScope(parent, type) {
   this.isBooted = false;
   this.renamer = null;
 }
-var cls16;
-cls16 = ConcreteScope.prototype = createObj(Scope.prototype);
+var cls5;
+cls5 = ConcreteScope.prototype = createObj(Scope.prototype);
+function _m(name) {
+  return name + '%';
+}
+function _u(name) {
+  ASSERT.call(this, name.charCodeAt(name.length - 1) === CH_MODULO, 'only mangled names are allowed to get unmangled');
+  return name.substring(0, name.length - 1);
+}
+function _full(nameSpace, name) {
+  return nameSpace + ':' + name;
+}
 var ST_GLOBAL, ST_MODULE, ST_SCRIPT, ST_EXPR, ST_DECL, ST_OBJ, ST_FN, ST_CLS, ST_CLSMEM, ST_STATICMEM, ST_OBJMEM, ST_METH, ST_CTOR, ST_SETTER, ST_GETTER, ST_ACCESSOR, ST_ARROW, ST_BUNDLE, ST_GEN, ST_ASYNC, ST_BLOCK, ST_BARE, ST_CATCH, ST_PAREN, ST_NONE, SA_THROW, SA_AWAIT, SA_BREAK, SA_YIELD, SA_RETURN, SA_CONTINUE, SA_NEW_TARGET, SA_CALLSUPER, SA_MEMSUPER, SA_NONE, SF_LOOP, SF_UNIQUE, SF_STRICT, SF_ARGS, SF_INSIDEIF, SF_COND, SF_FORINIT, SF_WITH_SCALL, SF_HERITAGE, SF_WITH_SMEM, SF_INSIDEPROLOGUE, SF_NONE, DT_CLS, DT_FN, DT_CONST, DT_VAR, DT_CATCHARG, DT_SPECIAL, DT_LIQUID, DT_LET, DT_ARGUMENTS, DT_FNARG, DT_CLSNAME, DT_IDEFAULT, DT_IALIASED, DT_INAMESPACE, DT_INFERRED, DT_GLOBAL, DT_FNNAME, DT_EDEFAULT, DT_EALIASED, DT_ESELF, DT_EFW, DT_BOMB, DT_EXPORTED, DT_IMPORTED, DT_NONE, RS_ARGUMENTS, RS_SCALL, RS_THIS, ATS_DISTINCT, ATS_UNSURE, ATS_SAME;
 ST_GLOBAL = 1;
 ST_MODULE = ST_GLOBAL << 1;
@@ -1074,8 +781,8 @@ ATS_SAME = ATS_UNSURE << 1;
 function BundleScope() {
   ConcreteScope.call(this, null, ST_BUNDLE);
 }
-var cls4;
-cls4 = BundleScope.prototype = createObj(ConcreteScope.prototype);
+var cls1;
+cls1 = BundleScope.prototype = createObj(ConcreteScope.prototype);
 function Bundler(pathMan) {
   this.type = '#Bundler';
   this.pathMan = pathMan;
@@ -1087,8 +794,8 @@ function Bundler(pathMan) {
   this.rootNode = null;
   this.bundleScope = new BundleScope();
 }
-var cls3;
-cls3 = Bundler.prototype;
+var cls;
+cls = Bundler.prototype;
 // 
 // a
 // |__ b.js: import './l.js'
@@ -1102,7 +809,7 @@ cls3 = Bundler.prototype;
 // limport 'a/b.js'; limport 'e/u.js'
 // 
 // what is its output supposed to be?
-cls3.enter = function(relPath) {
+cls.enter = function(relPath) {
   var ll, man, at, len, n, elem;
   ll = {uri: this.curURI, dir: this.curDir};
   man = this.pathMan;
@@ -1119,18 +826,18 @@ cls3.enter = function(relPath) {
   this.curDir = man.head(this.curURI);
   return ll;
 };
-cls3.setURIAndDir = function(uri, dir) {
+cls.setURIAndDir = function(uri, dir) {
   this.curURI = uri;
   this.curDir = dir;
 };
-cls3.save = function(n) {
+cls.save = function(n) {
   n['#scope']['#uri'] = this.curURI;
   this.resolver.cache(this.curURI, n);
 };
-cls3.getExistingSourceNode = function() {
+cls.getExistingSourceNode = function() {
   return this.resolver.loadCached(this.curURI);
 };
-cls3.loadNewSource = function() {
+cls.loadNewSource = function() {
   var n;
   ASSERT.call(this, !this.resolver.hasInCache(this.curURI), 'incache');
   n = this.resolver.loadNew(this.curURI);
@@ -1139,7 +846,7 @@ cls3.loadNewSource = function() {
   this.freshSources.push(n);
   return n;
 };
-/* TODO: eliminate */cls4.synth_decl_find_homonym_m = function(mname) {
+/* TODO: eliminate */cls1.synth_decl_find_homonym_m = function(mname) {
   return this.findSynth_m(mname);
 };
 function Decl() {
@@ -1156,15 +863,15 @@ function Decl() {
   this.rsMap = null;
   this.realTarget = null;
 }
-var cls9;
-cls9 = Decl.prototype = createObj(Actix.prototype);
+var cls14;
+cls14 = Decl.prototype = createObj(Actix.prototype);
 function Liquid(category) {
   Decl.call(this);
   this.type |= DT_LIQUID;
   this.category = category;
 }
-var cls7;
-cls7 = Liquid.prototype = createObj(Decl.prototype);
+var cls12;
+cls12 = Liquid.prototype = createObj(Decl.prototype);
 function FunScope(parent, type) {
   ConcreteScope.call(this, parent, type | ST_FN);
   this.argList = [];
@@ -1180,8 +887,8 @@ function FunScope(parent, type) {
   this.spArguments = null;
   this.spSuperCall = null;
 }
-var cls1;
-cls1 = FunScope.prototype = createObj(ConcreteScope.prototype);
+var cls2;
+cls2 = FunScope.prototype = createObj(ConcreteScope.prototype);
 function CatchScope(sParent) {
   Scope.call(this, sParent, ST_CATCH);
   this.args = new SortedObj();
@@ -1196,9 +903,9 @@ function CatchScope(sParent) {
   this.synthNamesUntilNow = null;
   this.renamer = null;
 }
-var cls5;
-cls5 = CatchScope.prototype = createObj(Scope.prototype);
-cls5.synth_boot = function(r) {
+var cls6;
+cls6 = CatchScope.prototype = createObj(Scope.prototype);
+cls6.synth_boot = function(r) {
   ASSERT.call(this, !this.isBooted, 'boot');
   if (this.renamer === null)
     this.renamer = r;
@@ -1209,33 +916,33 @@ cls5.synth_boot = function(r) {
     this.catchVar = new Liquid('catchname').n('t');
   this.synth_defs_to(this.synthBase);
 };
-cls5.synth_boot_init = function() {
+cls6.synth_boot_init = function() {
   ASSERT.call(this, !this.isBooted, 'boot');
   if (this.synthNamesUntilNow === null)
     this.synthNamesUntilNow = new SortedObj();
   this.isBooted = true;
 };
-cls5.synth_start = function(r) {
+cls6.synth_start = function(r) {
   this.isBooted || this.synth_boot(r);
   FunScope.prototype.synth_externals.call(this);
 };
-cls5.synth_ref_may_escape_m = function(mname) {
+cls6.synth_ref_may_escape_m = function(mname) {
   return true;
 };
-cls5.insertSynth_m = function(mname, synth) {
+cls6.insertSynth_m = function(mname, synth) {
   return ConcreteScope.prototype.insertSynth_m.call(this, mname, synth);
 };
-cls5.rename = function(base, n) {
+cls6.rename = function(base, n) {
   return ConcreteScope.prototype.rename.call(this, base, n);
 };
-cls5.synth_ref_find_homonym_m = function(mname, r) {
+cls6.synth_ref_find_homonym_m = function(mname, r) {
   this.isBooted || this.synth_boot(r);
   return this.findSynth_m(mname);
 };
-cls5.findSynth_m = function(mname) {
+cls6.findSynth_m = function(mname) {
   return ConcreteScope.prototype.findSynth_m.call(this, mname);
 };
-cls5.synth_rcv = function() {
+cls6.synth_rcv = function() {
   var c, list, num, baseName, synthName, mname, synth, l, scope;
   c = this.defs.at(0);
   list = c.ref.rsList;
@@ -1264,7 +971,7 @@ cls5.synth_rcv = function() {
   c.synthName = synthName;
   this.insertSynth_m(mname, c);
 };
-cls5.synth_lcv = function() {
+cls6.synth_lcv = function() {
   var liq, baseName, num, mname, synthName;
   liq = this.catchVar;
   baseName = liq.name;
@@ -1285,9 +992,9 @@ function ClassScope(sParent, sType) {
   Scope.call(this, sParent, sType | ST_CLS);
   this.scopeName = null;
 }
-var cls2;
-cls2 = ClassScope.prototype = createObj(Scope.prototype);
-cls2.hasHeritage = function() {
+var cls7;
+cls7 = ClassScope.prototype = createObj(Scope.prototype);
+cls7.hasHeritage = function() {
   return this.flags & SF_HERITAGE;
 };
 function Comments() {
@@ -1295,16 +1002,16 @@ function Comments() {
   this.n = false;
   this.firstLen = 0;
 }
-var cls24;
-cls24 = Comments.prototype;
-cls24.push = function(comment) {
+var cls22;
+cls22 = Comments.prototype;
+cls22.push = function(comment) {
   this.c.push(comment);
   if (!this.n) {
     this.firstLen += comment['#firstLen'];
     this.n = comment.type === 'Line' || comment.loc.start.line !== comment.loc.end.line;
   }
 };
-cls24.mergeWith = function(another) {
+cls22.mergeWith = function(another) {
   if (!this.n)
     this.n = another.n;
   this.c = this.c.concat(another.c);
@@ -1316,14 +1023,14 @@ function LiquidGroup(cat, scope) {
   this.hasSeal = false;
   this.length = 0;
 }
-var cls25;
-cls25 = LiquidGroup.prototype;
-cls16.gocLG = function(gName) {
+var cls23;
+cls23 = LiquidGroup.prototype;
+cls5.gocLG = function(gName) {
   var lg;
   lg = this.getLG(gName);
   return lg || this.createLG(gName);
 };
-cls16.getLG = function(gName) {
+cls5.getLG = function(gName) {
   var mname;
   mname = _m(gName);
   if (this.liquidDefs.has(mname)) {
@@ -1331,7 +1038,7 @@ cls16.getLG = function(gName) {
   }
   return null;
 };
-cls16.createLG = function(gName) {
+cls5.createLG = function(gName) {
   var mname, group;
   mname = _m(gName);
   ASSERT.call(this, this.getLG(gName) === null, 'LGr exists');
@@ -1340,7 +1047,7 @@ cls16.createLG = function(gName) {
   //group.newL();
   return this.liquidDefs.set(mname, group);
 };
-cls16.synth_boot = function(r) {
+cls5.synth_boot = function(r) {
   if (this.renamer === null)
     this.renamer = r;
   ASSERT.call(this, this.isSourceLevel(), 'script m');
@@ -1350,14 +1057,14 @@ cls16.synth_boot = function(r) {
   this.synth_boot_init();
   this.synth_defs_to(this.synthBase);
 };
-cls16.synth_finish = function() {
+cls5.synth_finish = function() {
   this.synth_liquids_to(this.synthBase);
 };
-cls16.synth_start = function(r) {
+cls5.synth_start = function(r) {
   ASSERT.call(this, this.isSourceLevel(), 'script m');
   this.isBooted || this.synth_boot(r);
 };
-cls16.synth_liquids_to = function(targetScope) {
+cls5.synth_liquids_to = function(targetScope) {
   var list, e, len;
   if (this.spThis !== null && this.spThis.ref.i)
     targetScope.synthLiquid(this.spThis);
@@ -1375,7 +1082,7 @@ cls16.synth_liquids_to = function(targetScope) {
   while (e < len)
     this.synth_lg_to(list.at(e++), targetScope);
 };
-cls16.synth_externals = function() {
+cls5.synth_externals = function() {
   var list, e, len;
   ASSERT.call(this, this.isSourceLevel(), 'script m');
   list = this.parent.defs;
@@ -1384,21 +1091,21 @@ cls16.synth_externals = function() {
   while (e < len)
     this.synthGlobal(list.at(e++));
 };
-cls16.synth_lg_to = function(lg, target) {
+cls5.synth_lg_to = function(lg, target) {
   var list, e;
   list = lg.list;
   e = 0;
   while (e < list.length)
     target.synthLiquid(list[e++]);
 };
-cls16.synth_boot_init = function() {
+cls5.synth_boot_init = function() {
   ASSERT.call(this, this.isBootable(), 'not bootable');
   ASSERT.call(this, !this.isBooted, 'scope has been already booted');
   if (this.synthNamesUntilNow === null)
     this.synthNamesUntilNow = new SortedObj();
   this.isBooted = true;
 };
-cls16.findSynth_m = function(mname) {
+cls5.findSynth_m = function(mname) {
   var sn;
   sn = this.synthNamesUntilNow;
   return sn.has(mname) ? sn.get(mname) : null;
@@ -1406,34 +1113,34 @@ cls16.findSynth_m = function(mname) {
 // can this name escape the current scope anyway?
 // there is a difference between 'can' and 'do', of course -- a name could potentially escape a scope but still remain there because of a synth homonym.
 // on the other hand, some names never escape a scope -- for example, an `arguments` never escapes an emitted function
-cls16.synth_ref_may_escape_m = function(mname) {
+cls5.synth_ref_may_escape_m = function(mname) {
   ASSERT.call(this, this.isSourceLevel(), 'script m');
   return true;
 };
 // can this name get bound in the current scope anyway?
 // there is a difference between being a valid binding name and being a valid binding -- any name that is not an `eval/arguments` (when strict) and is not reserved
 // can be a valid binding name; but even then, they might remain invalid bindings, for example because they may be duplicates of an existing binding
-cls16.synth_name_is_valid_binding_m = function(mname) {
+cls5.synth_name_is_valid_binding_m = function(mname) {
   return true;
 };
-cls16.synth_ref_find_homonym_m = function(mname, r) {
+cls5.synth_ref_find_homonym_m = function(mname, r) {
   ASSERT.call(this, this.isSourceLevel(), 'script m');
   this.isBooted || this.synth_boot(r);
   return this.findSynth_m(mname);
 };
-cls16.synth_decl_find_homonym_m = function(mname) {
+cls5.synth_decl_find_homonym_m = function(mname) {
   ASSERT.call(this, this.isSourceLevel(), 'script m');
   this.isBooted || this.synth_boot(r);
   return this.findSynth_m(mname);
 };
-cls16.insertSynth_m = function(mname, synth) {
+cls5.insertSynth_m = function(mname, synth) {
   var sn;
   sn = this.synthNamesUntilNow || (this.synthNamesUntilNow = new SortedObj());
   // for msynth which uses it before the scope is booted
   ASSERT.call(this, !sn.has(mname), '\"' + mname + '\" exists');
   return sn.set(mname, synth);
 };
-cls16.synth_globals = function(r) {
+cls5.synth_globals = function(r) {
   var list, len, l;
   this.synth_boot_init();
   ASSERT.call(this, this.isGlobal() || this.isBundle(), 'global/bundler');
@@ -1445,7 +1152,7 @@ cls16.synth_globals = function(r) {
   while (l < len)
     this.synthGlobal(list.at(l++));
 };
-cls16.synthDecl = function(decl) {
+cls5.synthDecl = function(decl) {
   var rsList, num, baseName, mname, synthName, l, synth, scope;
   ASSERT.call(this, decl.isFnArg() || decl.isLet() || decl.isConst() || decl.isVar() || decl.isCls() || decl.isFn() || decl.isCatchArg() && decl.ref.scope.argIsSimple === false, 'fun/let/const/var/fnarg');
   ASSERT.call(this, decl.synthName === '', 'has synth');
@@ -1489,7 +1196,7 @@ cls16.synthDecl = function(decl) {
   decl.synthName = synthName;
   this.insertSynth_m(mname, decl);
 };
-cls16.synthGlobal = function(global) {
+cls5.synthGlobal = function(global) {
   var rsList, num, name, synthNames, m, mname, l, scope, synth;
   ASSERT.call(this, this.isGlobal() || this.isBundle(), 'script m');
   ASSERT.call(this, global.isGlobal(), 'not g');
@@ -1535,7 +1242,7 @@ cls16.synthGlobal = function(global) {
   if (num > 0)
     this.insertSynth_m(_m(synthNames[1]), global/* TODO: s/global/null/ */);
 };
-cls16.synthLiquid = function(liquid) {
+cls5.synthLiquid = function(liquid) {
   var rsList, num, baseName, mname, synthName, l, scope;
   ASSERT.call(this, liquid.isLiquid(), 'not liquid');
   ASSERT.call(this, liquid.synthName === '', 'has init');
@@ -1568,15 +1275,15 @@ cls16.synthLiquid = function(liquid) {
   liquid.synthName = synthName;
   this.insertSynth_m(mname, liquid);
 };
-cls16.rename = function(base, i) {
+cls5.rename = function(base, i) {
   return this.renamer(base, i);
 };
-cls9.s = function(s) {
+cls14.s = function(s) {
   ASSERT_EQ.call(this, this.site, null);
   this.site = s;
   return this;
 };
-cls9.r = function(r) {
+cls14.r = function(r) {
   ASSERT_EQ.call(this, this.ref, null);
   ASSERT_EQ.call(this, r.targetDecl_nearest, null);
   ASSERT_EQ.call(this, r.hasTarget, false);
@@ -1585,17 +1292,17 @@ cls9.r = function(r) {
   r.hasTarget = true;
   return this;
 };
-cls9.n = function(n) {
+cls14.n = function(n) {
   ASSERT_EQ.call(this, this.name, '');
   this.name = n;
   return this;
 };
-cls9.t = function(t) {
+cls14.t = function(t) {
   ASSERT_EQ.call(this, this.type, DT_NONE);
   this.type = t;
   return this;
 };
-cls9.activateTZ = function() {
+cls14.activateTZ = function() {
   if (this.hasTZCheck) {
     return false;
   }
@@ -1603,16 +1310,16 @@ cls9.activateTZ = function() {
   this.ref.scope.activateTZ();
   return true;
 };
-cls9.isReached = function() {
+cls14.isReached = function() {
   return this.reached && this.reached.v;
 };
-cls9.refreshRSListWithList = function(list) {
+cls14.refreshRSListWithList = function(list) {
   var l;
   l = 0;
   while (l < list.length)
     this.refreshRSListWith(list[l++]);
 };
-cls9.refreshRSListWith = function(scope) {
+cls14.refreshRSListWith = function(scope) {
   var id;
   if (this.rsMap === null)
     this.rsMap = {};
@@ -1625,7 +1332,7 @@ cls9.refreshRSListWith = function(scope) {
   this.ref.rsList.push(scope);
   return true;
 };
-cls9.getDecl_real = function() {
+cls14.getDecl_real = function() {
   var t;
   if (this.realTarget !== null) {
     return this.realTarget;
@@ -1636,7 +1343,7 @@ cls9.getDecl_real = function() {
   this.realTarget = t;
   return t;
 };
-cls9.mustSynth = function() {
+cls14.mustSynth = function() {
   var list, e, scope, msynth, sn, mname;
   if (this.msynth !== -1) {
     return this.msynth;
@@ -1666,31 +1373,31 @@ cls9.mustSynth = function() {
   return this.msynth = msynth;
 };
 var _HOISTED, _ARG, _LEXICAL, _VARLIKE, _OVERRIDABLE;
-cls9.isLet = function() {
+cls14.isLet = function() {
   return this.type & DT_LET;
 };
-cls9.isVar = function() {
+cls14.isVar = function() {
   return this.type & DT_VAR;
 };
-cls9.isConst = function() {
+cls14.isConst = function() {
   return this.type & DT_CONST;
 };
-cls9.isGlobal = function() {
+cls14.isGlobal = function() {
   return this.type & DT_GLOBAL;
 };
-cls9.isFn = function() {
+cls14.isFn = function() {
   return this.type & DT_FN;
 };
-cls9.isFnArg = function() {
+cls14.isFnArg = function() {
   return this.type & DT_FNARG;
 };
-cls9.isCls = function() {
+cls14.isCls = function() {
   return this.type & DT_CLS;
 };
-cls9.isCatchArg = function() {
+cls14.isCatchArg = function() {
   return this.type & DT_CATCHARG;
 };
-cls9.isTemporal = function() {
+cls14.isTemporal = function() {
   if (this.isFnArg()) {
     return !this.ref.scope.inBody;
   }
@@ -1702,79 +1409,79 @@ cls9.isTemporal = function() {
   }
   return this.isCls() || this.isClassName() || this.isLexicalLike();
 };
-cls9.isLLINOSA = function() {
+cls14.isLLINOSA = function() {
   return this.isLexicalLike() && this.ref.scope.insideLoop() && this.ref.i;
 };
-cls9.isLiquid = function() {
+cls14.isLiquid = function() {
   return this.type & DT_LIQUID;
 };
 _HOISTED = DT_FN | DT_VAR;
-cls9.isHoisted = function() {
+cls14.isHoisted = function() {
   return this.type & _HOISTED;
 };
 _ARG = DT_FNARG | DT_CATCHARG;
-cls9.isArg = function() {
+cls14.isArg = function() {
   return this.type & _ARG;
 };
 _LEXICAL = DT_CLS | DT_LET | DT_CONST;
-cls9.isLexicalLike = function() {
+cls14.isLexicalLike = function() {
   if (this.isFn()) {
     return this.ref.scope.isLexicalLike();
   }
   return this.type & _LEXICAL;
 };
 _VARLIKE = DT_FNARG | DT_VAR;
-cls9.isVarLike = function() {
+cls14.isVarLike = function() {
   if (this.isFn()) {
     return !this.ref.scope.isLexicalLike();
   }
   return this.type & _VARLIKE;
 };
 _OVERRIDABLE = DT_CATCHARG | _VARLIKE;
-cls9.isOverridableByVar = function() {
+cls14.isOverridableByVar = function() {
   return this.isVarLike() || this.type & _OVERRIDABLE;
 };
-cls9.isIDefault = function() {
+cls14.isIDefault = function() {
   return this.type & DT_IDEFAULT;
 };
-cls9.isIAliased = function() {
+cls14.isIAliased = function() {
   return this.type & DT_IALIASED;
 };
-cls9.isINamespace = function() {
+cls14.isINamespace = function() {
   return this.type & DT_INAMESPACE;
 };
-cls9.isImported = function() {
+cls14.isImported = function() {
   return this.isIDefault() || this.isIAliased() || this.isINamespace();
 };
-cls9.isEDefault = function() {
+cls14.isEDefault = function() {
   return this.type & DT_EDEFAULT;
 };
-cls9.isEAliased = function() {
+cls14.isEAliased = function() {
   return this.type & DT_EALIASED;
 };
-cls9.isESelf = function() {
+cls14.isESelf = function() {
   return this.type & DT_ESELF;
 };
-cls9.isExported = function() {
+cls14.isExported = function() {
   return this.isEDefault() || this.isEAliased() || this.isESelf();
 };
-cls9.isFnName = function() {
+cls14.isFnName = function() {
   return this.type & DT_FNNAME;
 };
-cls9.isClassName = function() {
+cls14.isClassName = function() {
   return this.type & DT_CLSNAME;
 };
-cls9.isName = function() {
+cls14.isName = function() {
   return this.type & (DT_FNNAME | DT_CLSNAME);
 };
-cls9.isInsignificant = function() {
+cls14.isInsignificant = function() {
   return this.type & DT_INFERRED;
 };
-cls9.isImmutable = function() {
+cls14.isImmutable = function() {
   return this.isConst() || this.isName();
 };
 // renamed global
-cls9.isRG = function() {
+cls14.isRG = function() {
   return this.isGlobal() && this.name !== this.synthName;
 };
 var Emitters, TransformByLeft, Transformers, UntransformedEmitters;
@@ -2074,9 +1781,9 @@ function Emitter() {
   this.out = '';
   this.outActive = false;
 }
-var cls14;
-cls14 = Emitter.prototype;
-cls14.emitAssignment_ex = function(n, flags, isStmt) {
+var cls10;
+cls10 = Emitter.prototype;
+cls10.emitAssignment_ex = function(n, flags, isStmt) {
   var hasParen, left, target, cb;
   hasParen = flags & EC_EXPR_HEAD;
   left = n.left;
@@ -2113,7 +1820,7 @@ Emitters['#SynthAssig'] = function(n, flags, isStmt) {
   }
   return this.emitAssignment_ex(n, flags, isStmt);
 };
-cls14.emitAssignment_binding = function(n, flags, isStmt) {
+cls10.emitAssignment_binding = function(n, flags, isStmt) {
   var cb, l;
   ASSERT.call(this, isResolvedName(n.left), 'name');
   cb = n['#c'];
@@ -2153,26 +1860,26 @@ UntransformedEmitters['arg-rest'] = function(n, flags, isStmt) {
   this.emc(cb, 'aft');
   return true;
 };
-cls14.w = function(str) {
+cls10.w = function(str) {
   this.writeToCurrentLine_checked(str);
   return this;
 };
-cls14.i = function() {
+cls10.i = function() {
   this.indentNextLine();
   return this;
 };
-cls14.l = function() {
+cls10.l = function() {
   this.flushCurrentLine();
   return this;
 };
-cls14.jz = function(str) {
+cls10.jz = function(str) {
   var jzLiquid;
   // TODO: helpers should be tracked in the transformer
   this.jzHelpers.use('#' + str);
   jzLiquid = this.jzLiquid;
   return this.w(jzLiquid.synthName).w('.').w(str);
 };
-cls14.wm = function() {
+cls10.wm = function() {
   var len, l, str;
   len = arguments.length;
   l = 0;
@@ -2191,62 +1898,62 @@ cls14.wm = function() {
   }
   return this;
 };
-cls14.wt = function(str, t) {
+cls10.wt = function(str, t) {
   this.tt(t);
   return this.w(str);
 };
-cls14.os = function() {
+cls10.os = function() {
   this.enqueueOmittableSpace();
   return this;
 };
-cls14.bs = function() {
+cls10.bs = function() {
   this.enqueueBreakingSpace();
   return this;
 };
-cls14.u = function() {
+cls10.u = function() {
   this.unindentNextLine();
   return this;
 };
-cls14.hs = function() {
+cls10.hs = function() {
   this.writeToCurrentLine_space();
   return this;
 };
-cls14.gu = function(guard) {
+cls10.gu = function(guard) {
   this.insertGuard(guard);
   return this;
 };
-cls14.gar = function(arg) {
+cls10.gar = function(arg) {
   this.setGuardArg(arg);
   return this;
 };
-cls14.gmon = function(listener) {
+cls10.gmon = function(listener) {
   this.monitorGuard(listener);
   return this;
 };
-cls14.grmif = function(listener) {
+cls10.grmif = function(listener) {
   this.removeGuard_if(listener);
   return this;
 };
-cls14.trygu = function(guard, listener) {
+cls10.trygu = function(guard, listener) {
   if (this.insertGuard_try(guard)) {
     this.monitorGuard(listener);
     return true;
   }
   return false;
 };
-cls14.sl = function(srcLoc) {
+cls10.sl = function(srcLoc) {
   this.setSourceLocTo(srcLoc);
   return this;
 };
-cls14.eA = function(n, flags, isStmt) {
+cls10.eA = function(n, flags, isStmt) {
   this.emitAny(n, flags, isStmt);
   return this;
 };
-cls14.eH = function(n, flags, isStmt) {
+cls10.eH = function(n, flags, isStmt) {
   this.emitHead(n, flags, isStmt);
   return this;
 };
-cls14.eN = function(n, flags, isStmt) {
+cls10.eN = function(n, flags, isStmt) {
   this.emitNonSeq(n, flags, isStmt);
   return this;
 };
@@ -2317,7 +2024,7 @@ Emitters['ConditionalExpression'] = function(n, flags, isStmt) {
   this.emc(cb, 'aft');
   isStmt && this.w(';');
 };
-cls14.emitCondTest = function(n, prec, flags) {
+cls10.emitCondTest = function(n, prec, flags) {
   var hasParen;
   hasParen = false;
   switch (n.type) {
@@ -2393,7 +2100,7 @@ Emitters['#Bundler'] = function(n, flags, isStmt) {
   }
   this.wm(')', ')', ';');
 };
-cls14.emitRenamed = function(scope, total) {
+cls10.emitRenamed = function(scope, total) {
   var list, l, item;
   list = scope.renamedHoisted;
   l = 0;
@@ -2420,7 +2127,7 @@ cls14.emitRenamed = function(scope, total) {
   scope.renamedHoisted = null;
   return l;
 };
-cls14.emitBundleItem = function(n) {
+cls10.emitBundleItem = function(n) {
   var list, len, l, total, scope, lsn, own, im, nc;
   list = n['#scope'].allImportedScopes;
   len = list.length();
@@ -2584,7 +2291,7 @@ function isBLE(n) {
     return false;
   }
 }
-cls14.emitBLE = Emitters['LogicalExpression'] = Emitters['BinaryExpression'] = function(n, flags, isStmt) {
+cls10.emitBLE = Emitters['LogicalExpression'] = Emitters['BinaryExpression'] = function(n, flags, isStmt) {
   var cb, hasParen, o, left, right;
   cb = CB(n);
   this.emc(cb, 'bef');
@@ -2633,7 +2340,7 @@ cls14.emitBLE = Emitters['LogicalExpression'] = Emitters['BinaryExpression'] = f
   isStmt && this.w(';');
   return true;// something was actually emitted
 };
-cls14.emitRight = function(n, o, flags) {
+cls10.emitRight = function(n, o, flags) {
   var hasParen, rp, lp, cb, aft;
   hasParen = false;
   rp = bp(n.operator);
@@ -2653,7 +2360,7 @@ cls14.emitRight = function(n, o, flags) {
   hasParen && this.w(')');
   this.emcim(aft);
 };
-cls14.emitLeft = function(n, o, flags) {
+cls10.emitLeft = function(n, o, flags) {
   var hasParen, rp, lp, cb, aft;
   hasParen = false;
   rp = bp(o);
@@ -2673,7 +2380,7 @@ cls14.emitLeft = function(n, o, flags) {
   hasParen && this.w(')');
   this.emcim(aft);
 };
-cls14.emitBLEP = function(n, flags) {
+cls10.emitBLEP = function(n, flags) {
   switch (n.type) {
   case'UnaryExpression':// it has a higher pr than any other op
   case'UpdateExpression':
@@ -2681,7 +2388,7 @@ cls14.emitBLEP = function(n, flags) {
   }
   return this.emitHead(n, flags, false);
 };
-cls14.emitPow = function(n, flags, isStmt) {
+cls10.emitPow = function(n, flags, isStmt) {
   var hasParen;
   hasParen = flags & EC_NEW_HEAD;
   if (hasParen) {
@@ -2798,7 +2505,7 @@ Emitters['ExpressionStatement'] = function(n, flags, isStmt) {
   this.emc(cb, 'aft');
   return true;
 };
-cls14.emitAny = function(n, flags, isStmt) {
+cls10.emitAny = function(n, flags, isStmt) {
   var emitters, t;
   emitters = this.emitters;
   t = n.type;
@@ -2807,24 +2514,24 @@ cls14.emitAny = function(n, flags, isStmt) {
   }
   this.err('unknown.node');
 };
-cls14.emitHead = function(n, flags, isStmt) {
+cls10.emitHead = function(n, flags, isStmt) {
   return this.emitAny(n, flags | EC_EXPR_HEAD | EC_NON_SEQ, isStmt);
 };
-cls14.emitNonSeq = function(n, flags, isStmt) {
+cls10.emitNonSeq = function(n, flags, isStmt) {
   return this.emitAny(n, flags | EC_NON_SEQ, isStmt);
 };
-cls14.emitNewHead = function(n, flags, isStmt) {
+cls10.emitNewHead = function(n, flags, isStmt) {
   return this.emitHead(n, EC_NEW_HEAD, false);
 };
-cls14.emitCallHead = function(n, flags, isStmt) {
+cls10.emitCallHead = function(n, flags, isStmt) {
   return this.emitHead(n, flags | EC_CALL_HEAD, false);
 };
-cls14.start = function() {
+cls10.start = function() {
   this.writeToSMout('{\"version\":3,\"mappings\":\"');
   this.inMapping = true;
   this.startFreshLine();
 };
-cls14.flushAll = function() {
+cls10.flushAll = function() {
   var list, l, len, str;
   this.flushCurrentLine();
   this.inMapping = false;
@@ -2848,7 +2555,7 @@ cls14.flushAll = function() {
   }
   this.writeToSMout(']}');
 };
-cls14.writeStringValue = function(sv, ql) {
+cls10.writeStringValue = function(sv, ql) {
   var ch, len, c, v, vLen;
   ch = -1;
   len = sv.length;
@@ -2870,7 +2577,7 @@ cls14.writeStringValue = function(sv, ql) {
     c++;
   }
 };
-cls14.isNormalCh = function(ch) {
+cls10.isNormalCh = function(ch) {
   switch (ch) {
   case CH_BACK_SLASH:
   case CH_SINGLE_QUOTE:
@@ -2879,7 +2586,7 @@ cls14.isNormalCh = function(ch) {
   }
   return ch <= CH_COMPLEMENT && ch >= CH_WHITESPACE;
 };
-cls14.stringEscapeFor = function(ch) {
+cls10.stringEscapeFor = function(ch) {
   switch (ch) {
   case CH_BACK_SLASH:
     return '\\\\';
@@ -2907,7 +2614,7 @@ cls14.stringEscapeFor = function(ch) {
     return '\\u' + hex(ch);
   }
 };
-cls14.writeString = function(sv, quotation) {
+cls10.writeString = function(sv, quotation) {
   this.tt(ETK_STR);
   this.writeToCurrentLine_checked(quotation);
   // must take care of wrapping for the quotation
@@ -2915,7 +2622,7 @@ cls14.writeString = function(sv, quotation) {
   // raw because the wrapping has been taken care of when in the writeStringValue routine
   this.writeToCurrentLine_raw(quotation);
 };
-cls14.emitCommaList = function(list, flags) {
+cls10.emitCommaList = function(list, flags) {
   var e;
   e = 0;
   while (e < list.length) {
@@ -2927,7 +2634,7 @@ cls14.emitCommaList = function(list, flags) {
     e++;
   }
 };
-cls14.emitStmtList = function(list) {
+cls10.emitStmtList = function(list) {
   var own, lsn, l;
   own = {used: false};
   lsn = this.listenForEmits(own);
@@ -2942,16 +2649,16 @@ cls14.emitStmtList = function(list) {
   }
   own.used || this.grmif(own);
 };
-cls14.emitStmt = function(stmt) {
+cls10.emitStmt = function(stmt) {
   return this.emitAny(stmt, EC_START_STMT, true);
 };
-cls14.emitTZCheckPoint = function(l) {
+cls10.emitTZCheckPoint = function(l) {
   var tz;
   ASSERT_EQ.call(this, l.hasTZCheck, true);
   tz = l.ref.scope.scs.getLG('tz').getL(0);
   this.wm(tz.synthName, '', '=', '', l.idx + '', ';');
 };
-cls14.wsndl = function(list) {
+cls10.wsndl = function(list) {
   var e;
   e = 0;
   while (e < list.length) {
@@ -2961,7 +2668,7 @@ cls14.wsndl = function(list) {
   }
   return true;
 };
-cls14.emitAttached = function(stmt) {
+cls10.emitAttached = function(stmt) {
   var ex, own, lsn;
   switch (stmt.type) {
   case'BlockStatement':
@@ -2992,7 +2699,7 @@ cls14.emitAttached = function(stmt) {
 };
 // a, b, e, ...l -> [a,b,e],sp(l)
 // a, b, e, l -> a,b,e,l
-cls14.emitElems = function(list, selem/* i.e., it contains a spread element */, cb) {
+cls10.emitElems = function(list, selem/* i.e., it contains a spread element */, cb) {
   var e, em, elem, br;
   e = 0;
   em = 0;
@@ -3014,14 +2721,14 @@ cls14.emitElems = function(list, selem/* i.e., it contains a spread element */, 
     ++em;
   }
 };
-cls14.emitSpread = function(n) {
+cls10.emitSpread = function(n) {
   var cb;
   cb = CB(n);
   this.emc(cb, 'bef');
   this.jz('sp').sl(n.loc.start);
   this.w('(').eN(n.argument, EC_NONE, false).w(')').emc(cb, 'aft');
 };
-cls14.emitElems_toRest = function(list, s, cb) {
+cls10.emitElems_toRest = function(list, s, cb) {
   var e, elem, holeComments;
   e = s;
   while (e < list.length) {
@@ -3045,7 +2752,7 @@ cls14.emitElems_toRest = function(list, s, cb) {
   }
   return e;
 };
-cls14.writeMemName = function(memName, asStr) {
+cls10.writeMemName = function(memName, asStr) {
   var cb;
   switch (memName.type) {
   case'Literal':
@@ -3063,10 +2770,10 @@ cls14.writeMemName = function(memName, asStr) {
   }
   ASSERT.call(this, false, 'unknown name');
 };
-cls14.writeIDName = function(nameStr) {
+cls10.writeIDName = function(nameStr) {
   return this.writeToCurrentLine_checked(nameStr);
 };
-cls14.emitSAT = function(n, flags, olen) {
+cls10.emitSAT = function(n, flags, olen) {
   if (n.type === 'MemberExpression') {
     return this.emitSAT_mem(n, flags, olen);
   }
@@ -3075,7 +2782,7 @@ cls14.emitSAT = function(n, flags, olen) {
   }
   ASSERT.call(this, false, 'got <' + n.type + '>');
 };
-cls14.emitAccessChk_tz = function(nd, loc) {
+cls10.emitAccessChk_tz = function(nd, loc) {
   var scope, tz;
   ASSERT.call(this, nd.hasTZCheck, 'unnecessary tz');
   scope = nd.ref.scope;
@@ -3087,7 +2794,7 @@ cls14.emitAccessChk_tz = function(nd, loc) {
   this.w(')');
   return true;
 };
-cls14.emitAccessChk_invalidSAT = function(nd, loc) {
+cls10.emitAccessChk_invalidSAT = function(nd, loc) {
   this.jz('cv');
   loc && this.sl(loc);
   this.w('(').writeString(nd.name, '\'');
@@ -3101,7 +2808,7 @@ UntransformedEmitters['synth-name'] = function(n, flags, isStmt) {
   this.wt(n.liq.synthName, ETK_ID);
   return true;
 };
-cls14.emitExprFn = function(n, flags, isStmt) {
+cls10.emitExprFn = function(n, flags, isStmt) {
   var hasParen, raw, scope, scopeName, lonll, isRenamed, hasWrapper, em, l;
   hasParen = flags & EC_START_STMT;
   raw = n.fun;
@@ -3172,7 +2879,7 @@ cls14.emitExprFn = function(n, flags, isStmt) {
   hasParen && this.w(')');
   isStmt && this.w(';');
 };
-cls14.writeToCurrentLine_checked = function(rawStr) {
+cls10.writeToCurrentLine_checked = function(rawStr) {
   var srcLoc, curEmCol, tt;
   ASSERT.call(this, arguments.length === 1, 'write must have only one single argument');
   ASSERT.call(this, typeof rawStr === STRING_TYPE, 'str');
@@ -3200,11 +2907,11 @@ cls14.writeToCurrentLine_checked = function(rawStr) {
   srcLoc && this.refreshTheCurrentLineLevelSourceMapWith(srcLoc);
   this.writeToCurrentLine_raw(rawStr);
 };
-cls14.writeToCurrentLine_raw = function(rawStr) {
+cls10.writeToCurrentLine_raw = function(rawStr) {
   this.emcol_cur += rawStr.length;
   this.curLine += rawStr;
 };
-cls14.writeToCurrentLine_space = function() {
+cls10.writeToCurrentLine_space = function() {
   this.ensureNoSpace();
   if (this.guard)
     this.runGuard(' ', ETK_NONE);
@@ -3212,7 +2919,7 @@ cls14.writeToCurrentLine_space = function() {
   this.ensureNoSpace();
   this.writeToCurrentLine_raw(' ');
 };
-cls14.writeToCurrentLine_virtualLineBreak = function() {
+cls10.writeToCurrentLine_virtualLineBreak = function() {
   this.ensureNoSpace();
   this.guard && this.runGuard('\n', ETK_NL);
 };
@@ -3229,7 +2936,7 @@ Emitters['IfStatement'] = function(n, flags, isStmt) {
   this.emc(cb, 'aft');
   return true;
 };
-cls14.emitIfBody = function(stmt) {
+cls10.emitIfBody = function(stmt) {
   var own;
   switch (stmt.type) {
   case'BlockStatement':
@@ -3258,37 +2965,37 @@ cls14.emitIfBody = function(stmt) {
   }
   this.u().w('}');
 };
-cls14.emitElseBody = function(stmt) {
+cls10.emitElseBody = function(stmt) {
   return stmt.type === 'IfStatement' ? this.emitStmt(stmt) : this.emitAttached(stmt);
 };
-cls14.tt = function(tt) {
+cls10.tt = function(tt) {
   ASSERT.call(this, this.ttype === ETK_NONE, 'none');
   this.ttype = tt;
 };
-cls14.nott = function() {
+cls10.nott = function() {
   ASSERT.call(this, this.ttype !== ETK_NONE, 'none');
   this.ttype = ETK_NONE;
 };
-cls14.nott_ifAny = function() {
+cls10.nott_ifAny = function() {
   if (this.ttype === ETK_NONE) {
     return false;
   }
   this.nott();
   return true;
 };
-cls14.insertGuard = function(guard) {
+cls10.insertGuard = function(guard) {
   ASSERT.call(this, this.guard === null, 'existing guard');
   ASSERT.call(this, this.guardArg === null, 'existing guardArg');
   ASSERT.call(this, this.guardListener === null, 'existing guardListener');
   ASSERT.call(this, !this.runningGuard, 'running');
   this.guard = guard;
 };
-cls14.monitorGuard = function(listener) {
+cls10.monitorGuard = function(listener) {
   ASSERT.call(this, this.guard !== null, 'no');
   ASSERT.call(this, this.guardListener === null, 'listener');
   this.guardListener = listener;
 };
-cls14.runGuard = function(str, t) {
+cls10.runGuard = function(str, t) {
   var guard, guardListener;
   guard = this.guard;
   guardListener = this.guardListener;
@@ -3302,7 +3009,7 @@ cls14.runGuard = function(str, t) {
   this.guardArg = null;
   this.runningGuard = false;
 };
-cls14.listenForEmits = function(fallbackListener) {
+cls10.listenForEmits = function(fallbackListener) {
   var l;
   l = null;
   if (this.guard === null) {
@@ -3320,11 +3027,11 @@ cls14.listenForEmits = function(fallbackListener) {
   }
   return l;
 };
-cls14.removeGuard_any = function() {
+cls10.removeGuard_any = function() {
   ASSERT.call(this, this.guard !== null, 'no');
   this.guard = this.guardListener = null;
 };
-cls14.removeGuard_if = function(listener) {
+cls10.removeGuard_if = function(listener) {
   var guardListener;
   // TODO: uncomment below
   // ASSERT.call(this, this.guard !== null, 'no');
@@ -3344,12 +3051,12 @@ cls14.removeGuard_if = function(listener) {
   this.removeGuard_any();
   return true;
 };
-cls14.setGuardArg = function(arg) {
+cls10.setGuardArg = function(arg) {
   ASSERT.call(this, arg === null || this.guard !== null, 'no');
   ASSERT.call(this, (arg === null ? this.guard : this.guardArg) === null, 'n');
   this.guardArg = arg;
 };
-cls14.insertGuard_try = function(guard) {
+cls10.insertGuard_try = function(guard) {
   if (this.guard !== null) {
     return false;
   }
@@ -3409,7 +3116,7 @@ Emitters['ObjectExpression'] = function(n, flags, isStmt) {
   isStmt && this.w(';');
   return true;
 };
-cls14.wrapCurrentLine = function() {
+cls10.wrapCurrentLine = function() {
   this.hasPendingSpace() && this.removePendingSpace();
   this.nextLineHasLineBreakBefore = true;
   if (this.lineBlank()) {
@@ -3422,7 +3129,7 @@ cls14.wrapCurrentLine = function() {
   else
     this.finishCurrentLine();
 };
-cls14.overflowLength = cls14.ol = function(len) {
+cls10.overflowLength = cls10.ol = function(len) {
   var wl;
   wl = this.wrapLimit;
   return wl <= 0 ? 0 : this.emcol_cur + len - wl;
@@ -3434,11 +3141,11 @@ UntransformedEmitters['ucond'] = function(n, flags, isStmt) {
   Emitters['ConditionalExpression'].call(this, n, flags, isStmt);
   this.emc(cb, 'aft');
 };
-cls14.writeToOut_nonLineBreak = function(str) {
+cls10.writeToOut_nonLineBreak = function(str) {
   this.ensureOutActive();
   this.writeToOut_raw(str);
 };
-cls14.writeToOut_lineBreak = function() {
+cls10.writeToOut_lineBreak = function() {
   this.ensureOutActive();
   this.emline_cur++;
   //this.emcol_cur = 0;
@@ -3446,15 +3153,15 @@ cls14.writeToOut_lineBreak = function() {
   // TODO: ensure we are allowed to actually write to SM; we must have actually committed anything in lm beforehands
   this.writeToOut_raw('\n');
 };
-cls14.writeToOut_raw = function(str) {
+cls10.writeToOut_raw = function(str) {
   this.out = this.out.concat(str);
   this.outLen += str.length;
 };
-cls14.useOut = function(use) {
+cls10.useOut = function(use) {
   ASSERT_EQ.call(this, !this.outActive, use);
   this.outActive = use;
 };
-cls14.ensureOutActive = function() {
+cls10.ensureOutActive = function() {
   ASSERT.call(this, this.outActive, 'out is not in use');
 };
 Emitters['#ForInStatementWithDeclarationHead'] = function(n, flags, isStmt) {
@@ -3465,7 +3172,7 @@ Emitters['#ForInStatementWithExHead'] = function(n, flags, isStmt) {
   ASSERT_EQ.call(this, isStmt, true);
   return this.emitEnumeration(n, flags, 'eh');
 };
-cls14.emitEnumeration = function(n, flags, t) {
+cls10.emitEnumeration = function(n, flags, t) {
   var b, l;
   b = t === 'dh';
   l = n.left;
@@ -3520,17 +3227,17 @@ UntransformedEmitters['cvtz'] = function(n, flags, isStmt) {
     this.w(',').os().emitAccessChk_invalidSAT(tg(n.rn), n.rn.loc.start);
   this.w(')');
 };
-cls14.flushCurrentLine = function() {
+cls10.flushCurrentLine = function() {
   if (this.curLine.length) {
     this.finishCurrentLine();
     return true;
   }
   return false;
 };
-cls14.lineBlank = function() {
+cls10.lineBlank = function() {
   return this.curLine.length === 0;
 };
-cls14.finishCurrentLine = function() {
+cls10.finishCurrentLine = function() {
   var line, optimalIndentLevel, tailLineBreak, optimalIndentString, optimalIndentStrLength, overflow;
   line = this.curLine;
   ASSERT.call(this, !this.finishingLine, 'finishing');
@@ -3564,7 +3271,7 @@ cls14.finishCurrentLine = function() {
   this.startFreshLine();
   this.finishingLine = false;
 };
-cls14.adjustColumns = function(lindLen) {
+cls10.adjustColumns = function(lindLen) {
   // line indentation length
   if (this.hasRecorded_SMLinkpoint)
     this.ln_emcol_cur += lindLen;
@@ -3575,7 +3282,7 @@ cls14.adjustColumns = function(lindLen) {
   else
     this.emcol_cur += lindLen;
 };
-cls14.startFreshLine = function() {
+cls10.startFreshLine = function() {
   this.curLineHasLineBreakBefore = this.nextLineHasLineBreakBefore;
   this.curLineIndent = this.nextLineIndent;
   this.curLine = '';
@@ -3590,7 +3297,7 @@ cls14.startFreshLine = function() {
   this.ln_vlq_tail = '';
   this.nextLineHasLineBreakBefore = this.allow.nl;
 };
-cls14.refreshSMOutWithLM = function() {
+cls10.refreshSMOutWithLM = function() {
   var lm0, lm;
   lm0 = '';
   lm = this.lm;
@@ -3642,7 +3349,7 @@ Emitters['TemplateLiteral'] = function(n, flags, isStmt) {
   this.w(')');
   isStmt && this.w(';');
 };
-Emitters['#-ResolvedName.ex'] = cls14.emitRName_ex = Emitters['#-ResolvedName.sat'] = cls14.emitRName_SAT = function(n, flags, isStmt) {
+Emitters['#-ResolvedName.ex'] = cls10.emitRName_ex = Emitters['#-ResolvedName.sat'] = cls10.emitRName_SAT = function(n, flags, isStmt) {
   var hasParen, hasZero, tv, tz, cb;
   hasParen = false;
   hasZero = false;
@@ -3685,7 +3392,7 @@ Emitters['#-ResolvedName.ex'] = cls14.emitRName_ex = Emitters['#-ResolvedName.sa
   isStmt && this.w(';');
   return true;
 };
-Emitters['#-ResolvedName.binding'] = cls14.emitRName_binding = function(n, flags, isStmt) {
+Emitters['#-ResolvedName.binding'] = cls10.emitRName_binding = function(n, flags, isStmt) {
   var cb;
   ASSERT.call(this, isResolvedName(n), 'rn');
   cb = CB(n);
@@ -3694,7 +3401,7 @@ Emitters['#-ResolvedName.binding'] = cls14.emitRName_binding = function(n, flags
   this.emc(cb, 'aft');
   return true;
 };
-cls14.emitSourceHead = function(n) {
+cls10.emitSourceHead = function(n) {
   var scope, em;
   scope = n['#scope'];
   em = 0;
@@ -3706,7 +3413,7 @@ cls14.emitSourceHead = function(n) {
   this.emitTempList(scope, em) && em++;
   return em;
 };
-cls14.emitFnHead = function(n) {
+cls10.emitFnHead = function(n) {
   var scope, em;
   scope = n.fun['#scope'];
   em = 0;
@@ -3721,7 +3428,7 @@ cls14.emitFnHead = function(n) {
   this.emitVarList(scope, em) && em++;
   return em;
 };
-cls14.emitSimpleHead = function(n) {
+cls10.emitSimpleHead = function(n) {
   var scope, em;
   scope = n['#scope'];
   em = 0;
@@ -3730,7 +3437,7 @@ cls14.emitSimpleHead = function(n) {
   this.emitFunLists(scope, false, em) && em++;
   return em;
 };
-cls14.emitVarList = function(scope, hasPrev) {
+cls10.emitVarList = function(scope, hasPrev) {
   var list, i, len, em, own, elem;
   ASSERT.call(this, scope.isSourceLevel() || scope.isAnyFn(), 'source/fn');
   list = scope.defs;
@@ -3755,7 +3462,7 @@ cls14.emitVarList = function(scope, hasPrev) {
   own.used || this.grmif(own);
   return em;
 };
-cls14.emitTempList = function(scope, hasPrev) {
+cls10.emitTempList = function(scope, hasPrev) {
   var list, i, len, own, elem;
   ASSERT.call(this, scope.isSourceLevel() || scope.isAnyFn(), 'source/fn');
   list = scope.getLG('<t>');
@@ -3773,7 +3480,7 @@ cls14.emitTempList = function(scope, hasPrev) {
   own.used || this.grmif(own);
   return i;
 };
-cls14.emitFunLists = function(scope, allowsDecl, hasPrev) {
+cls10.emitFunLists = function(scope, allowsDecl, hasPrev) {
   var list, i, len, em, own;
   list = scope.funLists;
   i = 0;
@@ -3786,7 +3493,7 @@ cls14.emitFunLists = function(scope, allowsDecl, hasPrev) {
   own.used || this.grmif(own);
   return em;
 };
-cls14.emitLLINOSAList = function(scope, hasPrev) {
+cls10.emitLLINOSAList = function(scope, hasPrev) {
   var list, i, len, em, own, elem;
   ASSERT.call(this, !scope.isSourceLevel() && !scope.isAnyFn(), 'scope/fn');
   list = scope.defs;
@@ -3808,7 +3515,7 @@ cls14.emitLLINOSAList = function(scope, hasPrev) {
   own.used || this.grmif(own);
   return em;
 };
-cls14.emitFunList_subList = function(funList, allowsDecl, hasPrev) {
+cls10.emitFunList_subList = function(funList, allowsDecl, hasPrev) {
   var i, em, own, lsn;
   i = 0;
   em = 0;
@@ -3822,7 +3529,7 @@ cls14.emitFunList_subList = function(funList, allowsDecl, hasPrev) {
   own.used || this.grmif(own);
   return em;
 };
-cls14.emitThisRef = function(scope, hasPrev) {
+cls10.emitThisRef = function(scope, hasPrev) {
   var th, own;
   th = scope.spThis;
   if (th === null) {
@@ -3837,7 +3544,7 @@ cls14.emitThisRef = function(scope, hasPrev) {
   own.used || this.grmif(own);
   return 1;
 };
-cls14.emitSingleFun = function(n, allowsDecl, i, hasPrev) {
+cls10.emitSingleFun = function(n, allowsDecl, i, hasPrev) {
   var scope, target, own, ll;
   if (n.emitted) {
     return 0;
@@ -3865,7 +3572,7 @@ cls14.emitSingleFun = function(n, allowsDecl, i, hasPrev) {
   own.used || this.grmif(own);
   return 1;
 };
-cls14.emitTCheckVar = function(scope, hasPrev) {
+cls10.emitTCheckVar = function(scope, hasPrev) {
   var tg, own;
   tg = scope.getLG('tz');
   if (tg === null) {
@@ -3878,7 +3585,7 @@ cls14.emitTCheckVar = function(scope, hasPrev) {
   own.used || this.grmif(own);
   return 1;
 };
-cls14.emitTransformedArgs = function(n, hasPrev) {
+cls10.emitTransformedArgs = function(n, hasPrev) {
   var ta, b, own;
   ta = n.argsPrologue;
   if (ta === null) {
@@ -3892,7 +3599,7 @@ cls14.emitTransformedArgs = function(n, hasPrev) {
   own.used || this.grmif(own);
   return 1;
 };
-cls14.emitTCHP = function(scope, hasPrev) {
+cls10.emitTCHP = function(scope, hasPrev) {
   var tg, own;
   tg = scope.scs.getLG('tz').getL(0);
   if (tg === null) {
@@ -3904,7 +3611,7 @@ cls14.emitTCHP = function(scope, hasPrev) {
   own.used || this.grmif(own);
   return 1;
 };
-cls14.emitArgumentsRef = function(scope, hasPrev) {
+cls10.emitArgumentsRef = function(scope, hasPrev) {
   var ar, own;
   ar = scope.spArguments;
   if (ar === null) {
@@ -3919,7 +3626,7 @@ cls14.emitArgumentsRef = function(scope, hasPrev) {
   own.used || this.grmif(own);
   return 1;
 };
-cls14.emitThisChk = function(scope, hasPrev) {
+cls10.emitThisChk = function(scope, hasPrev) {
   var ti, own;
   ti = scope.getLG('ti');
   if (ti === null) {
@@ -3935,7 +3642,7 @@ cls14.emitThisChk = function(scope, hasPrev) {
   own.used || this.grmif(own);
   return 1;
 };
-cls14.emitJ = function(scope, hasPrev) {
+cls10.emitJ = function(scope, hasPrev) {
   var own, u, o;
   return 0;
   own = false;
@@ -3979,7 +3686,7 @@ UntransformedEmitters['obj-iter-get'] = function(n, flags, isStmt) {
   else
     this.w('.').writeMemName(n.idx, false);
 };
-cls14.smSetName_str = function(name) {
+cls10.smSetName_str = function(name) {
   var nc, mname, list;
   nc = -1;
   if (name.length) {
@@ -3989,7 +3696,7 @@ cls14.smSetName_str = function(name) {
   }
   return this.smSetName_i(nc);
 };
-cls14.smSetName_i = function(i) {
+cls10.smSetName_i = function(i) {
   var list, nc;
   list = this.smNameList;
   ASSERT.call(this, i >= 0 ? i <= list.length() : i === -1, 'namei');
@@ -3997,7 +3704,7 @@ cls14.smSetName_i = function(i) {
   this.namei_cur = i;
   return nc;
 };
-cls14.smSetSrc_str = function(srcName) {
+cls10.smSetSrc_str = function(srcName) {
   var sc, mname, list;
   sc = -1;
   if (srcName.length) {
@@ -4007,7 +3714,7 @@ cls14.smSetSrc_str = function(srcName) {
   }
   return this.smSetSrc_i(sc);
 };
-cls14.smSetSrc_i = function(i) {
+cls10.smSetSrc_i = function(i) {
   var list, sc;
   list = this.smSrcList;
   ASSERT.call(this, i >= 0 ? i <= list.length() : i === -1, 'srci');
@@ -4015,12 +3722,12 @@ cls14.smSetSrc_i = function(i) {
   this.srci_cur = i;
   return sc;
 };
-cls14.writeToSMout = function(lm) {
+cls10.writeToSMout = function(lm) {
   this.sm = this.sm.concat(lm);
   if (this.inMapping)
     this.smLen += lm.length;
 };
-cls14.refreshTheCurrentLineLevelSourceMapWith = function(srcLoc) {
+cls10.refreshTheCurrentLineLevelSourceMapWith = function(srcLoc) {
   var l, vlqTail, ll, lm;
   l = 0;
   vlqTail = '';
@@ -4052,11 +3759,11 @@ cls14.refreshTheCurrentLineLevelSourceMapWith = function(srcLoc) {
     this.hasRecorded_emcol_latestRec = true;
   this.emline_latestRec = this.emline_cur;
 };
-cls14.setSourceLocTo = function(srcLoc) {
+cls10.setSourceLocTo = function(srcLoc) {
   ASSERT.call(this, srcLoc, 'lw');
   this.pendingSrcLoc = srcLoc;
 };
-cls14.findIndentStringWithIdealLength = function(idealLength) {
+cls10.findIndentStringWithIdealLength = function(idealLength) {
   var INLEN, remaining, level, cache, l, str;
   INLEN = this.indentString.length;
   remaining = idealLength % INLEN;
@@ -4079,14 +3786,14 @@ cls14.findIndentStringWithIdealLength = function(idealLength) {
     str += this.indentString.substring(0, remaining);
   return str;
 };
-cls14.indentNextLine = function() {
+cls10.indentNextLine = function() {
   this.nextLineIndent++;
 };
-cls14.unindentNextLine = function() {
+cls10.unindentNextLine = function() {
   ASSERT.call(this, this.nextLineIndent > 0, 'line has a <1 indent');
   this.nextLineIndent--;
 };
-cls14.emitMemex = function(n, flags, isStmt, len) {
+cls10.emitMemex = function(n, flags, isStmt, len) {
   var cb;
   cb = CB(n);
   this.emc(cb, 'bef');
@@ -4107,7 +3814,7 @@ cls14.emitMemex = function(n, flags, isStmt, len) {
   isStmt && this.w(';');
   return true;
 };
-cls14.emitSAT_mem = function(n, flags, len) {
+cls10.emitSAT_mem = function(n, flags, len) {
   return this.emitMemex(n, flags, false, len);
 };
 Emitters['MemberExpression'] = function(n, flags, isStmt, len) {
@@ -4160,7 +3867,7 @@ Emitters['UnaryExpression'] = function(n, flags, isStmt) {
   isStmt && this.w(';');
   return true;
 };
-cls14.emitUA = function(n) {
+cls10.emitUA = function(n) {
   switch (n.type) {
   case'UnaryExpression':
   case'UpdateExpression':
@@ -4191,7 +3898,7 @@ UntransformedEmitters['memlist'] = function(n, flags, isStmt) {
   }
   isStmt && m && this.w(';');
 };
-cls14.emc = function(cb, i) {
+cls10.emc = function(cb, i) {
   var e;
   if (HAS.call(cb, i)) {
     e = cb[i];
@@ -4200,7 +3907,7 @@ cls14.emc = function(cb, i) {
   }
   return false;
 };
-cls14.emce = // emc erase
+cls10.emce = // emc erase
 function(cb, i) {
   if (this.emc(cb, i)) {
     cb[i] = null;
@@ -4208,7 +3915,7 @@ function(cb, i) {
   }
   return false;
 };
-cls14.emcim = function(comments) {
+cls10.emcim = function(comments) {
   var list, nl, e, l, elem, resume, wflag;
   // emc -- immediate
   if (comments === null) {
@@ -4247,29 +3954,29 @@ cls14.emcim = function(comments) {
   }
   return true;
 };
-cls14.ensureNoSpace = function() {
+cls10.ensureNoSpace = function() {
   ASSERT.call(this, !this.hasPendingSpace(), 'hasPendingSpace');
 };
-cls14.hasPendingSpace = function() {
+cls10.hasPendingSpace = function() {
   return this.pendingSpace !== SP_NONE;
 };
-cls14.enqueueOmittableSpace = function() {
+cls10.enqueueOmittableSpace = function() {
   this.ensureNoSpace();
   ASSERT.call(this, this.notJustAfterLineBreak(), 'leading');
   this.pendingSpace = SP_OMITTABLE;
 };
-cls14.enqueueBreakingSpace = function() {
+cls10.enqueueBreakingSpace = function() {
   this.ensureNoSpace();
   ASSERT.call(this, this.notJustAfterLineBreak(), 'leading');
   this.pendingSpace = SP_BREAKABLE;
 };
-cls14.removePendingSpace = function() {
+cls10.removePendingSpace = function() {
   var sp;
   sp = this.pendingSpace;
   this.pendingSpace = SP_NONE;
   return sp;
 };
-cls14.effectPendingSpace = function(len) {
+cls10.effectPendingSpace = function(len) {
   var pendingSpace;
   ASSERT.call(this, this.notJustAfterLineBreak(), 'leading');
   pendingSpace = this.removePendingSpace();
@@ -4289,10 +3996,10 @@ cls14.effectPendingSpace = function(len) {
     break;
   }
 };
-cls14.removePendingSpace_try = function() {
+cls10.removePendingSpace_try = function() {
   return this.hasPendingSpace() ? this.removePendingSpace() : SP_NONE;
 };
-cls14.notJustAfterLineBreak = function() {
+cls10.notJustAfterLineBreak = function() {
   return this.curLine.length || !this.curLineHasLineBreakBefore;
 };
 UntransformedEmitters['resolved-this'] = function(n, flags, isStmt) {
@@ -4407,7 +4114,7 @@ UntransformedEmitters['transformed-fn'] = function(n, flags, isStmt) {
     this.emitExprFn(n, flags, isStmt);
   n.emitted = true;
 };
-cls14.emitTransformedFn = function(n, flags, isStmt) {
+cls10.emitTransformedFn = function(n, flags, isStmt) {
   var raw, cb, scopeName, ni, name_cb, own, lsn, em;
   raw = n.fun;
   cb = CB(raw);
@@ -4816,9 +4523,9 @@ function Parser(src, o) {
   this.argploc = null;
   this.pure = false;// pure-ness
 }
-var cls11;
+var cls18;
 ;
-cls11 = Parser.prototype;
+cls18 = Parser.prototype;
 function renamer_incremental(base, i) {
   if (i === 0) {
     return base;
@@ -4883,9 +4590,9 @@ function Transformer() {
   // activation target in use (mostly, it is just the same thing as this.cur)
   this.renamer = renamer_incremental;
 }
-var cls19;
-cls19 = Transformer.prototype;
-cls14.writeJZHelpers = function() {
+var cls17;
+cls17 = Transformer.prototype;
+cls10.writeJZHelpers = function() {
   var helperSrc, helperNode, ntr;
   helperSrc = '(function(){var o={};' + this.jzHelpers.asCode() + 'return o;}())|0';
   helperNode = new Parser(helperSrc).parseProgram();
@@ -4961,7 +4668,7 @@ function readParen(str, i, eof) {
 function eof_default(str, i) {
   return i >= str.length;
 }
-var cls13;
+var cls20;
 Template.from = function(str, i, eof) {
   var start, needDot, list, pendingDot, elem, ch, template;
   i = i || 0;
@@ -5007,7 +4714,7 @@ Template.from = function(str, i, eof) {
   template.str = start === 0 && i === str.length ? str : str.substring(start, i);
   return template;
 };
-cls13 = Template.prototype;
+cls20 = Template.prototype;
 function ErrorString(stringsAndTemplates) {
   this.stringsAndTemplates = stringsAndTemplates;
 }
@@ -5022,7 +4729,7 @@ function readTemplate(str, i) {
   }
   return Template.from(str, i, eof_rcurly);
 }
-var cls12;
+var cls19;
 ErrorString.from = function(str) {
   var elem, i, list, template, error;
   elem = '';
@@ -5051,8 +4758,8 @@ ErrorString.from = function(str) {
   error.str = str;
   return error;
 };
-cls12 = ErrorString.prototype;
-cls12.applyTo = function(obj) {
+cls19 = ErrorString.prototype;
+cls19.applyTo = function(obj) {
   var errorMessage, isString, list, e;
   errorMessage = '';
   isString = true;
@@ -5065,7 +4772,7 @@ cls12.applyTo = function(obj) {
   }
   return errorMessage;
 };
-cls1.setRefsAndArgRefs = function(refs) {
+cls2.setRefsAndArgRefs = function(refs) {
   var len, e;
   ASSERT.call(this, !this.inBody, 'sraar must be in args');
   len = refs.length();
@@ -5075,7 +4782,7 @@ cls1.setRefsAndArgRefs = function(refs) {
   this.argRefs = refs;
   this.refs = this.argRefs;
 };
-cls1.getNonLocalLoopLexicals = function() {
+cls2.getNonLocalLoopLexicals = function() {
   var argRefs, e, len, target, list, ref, mname, ll;
   argRefs = this.argRefs;
   e = 0;
@@ -5150,11 +4857,11 @@ cls1.getNonLocalLoopLexicals = function() {
 //     };
 //   }(len));
 // }
-cls1.getClosureLLINOSA_m = function(mname) {
+cls2.getClosureLLINOSA_m = function(mname) {
   return this.closureLLINOSA[mname];
 };
 // CLs are only inserted when an fn's outer-loop-lexicals are getting calculated;
-cls1.insertClosureLLINOSA_m = function(mname, llinosa) {
+cls2.insertClosureLLINOSA_m = function(mname, llinosa) {
   ASSERT.call(this, !this.getClosureLLINOSA_m(mname), 'closure-l');
   this.closureLLINOSA[mname] = llinosa;
 };
@@ -5167,7 +4874,7 @@ function ref_scall_m(mname) {
 function ref_this_m(mname) {
   return mname === RS_THIS;
 }
-cls1.handOver_m = function(mname, ref) {
+cls2.handOver_m = function(mname, ref) {
   if (!this.isArrow()) {
     if (ref_arguments_m(mname)) {
       return this.spCreate_arguments(ref);
@@ -5178,7 +4885,7 @@ cls1.handOver_m = function(mname, ref) {
   }
   return this.parent.refIndirect_m(mname, ref);
 };
-cls1.refInHead = function(mname, ref) {
+cls2.refInHead = function(mname, ref) {
   if (!this.isArrow()) {
     if (ref_this_m(mname)) {
       return this.spCreate_this(ref);
@@ -5190,13 +4897,13 @@ cls1.refInHead = function(mname, ref) {
   }
   return this.focRefAny_m(mname).absorbDirect(ref);
 };
-cls1.spCreate_arguments = function(ref) {
+cls2.spCreate_arguments = function(ref) {
   var spArguments;
   ASSERT.call(this, ref, 'ref must be provided to create an argumentsSP');
   spArguments = new Liquid('<arguments>').r(ref).n('arguments');
   return this.spArguments = spArguments;
 };
-cls1.spCreate_scall = function(ref) {
+cls2.spCreate_scall = function(ref) {
   var lg, spSuperCall;
   ASSERT.call(this, this.isCtor(), 'only ctor scopes are allowed to create scall');
   ASSERT.call(this, ref, 'ref must be provided to create a scallSP');
@@ -5208,13 +4915,13 @@ cls1.spCreate_scall = function(ref) {
   spSuperCall.name = 's';
   return this.spSuperCall = spSuperCall;
 };
-cls1.synth_ref_may_escape_m = function(mname) {
+cls2.synth_ref_may_escape_m = function(mname) {
   return !ref_arguments_m(mname);
 };
-cls1.synth_name_is_valid_binding_m = function(mname) {
+cls2.synth_name_is_valid_binding_m = function(mname) {
   return true;
 };
-cls1.synth_ref_find_homonym_m = function(mname, r) {
+cls2.synth_ref_find_homonym_m = function(mname, r) {
   var synth;
   this.isBooted || this.synth_boot(r);
   synth = this.findSynth_m(mname);
@@ -5222,11 +4929,11 @@ cls1.synth_ref_find_homonym_m = function(mname, r) {
     synth = this.scopeName;
   return synth;
 };
-cls1.synth_decl_find_homonym_m = function(mname, r) {
+cls2.synth_decl_find_homonym_m = function(mname, r) {
   this.isBooted || this.synth_boot(r);
   return this.findSynth_m(mname);
 };
-cls1.synth_boot = function(r) {
+cls2.synth_boot = function(r) {
   if (this.renamer === null)
     this.renamer = r;
   this.synth_boot_init();
@@ -5236,12 +4943,12 @@ cls1.synth_boot = function(r) {
   this.synth_defs_to(this);
   this.deactivateBody();
 };
-cls1.synth_start = function(r) {
+cls2.synth_start = function(r) {
   this.isBooted || this.synth_boot(r);
   this.synth_externals();
 };
 // TODO: save extenals on hand-over to obviate the chore below
-cls1.synth_externals = function() {
+cls2.synth_externals = function() {
   var list, e, len, item, target, mname, synth;
   ASSERT.call(this, !this.inBody, 'inBody');
   list = this.argRefs;
@@ -5272,7 +4979,7 @@ cls1.synth_externals = function() {
     }
   }
 };
-cls1.synth_args = function() {
+cls2.synth_args = function() {
   var list, nmap, e, arg, mname;
   list = this.argList;
   nmap = {};
@@ -5289,7 +4996,7 @@ cls1.synth_args = function() {
     e--;
   }
 };
-cls1.verifyForStrictness = function() {
+cls2.verifyForStrictness = function() {
   var list, i, elem;
   this.verifyUniqueArgs();
   list = this.argList;
@@ -5302,35 +5009,35 @@ cls1.verifyForStrictness = function() {
       this.parser.err('invalid.argument.in.strict.mode');
   }
 };
-cls1.canDup = function() {
+cls2.canDup = function() {
   ASSERT.call(this, !this.inBody, 'canDup allowed in args only');
   return !this.insideUniqueArgs() && !this.insideStrict();
 };
-cls1.insideUniqueArgs = function() {
+cls2.insideUniqueArgs = function() {
   return this.flags & SF_UNIQUE;
 };
-cls1.exitUniqueArgs = function() {
+cls2.exitUniqueArgs = function() {
   ASSERT.call(this, !this.inBody, 'must be in args');
   ASSERT.call(this, this.insideUniqueArgs(), 'must be in unique args');
   this.flags &= ~SF_UNIQUE;
 };
-cls1.enterUniqueArgs = function() {
+cls2.enterUniqueArgs = function() {
   if (!this.canDup()) {
     return;
   }
   this.verifyUniqueArgs();
   this.flags |= SF_UNIQUE;
 };
-cls1.verifyUniqueArgs = function() {
+cls2.verifyUniqueArgs = function() {
   this.firstDup && this.parser.err('argsdup');
 };
 function GlobalScope() {
   ConcreteScope.call(this, null, ST_GLOBAL);
   this.scriptScope = null;
 }
-var cls;
-cls = GlobalScope.prototype = createObj(ConcreteScope.prototype);
-/* TODO: eliminate */cls.synth_decl_find_homonym_m = function(mname) {
+var cls3;
+cls3 = GlobalScope.prototype = createObj(ConcreteScope.prototype);
+/* TODO: eliminate */cls3.synth_decl_find_homonym_m = function(mname) {
   return this.findSynth_m(mname);
 };
 function Ref(scope) {
@@ -5343,17 +5050,17 @@ function Ref(scope) {
   this.parentRef = null;
   this.lhs = 0;
 }
-var cls26;
-cls26 = Ref.prototype;
-cls25.getL = function(idx) {
+var cls24;
+cls24 = Ref.prototype;
+cls23.getL = function(idx) {
   return idx < this.list.length ? this.list[idx] : null;
 };
-cls25.seal = function() {
+cls23.seal = function() {
   ASSERT.call(this, !this.hasSeal, 'has seal');
   this.hasSeal = true;
   return this;
 };
-cls25.newL = function() {
+cls23.newL = function() {
   var liq;
   ASSERT.call(this, !this.hasSeal, 'has seal');
   liq = new Liquid(this.category);
@@ -5368,7 +5075,7 @@ cls25.newL = function() {
 //       contain any significant names, but they are not recorded in the lsi
 //       of the scope's unresolved references; nothing looks actually wrong with this approach,
 //       except that it is in total contrast to the one taken in the previous version
-cls7.track = function(scope) {
+cls12.track = function(scope) {
   var cur, root;
   if (this.rsMap === null)
     this.rsMap = {};
@@ -5386,6 +5093,11 @@ cls7.track = function(scope) {
     if (cur === root) {
       break;
     }
+    // TODO: this is for inter-source liquid access (currently only for tz because others don't cross source boundaries);
+    // it is better to add a parameter to `track to assert the fact that this is a tracking that goes beyond the current source
+    if (cur.isSourceLevel() && root.isSourceLevel()) {
+      break;
+    }
     cur = cur.parent;
     ASSERT.call(this, cur, 'reached topmost while pulling up a liquid');
   }
@@ -5396,15 +5108,15 @@ function ParenScope(sParent) {
   this.hasDissolved = false;
   this.ch = [];
 }
-var cls6;
-cls6 = ParenScope.prototype = createObj(Scope.prototype);
-cls6.finish = function() {};
-cls6.makeParams = function(paramScope) {
+var cls8;
+cls8 = ParenScope.prototype = createObj(Scope.prototype);
+cls8.finish = function() {};
+cls8.makeParams = function(paramScope) {
   paramScope.setRefsAndArgRefs(this.refs);
   this.updateParentForSubScopesTo(paramScope);
   this.hasDissolved = true;
 };
-cls6.makeSimple = function() {
+cls8.makeSimple = function() {
   var list, i, len, p, mname, ref, elem;
   list = this.refs;
   i = 0;
@@ -5425,7 +5137,7 @@ cls6.makeSimple = function() {
   this.updateParentForSubScopesTo(p);
   this.hasDissolved = true;
 };
-cls6.updateParentForSubScopesTo = function(sParent) {
+cls8.updateParentForSubScopesTo = function(sParent) {
   var list, i, elem;
   list = this.ch;
   i = 0;
@@ -5443,7 +5155,7 @@ cls6.updateParentForSubScopesTo = function(sParent) {
     i++;
   }
 };
-cls11.parseCond = function(cond, ctx) {
+cls18.parseCond = function(cond, ctx) {
   var seq, alt;
   this.spc(core(cond), 'aft');
   this.next();
@@ -5481,7 +5193,7 @@ function base_Y(n) {
   return base_Y0.call(this, n);
 }
 ;
-cls11.Y0 = function() {
+cls18.Y0 = function() {
   var yc, e;
   yc = 0;
   e = 0;
@@ -5489,7 +5201,7 @@ cls11.Y0 = function() {
     yc += base_Y0.call(this, arguments[e++]);
   return yc;
 };
-cls11.Y = function() {
+cls18.Y = function() {
   var yc, e;
   yc = 0;
   e = 0;
@@ -5497,17 +5209,17 @@ cls11.Y = function() {
     yc += base_Y.call(this, arguments[e++]);
   return yc;
 };
-cls11.readSingleChar = function() {
+cls18.readSingleChar = function() {
   var ch;
   ch = this.src.charAt(this.c);
   this.lttype = ch.charCodeAt(0);
   this.ltraw = ch;
   this.setsimpoff(this.c + 1);
 };
-cls11.ensureSpreadToRestArgument_soft = function(head) {
+cls18.ensureSpreadToRestArgument_soft = function(head) {
   return head.type !== 'AssignmentExpression';
 };
-cls11.parseExpr = function(ctx) {
+cls18.parseExpr = function(ctx) {
   var head, latestExpr, e, y;
   head = this.parseNonSeq(PREC_NONE, ctx);
   latestExpr = null;
@@ -5527,7 +5239,7 @@ cls11.parseExpr = function(ctx) {
   } while (this.lttype === CH_COMMA);
   return {type: 'SequenceExpression', expressions: e, start: head.start, end: latestExpr.end, loc: {start: head.loc.start, end: latestExpr.loc.end}, '#y': y, '#c': {}};
 };
-cls11.parseDoWhile = function() {
+cls18.parseDoWhile = function() {
   var scope, c0, cb, loc0, nbody, cond, c, li, col;
   this.resvchk();
   this.testStmt() || this.err('not.stmt');
@@ -5569,7 +5281,7 @@ cls11.parseDoWhile = function() {
   this.exitScope();
   return {type: 'DoWhileStatement', test: cond, start: c0, end: c, body: nbody, loc: {start: loc0, end: {line: li, column: col}}, '#scope': scope, '#y': this.Y(cond) + this.Y(nbody), '#c': cb};
 };
-cls11.parseReturn = function() {
+cls18.parseReturn = function() {
   var c0, loc0, c, li, col, b, r, ec, eloc;
   this.resvchk();
   this.testStmt() || this.err('not.stmt');
@@ -5594,7 +5306,7 @@ cls11.parseReturn = function() {
   this.foundStatement = true;
   return {type: 'ReturnStatement', argument: r && core(r), start: c0, end: ec, loc: {start: loc0, end: eloc}, '#c': b, '#y': this.Y0(r)};
 };
-cls11.skipWS = function() {
+cls18.skipWS = function() {
   var c, s, l, nl, sourceStart, ch;
   c = this.c;
   s = this.src;
@@ -5695,7 +5407,7 @@ var NUM0_NONDEC, NUM0_DEC, NUM0_ZERO;
 NUM0_NONDEC = 0;
 NUM0_DEC = 1;
 NUM0_ZERO = 2;
-cls11.readNum_raw = function(ch) {
+cls18.readNum_raw = function(ch) {
   var c, s, l, legacy, deci, fl, t0;
   c = this.c + 1;
   s = this.src;
@@ -5746,7 +5458,7 @@ cls11.readNum_raw = function(ch) {
       this.err('unexpected.char.is.num.tail');
   }
 };
-cls11.readNum_0 = function() {
+cls18.readNum_0 = function() {
   var ch;
   ch = this.scat(this.c + 1);
   switch (ch) {
@@ -5770,7 +5482,7 @@ cls11.readNum_0 = function() {
     return NUM0_ZERO;
   }
 };
-cls11.readNum_0b = function() {
+cls18.readNum_0b = function() {
   var c, s, l, v, ch;
   c = this.c + 2;
   // '0b'
@@ -5803,7 +5515,7 @@ cls11.readNum_0b = function() {
   this.ltval = v;
   this.ltraw = this.c0_to_c();
 };
-cls11.readNum_octLegacy = function(ch) {
+cls18.readNum_octLegacy = function(ch) {
   var c, s, l, dec;
   if (this.scope.insideStrict())
     this.err('oct.legacy.num.in.strict');
@@ -5828,7 +5540,7 @@ cls11.readNum_octLegacy = function(ch) {
   }
   return NUM0_DEC;
 };
-cls11.readNum_tail = function(fl) {
+cls18.readNum_tail = function(fl) {
   var c, s, l, hasSign, ch;
   c = this.c;
   s = this.src;
@@ -5871,7 +5583,7 @@ cls11.readNum_tail = function(fl) {
   }
   this.setsimpoff(c);
 };
-cls11.readNum_0x = function() {
+cls18.readNum_0x = function() {
   var c, s, l, v, ch;
   c = this.c + 2;
   // '0x'
@@ -5899,7 +5611,7 @@ cls11.readNum_0x = function() {
   this.ltraw = this.c0_to_c();
   this.ltval = v;
 };
-cls11.readNum_0o = function() {
+cls18.readNum_0o = function() {
   var c, s, l, v, ch;
   c = this.c + 2;
   s = this.src;
@@ -5928,10 +5640,10 @@ cls11.readNum_0o = function() {
   this.ltraw = this.c0_to_c();
   this.ltval = v;
 };
-cls11.regMakeSurrogate = function(c1, c2) {
+cls18.regMakeSurrogate = function(c1, c2) {
   return {type: '#Regex.Ho', cp: surrogate(c1.cp, c2.cp), start: c1.start, end: c2.end, raw: c1.raw + c2.raw, loc: {start: c1.loc.start, end: c2.loc.end}, c1: c1, c2: c2};
 };
-cls11.regSurrogateComponent_VOKE = function(cp, offset, kind, escape) {
+cls18.regSurrogateComponent_VOKE = function(cp, offset, kind, escape) {
   var c0, loc0;
   c0 = this.c;
   loc0 = this.loc();
@@ -5940,7 +5652,7 @@ cls11.regSurrogateComponent_VOKE = function(cp, offset, kind, escape) {
   return {type: '#Regex.SurrogateComponent', kind: kind, start: c0, end: offset, cp: cp, loc: {start: loc0, end: this.loc()}, next: null, // if it turns out to be the lead of a surrogate pair
   escape: escape, raw: this.src.substring(c0, offset)};
 };
-cls11.parseSwitchCase = function() {
+cls18.parseSwitchCase = function() {
   var c0, cb, loc0, nbody, cond, c, li, col, last, ec, eloc;
   c0 = -1;
   cb = {};
@@ -5993,7 +5705,7 @@ cls11.parseSwitchCase = function() {
   this.suc(cb, 'inner');
   return {type: 'SwitchCase', test: cond, start: c0, end: ec, loc: {start: loc0, end: eloc}, consequent: nbody, '#y': this.Y0(cond) + this.yc, '#c': cb};
 };
-cls11.parseImport = function() {
+cls18.parseImport = function() {
   var hasTail, cb, c0, loc0, list, lName, decl, beforeFrom, beforeFromNode, src, ec, eloc;
   this.v <= 5 && this.err('ver.exim');
   this.isScript && this.err('import.not.in.module');
@@ -6059,7 +5771,7 @@ cls11.parseImport = function() {
   this.scope.regulateImports_sl(src, list);
   return {type: 'ImportDeclaration', start: c0, loc: {start: loc0, end: eloc}, end: ec, specifiers: list, source: src, '#y': 0, '#c': {}};
 };
-cls11.parseImport_slist = function(list) {
+cls18.parseImport_slist = function(list) {
   var cb, eName, lName, decl;
   cb = this.cb;
   this.suc(cb, 'list.bef');
@@ -6089,7 +5801,7 @@ cls11.parseImport_slist = function(list) {
   this.suc(cb, 'inner');
   this.expectT(CH_RCURLY) || this.err('import.specifier.list.unfinished');
 };
-cls11.parseImport_namespace = function() {
+cls18.parseImport_namespace = function() {
   var c0, cb, loc0, lName, decl;
   c0 = this.c0;
   cb = this.cb;
@@ -6107,7 +5819,7 @@ cls11.parseImport_namespace = function() {
   decl = this.scope.declareImportedName(lName, DT_INAMESPACE);
   return {type: 'ImportNamespaceSpecifier', start: c0, loc: {start: loc0, end: lName.loc.end}, end: lName.end, local: lName, '#y': 0, '#decl': decl, '#c': {}};
 };
-cls11.parseExprHead = function(ctx) {
+cls18.parseExprHead = function(ctx) {
   var head;
   head = this.exprHead;
   if (head !== null)
@@ -6201,7 +5913,7 @@ function errt_asyn(err) {
 function errt_ssyn(err) {
   return err & ERR_S_SYN;
 }
-cls11.parseAssignment = function(head, ctx) {
+cls18.parseAssignment = function(head, ctx) {
   var o, right, oploc, st, se, so, pt, pe, po, sc0, sli0, scol0, pc0, pli0, pcol0, c0, li0, col0;
   o = this.ltraw;
   if (o === '=>') {
@@ -6315,7 +6027,7 @@ cls11.parseAssignment = function(head, ctx) {
   this.inferName(head, core(right), false);
   return {type: 'AssignmentExpression', operator: o, start: head.start, end: right.end, left: head, right: core(right), loc: {start: head.loc.start, end: right.loc.end}, '#o': oploc, '#y': this.Y(head) + this.Y(right), '#c': {}};
 };
-cls11.parseStatement = function(allowNull) {
+cls18.parseStatement = function(allowNull) {
   var head, finishPrologue;
   head = null;
   switch (this.lttype) {
@@ -6372,7 +6084,7 @@ cls11.parseStatement = function(allowNull) {
     this.scope.exitPrologue();
   return head;
 };
-cls11.readOp_exclam = function() {
+cls18.readOp_exclam = function() {
   var c, ch;
   c = this.c;
   c++;
@@ -6395,7 +6107,7 @@ cls11.readOp_exclam = function() {
   }
   this.setsimpoff(c);
 };
-cls11.inferName = function(left, right, isComputed) {
+cls18.inferName = function(left, right, isComputed) {
   var t, c, scope, name, scopeName;
   if (isComputed && left.type === 'Identifier') {
     return null;
@@ -6441,13 +6153,13 @@ cls11.inferName = function(left, right, isComputed) {
     this.inferName(left, right['#ct'].value, false);
   return scopeName;
 };
-cls11.cutEx = function() {
+cls18.cutEx = function() {
   var ex;
   ex = this.ex;
   this.ex = DT_NONE;
   return ex;
 };
-cls11.readOp_and = function() {
+cls18.readOp_and = function() {
   var c, ch;
   c = this.c;
   c++;
@@ -6471,7 +6183,7 @@ cls11.readOp_and = function() {
   }
   this.setsimpoff(c);
 };
-cls11.parseContinue = function() {
+cls18.parseContinue = function() {
   var c0, loc0, c, li, col, cb, label, target, ec, eloc;
   this.resvchk();
   this.testStmt() || this.err('not.stmt');
@@ -6503,7 +6215,7 @@ cls11.parseContinue = function() {
   this.foundStatement = true;
   return {type: 'ContinueStatement', label: label, start: c0, end: ec, loc: {start: loc0, end: eloc}, '#y': 0, '#c': cb};
 };
-cls11.readID_bs = function() {
+cls18.readID_bs = function() {
   var bsc, ccode, head;
   this.ct = ERR_PIN_UNICODE_IN_RESV;
   this.pin_ct(this.c, this.li, this.col);
@@ -6516,7 +6228,7 @@ cls11.readID_bs = function() {
   head = cp2sp(bsc);
   return this.readID_withHead(head);
 };
-cls11.regCurlyQuantifier = function() {
+cls18.regCurlyQuantifier = function() {
   var c0, c, s, l, li0, col0, luo0, minVal, minRaw, maxVal, maxRaw, min, max;
   ASSERT_EQ.call(this, this.regCurlyChar, false);
   c0 = this.c;
@@ -6574,13 +6286,13 @@ cls11.regCurlyQuantifier = function() {
   this.regCurlyChar = true;
   return null;
 };
-cls11.loc = function() {
+cls18.loc = function() {
   return {line: this.li, column: this.col};
 };
-cls11.loc0 = function() {
+cls18.loc0 = function() {
   return {line: this.li0, column: this.col0};
 };
-cls11.regPrepareQ = function() {
+cls18.regPrepareQ = function() {
   var c, s, l;
   c = this.c;
   s = this.src;
@@ -6601,7 +6313,7 @@ cls11.regPrepareQ = function() {
   }
   return false;
 };
-cls11.regQuantify = function(elem) {
+cls18.regQuantify = function(elem) {
   var c, li, col, loc, s, t, bq, greedy;
   c = this.c;
   li = this.li;
@@ -6638,7 +6350,7 @@ cls11.regQuantify = function(elem) {
   }
   return {type: '#Regex.Quantified', rangeQuantifier: bq, quantifier: t, pattern: elem, start: elem.start, loc: {start: elem.loc.start, end: loc}, end: this.c, greedy: greedy};
 };
-cls11.parseMeth = function(memName, ctx, st) {
+cls18.parseMeth = function(memName, ctx, st) {
   var val, computed, name, cb;
   if (this.lttype !== CH_LPAREN)
     this.err('meth.paren');
@@ -6669,17 +6381,17 @@ cls11.parseMeth = function(memName, ctx, st) {
   this.inferName(core(memName), val, computed);
   return {type: 'Property', key: core(memName), start: memName.start, end: val.end, kind: !(st & ST_ACCESSOR) ? 'init' : st & ST_SETTER ? 'set' : 'get', computed: memName.type === PAREN, loc: {start: memName.loc.start, end: val.loc.end}, method: !(st & ST_ACCESSOR), shorthand: false, value: val, '#y': computed ? this.Y(memName) : 0, '#c': cb};
 };
-cls11.resetLastRegexElem = function() {
+cls18.resetLastRegexElem = function() {
   var lbe;
   lbe = this.regLastBareElem;
   if (lbe !== null)
     this.regLastBareElem = null;
   return lbe;
 };
-cls11.regLEIAC = function() {
+cls18.regLEIAC = function() {
   return this.regLastBareElem && isCharSeq(this.regLastBareElem) ? this.regLastBareElem : null;
 };
-cls11.expectChar = function(ch) {
+cls18.expectChar = function(ch) {
   var c, s, l;
   c = this.c;
   s = this.src;
@@ -6693,7 +6405,7 @@ cls11.expectChar = function(ch) {
   }
   return false;
 };
-cls11.regTryToParseNum = function() {
+cls18.regTryToParseNum = function() {
   var c, s, l, v, ch;
   c = this.c;
   s = this.src;
@@ -6718,7 +6430,7 @@ cls11.regTryToParseNum = function() {
   this.setsimpoff(c);
   return v;
 };
-cls11.parseClass = function(ctx) {
+cls18.parseClass = function(ctx) {
   var c0, cb, loc0, isStmt, name, sourceDecl, st, scope, superClass, mmflags, mmctx, list, c0b, loc0b, cbb, mem, y, ct, eloc, n;
   if (this.v <= 5)
     this.err('ver.class');
@@ -6813,7 +6525,7 @@ cls11.parseClass = function(ctx) {
     this.foundStatement = true;
   return n;
 };
-cls11.parseSuper = function() {
+cls18.parseSuper = function() {
   var cb, n;
   if (this.v <= 5)
     this.err('ver.super');
@@ -6838,7 +6550,7 @@ cls11.parseSuper = function() {
   }
   return n;
 };
-cls11.parseMeta = function(c0, loc0, c, li, col) {
+cls18.parseMeta = function(c0, loc0, c, li, col) {
   var cb, prop;
   cb = this.cb;
   this.v <= 5 && this.err('ver.ntarget');
@@ -6850,14 +6562,14 @@ cls11.parseMeta = function(c0, loc0, c, li, col) {
   prop = this.id();
   return {type: 'MetaProperty', meta: {type: 'Identifier', name: 'new', start: c0, end: c, loc: {start: loc0, end: {line: li, column: col}}}, start: c0, property: prop, end: prop.end, loc: {start: loc0, end: prop.loc.end}, '#y': 0, '#c': cb};
 };
-cls11.parseEmptyStatement = function() {
+cls18.parseEmptyStatement = function() {
   var n;
   n = {type: 'EmptyStatement', start: this.c0, loc: {start: this.loc0(), end: this.loc()}, end: this.c, '#y': 0, '#c': {}};
   this.spc(n, 'bef');
   this.next();
   return n;
 };
-cls11.parseNonSeq = function(prec, ctx) {
+cls18.parseNonSeq = function(prec, ctx) {
   var head, hasOp, curPrec, o, oploc, r;
   head = this.exprHead;
   if (head)
@@ -6933,7 +6645,7 @@ cls11.parseNonSeq = function(prec, ctx) {
   }
   return head;
 };
-cls11.semi = function(cb, i) {
+cls18.semi = function(cb, i) {
   var t;
   t = this.lttype;
   if (t === CH_SEMI) {
@@ -6961,7 +6673,7 @@ cls11.semi = function(cb, i) {
   }
   return false;
 };
-cls11.parsePat_rest = function() {
+cls18.parsePat_rest = function() {
   var c0, cb, loc0, arg;
   this.v <= 5 && this.err('ver.spread.rest');
   c0 = this.c0;
@@ -6977,7 +6689,7 @@ cls11.parsePat_rest = function() {
     this.err('rest.has.no.arg');
   return {type: 'RestElement', argument: arg, start: c0, end: arg.end, loc: {start: loc0, end: arg.loc.end}, '#c': cb, '#y': this.Y(arg)};
 };
-cls11.readOp_add = function() {
+cls18.readOp_add = function() {
   var c, ch;
   c = this.c;
   c++;
@@ -6998,7 +6710,7 @@ cls11.readOp_add = function() {
   }
   this.setsimpoff(c);
 };
-cls11.readOp_or = function() {
+cls18.readOp_or = function() {
   var c, ch;
   c = this.c;
   c++;
@@ -7022,7 +6734,7 @@ cls11.readOp_or = function() {
   }
   this.setsimpoff(c);
 };
-cls11.readOp_mul = function() {
+cls18.readOp_mul = function() {
   var c, ch;
   c = this.c;
   c++;
@@ -7053,7 +6765,7 @@ cls11.readOp_mul = function() {
   }
   this.setsimpoff(c);
 };
-cls11.parseThis = function() {
+cls18.parseThis = function() {
   var cb, n;
   this.resvchk();
   cb = {};
@@ -7063,7 +6775,7 @@ cls11.parseThis = function() {
   this.scope.refDirect_m(RS_THIS, null);
   return n;
 };
-cls11.parseMem = function(ctx, st) {
+cls18.parseMem = function(ctx, st) {
   var firstMod, latestMod, nonMod, mpending, nina, c0, loc0, lpm, cb, memName, nameVal, mem;
   firstMod = null;
   latestMod = null;
@@ -7236,7 +6948,7 @@ cls11.parseMem = function(ctx, st) {
     this.err('meth.paren');
   return this.parseNonMethObjMem(memName, ctx);
 };
-cls11.parseNonMethObjMem = function(memName, ctx) {
+cls18.parseNonMethObjMem = function(memName, ctx) {
   var hasProto, firstProto, cb, val, computed, cbn;
   hasProto = ctx & CTX_HASPROTO;
   firstProto = this.first__proto__;
@@ -7305,7 +7017,7 @@ cls11.parseNonMethObjMem = function(memName, ctx) {
   }
   return {type: 'Property', key: memName, start: val.start, end: val.end, loc: val.loc, kind: 'init', shorthand: true, method: false, value: val, computed: false, '#y': 0, '#c': cb};
 };
-cls11.readBS = function() {
+cls18.readBS = function() {
   var c, s, l, val, c0, b;
   c = this.c;
   s = this.src;
@@ -7336,7 +7048,7 @@ cls11.readBS = function() {
   this.setsimpoff(c);
   return val;
 };
-cls11.readBS_lcurly = function(c) {
+cls18.readBS_lcurly = function(c) {
   var s, l, val, b, t;
   s = this.src;
   l = s.length;
@@ -7376,7 +7088,7 @@ cls11.readBS_lcurly = function(c) {
   this.setsimpoff(c);
   return val;
 };
-cls11.getName_cls = function(st) {
+cls18.getName_cls = function(st) {
   var fl, name;
   fl = this.scope.flags;
   name = null;
@@ -7392,7 +7104,7 @@ cls11.getName_cls = function(st) {
   this.scope.flags = fl;
   return name;
 };
-cls11.getName_fn = function(st) {
+cls18.getName_fn = function(st) {
   switch (this.ltval) {
   case'yield':
     if (st & ST_GEN || this.scope.insideStrict())
@@ -7408,7 +7120,7 @@ cls11.getName_fn = function(st) {
     this.arorevErr();
   return this.id();
 };
-cls11.parsePat = function() {
+cls18.parsePat = function() {
   var id;
   switch (this.lttype) {
   case TK_ID:
@@ -7436,7 +7148,7 @@ cls11.parsePat = function() {
   }
 };
 // errors pertaining to u escapes will first check for pending semi ranges at the start of their corresponding routines
-cls11.regEsc_u = function(ce) {
+cls18.regEsc_u = function(ce) {
   var c, s, l, r, ch, n;
   if (ce && this.regSemiRange && this.regSemiRange.max.escape !== 'hex4' && !this.regTryCompleteSemiRange()) {
     return null;
@@ -7488,7 +7200,7 @@ cls11.regEsc_u = function(ce) {
   }
   return this.regChar_VECI(String.fromCharCode(ch), c, ch, ce);
 };
-cls11.regEsc_uCurly = function(ce) {
+cls18.regEsc_uCurly = function(ce) {
   var c, s, l, r, ch, c0, loc0;
   if (ce && this.testSRerr()) {
     return null;
@@ -7546,10 +7258,10 @@ cls11.regEsc_uCurly = function(ce) {
   return {type: '#Regex.Ho', // Higher-order, i.e., > 0xFFFF
   cp: ch, start: c0, end: c, raw: s.substring(c0, c), loc: {start: loc0, end: this.loc()}, c1: null, c2: null};
 };
-cls11.findLabel_m = function(mname) {
+cls18.findLabel_m = function(mname) {
   return HAS.call(this.labels, mname) ? this.labels[mname] : null;
 };
-cls11.testStmt = function() {
+cls18.testStmt = function() {
   if (this.canBeStatement) {
     this.canBeStatement = false;
     return true;
@@ -7559,13 +7271,13 @@ cls11.testStmt = function() {
 // NOTE: great care has to be taken to use this.unsatisfiedLabel such that it won't get overwritten.
 // the recommended way is to use fixupLabels at the very beginning of relevant parse routine, or at least before calling
 // any parse routine that might overwrite this.unsatisfiedLabel
-cls11.fixupLabels = function(isLoop) {
+cls18.fixupLabels = function(isLoop) {
   if (this.unsatisfiedLabel) {
     this.unsatisfiedLabel.loop = isLoop;
     this.unsatisfiedLabel = null;
   }
 };
-cls11.stmtList = function() {
+cls18.stmtList = function() {
   var stmt, y, list, last;
   stmt = null;
   y = 0;
@@ -7581,10 +7293,10 @@ cls11.stmtList = function() {
   return list;
 };
 // TODO: eliminate
-cls11.fixupLabel = function(label, isLoop) {
+cls18.fixupLabel = function(label, isLoop) {
   label.loop = isLoop;
 };
-cls11.parseFor = function() {
+cls18.parseFor = function() {
   var c0, cb, loc0, scope, head, headIsExpr, headctx, nbody, afterHead, kind, iterkw, tail;
   this.resvchk();
   this.testStmt() || this.err('not.stmt');
@@ -7706,23 +7418,23 @@ cls11.parseFor = function() {
   this.exitScope();
   return {type: 'ForStatement', init: head && core(head), start: c0, end: nbody.end, test: afterHead && core(afterHead), loc: {start: loc0, end: nbody.loc.end}, body: nbody, update: tail && core(tail), '#scope': scope, '#c': cb, '#y': this.Y0(head, afterHead, tail) + this.Y(nbody)};
 };
-cls11.ensureVarsAreNotResolvingToCatchParams = function() {
+cls18.ensureVarsAreNotResolvingToCatchParams = function() {
   return;
 };
-cls11.expectT = function(lttype) {
+cls18.expectT = function(lttype) {
   if (this.lttype === lttype) {
     this.next();
     return true;
   }
   return false;
 };
-cls11.rw = function(c, li, col, luo) {
+cls18.rw = function(c, li, col, luo) {
   this.c = c;
   this.li = li;
   this.col = col;
   this.luo = luo;
 };
-cls11.next = function() {
+cls18.next = function() {
   var ch;
   this.skipWS();
   if (this.c >= this.src.length) {
@@ -7782,10 +7494,10 @@ cls11.next = function() {
     return this.readSingleChar();
   }
 };
-cls11.c0_to_c = function() {
+cls18.c0_to_c = function() {
   return this.src.substring(this.c0, this.c);
 };
-cls11.toAssig = function(head, context) {
+cls18.toAssig = function(head, context) {
   var i, list;
   if (head === this.ao)
     this.throwTricky('a', this.at, this.ae);
@@ -7855,7 +7567,7 @@ cls11.toAssig = function(head, context) {
     this.err('not.assignable', {tn: core(head)});
   }
 };
-cls11.readOp_gt = function() {
+cls18.readOp_gt = function() {
   var c, ch;
   c = this.c;
   c++;
@@ -7901,7 +7613,7 @@ cls11.readOp_gt = function() {
   }
   this.setsimpoff(c);
 };
-cls11.readOp_mod = function() {
+cls18.readOp_mod = function() {
   var c, ch;
   c = this.c;
   c++;
@@ -7918,7 +7630,7 @@ cls11.readOp_mod = function() {
   }
   this.setsimpoff(c);
 };
-cls11.parseVar = function(dt, ctx) {
+cls18.parseVar = function(dt, ctx) {
   var kind, letID, c0, loc0, vpat, y, cb, isConst, mi, list, last, init, ioh, y0, lastItem, ec, eloc;
   if (!this.testStmt()) {
     if (dt === DT_LET) {
@@ -8011,7 +7723,7 @@ cls11.parseVar = function(dt, ctx) {
   this.foundStatement = true;
   return {type: 'VariableDeclaration', kind: kind, start: c0, declarations: list, end: ec, loc: {start: loc0, end: eloc}, '#c': cb, '#y': y};
 };
-cls11.read_ellipsis = function() {
+cls18.read_ellipsis = function() {
   var c, s;
   c = this.c + 2;
   s = this.src;
@@ -8036,7 +7748,7 @@ function uAkin(a, b) {
   ASSERT.call(this, isSurroComp(b), 'b');
   return a.escape === b.escape;
 }
-cls11.regBranch = function() {
+cls18.regBranch = function() {
   var elem, elements, lastElem;
   this.regErr = null;
   this.regIsQuantifiable = false;
@@ -8065,7 +7777,7 @@ cls11.regBranch = function() {
   lastElem = elements[elements.length - 1];
   return {type: '#Regex.Branch', elements: elements, start: elements[0].start, end: lastElem.end, loc: {start: elements[0].loc.start, end: lastElem.loc.end}};
 };
-cls11.regTryMix = function(list, elem) {
+cls18.regTryMix = function(list, elem) {
   var last;
   if (list.length === 0) {
     return elem;
@@ -8081,7 +7793,7 @@ cls11.regTryMix = function(list, elem) {
   }
   return elem;
 };
-cls11.regBareElem = function() {
+cls18.regBareElem = function() {
   var c, s, l, elem, c0, li0, col0, luo0;
   c = this.c;
   s = this.src;
@@ -8139,14 +7851,14 @@ cls11.regBareElem = function() {
     return this.regChar(false);
   }
 };
-cls11.id = function() {
+cls18.id = function() {
   var id;
   id = {type: 'Identifier', name: this.ltval, start: this.c0, end: this.c, loc: {start: this.loc0(), end: this.loc()}, raw: this.ltraw, '#ref': null, '#cvtz': CVTZ_NONE, '#c': {}};
   this.spc(id, 'bef');
   this.next();
   return id;
 };
-cls11.parseLabel = function(label, allowNull) {
+cls18.parseLabel = function(label, allowNull) {
   var ref, mname, ex, stmt;
   ref = this.scope.findRefAny_m(_m(label.name));
   ref.d--;
@@ -8161,7 +7873,7 @@ cls11.parseLabel = function(label, allowNull) {
   this.labels[mname] = null;
   return {type: 'LabeledStatement', label: label, start: label.start, end: stmt.end, loc: {start: label.loc.start, end: stmt.loc.end}, body: stmt, '#y': this.Y0(stmt), '#c': {}};
 };
-cls11.parseBlock = function() {
+cls18.parseBlock = function() {
   var scope, c0, loc0, cb, n;
   this.fixupLabels(false);
   this.enterScope(this.scope.spawnBlock());
@@ -8178,7 +7890,7 @@ cls11.parseBlock = function() {
   this.exitScope();
   return n;
 };
-cls11.parseIf = function() {
+cls18.parseIf = function() {
   var ifScope, c0, cb, loc0, cond, nbody, alt, elseScope;
   this.resvchk();
   !this.testStmt() && this.err('not.stmt');
@@ -8216,79 +7928,79 @@ cls11.parseIf = function() {
   this.foundStatement = true;
   return {type: 'IfStatement', test: cond, start: c0, end: (alt || nbody).end, loc: {start: loc0, end: (alt || nbody).loc.end}, consequent: nbody, alternate: alt, '#ifScope': ifScope, '#y': this.Y(cond, nbody) + this.Y0(alt), '#c': cb, '#elseScope': elseScope};
 };
-cls11.regErr_nonexistentRef = function(ref) {
+cls18.regErr_nonexistentRef = function(ref) {
   return this.regErrNew('nonexistent-ref', this.loc(), {ref: ref});
 };
-cls11.regErr_looseLCurly = function() {
+cls18.regErr_looseLCurly = function() {
   return this.regErrNew('loose-lcurly', this.loc());
 };
-cls11.regErr_looseRCurly = function() {
+cls18.regErr_looseRCurly = function() {
   return this.regErrNew('loose-rcurly', this.loc());
 };
-cls11.regErr_invalidUEsc = function(esc) {
+cls18.regErr_invalidUEsc = function(esc) {
   return this.regErrNew('invalid-uesc', this.loc(), {esc: esc});
 };
-cls11.regErr_classUnfinished = function() {
+cls18.regErr_classUnfinished = function() {
   return this.regErrNew('class-unfinished', this.loc());
 };
-cls11.regErr_looseCurlyQuantifier = function(elem) {
+cls18.regErr_looseCurlyQuantifier = function(elem) {
   return this.regErrNew('loose-cq', elem.loc.start);
 };
-cls11.regErr_trailSlash = function() {
+cls18.regErr_trailSlash = function() {
   return this.regErrNew('trail-slash', this.loc());
 };
-cls11.regErr_hexEOF = function() {
+cls18.regErr_hexEOF = function() {
   return this.regErrNew('hex-eof', this.loc());
 };
-cls11.regErr_hexEscNotHex = function() {
+cls18.regErr_hexEscNotHex = function() {
   return this.regErrNew('hex-not', this.loc());
 };
-cls11.regErr_minBiggerThanMax = function(min, max) {
+cls18.regErr_minBiggerThanMax = function(min, max) {
   return this.regErrNew('min-bigger-than-max', this.loc(), {min: min, max: max});
 };
-cls11.regErr_controlAZaz = function(esc) {
+cls18.regErr_controlAZaz = function(esc) {
   return this.regErrNew('control-AZaz', this.loc(), {esc: esc});
 };
-cls11.regErr_controlEOF = function() {
+cls18.regErr_controlEOF = function() {
   return this.regErrNew('control-eof', this.loc());
 };
-cls11.regErr_insufficientNumsAfterU = function(ce) {
+cls18.regErr_insufficientNumsAfterU = function(ce) {
   if (ce && this.testSRerr()) {
     return null;
   }
   return this.regErrNew('insufficient-nums-after-u', this.loc());
 };
-cls11.regErr_nonNumInU = function(ce) {
+cls18.regErr_nonNumInU = function(ce) {
   if (ce && this.testSRerr()) {
     return null;
   }
   return this.regErrNew('non-num-in-u', this.loc());
 };
-cls11.regErr_looseQuantifier = function() {
+cls18.regErr_looseQuantifier = function() {
   return this.regErrNew('loose-quantifier', this.loc());
 };
-cls11.regErr_uRCurlyNotReached = function(ce) {
+cls18.regErr_uRCurlyNotReached = function(ce) {
   if (ce && this.testSRerr()) {
     return null;
   }
   return this.regErrNew('u-rcurly', this.loc());
 };
-cls11.regErr_1114111U = function(ch, ce) {
+cls18.regErr_1114111U = function(ch, ce) {
   if (ce && this.testRSerr()) {
     return null;
   }
   return this.regErrNew('1114111-u', this.loc(), {value: ch});
 };
-cls11.regErr_curlyMinIsBiggerThanMax = function(min, max) {
+cls18.regErr_curlyMinIsBiggerThanMax = function(min, max) {
   return this.regErrNew('curly-min-is-bigger-max', this.loc(), {min: min, max: max});
 };
-cls11.regErr_unfinishedParen = function(n) {
+cls18.regErr_unfinishedParen = function(n) {
   return this.regErrNew('rparen-missing', this.loc(), {element: n});
 };
-cls11.regErr_invalidCharAfterQuestionParen = function(ch) {
+cls18.regErr_invalidCharAfterQuestionParen = function(ch) {
   return this.regErrNew('qparen', this.loc(), {ch: ch});
 };
-cls11.regErrNew = function() {
+cls18.regErrNew = function() {
   var kind, eloc, ctx;
   kind = arguments[0];
   eloc = arguments.length > 1 && arguments[1] || this.loc();
@@ -8297,7 +8009,7 @@ cls11.regErrNew = function() {
   this.regErr = {type: '#Regex.Err', kind: kind, context: ctx, position: this.c, loc: eloc};
   return null;
 };
-cls11.parseUpdate = function(arg, ctx) {
+cls18.parseUpdate = function(arg, ctx) {
   var c, loc, u, uc;
   c = 0;
   loc = null;
@@ -8324,12 +8036,12 @@ cls11.parseUpdate = function(arg, ctx) {
   this.next();
   return {type: 'UpdateExpression', operator: u, start: arg.start, end: c, argument: core(arg), loc: loc, '#c': {}, prefix: false, '#y': this.Y(arg)};
 };
-cls11.readOp_compl = function() {
+cls18.readOp_compl = function() {
   this.lttype = TK_UNARY;
   this.ltraw = '~';
   this.setsimpoff(this.c + 1);
 };
-cls11.parseTail = function(head) {
+cls18.parseTail = function(head) {
   var argloc, cb, inner, elem;
   if (head.type === 'Identifier')
     head['#ref'] = this.scope.refDirect_m(_m(head.name), null);
@@ -8391,7 +8103,7 @@ cls11.parseTail = function(head) {
   }
   return head;
 };
-cls11.parseTryStatement = function() {
+cls18.parseTryStatement = function() {
   var c0, cb, loc0, tryBlock, tryScope, finBlock, catBlock, finScope, finOrCat;
   this.resvchk();
   this.testStmt() || this.err('not.stmt');
@@ -8427,7 +8139,7 @@ cls11.parseTryStatement = function() {
   this.foundStatement = true;
   return {type: 'TryStatement', block: tryBlock, start: c0, end: finOrCat.end, handler: catBlock, finalizer: finBlock, loc: {start: loc0, end: finOrCat.loc.end}, '#y': this.Y(tryBlock) + this.Y0(catBlock, finBlock), '#finScope': finScope, '#c': cb, '#tryScope': tryScope};
 };
-cls11.getLit_true = function() {
+cls18.getLit_true = function() {
   var cb, n;
   this.resvchk();
   cb = {};
@@ -8436,7 +8148,7 @@ cls11.getLit_true = function() {
   this.next();
   return n;
 };
-cls11.getLit_false = function() {
+cls18.getLit_false = function() {
   var cb, n;
   this.resvchk();
   cb = {};
@@ -8445,7 +8157,7 @@ cls11.getLit_false = function() {
   this.next();
   return n;
 };
-cls11.getLit_null = function() {
+cls18.getLit_null = function() {
   var cb, n;
   this.resvchk();
   cb = {};
@@ -8454,7 +8166,7 @@ cls11.getLit_null = function() {
   this.next();
   return n;
 };
-cls11.getLit_num = function() {
+cls18.getLit_num = function() {
   var cb, n;
   cb = {};
   this.suc(cb, 'bef');
@@ -8462,7 +8174,7 @@ cls11.getLit_num = function() {
   this.next();
   return n;
 };
-cls11.parseFunBody = function() {
+cls18.parseFunBody = function() {
   var c0, loc0, cb, list, n;
   if (this.lttype !== CH_LCURLY)
     this.err('fun.body.not.a.curly');
@@ -8480,11 +8192,11 @@ cls11.parseFunBody = function() {
     this.err('fun.body.is.unfinished');
   return n;
 };
-cls11.err = function(errorType, errParams) {
+cls18.err = function(errorType, errParams) {
   errParams = this.normalize(errParams);
   return this.errorListener.onErr(errorType, errParams);
 };
-cls11.normalize = function(err) {
+cls18.normalize = function(err) {
   var loc0, loc, e, tn;
   loc0 = {li: this.li0, col: this.col0};
   loc = {li: this.li, col: this.col};
@@ -8535,10 +8247,10 @@ cls11.normalize = function(err) {
   e.loc = e.cur.loc;
   return e;
 };
-cls11.ga = function() {
+cls18.ga = function() {
   this.err('gen.async');
 };
-cls11.parseDependent = function(name) {
+cls18.parseDependent = function(name) {
   var c0, cb, loc0, n;
   c0 = this.c0;
   cb = {};
@@ -8554,7 +8266,7 @@ cls11.parseDependent = function(name) {
 };
 // characters do not test for early semi-ranges, because that makes things needlessly complicated -- after all, we are only a single character away
 // from telling whether the semi range is deterministically erroneous, which is not much of a calculation
-cls11.regChar = function(ce) {
+cls18.regChar = function(ce) {
   var c0, s, ch, l;
   c0 = this.c;
   s = this.src;
@@ -8571,7 +8283,7 @@ cls11.regChar = function(ce) {
   // '-'
   return l;
 };
-cls11.regChar_VECI = function(value, offset, ch, ce) {
+cls18.regChar_VECI = function(value, offset, ch, ce) {
   var s, c0, loc0, raw, li, col, parent;
   s = this.src;
   c0 = this.c;
@@ -8597,11 +8309,11 @@ cls11.regChar_VECI = function(value, offset, ch, ce) {
   this.regIsQuantifiable = true;
   return {type: '#Regex.CharSeq', raw: raw, start: c0, end: offset, cp: ch, charLength: 1, loc: {start: loc0, end: {line: li, column: col}}, value: value};
 };
-cls11.readID_simple = function() {
+cls18.readID_simple = function() {
   this.ct = ERR_NONE_YET;
   return this.readID_withHead(this.src.charAt(this.c++));
 };
-cls11.parseString = function(startChar) {
+cls18.parseString = function(startChar) {
   var c, s, l, v, luo, surrogateTail, ch, cb, n;
   c = this.c;
   s = this.src;
@@ -8660,17 +8372,17 @@ cls11.parseString = function(startChar) {
   this.next();
   return n;
 };
-cls11.read_multiQ = function() {
+cls18.read_multiQ = function() {
   this.lttype = CH_MULTI_QUOTE;
   this.ltraw = '\"';
   this.setsimpoff(this.c + 1);
 };
-cls11.read_singleQ = function() {
+cls18.read_singleQ = function() {
   this.lttype = CH_SINGLE_QUOTE;
   this.ltraw = '\'';
   this.setsimpoff(this.c + 1);
 };
-cls11.parseTemplate = function() {
+cls18.parseTemplate = function() {
   var c0, loc0, c, li, col, str, ex, v, luo, s, l, c0s, loc0s, iscr, y, cb, e, n;
   this.v <= 5 && this.err('ver.temp');
   c0 = this.c0;
@@ -8757,7 +8469,7 @@ cls11.parseTemplate = function() {
   this.next();
   return n;
 };
-cls11.parseNew = function() {
+cls18.parseNew = function() {
   var c0, loc0, c, li, col, cb, head, inner, elem, argloc;
   this.resvchk();
   c0 = this.c0;
@@ -8826,7 +8538,7 @@ cls11.parseNew = function() {
     }
   return head;
 };
-cls11.regPattern = function() {
+cls18.regPattern = function() {
   var c0, li0, col0, l, branches, elem, startLoc, lastElem, endLoc;
   c0 = this.c;
   li0 = this.li;
@@ -8860,7 +8572,7 @@ cls11.regPattern = function() {
   return {type: '#Regex.Main', branches: branches, start: c0, end: lastElem ? lastElem.end : this.c, // equal either way, actually
   loc: {start: startLoc, end: endLoc}};
 };
-cls11.regDot = function() {
+cls18.regDot = function() {
   var c0, loc0;
   c0 = this.c;
   loc0 = this.loc();
@@ -8868,7 +8580,7 @@ cls11.regDot = function() {
   this.regIsQuantifiable = true;
   return {type: '#Regex.Dot', start: c0, loc: {start: loc0, end: this.loc()}, end: this.c};
 };
-cls11.parseSwitch = function() {
+cls18.parseSwitch = function() {
   var c0, loc0, cases, hasDefault, elem, cb, switchExpr, scope, y, n;
   this.resvchk();
   !this.testStmt() && this.err('not.stmt');
@@ -8913,7 +8625,7 @@ cls11.parseSwitch = function() {
     this.err('switch.unfinished');
   return n;
 };
-cls11.parseCatchClause = function() {
+cls18.parseCatchClause = function() {
   var c0, cb, loc0, catParam, catBlock, scope;
   c0 = this.c0;
   cb = {};
@@ -8943,7 +8655,7 @@ cls11.parseCatchClause = function() {
   scope = this.exitScope();
   return {type: 'CatchClause', loc: {start: loc0, end: catBlock.loc.end}, start: c0, end: catBlock.end, param: catParam, body: catBlock, '#scope': scope, '#y': this.Y(catParam) + this.Y(catBlock)};
 };
-cls11.parseThrow = function() {
+cls18.parseThrow = function() {
   var ex, c0, loc0, li, c, col, b;
   this.resvchk();
   this.testStmt() || this.err('not.stmt');
@@ -8967,14 +8679,14 @@ cls11.parseThrow = function() {
   this.foundStatement = true;
   return {type: 'ThrowStatement', argument: core(ex), start: c0, end: this.semiC || ex.end, loc: {start: loc0, end: this.semiLoc || ex.loc.end}, '#c': b, '#y': this.Y(ex)};
 };
-cls11.asArrowFuncArgList = function(argList) {
+cls18.asArrowFuncArgList = function(argList) {
   var i, list;
   i = 0;
   list = argList;
   while (i < list.length)
     this.asArrowFuncArg(list[i++]);
 };
-cls11.asArrowFuncArg = function(arg) {
+cls18.asArrowFuncArg = function(arg) {
   var i, list;
   i = 0;
   list = null;
@@ -9046,7 +8758,7 @@ cls11.asArrowFuncArg = function(arg) {
     this.err('not.bindable');
   }
 };
-cls11.parseExport_elemOther = function(c0, loc0) {
+cls18.parseExport_elemOther = function(c0, loc0) {
   var elem, cb, stmt;
   elem = null;
   cb = this.cb;
@@ -9097,7 +8809,7 @@ cls11.parseExport_elemOther = function(c0, loc0) {
     this.semi(elem['#c'], 'aft') || this.err('no.semi');
   return {type: 'ExportNamedDeclaration', start: c0, loc: {start: loc0, end: elem.loc.end}, end: elem.end, declaration: elem, specifiers: [], source: null, '#y': 0, '#c': cb};
 };
-cls11.parseExport_elemList = function(c0, loc0) {
+cls18.parseExport_elemList = function(c0, loc0) {
   var cb, firstResv, list, lName, eName, entry, ec, eli, ecol, src, eloc;
   cb = this.cb;
   this.suc(cb, 'list.bef');
@@ -9145,7 +8857,7 @@ cls11.parseExport_elemList = function(c0, loc0) {
   src ? this.scope.regulateForwardExportList(list, src) : this.scope.regulateOwnExportList(list);
   return {type: 'ExportNamedDeclaration', start: c0, loc: {start: loc0, end: eloc}, end: ec, declaration: null, specifiers: list, source: src, '#y': 0, '#c': cb};
 };
-cls11.parseExport_elemAll = function(c0, loc0) {
+cls18.parseExport_elemAll = function(c0, loc0) {
   var cb, src;
   cb = this.cb;
   this.suc(cb, '*.bef');
@@ -9157,7 +8869,7 @@ cls11.parseExport_elemAll = function(c0, loc0) {
   this.scope.registerForwardedSource(src);
   return {type: 'ExportAllDeclaration', start: c0, loc: {start: loc0, end: this.semiLoc || src.loc.end}, end: this.semiC || src.end, source: src, '#y': 0, '#c': cb};
 };
-cls11.createDefaultLiq = function() {
+cls18.createDefaultLiq = function() {
   var lg, liqDefault;
   lg = this.scope.gocLG('default');
   liqDefault = lg.newL();
@@ -9165,7 +8877,7 @@ cls11.createDefaultLiq = function() {
   liqDefault.name = '_default';
   return liqDefault;
 };
-cls11.parseExport_elemDefault = function(c0, loc0) {
+cls18.parseExport_elemDefault = function(c0, loc0) {
   var cb, defaultID, elem, entry, stmt, target, needsTarget;
   cb = this.cb;
   this.suc(cb, 'default.bef');
@@ -9235,7 +8947,7 @@ cls11.parseExport_elemDefault = function(c0, loc0) {
   this.foundStatement = true;
   return {type: 'ExportDefaultDeclaration', start: c0, loc: {start: loc0, end: this.semiLoc || elem.loc.end}, end: this.semiC || elem.end, declaration: core(elem), '#y': 0, '#c': cb, '#binding': needsTarget ? entry.target.v : null, '#emitted': false};
 };
-cls11.parseExport_from = function() {
+cls18.parseExport_from = function() {
   var cb;
   cb = this.cb;
   this.peekID('from') || this.err('export.from');
@@ -9244,7 +8956,7 @@ cls11.parseExport_from = function() {
   this.peekStr() || this.err('export.src');
   return this.parseString(this.lttype);
 };
-cls11.parseExport = function() {
+cls18.parseExport = function() {
   var c0, cb, loc0;
   if (this.v <= 5)
     this.err('ver.exim');
@@ -9258,7 +8970,7 @@ cls11.parseExport = function() {
   this.cb = cb;
   return this.peekMul() ? this.parseExport_elemAll(c0, loc0) : this.peekID('default') ? this.parseExport_elemDefault(c0, loc0) : this.lttype === CH_LCURLY ? this.parseExport_elemList(c0, loc0) : this.parseExport_elemOther(c0, loc0);
 };
-cls11.parseExport_elemDefault_async = function() {
+cls18.parseExport_elemDefault_async = function() {
   var a;
   a = this.id();
   // 'async'
@@ -9269,7 +8981,7 @@ cls11.parseExport_elemDefault_async = function() {
   }
   return this.parseAsync(a, CTX_TOP | CTX_DEFAULT);
 };
-cls11.regUnitAssertion = function() {
+cls18.regUnitAssertion = function() {
   var c0, loc0, kind;
   c0 = this.c;
   loc0 = this.loc();
@@ -9277,7 +8989,7 @@ cls11.regUnitAssertion = function() {
   this.setsimpoff(this.c + 1);
   return {type: '#Regex.Assertion', kind: kind, start: c0, end: this.c, loc: {start: loc0, end: this.loc()}};
 };
-cls11.regBbAssertion = function() {
+cls18.regBbAssertion = function() {
   var c0, loc0, kind;
   c0 = this.c;
   loc0 = this.loc();
@@ -9285,14 +8997,14 @@ cls11.regBbAssertion = function() {
   this.setsimpoff(c0 + 2);
   return {type: '#Regex.Assertion', kind: kind, start: c0, end: this.c, loc: {start: loc0, end: this.loc()}};
 };
-cls11.enterPrologue = function() {
+cls18.enterPrologue = function() {
   this.scope.enterPrologue();
 };
-cls11.exitPrologue = function() {
+cls18.exitPrologue = function() {
   this.scope.exitPrologue();
   this.clearPendingStrictErrors();
 };
-cls11.applyDirective = function(directiveLiteral) {
+cls18.applyDirective = function(directiveLiteral) {
   var raw;
   if (this.alreadyApplied) {
     this.alreadyApplied = false;
@@ -9305,7 +9017,7 @@ cls11.applyDirective = function(directiveLiteral) {
     this.strict_esc_chk();// for now it is the sole possible error
   }
 };
-cls11.parseArrow = function(arg, ctx) {
+cls18.parseArrow = function(arg, ctx) {
   var async, cb, sc, loc, scope, isExpr, nbody, prevLabels, prevDeclMode, params;
   if (this.v <= 5)
     this.err('ver.arrow');
@@ -9407,7 +9119,7 @@ cls11.parseArrow = function(arg, ctx) {
   }
   return {type: 'ArrowFunctionExpression', params: params, start: arg.start, end: nbody.end, loc: {start: arg.loc.start, end: nbody.loc.end}, generator: false, expression: isExpr, body: core(nbody), id: null, async: async, '#scope': scope, '#y': 0, '#c': cb, '#argploc': loc};
 };
-cls11.parseParen = function(ctx) {
+cls18.parseParen = function(ctx) {
   var c0, loc0, list, prevys, elctx, hasRest, pc0, pli0, pcol0, sc0, sli0, scol0, st, se, so, pt, pe, po, insideParams, parenScope, lastElem, hasTailElem, bef, elem, y, n, cbe;
   c0 = this.c0;
   loc0 = this.loc0();
@@ -9570,13 +9282,13 @@ cls11.parseParen = function(ctx) {
   this.parenScope = parenScope;
   return n;
 };
-cls11.dissolveParen = function() {
+cls18.dissolveParen = function() {
   if (this.parenScope) {
     this.parenScope.makeSimple();
     this.parenScope = null;
   }
 };
-cls11.parseDbg = function() {
+cls18.parseDbg = function() {
   var c0, loc0, c, li, bl, col;
   this.resvchk();
   this.testStmt() || this.err('not.stmt');
@@ -9593,7 +9305,7 @@ cls11.parseDbg = function() {
   this.foundStatement = true;
   return {type: 'DebuggerStatement', loc: {start: loc0, end: this.semiLoc || {line: li, column: col}}, start: c0, end: this.semiC || c, '#c': bl};
 };
-cls11.readSurrogateTail = function() {
+cls18.readSurrogateTail = function() {
   var c, s, l, mustSetOff, surrogateTail;
   c = this.c;
   s = this.src;
@@ -9608,7 +9320,7 @@ cls11.readSurrogateTail = function() {
   mustSetOff && this.setsimpoff(c + 1);
   return surrogateTail;
 };
-cls11.readID_surrogate = function(sc) {
+cls18.readID_surrogate = function(sc) {
   var surrogateTail, ccode;
   if (this.c + 1 >= this.src.length)
     this.err('id.head.got.eof.surrogate');
@@ -9620,7 +9332,7 @@ cls11.readID_surrogate = function(sc) {
   this.c += 2;
   return this.readID_withHead(String.fromCharCode(sc) + String.fromCharCode(surrogateTail));
 };
-cls11.parsePat_assig = function(head) {
+cls18.parsePat_assig = function(head) {
   var e;
   if (this.v <= 5)
     this.err('ver.assig');
@@ -9631,22 +9343,22 @@ cls11.parsePat_assig = function(head) {
   return {type: 'AssignmentPattern', start: head.start, left: head, end: e.end, right: core(e), loc: {start: head.loc.start, end: e.loc.end}, '#y': this.Y(head, e), '#c': {}};
 };
 var tm;
-cls11.pt_override = function(pt) {
+cls18.pt_override = function(pt) {
   return this.pt !== ERR_NONE_YET && (pt === ERR_NONE_YET || agtb(this.pt, pt));
 };
-cls11.at_override = function(at) {
+cls18.at_override = function(at) {
   return this.at !== ERR_NONE_YET && (at === ERR_NONE_YET || agtb(this.at, at));
 };
-cls11.st_override = function(st) {
+cls18.st_override = function(st) {
   return this.st !== ERR_NONE_YET && (st === ERR_NONE_YET || agtb(this.st, st));
 };
-cls11.pt_reset = function() {
+cls18.pt_reset = function() {
   this.pt = ERR_NONE_YET;
 };
-cls11.at_reset = function() {
+cls18.at_reset = function() {
   this.at = ERR_NONE_YET;
 };
-cls11.st_reset = function() {
+cls18.st_reset = function() {
   this.st = ERR_NONE_YET;
 };
 tm = {};
@@ -9661,18 +9373,18 @@ tm[ERR_NON_TAIL_EXPR] = 'seq.non.tail.expr';
 tm[ERR_INTERMEDIATE_ASYNC] = 'intermediate.async';
 tm[ERR_ASYNC_NEWLINE_BEFORE_PAREN] = 'async.newline.before.paren';
 tm[ERR_PIN_NOT_AN_EQ] = 'complex.assig.not.pattern';
-cls11.pt_flush = function() {
+cls18.pt_flush = function() {
   ASSERT.call(this, this.pt === ERR_NONE_YET, 'pending errors in pt');
   this.st = this.at = ERR_NONE_YET;
 };
-cls11.at_flush = function() {
+cls18.at_flush = function() {
   //ASSERT.call(this, this.at === ERR_NONE_YET,
   //  'pending errors in at');
   // [a-=b,l=e]
   this.at = ERR_NONE_YET;
   this.st = this.pt = ERR_NONE_YET;
 };
-cls11.st_flush = function() {
+cls18.st_flush = function() {
   var st, se, so, ep, pin;
   this.at = this.pt = ERR_NONE_YET;
   if (this.st === ERR_NONE_YET) {
@@ -9693,57 +9405,57 @@ cls11.st_flush = function() {
   }
   return this.err(tm[st], ep);
 };
-cls11.throwTricky = function(name, t) {
+cls18.throwTricky = function(name, t) {
   var core;
   core = name === 'p' ? this.pe : name === 'a' ? this.ae : this.se;
   this.err(tm[t], {tn: core});
 };
-cls11.pt_teot = function(t, e, o) {
+cls18.pt_teot = function(t, e, o) {
   this.pt = t;
   this.pe = e;
   this.po = o;
 };
-cls11.at_teot = function(t, e, o) {
+cls18.at_teot = function(t, e, o) {
   this.at = t;
   this.ae = e;
   this.ao = o;
 };
-cls11.st_teot = function(t, e, o) {
+cls18.st_teot = function(t, e, o) {
   this.st = t;
   this.se = e;
   this.so = o;
 };
-cls11.st_adjust_for_toAssig = function() {
+cls18.st_adjust_for_toAssig = function() {
   if (this.st === ERR_ARGUMENTS_OR_EVAL_ASSIGNED)
     this.st = ERR_ARGUMENTS_OR_EVAL_DEFAULT;
   else
     this.st = ERR_NONE_YET;
 };
-cls11.pin_at = function(c0, li0, col0) {
+cls18.pin_at = function(c0, li0, col0) {
   return this.pinErr(this.pin.a, c0, li0, col0);
 };
-cls11.pin_ct = function(c0, li0, col0) {
+cls18.pin_ct = function(c0, li0, col0) {
   return this.pinErr(this.pin.c, c0, li0, col0);
 };
-cls11.pin_st = function(c0, li0, col0) {
+cls18.pin_st = function(c0, li0, col0) {
   return this.pinErr(this.pin.s, c0, li0, col0);
 };
-cls11.pin_pt = function(c0, li0, col0) {
+cls18.pin_pt = function(c0, li0, col0) {
   return this.pinErr(this.pin.p, c0, li0, col0);
 };
-cls11.pinErr = function(pin, c0, li0, col0) {
+cls18.pinErr = function(pin, c0, li0, col0) {
   pin.c0 = c0;
   pin.li0 = li0;
   pin.col0 = col0;
 };
-cls11.strict_esc_chk = function() {
+cls18.strict_esc_chk = function() {
   if (this.ct === ERR_NONE_YET) {
     return;
   }
   ASSERT.call(this, this.ct === ERR_PIN_OCTAL_IN_STRICT, 'currently the only error for strict_esc_chk is ERR_PIN_OCTAL_IN_STRICT');
   this.err('strict.octal');
 };
-cls11.parseWhile = function() {
+cls18.parseWhile = function() {
   var scope, c0, cb, loc0, cond, nbody;
   this.resvchk();
   this.testStmt() || this.err('not.stmt');
@@ -9770,7 +9482,7 @@ cls11.parseWhile = function() {
   scope = this.exitScope();
   return {type: 'WhileStatement', test: cond, start: c0, end: nbody.end, loc: {start: loc0, end: nbody.loc.end}, body: nbody, '#scope': scope, '#y': this.Y(cond, nbody), '#c': cb};
 };
-cls11.readID_withHead = function(v) {
+cls18.readID_withHead = function(v) {
   var c, s, l, surrogateTail, luo, ccode, ch;
   c = this.c;
   s = this.src;
@@ -9819,7 +9531,7 @@ cls11.readID_withHead = function(v) {
   this.lttype = TK_ID;
 };
 var isUIEsc;
-cls11.regEsc = function(ce) {
+cls18.regEsc = function(ce) {
   var c, s, l, elem, c0, li0, col0, luo0, w;
   c = this.c;
   s = this.src;
@@ -9893,7 +9605,7 @@ cls11.regEsc = function(ce) {
     return this.regEsc_itself(w, ce);
   }
 };
-cls11.regClassifier = function() {
+cls18.regClassifier = function() {
   var c0, loc0, t;
   c0 = this.c;
   loc0 = this.loc();
@@ -9902,7 +9614,7 @@ cls11.regClassifier = function() {
   this.regIsQuantifiable = true;
   return {type: '#Regex.Classifier', start: c0, loc: {start: loc0, end: this.loc()}, end: this.c, kind: t};
 };
-cls11.regEsc_hex = function(ce) {
+cls18.regEsc_hex = function(ce) {
   var s, l, c, ch1, ch2, ch;
   s = this.src;
   l = this.regLastOffset;
@@ -9931,10 +9643,10 @@ cls11.regEsc_hex = function(ce) {
   // Last Elem If A CharSeq
   return this.regChar_VECI(String.fromCharCode(ch), c, ch, ce);
 };
-cls11.regEsc_simple = function(v, ce) {
+cls18.regEsc_simple = function(v, ce) {
   return this.regChar_VECI(v, this.c + 2, v.charCodeAt(0), ce);
 };
-cls11.regEsc_control = function(ce) {
+cls18.regEsc_control = function(ce) {
   var c0, c, s, l, ch;
   c0 = this.c;
   c = c0;
@@ -9961,7 +9673,7 @@ cls11.regEsc_control = function(ce) {
   return this.regChar_VECI(String.fromCharCode(ch), c, ch, ce);
 };
 isUIEsc = makeAcceptor('^$\\.*+?()[]{}|/');
-cls11.regEsc_itself = function(ch, ce) {
+cls18.regEsc_itself = function(ch, ce) {
   var c, s;
   c = this.c;
   s = this.src;
@@ -9978,7 +9690,7 @@ cls11.regEsc_itself = function(ch, ce) {
   c++;
   return this.regChar_VECI(String.fromCharCode(ch), c, ch, ce);
 };
-cls11.regEsc_num = function(ch, ce) {
+cls18.regEsc_num = function(ch, ce) {
   var c, s, l, r0, num, c0, loc0;
   c = this.c;
   s = this.src;
@@ -10015,7 +9727,7 @@ cls11.regEsc_num = function(ch, ce) {
   return this.regEsc_legacyNum(r0, ce);
 };
 // TODO: strict-chk
-cls11.regEsc_legacyNum = function(ch, ce) {
+cls18.regEsc_legacyNum = function(ch, ce) {
   var c, s, l, max, num;
   c = this.c;
   s = this.src;
@@ -10037,7 +9749,7 @@ cls11.regEsc_legacyNum = function(ch, ce) {
   }
   return this.regChar_VECI(String.fromCharCode(num), c, num, ce);
 };
-cls11.regEsc_num0 = function(ce) {
+cls18.regEsc_num0 = function(ce) {
   var c, s, l, r;
   c = this.c;
   s = this.src;
@@ -10052,7 +9764,7 @@ cls11.regEsc_num0 = function(ce) {
   }
   return this.regEsc_simple('\x00', ce);
 };
-cls11.handleLet = function(letID) {
+cls18.handleLet = function(letID) {
   if (this.v <= 5 || !this.scope.insideStrict()) {
     return letID;
   }
@@ -10060,7 +9772,7 @@ cls11.handleLet = function(letID) {
 };
 // /\1200(*followed by 1200 ()'s)/ becomes /(*backref=\1200)(*1200 ()'s)/; but, /\1200(*followed by 1199 ()'s)/ becomes /(*legacyEsc=\120)(*ch='0')(*1199 ()'s);
 // this means any captureP had better get tracked below, rather than in `parseRegex`
-cls11.parseRegexLiteral = function() {
+cls18.parseRegexLiteral = function() {
   var c, b, s, nump, l, c0, inClass, loc0, esc, pattern, patternStart, flags, flagsStart, n, regex;
   this.v < 2 && this.err('ver.regex');
   c = this.c;
@@ -10145,7 +9857,7 @@ cls11.parseRegexLiteral = function() {
   this.next();
   return regex;
 };
-cls11.parsePat_array = function() {
+cls18.parsePat_array = function() {
   var c0, loc0, elem, list, y, cb, n;
   if (this.v <= 5)
     this.err('ver.patarr');
@@ -10190,7 +9902,7 @@ cls11.parsePat_array = function() {
     this.err('pat.array.is.unfinished');
   return n;
 };
-cls11.ensureSAT = function(left) {
+cls18.ensureSAT = function(left) {
   switch (left.type) {
   case'Identifier':
     if (this.scope.insideStrict() && arorev(left.name))
@@ -10200,7 +9912,7 @@ cls11.ensureSAT = function(left) {
   }
   return false;
 };
-cls11.patErrCheck = function() {
+cls18.patErrCheck = function() {
   ASSERT.call(this, this.vpatCheck, 'PEC msut have vpatCheck hold');
   this.vpatCheck = false;
   if (!this.scope.canDeclareLexical())
@@ -10211,13 +9923,13 @@ cls11.patErrCheck = function() {
     return false;
   return true;
 };
-cls11.setPatCheck = function(shouldCheck) {
+cls18.setPatCheck = function(shouldCheck) {
   if (shouldCheck) {
     this.vpatCheck = true;
     this.vpatErr = PE_NONE;
   }
 };
-cls11.parseArgList = function() {
+cls18.parseArgList = function() {
   var c0, li0, col0, parenAsync, elem, list, y, argloc;
   c0 = -1;
   li0 = -1;
@@ -10257,7 +9969,7 @@ cls11.parseArgList = function() {
   this.argploc = argloc;
   return list;
 };
-cls11.parseFn = function(ctx, st) {
+cls18.parseFn = function(ctx, st) {
   var labels_, declMode_, isStmt, isMeth, isAsync, fnName, declScope, c0, cb, loc0, argploc, argLen, argList, nbody, scope, n;
   labels_ = this.labels;
   declMode_ = this.declMode;
@@ -10344,7 +10056,7 @@ cls11.parseFn = function(ctx, st) {
     this.foundStatement = true;
   return n;
 };
-cls11.parseSpread = function(ctx) {
+cls18.parseSpread = function(ctx) {
   var c0, cb, loc0, arg;
   this.v <= 5 && this.err('ver.spread.rest');
   c0 = this.c0;
@@ -10367,7 +10079,7 @@ cls11.parseSpread = function(ctx) {
   }
   return {type: 'SpreadElement', loc: {start: loc0, end: arg.loc.end}, start: c0, end: arg.end, argument: core(arg), '#c': cb, '#y': this.Y(arg)};
 };
-cls11.readOp_min = function() {
+cls18.readOp_min = function() {
   var c, ch;
   c = this.c;
   c++;
@@ -10388,14 +10100,14 @@ cls11.readOp_min = function() {
   }
   this.setsimpoff(c);
 };
-cls11.mem_id = function() {
+cls18.mem_id = function() {
   if (this.v > 5) {
     return this.id();
   }
   this.validate(this.ltval);
   return this.id();
 };
-cls11.mem_expr = function() {
+cls18.mem_expr = function() {
   var c0, b, loc0, e, cb, n;
   if (this.v <= 5)
     this.err('ver.mem.comp');
@@ -10423,13 +10135,13 @@ cls11.mem_expr = function() {
     this.err('prop.dyna.is.unfinished');
   return n;
 };
-cls11.cc = function() {
+cls18.cc = function() {
   var commentBuf;
   commentBuf = this.commentBuf;
   this.commentBuf = null;
   return commentBuf;
 };
-cls11.augmentCB = function(n, i, c) {
+cls18.augmentCB = function(n, i, c) {
   var cb;
   if (c === null) {
     return;
@@ -10440,15 +10152,15 @@ cls11.augmentCB = function(n, i, c) {
   else
     cb[i].mergeWith(c);
 };
-cls11.suc = function(cb, i) {
+cls18.suc = function(cb, i) {
   cb[i] = this.cc();
 };
-cls11.spc = function(n, i) {
+cls18.spc = function(n, i) {
   var cb;
   cb = CB(n);
   cmn_ac(cb, i, this.cc());
 };
-cls11.parseObj = function(ctx) {
+cls18.parseObj = function(ctx) {
   var c0, loc0, elem, list, first__proto__, elctx, pt, pe, po, at, ae, ao, st, se, so, n, cb, pc0, pli0, pcol0, ac0, ali0, acol0, sc0, sli0, scol0, y, ci;
   c0 = this.c0;
   loc0 = this.loc0();
@@ -10564,9 +10276,9 @@ function SourceScope(parent, st) {
   this['#uri'] = '';
   this['#loader'] = '';
 }
-var cls15;
-cls15 = SourceScope.prototype = createObj(ConcreteScope.prototype);
-cls11.parseProgram = function() {
+var cls4;
+cls4 = SourceScope.prototype = createObj(ConcreteScope.prototype);
+cls18.parseProgram = function() {
   var c0, li0, col0, ec, eloc, list, cb, n, bundler;
   c0 = this.c;
   li0 = this.li;
@@ -10598,7 +10310,7 @@ cls11.parseProgram = function() {
   }
   return n;
 };
-cls11.declare = function(id) {
+cls18.declare = function(id) {
   var decl, entry, sourceScope;
   ASSERT.call(this, this.declMode !== DT_NONE, 'Unknown declMode');
   if (this.declMode & (DT_LET | DT_CONST)) {
@@ -10622,20 +10334,20 @@ cls11.declare = function(id) {
     sourceScope.isSourceLevel() && sourceScope.refreshUnresolvedExportsWith(decl);
   }
 };
-cls11.enterScope = function(scope) {
+cls18.enterScope = function(scope) {
   this.scope = scope;
 };
-cls11.exitScope = function() {
+cls18.exitScope = function() {
   var scope;
   scope = this.scope;
   scope.finish();
   this.scope = this.scope.parent;
   return scope;
 };
-cls11.allow = function(allowedActions) {
+cls18.allow = function(allowedActions) {
   this.scope.actions |= allowedActions;
 };
-cls11.isResv = function(name) {
+cls18.isResv = function(name) {
   switch (name.length) {
   case 1:
     return false;
@@ -10765,10 +10477,10 @@ cls11.isResv = function(name) {
     return false;
   }
 };
-cls11.validate = function(name) {
+cls18.validate = function(name) {
   this.isResv(name) && this.ri();
 };
-cls11.parsePat_obj = function() {
+cls18.parsePat_obj = function() {
   var isID, c0, loc0, name, val, list, isShort, cb, ci, y, elem, y0, n;
   this.v <= 5 && this.err('ver.patobj');
   isID = false;
@@ -10843,7 +10555,7 @@ cls11.parsePat_obj = function() {
     this.err('pat.obj.is.unfinished');
   return n;
 };
-cls11.parseAsync_otherID = function(asyncID, ctx) {
+cls18.parseAsync_otherID = function(asyncID, ctx) {
   var id, n;
   this.cutEx();
   if (this.nl) {
@@ -10856,7 +10568,7 @@ cls11.parseAsync_otherID = function(asyncID, ctx) {
   this.se = n;
   return n;
 };
-cls11.parseAsync_exprHead = function(asyncID, ctx) {
+cls18.parseAsync_exprHead = function(asyncID, ctx) {
   var stmt, nl, list, n, cb;
   if (!(ctx & CTX_PAT)) {
     return asyncID;
@@ -10889,7 +10601,7 @@ cls11.parseAsync_exprHead = function(asyncID, ctx) {
   // restore
   return n;
 };
-cls11.parseAsync_fn = function(asyncID, ctx) {
+cls18.parseAsync_fn = function(asyncID, ctx) {
   var asyncFn;
   if (this.nl) {
     return asyncID;
@@ -10900,7 +10612,7 @@ cls11.parseAsync_fn = function(asyncID, ctx) {
   asyncFn['#c']['async.bef'] = asyncID['#c'].bef;
   return asyncFn;
 };
-cls11.parseAsync = function(asyncID, ctx) {
+cls18.parseAsync = function(asyncID, ctx) {
   if (this.peekID('function')) {
     return this.parseAsync_fn(asyncID, ctx);
   }
@@ -10924,7 +10636,7 @@ function a(errorType, builderOutline) {
   ErrorBuilders[errorType] = builder;
   return builder;
 }
-function set(newErrorType, existingErrorType) {
+var set1 = function set(newErrorType, existingErrorType) {
   var builder;
   if (HAS.call(ErrorBuilders, newErrorType)) {
     throw new Error('cannot override the existing <' + newErrorType + '> with <' + existingErrorType);
@@ -10935,7 +10647,7 @@ function set(newErrorType, existingErrorType) {
   builder = ErrorBuilders[existingErrorType];
   ErrorBuilders[newErrorType] = builder;
   return builder;
-}
+};
 function regp() {
   this.col0 = this.col + (this.c0 - this.c);
   if (this.extra === null)
@@ -10943,7 +10655,7 @@ function regp() {
   this.extra.ch = this.parser.src.charAt(this.c0);
 }
 var ErrorBuilders;
-cls11.onErr = function(errorType, errParams) {
+cls18.onErr = function(errorType, errParams) {
   var message, errorBuilder, errorInfo, offset, line, column, errMessage;
   message = '';
   if (!HAS.call(ErrorBuilders, errorType))
@@ -10961,7 +10673,7 @@ cls11.onErr = function(errorType, errParams) {
   throw new Error(message);
 };
 // TODO: find a way to squash it with normalize
-cls11.buildErrorInfo = function(builder, params) {
+cls18.buildErrorInfo = function(builder, params) {
   var errInfo, cur0, cur, tn;
   if (builder.preprocessor !== null)
     builder.preprocessor.call(params);
@@ -11034,12 +10746,12 @@ a('await.in.strict', {c0: 'parser.c0', li0: 'parserl.li0', col0: 'parser.col0', 
 a('rest.binding.arg.not.id', {tn: 'tn.argument', m: 'binding rests can only have an argument of type \'Identifier\'(which {tn.argument.type} isn\'t) in versions before 7; current version is {parser.v}.'}, 'function a(...[b]){}');
 a('binding.to.arguments.or.eval', {tn: 'tn', m: 'invalid binding name in strict mode: {tn.name}'}, '\"use strict\"; (arguments)=>12');
 a('<unfinished>', {'tn': 'tn', m: 'unexpected {parser.lttype} -- a {extra.delim} was expected to end the {tn.type} at {tn.loc.start.line}:{tn.loc.start.column} (offset {tn.start})'});
-set('block.dependent.is.unfinished', '<unfinished>', 'try { 12');
+set1('block.dependent.is.unfinished', '<unfinished>', 'try { 12');
 a('block.dependent.no.opening.curly', {c0: 'parser.c0', li0: 'parser.li', col0: 'parser.col0', m: 'unexpected {parser.lttype} after {extra.name} -- expected {}'}, 'try 12');
-set('block.unfinished', '<unfinished>');
+set1('block.unfinished', '<unfinished>');
 a('break.no.such.label', {tn: 'tn', m: 'no such label: {tn.name}'}, 'while (false) break L;');
 a('break.not.in.breakable', {c0: 'c0', li0: 'li0', col0: 'col0', m: 'breaks without any targets can only appear inside an iteration statement or a switch'}, 'break;');
-set('call.args.is.unfinished', '<unfinished>');
+set1('call.args.is.unfinished', '<unfinished>');
 a('catch.has.no.end.paren', {c0: 'c0', li0: 'li0', col0: 'col0', m: 'unexpected {parser.lttype} -- a ) was expected'}, 'try {} catch (a) { 12');
 a('catch.has.no.opening.paren', {c0: 'c0', li0: 'li0', col0: 'col0', m: 'unexpected {parser.lttype} -- a ( was expected'}, 'try {} catch 12');
 a('catch.has.an.asiig.param', {c0: 'c0', li0: 'li0', col0: 'col0', m: 'the parameter for a catch clause can not be an assignment pattern'}, 'try{} catch(a=12){}');
@@ -11055,7 +10767,7 @@ a('class.prototype.is.static.mem', {tn: 'tn', m: 'class can not have a static me
 a('class.super.call', {tn: 'tn', m: 'can not call super in this context'}, 'class A{constructor(){var a = super()}');
 a('class.super.lone', {tn: 'tn', m: 'unexpected {parser.lttype} after \'super\' -- a \"(\" or \".\" or \"[\" was expected'}, 'class A extends B { constructor() { (super * 12); }}');
 a('class.super.mem', {tn: 'tn', m: 'member access from super not allowed in this context -- super member access must only occur inside an object method or inside a non-static class member'}, 'class A { static b() { (super.l()); }');
-set('class.unfinished', '<unfinished>');
+set1('class.unfinished', '<unfinished>');
 a('comment.multi.unfinished', {c0: 'parser.c', li0: 'parser.li', col0: 'parser.col', m: 'reached eof before finding a matching */ for the multiline comment at {extra.li0}:{extra.col0} (offset {extra.c0})'}, '/* 12');
 // TODO: tell what was got
 a('complex.assig.not.pattern', {c0: 'c0', li0: 'li0', col0: 'col0', m: 'a \'=\' was expected'}, '(a-=12)=>12');
@@ -11068,9 +10780,9 @@ a('continue.not.in.loop', {c0: 'parser.c0', li0: 'parser.li0', col0: 'parser.col
 a('decl.label', {c0: 'c0', li0: 'li0', col0: 'col0', m: '{parser.ltval} declarations can not have labels'}, 'L: const a = 12;');
 a('delete.arg.not.a.mem', {tn: 'tn', m: 'when in strict mode code, the delete operator must take a member expression as argument; currently, its argument is a {tn.type}'}, '\"use strict\"; a * (delete l)');
 a('<closing>', {c0: 'parser.c0', li0: 'parser.li0', col0: 'parser.col0', m: 'a ) was expected; got {parser.lttype}'});
-set('do.has.no.closing.paren', '<closing>');
+set1('do.has.no.closing.paren', '<closing>');
 a('<opening>', {c0: 'parser.c0', li0: 'parser.li0', col0: 'parser.col0', m: 'a ( was expected; got {parser.lttype}'});
-set('do.has.no.opening.paren', '<opening>');
+set1('do.has.no.opening.paren', '<opening>');
 a('do.has.no.while', {c0: 'parser.c0', li0: 'parser.li0', col0: 'parser.col0', m: 'while expected; got {parser.lttype}'}, 'do {};');
 a('esc.8.or.9', {c0: 'parser.c', li0: 'parser.li', col0: 'parser.col0', m: 'escapes \\8 or \\9 are not syntactically valid escapes'}, '\"\\8\"');
 a('exists.in.current', {tn: 'tn', m: '\'{tn.name}\' has been actually declared at {extra.loc.start.line}:{extra.loc.start.column} (offset {extra.start})'}, 'let a;{var a;}');
@@ -11082,8 +10794,8 @@ a('export.default.const.let', {c0: 'parser.c0', li0: 'parser.li0', col0: 'parser
 a('export.named.has.reserved', {tn: 'tn', m: 'local {tn.name} is actually a reserved word'}, 'export {a, if as l};');
 a('export.named.list.not.finished', {c0: 'parser.c0', li0: 'parser.li0', col0: 'parser.col0', m: 'unfinished specifier list -- expected }, got {parser.lttype}'}, 'export {a 12 from \'l\'');
 a('export.named.no.exports', {c0: 'parser.c0', li0: 'parser.li0', col0: 'parser.col0', m: 'unexpected {parser.lttype} -- it is not something that can appear at the beginning of an actual declaration'}, 'export 12');
-set('export.named.not.id.from', 'export.all.no.from');
-set('export.named.source.not.str', 'export.all.source.not.str');
+set1('export.named.not.id.from', 'export.all.no.from');
+set1('export.named.source.not.str', 'export.all.source.not.str');
 a('export.newline.before.the.function', {c0: 'parser.c0', li0: 'parser.li0', col0: 'parser.col0', m: 'a newline is not allowed before \'function\' in exported async declarations.'}, 'export async\nfunction l() {}');
 a('export.not.in.module', {c0: 'parser.c0', li0: 'parser.li0', col0: 'parser.col0'});
 a('export.specifier.after.as.id', {c0: 'parser.c0', li0: 'parser.li0', col0: 'parser.col0', m: 'got {parser.lttype}; an identifier was expected'}, 'export {a as 12}');
@@ -11095,14 +10807,14 @@ a('for.in.has.init.assig', {tn: 'tn', m: 'assignment expressions can not be a {e
 a('for.iter.no.end.paren', {m: 'a ) was expected; got {parser.lttype}'}, 'for (a in b 5');
 a('for.iter.not.of.in', {m: 'an \'in\' or \'of\' expected; got {parser.ltval}'}, 'for (a to e) break;');
 a('for.of.var.overrides.catch', {tn: 'tn', m: '{tn.name} overrides the surrounding catch block\'s variable of the same name'}, 'try {} catch (a) { for (var a of l) break;}');
-set('for.simple.no.end.paren', 'for.iter.no.end.paren');
+set1('for.simple.no.end.paren', 'for.iter.no.end.paren');
 a('for.simple.no.init.semi', {m: 'a ; was expected; got {parser.lttype}'}, 'for (a 12 b; 12) break;');
-set('for.simple.no.test.semi', 'for.simple.no.init.semi');
-set('for.with.no.opening.paren', '<opening>');
+set1('for.simple.no.test.semi', 'for.simple.no.init.semi');
+set1('for.with.no.opening.paren', '<opening>');
 // TODO: precision
 a('func.args.has.dup', {tn: 'tn', m: '{tn.name}: duplicate params are not allowed'}, 'function l([a,a]) {}');
-set('func.args.no.end.paren', '<closing>');
-set('func.args.no.opening.paren', '<opening>');
+set1('func.args.no.end.paren', '<closing>');
+set1('func.args.no.opening.paren', '<opening>');
 a('func.args.not.enough', {m: 'unexpected {parser.lttype}'}, '({ get a(l) {} })', '({set a() {}})');
 a('func.body.is.unfinished', {m: 'a } was expected to end the current function\'s body; got {parser.lttype}'}, 'function l() { 12');
 a('func.decl.not.allowed', {m: 'the current scope does not allow a function to be declared in it'}, 'while (false) function l() {}');
@@ -11115,8 +10827,8 @@ a('id.multi.must.be.idhead', {cur0: 'cur', m: 'the unicode surrogate pair [{extr
 a('id.multi.must.be.idbody', {cur0: 'cur', m: 'the unicode surrogate pair [{extra.0},{extra.1}] don\'t represent an identifier body codepoint'});
 a('id.name.has.surrogate.pair', {m: 'unicode escapes in identifier names can not be parts of a surrogate pair'});
 a('id.u.not.after.slash', {m: 'a \'u\' was expected after \\'}, '\\e');
-set('if.has.no.closing.paren', '<closing>');
-set('if.has.no.opening.paren', '<opening>');
+set1('if.has.no.closing.paren', '<closing>');
+set1('if.has.no.opening.paren', '<opening>');
 a('import.from', {m: '\'from\' expected'}, 'import * 12');
 a('import.invalid.specifier.after.comma', {m: 'unexpected {parser.lttype}'}, 'import a, 12 from \'l\'');
 a('import.namespace.specifier.not.*', {m: 'unexpected {parser.ltraw} -- a * was expected'}, 'import - as \'12\'');
@@ -11125,10 +10837,10 @@ a('import.namespace.specifier.no.as', {m: '\'as\' expected'}, 'import {a 12 l} f
 a('import.not.in.module', {m: 'import is not allowed in script mode'});
 a('import.source.is.not.str', {m: 'string literal was expected'}, 'import * as a from 12');
 a('import.specifier.list.unfinished', {m: 'a } was expected; got {parser.lttype}'}, 'import {a as b, e as l 12');
-set('import.specifier.local.not.id', 'import.namespace.specifier.local.not.id');
-set('import.specifier.no.as', 'import.namespace.specifier.no.as');
+set1('import.specifier.local.not.id', 'import.namespace.specifier.local.not.id');
+set1('import.specifier.no.as', 'import.namespace.specifier.no.as');
 a('incdec.post.not.simple.assig', {m: 'member expression or identifier expected -- got {tn.type}'}, '[a]--');
-set('incdec.pre.not.simple.assig', 'incdec.post.not.simple.assig');
+set1('incdec.pre.not.simple.assig', 'incdec.post.not.simple.assig');
 a('label.is.a.dup', {m: '{tn.name} has been actually declared at {extra.li0}:{extra:col0} (offset {extra.c0})'}, 'a: a: for (;false;) break;');
 // TODO:
 // a('let.dcl.not.in.block',{m: 
@@ -11174,11 +10886,11 @@ a('param.has.yield.or.super', {p: function p() {
     this.tn = {type: 'AwaitExpression', start: this.tn.start, loc: this.tn.loc, end: this.tn.end, argument: null};
 }, m: '{tn.type} isn\'t allowed to appear in this context'}, 'function* l() { ([a]=[yield])=>12; }');
 a('paren.unbindable', {m: 'unexpected ) -- bindings should not have parentheses around them, neither should non-simple assignment-patterns'}, '([(a)])=>12', '[a,b,e,([l])]=12');
-set('pat.array.is.unfinished', 'array.unfinished');
+set1('pat.array.is.unfinished', 'array.unfinished');
 a('pat.obj.is.unfinished', {m: 'unexpected {parser.lttype} -- a } was expected'}, 'var {a=12 l} = 12)');
 a('program.unfinished', {m: 'unexpected {parser.lttype} -- an EOF was expected'}, 'a, b, e, l; ?');
 a('prop.dyna.is.unfinished', {m: 'unexpected {parser.lttype}'}, '({[a 12]: e})');
-set('prop.dyna.no.expr', 'prop.dyna.is.unfinished');
+set1('prop.dyna.no.expr', 'prop.dyna.is.unfinished');
 // TODO: precision
 a('regex.flag.is.dup', {p: regp, m: 'regex flag is duplicate'}, '/a/guymu');
 a('regex.newline', {p: regp, m: 'regular expressions can not contain a newline'}, '/a\n/');
@@ -11241,7 +10953,7 @@ a('with.strict', {m: 'with statements not allowed in strict mode'}, '\"use stric
 a('yield.args', {m: 'yield expression not allowed in generator\'s argument list'}, 'function* l(e=yield 12) {}');
 a('yield.as.an.id', {m: 'yield is not allowed as an identifier in this context'}, 'function* l() { var yield = 12 }');
 a('yield.has.no.expr.deleg', {m: 'unexpected {parser.lttype} -- it can not star an expression'}, 'function* l() { yield* ?}');
-cls11.regClass = function() {
+cls18.regClass = function() {
   var c0, loc0, list, e, latest, n, inverse;
   c0 = this.c;
   loc0 = this.loc();
@@ -11274,7 +10986,7 @@ cls11.regClass = function() {
   this.regIsQuantifiable = true;
   return n;
 };
-cls11.regPushClassElem = function(list, tail) {
+cls18.regPushClassElem = function(list, tail) {
   var len, ltop, sr, max, maxv, min, minv, semi, elem;
   if (list.length === 0) {
     list.push(tail);
@@ -11339,7 +11051,7 @@ cls11.regPushClassElem = function(list, tail) {
   }
   list.push(elem);
 };
-cls11.regTryCompleteSemiRange = function() {
+cls18.regTryCompleteSemiRange = function() {
   var sr;
   sr = this.regSemiRange;
   ASSERT.call(this, sr.type === '#Regex.SemiRange', 'semi');
@@ -11355,10 +11067,10 @@ cls11.regTryCompleteSemiRange = function() {
   return sr;
 };
 // true if completeing the semi-range results in a `regErr
-cls11.testSRerr = function() {
+cls18.testSRerr = function() {
   return this.regSemiRange && !this.regTryCompleteSemiRange();
 };
-cls11.regClassElem = function() {
+cls18.regClassElem = function() {
   var c, s, l;
   c = this.c;
   s = this.src;
@@ -11375,7 +11087,7 @@ cls11.regClassElem = function() {
     return this.regChar(true);
   }
 };
-cls11.parseWith = function() {
+cls18.parseWith = function() {
   var scope, c0, cb, loc0, obj, nbody;
   this.resvchk();
   this.testStmt() || this.err('not.stmt');
@@ -11402,7 +11114,7 @@ cls11.parseWith = function() {
   this.foundStatement = true;
   return {type: 'WithStatement', loc: {start: loc0, end: nbody.loc.end}, start: c0, end: nbody.end, object: obj, body: nbody, '#scope': scope, '#y': this.Y(obj, nbody), '#c': cb};
 };
-cls11.regParen = function() {
+cls18.regParen = function() {
   var c0, s, l, loc0, elem, finished, n;
   c0 = this.c;
   s = this.src;
@@ -11427,7 +11139,7 @@ cls11.regParen = function() {
   }
   return this.regErr_unfinishedParen(n);
 };
-cls11.regPeekOrGroup = function() {
+cls18.regPeekOrGroup = function() {
   var c0, s, l, r;
   c0 = this.c;
   s = this.src;
@@ -11444,7 +11156,7 @@ cls11.regPeekOrGroup = function() {
     return this.regErr_invalidCharAfterQuestionParen(r);// (?
   }
 };
-cls11.regPeek = function(notInverse) {
+cls18.regPeek = function(notInverse) {
   var c0, loc0, n, elem, finished;
   c0 = this.c;
   loc0 = this.loc();
@@ -11461,7 +11173,7 @@ cls11.regPeek = function(notInverse) {
   }
   return this.regErr_unfinishedParen(n);
 };
-cls11.regGroup = function() {
+cls18.regGroup = function() {
   var c0, loc0, n, elem, finished;
   c0 = this.c;
   loc0 = this.loc();
@@ -11478,7 +11190,7 @@ cls11.regGroup = function() {
   }
   return this.regErr_unfinishedParen(n);
 };
-cls11.parseYield = function(ctx) {
+cls18.parseYield = function(ctx) {
   var c, li, col, deleg, arg, c0, cb, loc0, ec, eloc, n;
   c = this.c;
   li = this.li;
@@ -11519,7 +11231,7 @@ cls11.parseYield = function(ctx) {
     this.suspys = n;
   return n;
 };
-cls11.readOp_lt = function() {
+cls18.readOp_lt = function() {
   var c, ch;
   c = this.c;
   c++;
@@ -11552,7 +11264,7 @@ cls11.readOp_lt = function() {
   this.setsimpoff(c);
 };
 // GENERAL RULE: if error occurs while parsing an elem, the parse routine sets the `regexErr and returns null
-cls11.parseRegex = function(rc, rli, rcol, regLast, nump, flags, /* tail (flags) */tc, tli, tcol) {
+cls18.parseRegex = function(rc, rli, rcol, regLast, nump, flags, /* tail (flags) */tc, tli, tcol) {
   var c, li, col, luo0, src0, e, str, n, fl;
   c = this.c;
   li = this.li;
@@ -11611,16 +11323,16 @@ cls11.parseRegex = function(rc, rli, rcol, regLast, nump, flags, /* tail (flags)
   this.src = src0;
   return n;
 };
-cls11.peekMul = function() {
+cls18.peekMul = function() {
   return this.lttype === TK_SIMP_BINARY && this.ltraw === '*';
 };
-cls11.peekID = function(name) {
+cls18.peekID = function(name) {
   return this.lttype === TK_ID && this.ltval === name;
 };
-cls11.peekEq = function() {
+cls18.peekEq = function() {
   return this.lttype === TK_SIMP_ASSIG && this.ltraw === '=';
 };
-cls11.peekStr = function() {
+cls18.peekStr = function() {
   switch (this.lttype) {
   case CH_SINGLE_QUOTE:
   case CH_MULTI_QUOTE:
@@ -11628,7 +11340,7 @@ cls11.peekStr = function() {
   }
   return false;
 };
-cls11.getOp = function(ctx) {
+cls18.getOp = function(ctx) {
   switch (this.lttype) {
   case TK_SIMP_BINARY:
   case TK_AA_MM:
@@ -11674,7 +11386,7 @@ cls11.getOp = function(ctx) {
     return false;
   }
 };
-cls11.readEsc = function(t) {
+cls18.readEsc = function(t) {
   var c, s, l, v, setoff, ch1, ch2;
   c = this.c;
   s = this.src;
@@ -11783,7 +11495,7 @@ cls11.readEsc = function(t) {
     this.setsimpoff(c);
   return v;
 };
-cls11.readEsc_legacy = function() {
+cls18.readEsc_legacy = function() {
   var c, s, l, v, max, ch;
   if (this.scope.insideStrict())
     this.err('esc.legacy.not.allowed.in.strict.mode');
@@ -11809,7 +11521,7 @@ cls11.readEsc_legacy = function() {
   this.setsimpoff(c);
   return String.fromCharCode(v);
 };
-cls11.read_dot = function() {
+cls18.read_dot = function() {
   var ch;
   ch = this.scat(this.c + 1);
   if (ch === CH_SINGLEDOT) {
@@ -11825,7 +11537,7 @@ cls11.read_dot = function() {
     this.lttype = CH_SINGLEDOT;
   }
 };
-cls11.readOp_xor = function() {
+cls18.readOp_xor = function() {
   var c, ch;
   c = this.c;
   c++;
@@ -11842,7 +11554,7 @@ cls11.readOp_xor = function() {
   }
   this.setsimpoff(c);
 };
-cls11.readComment_line = function() {
+cls18.readComment_line = function() {
   var c, s, l, li0, col0, c0;
   c = this.c;
   s = this.src;
@@ -11864,7 +11576,7 @@ cls11.readComment_line = function() {
   this.setsimpoff(c);
   this.foundComment(c0, li0, col0, c, 'Line');
 };
-cls11.readComment_multi = function() {
+cls18.readComment_multi = function() {
   var c, s, l, li0, col0, c0, hasNL, finished, l0o;
   c = this.c;
   s = this.src;
@@ -11912,7 +11624,7 @@ cls11.readComment_multi = function() {
   this.foundComment(c0, li0, col0, l0o, 'Block');
   return hasNL;
 };
-cls11.foundComment = function(c0, li0, col0, l0o, t) {
+cls18.foundComment = function(c0, li0, col0, l0o, t) {
   var c, li, col, line, comment;
   c = this.c;
   li = this.li;
@@ -11924,7 +11636,7 @@ cls11.foundComment = function(c0, li0, col0, l0o, t) {
   this.commentBuf.push(comment);
   this.commentCallback && this.commentCallback(comment);
 };
-cls11.parseBreak = function() {
+cls18.parseBreak = function() {
   var c0, loc0, c, li, col, cb, label, target, ec, eloc;
   this.resvchk();
   this.testStmt() || this.err('not.stmt');
@@ -11954,7 +11666,7 @@ cls11.parseBreak = function() {
   this.foundStatement = true;
   return {type: 'BreakStatement', label: label, start: c0, end: ec, loc: {start: loc0, end: eloc}, '#y': 0, '#c': cb};
 };
-cls11.parseArray = function(ctx) {
+cls18.parseArray = function(ctx) {
   var c0, cb, loc0, elem, list, elctx, pt, pe, po, at, ae, ao, st, se, so, pc0, pli0, pcol0, ac0, ali0, acol0, sc0, sli0, scol0, hasMore, hasRest, hasNonTailRest, y, si, elemCore, t, n;
   c0 = this.c0;
   cb = {};
@@ -12099,7 +11811,7 @@ cls11.parseArray = function(ctx) {
     this.err('array.unfinished');
   return n;
 };
-cls11.parseIDExprHead = function(ctx) {
+cls18.parseIDExprHead = function(ctx) {
   var name;
   name = this.ltval;
   SWITCH:
@@ -12311,28 +12023,28 @@ cls11.parseIDExprHead = function(ctx) {
   }
   return this.id();
 };
-cls11.resvchk = function() {
+cls18.resvchk = function() {
   if (this.ct !== ERR_NONE_YET) {
     ASSERT.call(this.ct === ERR_PIN_UNICODE_IN_RESV, 'the error in this.ct is something other than ERR_PIN_UNICODE_IN_RESV: ' + this.ct);
     this.err('resv.unicode');
   }
 };
-cls11.setsimpoff = function(offset) {
+cls18.setsimpoff = function(offset) {
   this.col += (this.c = offset) - this.luo;
   // TODO: will luo remain relevant even if
   // we only use this.c at the start and end of a lexer routine
   this.luo = offset;
 };
-cls11.setzoff = function(offset) {
+cls18.setzoff = function(offset) {
   this.luo = offset;
   this.c = offset;
   this.col = 0;
   this.li++;
 };
-cls11.scat = function(offset) {
+cls18.scat = function(offset) {
   return offset < this.src.length ? this.src.charCodeAt(offset) : -1;
 };
-cls11.parseParams = function(argLen) {
+cls18.parseParams = function(argLen) {
   var c0, li0, col0, tail, elem, list, gnsa, argploc;
   c0 = -1;
   li0 = -1;
@@ -12399,7 +12111,7 @@ cls11.parseParams = function(argLen) {
   this.argploc = argploc;
   return list;
 };
-cls11.readOp_eq = function() {
+cls18.readOp_eq = function() {
   var c, ch;
   c = this.c;
   c++;
@@ -12427,7 +12139,7 @@ cls11.readOp_eq = function() {
   }
   this.setsimpoff(c);
 };
-cls11.parseUnary = function(ctx) {
+cls18.parseUnary = function(ctx) {
   var op, loc0, c0, vdt, cb, arg, n;
   op = '';
   loc0 = this.loc0();
@@ -12452,23 +12164,26 @@ cls11.parseUnary = function(ctx) {
   }
   return {type: 'UnaryExpression', operator: op, start: c0, end: arg.end, loc: {start: loc0, end: arg.loc.end}, prefix: true, '#c': cb, argument: core(arg), '#y': this.Y(arg)};
 };
-cls11.readDiv = function() {
+cls18.readDiv = function() {
   this.lttype = CH_DIV;
   this.setsimpoff(this.c + 1);
 };
-cls23.isSlash = function(path, at) {
+function PathMan() {}
+var cls25;
+cls25 = PathMan.prototype;
+cls25.isSlash = function(path, at) {
   return path.length <= at ? false : path.charCodeAt(at) === CH_DIV;
 };
-cls23.findSlash = function(path, at) {
+cls25.findSlash = function(path, at) {
   ASSERT.call(this, arguments.length === 2, 'arguments');
   return path.indexOf('/', at);
 };
-cls23.findLastSlash = function(path, at) {
+cls25.findLastSlash = function(path, at) {
   ASSERT.call(this, arguments.length === 2, 'arguments');
   return path.lastIndexOf('/', at);
 };
 // tail(a/b) -> b; tail(a) -> ""
-cls23.tail = function(path) {
+cls25.tail = function(path) {
   var slash;
   slash = this.findLastSlash(path, path.length);
   if (slash === -1) {
@@ -12478,12 +12193,12 @@ cls23.tail = function(path) {
   return slash >= path.length ? '' : path.substring(slash);
 };
 // head(a/b) -> a; head(a) -> ""
-cls23.head = function(path) {
+cls25.head = function(path) {
   var slash;
   slash = this.findLastSlash(path, path.length);
   return slash === -1 ? '' : slash === 0 ? path.charAt(0) : path.substring(0, slash);
 };
-cls23.len = function(path, start) {
+cls25.len = function(path, start) {
   var tail;
   if (start >= path.length) {
     return 0;
@@ -12500,21 +12215,21 @@ cls23.len = function(path, start) {
     tail++;
   return tail - start;
 };
-cls23.trimSlash = function(path) {
+cls25.trimSlash = function(path) {
   return path !== '/' && this.isSlash(path, path.length - 1) ? path.substring(0, path.length - 1) : path;
 };
-cls23.trimAll = function(path) {
+cls25.trimAll = function(path) {
   var slash;
   slash = this.findSlash(path, 0);
   return slash === -1 ? path : slash === 0 ? path.charAt(0) : path.substring(0, slash);
 };
-cls23.hasTailSlash = function(path) {
+cls25.hasTailSlash = function(path) {
   return this.isSlash(path, path.length - 1);
 };
-cls23.hasHeadSlash = function(path) {
+cls25.hasHeadSlash = function(path) {
   return this.isSlash(path, 0);
 };
-cls23.joinRaw = function(a, b, nd) {
+cls25.joinRaw = function(a, b, nd) {
   if (this.hasHeadSlash(b)) {
     return b;
   }
@@ -12526,13 +12241,13 @@ cls23.joinRaw = function(a, b, nd) {
     a += '/';
   return a + b;
 };
-cls26.absorbDirect = function(ref) {
+cls24.absorbDirect = function(ref) {
   return this.absorb(ref, true);
 };
-cls26.absorbIndirect = function(ref) {
+cls24.absorbIndirect = function(ref) {
   return this.absorb(ref, false);
 };
-cls26.absorb = function(childRef, refD) {
+cls24.absorb = function(childRef, refD) {
   ASSERT.call(this, !childRef.hasTarget, 'resolved ref are not allowed to get absorbed by another ref');
   ASSERT.call(this, !childRef.parentRef, 'a ref with a parent is not allowed to get absorbed by another ref');
   if (refD) {
@@ -12547,11 +12262,11 @@ cls26.absorb = function(childRef, refD) {
     this.rsList.push(childRef.scope);
   childRef.parentRef = this;
 };
-cls26.updateStats = function(d, i) {
+cls24.updateStats = function(d, i) {
   this.d += d;
   this.i += i;
 };
-cls26.getDecl_nearest = function() {
+cls24.getDecl_nearest = function() {
   var ref;
   if (this.targetDecl_nearest !== null) {
     return this.targetDecl_nearest;
@@ -12565,10 +12280,10 @@ cls26.getDecl_nearest = function() {
   }
   ASSERT.call(this, false, 'ref unresolved');
 };
-cls26.getDecl_real = function() {
+cls24.getDecl_real = function() {
   return this.getDecl_nearest().getDecl_real();
 };
-cls26.assigned = function() {
+cls24.assigned = function() {
   var targetRef;
   targetRef = this.getDecl_nearest().ref;
   if (targetRef.lhs < 0)
@@ -12579,25 +12294,25 @@ function ResourceResolver() {
   this.savedNodes = {};
   this.bundleScope = null;
 }
-var cls27;
-cls27 = ResourceResolver.prototype;
+var cls26;
+cls26 = ResourceResolver.prototype;
 // TODO: fetch nodes based on id's, such that, in case the uri's 'a/b' and 'l/e' both point to the same file on a disk, and we have only saved 'a/b', this.get('l/e') returns the 
 // same node saved under 'a/b' (by the way, this is more of a bundler's job than a resource loader's)
-cls27.hasInCache = function(uri) {
+cls26.hasInCache = function(uri) {
   return HAS.call(this.savedNodes, _m(uri));
 };
-cls27.loadCached = function(uri) {
+cls26.loadCached = function(uri) {
   var mname;
   mname = _m(uri);
   return HAS.call(this.savedNodes, mname) ? this.savedNodes[mname] : null;
 };
-cls27.cache = function(uri, n) {
+cls26.cache = function(uri, n) {
   var mname;
   mname = _m(uri);
   ASSERT.call(this, !this.hasInCache(uri), 'existing');
   this.savedNodes[mname] = n;
 };
-cls27.loadNew = function(uri) {
+cls26.loadNew = function(uri) {
   ASSERT.call(this, !this.hasInCache(uri), 'existing');
   return this.asNode(uri);
 };
@@ -12606,9 +12321,9 @@ function ScopeName(name, src) {
   this.name = name;
   this.source = src;
 }
-var cls8;
-cls8 = ScopeName.prototype = createObj(Decl.prototype);
-cls8.hasName_m = function(mname) {
+var cls13;
+cls13 = ScopeName.prototype = createObj(Decl.prototype);
+cls13.hasName_m = function(mname) {
   return _m(this.name) === mname;
 };
 // attachment state:
@@ -12620,7 +12335,7 @@ cls8.hasName_m = function(mname) {
 //     otherwise:
 //       src has non-matching synthName -> unattached
 //       otherwise -> attached
-cls8.getAS = function() {
+cls13.getAS = function() {
   var src;
   src = this.source;
   if (src === null || src.isLexicalLike()) {
@@ -12635,14 +12350,14 @@ cls8.getAS = function() {
   }
   return ATS_DISTINCT;
 };
-cls17.addVarTarget_m = function(mname, newDecl) {
+cls9.addVarTarget_m = function(mname, newDecl) {
   ASSERT.call(this, !HAS.call(this.varTargets, mname), 'var target is not unique: <' + mname + '>');
   this.varTargets[mname] = newDecl;
 };
-cls17.findVarTarget_m = function(mname) {
+cls9.findVarTarget_m = function(mname) {
   return this.varTargets[mname];
 };
-cls17.determineActions = function() {
+cls9.determineActions = function() {
   var a;
   if (this.isParen()) {
     return this.parent.actions;
@@ -12671,7 +12386,7 @@ cls17.determineActions = function() {
   }
   return a;
 };
-cls17.activateTZ = function() {
+cls9.activateTZ = function() {
   var scope;
   scope = this.scs;
   if (scope.hasTZCheckPoint) {
@@ -12679,26 +12394,26 @@ cls17.activateTZ = function() {
   }
   return this.hasTZCheckPoint = true;
 };
-cls17.setName = function(name, source) {
+cls9.setName = function(name, source) {
   ASSERT.call(this, this.canHaveName(), 'only cls/fn can have a name');
   ASSERT_EQ.call(this, this.scopeName, null);
   this.scopeName = new ScopeName(name, source).r(new Ref(this));
   return this.scopeName;
 };
-cls17.getThisBase = function() {
+cls9.getThisBase = function() {
   return this.scs;
 };
-cls17.pushFun = function(name, transformedFn) {
+cls9.pushFun = function(name, transformedFn) {
   var mname, list;
   ASSERT.call(this, transformedFn.type === '#Untransformed' && transformedFn.kind === 'transformed-fn', 'transformed-fn');
   mname = _m(name);
   list = this.funLists.has(mname) ? this.funLists.get(mname) : this.funLists.set(mname, []);
   list.push(transformedFn);
 };
-cls17.owns = function(nd) {
+cls9.owns = function(nd) {
   return nd.ref.scope === this/* && (!nd.isImported()) */;
 };
-cls17.determineFlags = function() {
+cls9.determineFlags = function() {
   var fl;
   if (this.isParen()) {
     return this.parent.flags;
@@ -12716,7 +12431,7 @@ cls17.determineFlags = function() {
     fl |= SF_UNIQUE;
   return fl;
 };
-cls17.spCreate_this = function(ref) {
+cls9.spCreate_this = function(ref) {
   var spThis;
   ASSERT.call(this, this.canMakeThis(), 'this');
   if (!ref)
@@ -12725,12 +12440,12 @@ cls17.spCreate_this = function(ref) {
   spThis = new Liquid('<this>').r(ref).n('this_');
   return this.spThis = spThis;
 };
-cls17.setSynthBase = function(base) {
+cls9.setSynthBase = function(base) {
   ASSERT.call(this, this.synthBase === this.scs, 'synth-base is not intact');
   ASSERT.call(this, base.isConcrete(), 'base');
   this.synthBase = base;
 };
-cls17.getSourceLevelScope = function() {
+cls9.getSourceLevelScope = function() {
   var l, u;
   l = this.sourceScope;
   // up
@@ -12746,7 +12461,7 @@ cls17.getSourceLevelScope = function() {
   }
   return l;
 };
-cls17.handOverRefList = function(list) {
+cls9.handOverRefList = function(list) {
   var len, i, ref, mname;
   len = list.length();
   i = 0;
@@ -12760,7 +12475,7 @@ cls17.handOverRefList = function(list) {
     i++;
   }
 };
-cls17.handOver_m = function(mname, ref) {
+cls9.handOver_m = function(mname, ref) {
   if (this.isBlock() || this.isBare()) {
     return this.parent.refDirect_m(mname, ref);
   }
@@ -12781,12 +12496,12 @@ cls17.handOver_m = function(mname, ref) {
   }
   return this.parent.spReportGlobal_m(mname, ref);
 };
-cls17.finish = function() {
+cls9.finish = function() {
   if (this.isAnyFn() || this.isCatch())
     this.finishBody();
   return this.handOverRefList(this.refs);
 };
-cls17.finishBody = function() {
+cls9.finishBody = function() {
   var list, len, e, mname, ref, isCatch;
   ASSERT.call(this, this.inBody, 'finish must be in body');
   list = this.refs;
@@ -12810,97 +12525,97 @@ cls17.finishBody = function() {
   }
   this.inBody = false;
 };
-cls17.isAnyFn = function() {
+cls9.isAnyFn = function() {
   return this.type & ST_FN;
 };
-cls17.isCatch = function() {
+cls9.isCatch = function() {
   return this.type & ST_CATCH;
 };
-cls17.isScript = function() {
+cls9.isScript = function() {
   return this.type & ST_SCRIPT;
 };
-cls17.isModule = function() {
+cls9.isModule = function() {
   return this.type & ST_MODULE;
 };
-cls17.isClass = function() {
+cls9.isClass = function() {
   return this.type & ST_CLS;
 };
-cls17.isGen = function() {
+cls9.isGen = function() {
   return this.type & ST_GEN;
 };
-cls17.isAsync = function() {
+cls9.isAsync = function() {
   return this.type & ST_ASYNC;
 };
-cls17.isGetter = function() {
+cls9.isGetter = function() {
   return this.type & ST_GETTER;
 };
-cls17.isSetter = function() {
+cls9.isSetter = function() {
   return this.type & ST_SETTER;
 };
-cls17.isClassMem = function() {
+cls9.isClassMem = function() {
   return this.type & ST_CLSMEM;
 };
-cls17.isStaticMem = function() {
+cls9.isStaticMem = function() {
   return this.type & ST_STATICMEM;
 };
-cls17.isObjMem = function() {
+cls9.isObjMem = function() {
   return this.type & ST_OBJMEM;
 };
-cls17.isMem = function() {
+cls9.isMem = function() {
   return this.isClassMem() || this.isStaticMem() || this.isObjMem();
 };
-cls17.isArrow = function() {
+cls9.isArrow = function() {
   return this.type & ST_ARROW;
 };
-cls17.isBlock = function() {
+cls9.isBlock = function() {
   return this.type & ST_BLOCK;
 };
-cls17.isBare = function() {
+cls9.isBare = function() {
   return this.type & ST_BARE;
 };
-cls17.isCtor = function() {
+cls9.isCtor = function() {
   return this.type & ST_CTOR;
 };
-cls17.isLexicalLike = function() {
+cls9.isLexicalLike = function() {
   return this.isBlock() || this.isCatch();
 };
-cls17.isDecl = function() {
+cls9.isDecl = function() {
   return this.type & ST_DECL;
 };
-cls17.isParen = function() {
+cls9.isParen = function() {
   return this.type & ST_PAREN;
 };
-cls17.isHoisted = function() {
+cls9.isHoisted = function() {
   return this.isAnyFn() && this.isDecl();
 };
-cls17.isExpr = function() {
+cls9.isExpr = function() {
   return this.type & ST_EXPR;
 };
-cls17.isBootable = function() {
+cls9.isBootable = function() {
   return this.isScript() || this.isAnyFn() || this.isCatch() || this.isModule() || this.isBundle() || this.isGlobal();
 };
-cls17.isSourceLevel = function() {
+cls9.isSourceLevel = function() {
   return this.isScript() || this.isModule();
 };
-cls17.isSimpleFn = function() {
+cls9.isSimpleFn = function() {
   return this.type & (ST_EXPR | ST_DECL);
 };
-cls17.isBundle = function() {
+cls9.isBundle = function() {
   return this.type & ST_BUNDLE;
 };
-cls17.isGlobal = function() {
+cls9.isGlobal = function() {
   return this.type & ST_GLOBAL;
 };
-cls17.isConditional = function() {
+cls9.isConditional = function() {
   return this.flags & ST_COND;
 };
-cls17.isConcrete = function() {
+cls9.isConcrete = function() {
   return this.isModule() || this.isAnyFn() || this.isScript() || this.isBundle();
 };
-cls17.isSoft = function() {
+cls9.isSoft = function() {
   return this.isBlock() || this.isClass() || this.isCatch() || this.isParen() || this.isBare();
 };
-cls17.synth_defs_to = function(targetScope) {
+cls9.synth_defs_to = function(targetScope) {
   var list, e, len, insertSelf, tdclr;
   list = this.defs;
   e = 0;
@@ -12918,24 +12633,24 @@ cls17.synth_defs_to = function(targetScope) {
     }
   }
 };
-cls17.activateBody = function() {
+cls9.activateBody = function() {
   ASSERT.call(this, this.hasHead(), 'a scope with a head was expected');
   ASSERT_EQ.call(this, this.inBody, false);
   this.inBody = true;
   this.refs = this.bodyRefs;
 };
-cls17.deactivateBody = function() {
+cls9.deactivateBody = function() {
   ASSERT.call(this, this.hasHead(), 'a scope with a head was expected');
   ASSERT_EQ.call(this, this.inBody, true);
   this.inBody = false;
   this.refs = this.argRefs;
 };
-cls17.makeStrict = function() {
+cls9.makeStrict = function() {
   this.flags |= SF_STRICT;
   if (this.isAnyFn())
     this.verifyForStrictness();
 };
-cls17.refDirect_m = function(mname, childRef) {
+cls9.refDirect_m = function(mname, childRef) {
   var ref;
   ref = this.focRefAny_m(mname);
   if (childRef === null) {
@@ -12945,10 +12660,10 @@ cls17.refDirect_m = function(mname, childRef) {
   ref.absorbDirect(childRef);
   return ref;
 };
-cls17.findRefU_m = cls17.fRo_m = function(mname) {
+cls9.findRefU_m = cls9.fRo_m = function(mname) {
   return this.refs.has(mname) ? this.refs.get(mname) : null;
 };
-cls17.findRefAny_m = cls17.fRa_m = function(mname) {
+cls9.findRefAny_m = cls9.fRa_m = function(mname) {
   var ref, tdecl;
   ref = this.findRefU_m(mname);
   if (ref) {
@@ -12967,7 +12682,7 @@ cls17.findRefAny_m = cls17.fRa_m = function(mname) {
   }
   return null;
 };
-cls17.removeRefU_m = function(mname) {
+cls9.removeRefU_m = function(mname) {
   var ref;
   ref = this.findRefU_m(mname);
   if (ref)
@@ -12976,14 +12691,14 @@ cls17.removeRefU_m = function(mname) {
     ASSERT.call(this, !this.findDeclOwn_m(mname), 'unresolved ref has a decl with the same name?!');
   return ref;
 };
-cls17.rocRefU_m = function(mname) {
+cls9.rocRefU_m = function(mname) {
   var ref;
   ref = this.removeRefU_m(mname);
   if (!ref)
     ref = new Ref(this);
   return ref;
 };
-cls17.focRefAny_m = cls17.focRa_m = function(mname) {
+cls9.focRefAny_m = cls9.focRa_m = function(mname) {
   var ref;
   ref = this.findRefAny_m(mname);
   if (!ref) {
@@ -12992,23 +12707,23 @@ cls17.focRefAny_m = cls17.focRa_m = function(mname) {
   }
   return ref;
 };
-cls17.insertRef_m = function(mname, ref) {
+cls9.insertRef_m = function(mname, ref) {
   this.refs.set(mname, ref);
 };
-cls17.refIndirect_m = function(mname, childRef) {
+cls9.refIndirect_m = function(mname, childRef) {
   var ref;
   ref = this.focRefAny_m(mname);
   ASSERT.call(this, childRef !== null, 'childRef is not allowed to be null when in refIndirect');
   ref.absorbIndirect(childRef);
   return ref;
 };
-cls17.hasNewTarget = function() {
+cls9.hasNewTarget = function() {
   return this.allowed & SA_NEW_TARGET;
 };
-cls17.hasHead = function() {
+cls9.hasHead = function() {
   return this.isAnyFn() || this.isCatch();
 };
-cls17.hasSignificantNames = function() {
+cls9.hasSignificantNames = function() {
   if (this.isModule() || this.isScript()) {
     return true;
   }
@@ -13020,29 +12735,29 @@ cls17.hasSignificantNames = function() {
   }
   return false;
 };
-cls17.enterForInit = function() {
+cls9.enterForInit = function() {
   this.flags |= SF_FORINIT;
 };
-cls17.enterPrologue = function() {
+cls9.enterPrologue = function() {
   this.flags |= SF_INSIDEPROLOGUE;
 };
-cls17.exitForInit = function() {
+cls9.exitForInit = function() {
   ASSERT.call(this, this.insideForInit(), 'must be in a for');
   this.flags &= ~SF_FORINIT;
 };
-cls17.exitPrologue = function() {
+cls9.exitPrologue = function() {
   this.flags &= ~SF_INSIDEPROLOGUE;
 };
-cls17.canSmem = function() {
+cls9.canSmem = function() {
   return this.actions & SA_MEMSUPER;
 };
-cls17.canAwait = function() {
+cls9.canAwait = function() {
   return this.actions & SA_AWAIT;
 };
-cls17.canBreak = function() {
+cls9.canBreak = function() {
   return this.actions & SA_BREAK;
 };
-cls17.canDeclareLexical = function() {
+cls9.canDeclareLexical = function() {
   if (this.isBlock() || this.isModule() || this.isScript()) {
     return true;
   }
@@ -13051,10 +12766,10 @@ cls17.canDeclareLexical = function() {
   }
   return this.insideForInit();
 };
-cls17.canScall = function() {
+cls9.canScall = function() {
   return this.actions & SA_CALLSUPER;
 };
-cls17.canDeclareFn = function(st) {
+cls9.canDeclareFn = function(st) {
   if (this.isBlock() || this.isModule() || this.isScript()) {
     return true;
   }
@@ -13067,28 +12782,28 @@ cls17.canDeclareFn = function(st) {
   }
   return this.insideIf();
 };
-cls17.canYield = function() {
+cls9.canYield = function() {
   return this.actions & SA_YIELD;
 };
-cls17.canMakeThis = function() {
+cls9.canMakeThis = function() {
   if (this.isAnyFn()) {
     return !this.isArrow();
   }
   return this.isSourceLevel();
 };
-cls17.canReturn = function() {
+cls9.canReturn = function() {
   return this.actions & SA_RETURN;
 };
-cls17.canContinue = function() {
+cls9.canContinue = function() {
   return this.actions & SA_CONTINUE;
 };
-cls17.canAccessNewTarget = function() {
+cls9.canAccessNewTarget = function() {
   return this.actions & SA_NEW_TARGET;
 };
-cls17.canHaveName = function() {
+cls9.canHaveName = function() {
   return this.isAnyFn() || this.isClass();
 };
-cls17.declareHoisted_m = function(mname, t) {
+cls9.declareHoisted_m = function(mname, t) {
   var tdecl, tscope, isNew;
   tdecl = this.findDeclAny_m(mname);
   if (tdecl) {
@@ -13117,7 +12832,7 @@ cls17.declareHoisted_m = function(mname, t) {
   isNew && tscope.addVarTarget_m(mname, tdecl);
   return tdecl;
 };
-cls17.findDeclOwn_m = function(mname) {
+cls9.findDeclOwn_m = function(mname) {
   var tdecl;
   tdecl = this.findDeclAny_m(mname);
   if (tdecl && this.owns(tdecl)) {
@@ -13125,7 +12840,7 @@ cls17.findDeclOwn_m = function(mname) {
   }
   return null;
 };
-cls17.findDeclAny_m = function(mname) {
+cls9.findDeclAny_m = function(mname) {
   if (this.isAnyFn() && !this.inBody) {
     return this.findParam_m(mname);
   }
@@ -13134,7 +12849,7 @@ cls17.findDeclAny_m = function(mname) {
   //    this.args.get(mname) : null;
   return this.defs.has(mname) ? this.defs.get(mname) : null;
 };
-cls17.hoistName_m = function(mname, tdecl, tscope, isNew) {
+cls9.hoistName_m = function(mname, tdecl, tscope, isNew) {
   var cur, existing;
   cur = this;
   while (true) {
@@ -13153,11 +12868,11 @@ cls17.hoistName_m = function(mname, tdecl, tscope, isNew) {
     ASSERT.call(this, cur !== null, 'reached topmost before reaching target');
   }
 };
-cls17.findParam_m = function(mname) {
+cls9.findParam_m = function(mname) {
   ASSERT.call(this, this.isAnyFn() || this.isCatch(), 'this scope is not an fn/catch, and has no params');
   return HAS.call(this.argMap, mname) ? this.argMap[mname] : null;
 };
-cls17.declareLexical_m = function(mname, t) {
+cls9.declareLexical_m = function(mname, t) {
   var existing, newDecl;
   existing = this.findDeclAny_m(mname);
   if (!existing) {
@@ -13171,7 +12886,7 @@ cls17.declareLexical_m = function(mname, t) {
   this.insertDecl_m(mname, newDecl);
   return newDecl;
 };
-cls17.decl_m = function(mname, dt) {
+cls9.decl_m = function(mname, dt) {
   var decl;
   decl = null;
   switch (dt & ~DT_EXPORTED) {
@@ -13202,22 +12917,22 @@ cls17.decl_m = function(mname, dt) {
   decl.idx = decl.ref.scope.di_ref.v++;
   return decl;
 };
-cls17.decl_let_m = function(mname, t) {
+cls9.decl_let_m = function(mname, t) {
   return this.declareLexical_m(mname, t);
 };
-cls17.decl_fn_m = function(mname, t) {
+cls9.decl_fn_m = function(mname, t) {
   return this.isLexicalLike() ? this.declareLexical_m(mname, t) : this.declareHoisted_m(mname, t);
 };
-cls17.decl_const_m = function(mname, t) {
+cls9.decl_const_m = function(mname, t) {
   return this.declareLexical_m(mname, t);
 };
-cls17.decl_var_m = function(mname, t) {
+cls9.decl_var_m = function(mname, t) {
   return this.declareHoisted_m(mname, t);
 };
-cls17.decl_cls_m = function(mname, t) {
+cls9.decl_cls_m = function(mname, t) {
   return this.declareLexical_m(mname, t);
 };
-cls17.decl_catchArg_m = function(mname, t) {
+cls9.decl_catchArg_m = function(mname, t) {
   var existing, newDecl;
   ASSERT.call(this, this.isCatch() && !this.inBody, 'only catch heads are allowed to declare args');
   existing = this.findDeclAny_m(mname);
@@ -13229,7 +12944,7 @@ cls17.decl_catchArg_m = function(mname, t) {
   this.addVarTarget_m(mname, newDecl);
   return newDecl;
 };
-cls17.decl_fnArg_m = function(mname, t) {
+cls9.decl_fnArg_m = function(mname, t) {
   var ref, newDecl, existing;
   ASSERT.call(this, this.isAnyFn() && !this.inBody, 'only fn heads are allowed to declare args');
   ref = this.findRefAny_m(mname);
@@ -13250,28 +12965,28 @@ cls17.decl_fnArg_m = function(mname, t) {
   this.argList.push(newDecl);
   return newDecl;
 };
-cls17.insertDecl_m = function(mname, newDecl) {
+cls9.insertDecl_m = function(mname, newDecl) {
   this.defs.set(mname, newDecl);
 };
-cls17.insideIf = function() {
+cls9.insideIf = function() {
   return this.flags & SF_INSIDEIF;
 };
-cls17.insideLoop = function() {
+cls9.insideLoop = function() {
   return this.flags & SF_LOOP;
 };
-cls17.insideStrict = function() {
+cls9.insideStrict = function() {
   return this.flags & SF_STRICT;
 };
-cls17.insidePrologue = function() {
+cls9.insidePrologue = function() {
   return this.flags & SF_INSIDEPROLOGUE;
 };
-cls17.insideForInit = function() {
+cls9.insideForInit = function() {
   return this.flags & SF_FORINIT;
 };
-cls17.insideArgs = function() {
+cls9.insideArgs = function() {
   return this.isAnyFn() && !this.inBody;
 };
-cls17.spReportGlobal_m = function(mname, ref) {
+cls9.spReportGlobal_m = function(mname, ref) {
   var globalBinding;
   globalBinding = this.findGlobal_m(mname);
   if (globalBinding) {
@@ -13287,13 +13002,13 @@ cls17.spReportGlobal_m = function(mname, ref) {
   ref.scope = this;
   return globalBinding;
 };
-cls17.insertGlobal_m = function(mname, global) {
+cls9.insertGlobal_m = function(mname, global) {
   ASSERT.call(this, this.isGlobal() || this.isBundle(), 'global or bundler');
   ASSERT.call(this, global.isGlobal(), 'global');
   ASSERT.call(this, this.defs.has(mname) === false, 'existing');
   return this.defs.set(mname, global);
 };
-cls17.findGlobal_m = function(mname) {
+cls9.findGlobal_m = function(mname) {
   var global;
   global = null;
   if (this.defs.has(mname)) {
@@ -13302,36 +13017,36 @@ cls17.findGlobal_m = function(mname) {
   }
   return global;
 };
-cls17.spawnBlock = function() {
+cls9.spawnBlock = function() {
   return new Scope(this, ST_BLOCK);
 };
-cls17.spawnFn = function(st) {
+cls9.spawnFn = function(st) {
   return new FunScope(this, st | ST_FN);
 };
-cls17.spawnCatch = function() {
+cls9.spawnCatch = function() {
   return new CatchScope(this);
 };
-cls17.spawnParen = function() {
+cls9.spawnParen = function() {
   return new ParenScope(this);
 };
-cls17.spawnCls = function(st) {
+cls9.spawnCls = function(st) {
   return new ClassScope(this, st | ST_CLS);
 };
-cls17.spawnBare = function() {
+cls9.spawnBare = function() {
   return new Scope(this, ST_BARE);
 };
-cls21.set = function(name, val) {
+cls11.set = function(name, val) {
   if (!HAS.call(this.obj, name))
     this.keys.push(name);
   return this.obj[name] = val;
 };
-cls21.at = function(i) {
+cls11.at = function(i) {
   return i < this.keys.length ? this.obj[this.keys[i]] : void 0;
 };
-cls21.get = function(name) {
+cls11.get = function(name) {
   return this.obj[name];
 };
-cls21.remove = function(name) {
+cls11.remove = function(name) {
   var list, i;
   if (!HAS.call(this.obj, name)) {
     return false;
@@ -13349,13 +13064,13 @@ cls21.remove = function(name) {
   list.pop();
   return true;
 };
-cls21.has = function(name) {
+cls11.has = function(name) {
   return HAS.call(this.obj, name);
 };
-cls21.length = function() {
+cls11.length = function() {
   return this.keys.length;
 };
-cls21.pop = function(out) {
+cls11.pop = function(out) {
   var list, name, elem;
   list = this.keys;
   ASSERT.call(this, list.length, 'len');
@@ -13370,24 +13085,24 @@ cls21.pop = function(out) {
     out = elem;
   return out;
 };
-cls15.forwardsSource = function(src) {
+cls4.forwardsSource = function(src) {
   return this.allSourcesForwarded.has(_m(src));
 };
-cls15.fillForwardedSourceEntryWith = function(fw, scope) {
+cls4.fillForwardedSourceEntryWith = function(fw, scope) {
   var mname;
   mname = _m(fw);
   ASSERT.call(this, this.allSourcesForwarded.has(mname) && this.allSourcesForwarded.get(mname) === null, 'not null');
   ASSERT.call(this, this.allSourcesImported.has(mname), 'must also be in importsList');
   this.allSourcesForwarded.set(mname, scope);
 };
-cls15.regulateForwardExportList = function(list, src) {
+cls4.regulateForwardExportList = function(list, src) {
   var sourceImported, l;
   sourceImported = this.gocSourceImported(src.value);
   l = 0;
   while (l < list.length)
     this.regulateForwardExport(list[l++], sourceImported);
 };
-cls15.regulateForwardExport = function(ex, sourceImported) {
+cls4.regulateForwardExport = function(ex, sourceImported) {
   var entry, nd;
   entry = ex['#entry'];
   nd = this.createImportedBinding(ex.local, DT_EFW);
@@ -13395,19 +13110,19 @@ cls15.regulateForwardExport = function(ex, sourceImported) {
   ASSERT.call(this, entry.target === null, 'entry');
   entry.target = entry.target || {prev: null, v: nd, next: null};
 };
-cls15.regulateOwnExportList = function(list) {
+cls4.regulateOwnExportList = function(list) {
   var l;
   l = 0;
   while (l < list.length)
     this.regulateOwnExport(list[l++]['#entry']);
 };
-cls15.regulateOwnExport = function(entry) {
+cls4.regulateOwnExport = function(entry) {
   var mname, nd;
   mname = _m(entry.innerName);
   nd = this.findDeclAny_m(mname);
   entry.target = nd ? {p: null, v: nd, n: null} : this.focUnresolvedExportedTarget(entry.innerName);
 };
-cls15.registerForwardedSource = function(src) {
+cls4.registerForwardedSource = function(src) {
   var mname;
   mname = _m(src.value);
   if (this.allSourcesForwarded.has(mname)) {
@@ -13416,7 +13131,7 @@ cls15.registerForwardedSource = function(src) {
   this.allSourcesForwarded.set(mname, null);
   this.allSourcesImported.has(mname) || this.allSourcesImported.set(mname, null);
 };
-cls15.refreshUnresolvedExportsWith = function(n) {
+cls4.refreshUnresolvedExportsWith = function(n) {
   var mname, target, tp, tn;
   mname = _m(n.name);
   target = this.allUnresolvedExports.has(mname) ? this.allUnresolvedExports.get(mname) : null;
@@ -13435,7 +13150,7 @@ cls15.refreshUnresolvedExportsWith = function(n) {
   tn && (tn.prev = tp);
   target.next = target.prev = null;
 };
-cls15.registerExportedEntry_oi = function(outerName, outerID, innerName) {
+cls4.registerExportedEntry_oi = function(outerName, outerID, innerName) {
   var mname, entry, target;
   mname = _m(outerName);
   entry = this.allNamesExported.has(mname) ? this.allNamesExported.get(mname) : null;
@@ -13445,7 +13160,7 @@ cls15.registerExportedEntry_oi = function(outerName, outerID, innerName) {
     target.type |= DT_EALIASED;
   return this.allNamesExported.set(mname, {innerName: innerName, outerName: outerName, target: null, outerID: outerID});
 };
-cls15.focUnresolvedExportedTarget = function(name) {
+cls4.focUnresolvedExportedTarget = function(name) {
   var mname, target, luet;
   mname = _m(name);
   if (this.allUnresolvedExports.has(mname)) {
@@ -13461,7 +13176,7 @@ cls15.focUnresolvedExportedTarget = function(name) {
   }
   return this.allUnresolvedExports.set(mname, target);
 };
-cls15.regulateImports_sl = function(src, list) {
+cls4.regulateImports_sl = function(src, list) {
   var sourceImported, e, item, target;
   sourceImported = this.gocSourceImported(src.value);
   e = 0;
@@ -13471,18 +13186,18 @@ cls15.regulateImports_sl = function(src, list) {
     this.addImportedAlias_ios(target, target.isIAliased() ? item.imported.name : target.isIDefault() ? '*default*' : '*', sourceImported);
   }
 };
-cls15.addImportedAlias_ios = function(inner, outer, sourceImported) {
+cls4.addImportedAlias_ios = function(inner, outer, sourceImported) {
   var aliases;
   aliases = this.gocAliasesImported(sourceImported, outer);
   aliases.push(inner);
 };
-cls15.gocSourceImported = function(src) {
+cls4.gocSourceImported = function(src) {
   var mname, im;
   mname = _m(src);
   im = this.allSourcesImported.has(mname) ? this.allSourcesImported.get(mname) : null;
   return im || this.allSourcesImported.set(mname, new SortedObj());
 };
-cls15.declareImportedName = function(id, t) {
+cls4.declareImportedName = function(id, t) {
   var mname, existing, nd;
   mname = _m(id.name);
   existing = this.findDeclAny_m(mname);
@@ -13493,18 +13208,18 @@ cls15.declareImportedName = function(id, t) {
   this.refreshUnresolvedExportsWith(nd);
   return nd;
 };
-cls15.gocAliasesImported = function(sourceImported, outerName) {
+cls4.gocAliasesImported = function(sourceImported, outerName) {
   var mname;
   mname = _m(outerName);
   return sourceImported.has(mname) ? sourceImported.get(mname) : sourceImported.set(mname, []);
 };
-cls15.createImportedBinding = function(id, t) {
+cls4.createImportedBinding = function(id, t) {
   var nd;
   nd = new Decl();
   nd.t(t).s(id).n(id.name);
   return nd;
 };
-cls15.satisfyWithBundler = function(bundler) {
+cls4.satisfyWithBundler = function(bundler) {
   var bundlerSources, allSourcesImported, e, len, sourcePath, exitPath, src, isNew, satisfierScope, entriesImported, im;
   bundlerSources = bundler.freshSources;
   allSourcesImported = this.allSourcesImported;
@@ -13536,7 +13251,7 @@ cls15.satisfyWithBundler = function(bundler) {
   bundler.freshSources = bundlerSources;
   return im;
 };
-cls15.satisfyEntries = function(list) {
+cls4.satisfyEntries = function(list) {
   var len, l, name, bindingList, bi;
   len = list.length();
   l = 0;
@@ -13549,14 +13264,14 @@ cls15.satisfyEntries = function(list) {
     l++;
   }
 };
-cls15.satisfyBindingWithName = function(binding, name) {
+cls4.satisfyBindingWithName = function(binding, name) {
   var ex;
   ex = this.searchExports(name, null);
   if (!ex)
     this.parser.err('unresolved.name');
   this.resolve1to2(binding, ex.ref.getDecl_real());
 };
-cls15.searchInOwnExports = function(name) {
+cls4.searchInOwnExports = function(name) {
   var mname, entry;
   mname = _m(name);
   entry = this.allNamesExported.has(mname) ? this.allNamesExported.get(mname) : null;
@@ -13566,7 +13281,7 @@ cls15.searchInOwnExports = function(name) {
   }
   return null;
 };
-cls15.searchExports = function(name, soFar) {
+cls4.searchExports = function(name, soFar) {
   var ex;
   ex = this.searchInOwnExports(name);
   if (ex === null) {
@@ -13577,7 +13292,7 @@ cls15.searchExports = function(name, soFar) {
   }
   return ex;
 };
-cls15.searchInForwardedExports = function(name, soFar) {
+cls4.searchInForwardedExports = function(name, soFar) {
   var list, l, len, entry, satisfier;
   list = this.allSourcesForwarded;
   l = 0;
@@ -13594,7 +13309,7 @@ cls15.searchInForwardedExports = function(name, soFar) {
   }
   return entry;
 };
-cls15.resolve1to2 = function(slave, master) {
+cls4.resolve1to2 = function(slave, master) {
   var slaveRef, slaveRSList, l;
   ASSERT.call(this, master === master.ref.getDecl_real(), 'master');
   ASSERT.call(this, master !== slave, 'same');
@@ -13616,7 +13331,7 @@ cls15.resolve1to2 = function(slave, master) {
   master.ref.i += slaveRef.i;
   master.ref.d++;// TODO: must be exact
 };
-cls15.registerImportedScope = function(uri, scope) {
+cls4.registerImportedScope = function(uri, scope) {
   var mname;
   mname = _m(uri);
   ASSERT.call(this, !this.allImportedScopes.has(mname), 'have [' + uri + ']');
@@ -13624,7 +13339,7 @@ cls15.registerImportedScope = function(uri, scope) {
 };
 // TODO: add a mechanism to react to cases where latestVal does not have a property (own or inherited)
 // whose name has the same value as idx
-cls13.applyTo = function(obj, noErrIfUndefNull) {
+cls20.applyTo = function(obj, noErrIfUndefNull) {
   var latestVal, latestIdx, list, e, idx;
   latestVal = obj;
   latestIdx = '';
@@ -13777,7 +13492,7 @@ Transformers['#SynthAssig'] = function(n, isVal) {
   ASSERT_EQ.call(this, isVal, false);
   return TransformByLeft[n.left.type].call(this, n, isVal, n.binding);
 };
-cls19.trArrayElem = function(left, iter, at, isB, cbn) {
+cls17.trArrayElem = function(left, iter, at, isB, cbn) {
   var right, rest_cb, h, assig, res, cb;
   right = null;
   rest_cb = null;
@@ -13807,7 +13522,7 @@ cls19.trArrayElem = function(left, iter, at, isB, cbn) {
   }
   return res;
 };
-cls19.trObjElem = function(elem, iter, isB) {
+cls17.trObjElem = function(elem, iter, isB) {
   var name, right, left;
   name = elem.key;
   if (elem.computed)
@@ -13816,7 +13531,7 @@ cls19.trObjElem = function(elem, iter, isB) {
   left = elem.value;
   return this.tr(this.synth_SynthAssig(left, right, isB), false);
 };
-cls19.needsCVLHS = function(decl) {
+cls17.needsCVLHS = function(decl) {
   var tc;
   if (!decl.isImmutable()) {
     return false;
@@ -13827,7 +13542,7 @@ cls19.needsCVLHS = function(decl) {
   }
   return true;
 };
-cls19.cacheCVLHS = function(decl) {
+cls17.cacheCVLHS = function(decl) {
   var tc;
   tc = this.getTCCache(decl);
   if (tc)
@@ -13913,37 +13628,37 @@ Transformers['CallExpression'] = function(n, isVal) {
   synthcall['#argloc'] = n['#argloc'];
   return synthcall;
 };
-cls19.setCVTZ = function(cvtz) {
+cls17.setCVTZ = function(cvtz) {
   var l;
   l = this.cvtz;
   this.cvtz = cvtz;
   return l;
 };
-cls19.setRR = function(reachedRef) {
+cls17.setRR = function(reachedRef) {
   var rr;
   rr = this.reachedRef;
   this.reachedRef = reachedRef;
   return rr;
 };
-cls19.setScope = function(scope) {
+cls17.setScope = function(scope) {
   var cur;
   cur = this.cur;
   this.cur = scope;
   return cur;
 };
-cls19.setTS = function(ts) {
+cls17.setTS = function(ts) {
   var ts0;
   ts0 = this.tempStack;
   this.tempStack = ts;
   return ts0;
 };
-cls19.setThis = function(thisState) {
+cls17.setThis = function(thisState) {
   var th;
   th = this.thisState;
   this.thisState = thisState;
   return th;
 };
-cls19.tr = function(n, isVal) {
+cls17.tr = function(n, isVal) {
   var ntype, transformer;
   ntype = n.type;
   switch (ntype) {
@@ -13960,7 +13675,7 @@ cls19.tr = function(n, isVal) {
   }
   return transformer.call(this, n, isVal);
 };
-cls19.rename = function(base, i) {
+cls17.rename = function(base, i) {
   return this.renamer(base, i);
 };
 Transformers['BlockStatement'] = function(n, isVal) {
@@ -13988,7 +13703,7 @@ Transformers['#Bundler'] = function(n, isVal) {
     bs.synthLiquid(jzLG.getL(0));
   return n;
 };
-cls19.transformBundleItem = function(n) {
+cls17.transformBundleItem = function(n) {
   var list, len, l;
   list = n['#imports'];
   len = list ? list.length : 0;
@@ -14025,14 +13740,14 @@ Transformers['ArrayExpression'] = function(n, isVal) {
   this.trList(n.elements, true);
   return n;
 };
-cls19.trListChunk = function(list, isVal, s, e) {
+cls17.trListChunk = function(list, isVal, s, e) {
   while (s <= e) {
     if (list[s] !== null)
       list[s] = this.tr(list[s], isVal);
     s++;
   }
 };
-cls19.trSAT = function(n, isVal) {
+cls17.trSAT = function(n, isVal) {
   switch (n.type) {
   case'Identifier':
     return this.toResolvedName(n, 'sat');
@@ -14041,7 +13756,7 @@ cls19.trSAT = function(n, isVal) {
   }
   ASSERT.call(this, false, 'SAT !== <' + n.type + '>');
 };
-cls19.accessTZ = function(scope) {
+cls17.accessTZ = function(scope) {
   var lg, l;
   this.accessJZ();
   lg = scope.scs.gocLG('tz');
@@ -14053,12 +13768,12 @@ cls19.accessTZ = function(scope) {
   }
   return l.track(this.cur);
 };
-cls19.accessJZ = function() {
+cls17.accessJZ = function() {
   var jzContainer, lg, l;
   jzContainer = this.script;
   if (jzContainer.parent.isBundle())
     jzContainer = jzContainer.parent;
-  lg = this.script.gocLG('jz');
+  lg = jzContainer.gocLG('jz');
   l = lg.getL(0);
   if (!l) {
     l = lg.newL();
@@ -14067,10 +13782,10 @@ cls19.accessJZ = function() {
   }
   return l.track(this.cur);
 };
-cls19.trList = function(list, isVal) {
+cls17.trList = function(list, isVal) {
   return this.trListChunk(list, isVal, 0, list.length - 1);
 };
-cls19.transformCls = function(n, isVal, oBinding) {
+cls17.transformCls = function(n, isVal, oBinding) {
   var scope, ex, ctor, reached, list, tempsup, tempsupSave, s, clsTemp, classSave, jzCreateCls, tproto, memList, i, m, elem, mem, classcut, cls;
   scope = this.setScope(n['#scope']);
   ex = oBinding === null;
@@ -14149,7 +13864,7 @@ cls19.transformCls = function(n, isVal, oBinding) {
   cls.loc = n.loc;
   return cls;
 };
-cls19.transformCtor = function(ctor, oBinding, r) {
+cls17.transformCtor = function(ctor, oBinding, r) {
   var r0, scope, clsName, ref, sn;
   r0 = null;
   if (oBinding) {
@@ -14181,7 +13896,7 @@ cls19.transformCtor = function(ctor, oBinding, r) {
   }
   return this.transformExprFn(ctor);
 };
-cls19.transformMem = function(mem, oBinding, r) {
+cls17.transformMem = function(mem, oBinding, r) {
   var r0, scope, cls, sn, ref;
   r0 = null;
   scope = mem['#scope'];
@@ -14220,7 +13935,7 @@ cls19.transformMem = function(mem, oBinding, r) {
     mem.cls = {inner: sn, outer: null};
   return mem;
 };
-cls19.syntheticCtor = function(cls, heritage) {
+cls17.syntheticCtor = function(cls, heritage) {
   return {kind: 'synthc', heritage: heritage, name: cls['#scope'].scopeName, type: '#Untransformed'};
 };
 Transformers['ClassExpression'] = function(n, isVal) {
@@ -14249,81 +13964,81 @@ Transformers['BinaryExpression'] = function(n, isVal) {
   return n;
 };
 var SYNTH_VOID0, SKIP;
-cls19.synth_Temp = function(liq) {
+cls17.synth_Temp = function(liq) {
   return {kind: 'temp', occupied: 0, liq: liq, type: '#Untransformed', '#c': {}, loc: null};
 };
-cls19.synth_TempSave = function(t, expr) {
+cls17.synth_TempSave = function(t, expr) {
   ASSERT.call(this, isTemp(t), 't is not temp');
   if (t === expr) {
     return null;
   }
   return {kind: 'temp-save', right: expr, left: t, type: '#Untransformed', loc: expr.loc, '#c': {}};
 };
-cls19.synth_AssigList = function(list) {
+cls17.synth_AssigList = function(list) {
   return {kind: 'assig-list', type: '#Untransformed', list: list, '#c': {}, raw: null, // cls-exclusive
   loc: null};
 };
-cls19.synth_UCond = function(t, c, a, tr) {
+cls17.synth_UCond = function(t, c, a, tr) {
   return {kind: 'ucond', test: t, consequent: c, type: tr ? 'ConditionalExpression' : '#Untransformed', alternate: a, '#c': {}};
 };
-cls19.synth_ArrIterEnd = function(iterVal) {
+cls17.synth_ArrIterEnd = function(iterVal) {
   return {kind: 'arr-iter-end', type: '#Untransformed', iter: iterVal, '#c': {}};
 };
-cls19.synth_ArrIter = function(iterVal) {
+cls17.synth_ArrIter = function(iterVal) {
   this.accessJZ();
   return {kind: 'arr-iter', type: '#Untransformed', iter: iterVal, '#c': {}};
 };
-cls19.synth_ArrIterGet = function(iterVal, at) {
+cls17.synth_ArrIterGet = function(iterVal, at) {
   return {kind: 'arr-iter-get', type: '#Untransformed', iter: iterVal, idx: at, '#c': {}};
 };
-cls19.synth_SynthAssig = function(left, right, isB) {
+cls17.synth_SynthAssig = function(left, right, isB) {
   return {binding: isB || false, right: right, left: left, type: '#SynthAssig', operator: '=', '#c': {}};
 };
-cls19.synth_Call = function(head, mem, list) {
+cls17.synth_Call = function(head, mem, list) {
   return {head: head, mem: mem, list: list, type: '#Untransformed', kind: 'call', '#c': {}, '#argloc': null, loc: null};
 };
-cls19.synth_U = function(expr) {
+cls17.synth_U = function(expr) {
   this.accessJZ();
   return {kind: 'u', type: '#Untransformed', value: expr, '#c': {}};
 };
-cls19.synth_ArrIterGetRest = function(iter, at) {
+cls17.synth_ArrIterGetRest = function(iter, at) {
   return {kind: 'arr-iter-get-rest', type: '#Untransformed', iter: iter, idx: at, '#c': {}};
 };
-cls19.synth_ObjIter = function(iterVal) {
+cls17.synth_ObjIter = function(iterVal) {
   return {kind: 'obj-iter', type: '#Untransformed', iter: iterVal, '#c': {}};
 };
-cls19.synth_ObjIterEnd = function(iterVal) {
+cls17.synth_ObjIterEnd = function(iterVal) {
   return {kind: 'obj-iter-end', type: '#Untransformed', iter: iterVal, '#c': {}};
 };
-cls19.synth_ObjIterGet = function(iter, at, isC) {
+cls17.synth_ObjIterGet = function(iter, at, isC) {
   return {kind: 'obj-iter-get', type: '#Untransformed', iter: iter, idx: at, computed: isC, '#c': {}};
 };
-cls19.synth_ArgAt = function(at) {
+cls17.synth_ArgAt = function(at) {
   return {type: '#Untransformed', idx: at, kind: 'arg-at', '#c': {}};
 };
-cls19.synth_ArgRest = function(ex, at) {
+cls17.synth_ArgRest = function(ex, at) {
   return {idx: at, left: ex, kind: 'arg-rest', type: '#Untransformed', '#c': {}};
 };
 SYNTH_VOID0 = {type: 'UnaryExpression', operator: 'void', argument: {type: 'Literal', value: 0, raw: '0', '#c': {}}, '#y': 0, '#c': {}};
-cls19.synth_node_BinaryExpression = function(left, o, right, y) {
+cls17.synth_node_BinaryExpression = function(left, o, right, y) {
   return {left: left, operator: o, right: right, type: 'BinaryExpression', '#y': y || 0, '#c': {}};
 };
-cls19.synth_Void0 = function() {
+cls17.synth_Void0 = function() {
   return SYNTH_VOID0;
 };
-cls19.synth_SynthName = function(liq) {
+cls17.synth_SynthName = function(liq) {
   return {type: '#Untransformed', kind: 'synth-name', liq: liq, '#c': {}};
 };
-cls19.synth_node_MemberExpression = function(n, v) {
+cls17.synth_node_MemberExpression = function(n, v) {
   return {loc: null, computed: true, object: n, property: v, '#y': 0, '#c': {}, type: 'MemberExpression'};
 };
-cls19.synth_TransformedFn = function(n, a) {
+cls17.synth_TransformedFn = function(n, a) {
   return {type: '#Untransformed', kind: 'transformed-fn', fun: n, argsPrologue: a, target: null, '#c': {}, scall: null, cls: null, loc: n.loc, emitted: false};
 };
-cls19.synth_GlobalUpdate = function(assig, isU) {
+cls17.synth_GlobalUpdate = function(assig, isU) {
   return {isU: isU, kind: 'global-update', assig: assig, type: '#Untransformed', '#c': {}};
 };
-cls19.synth_SynthLiteral = function(l) {
+cls17.synth_SynthLiteral = function(l) {
   switch (l.type) {
   case'Literal':
     return l;
@@ -14333,47 +14048,47 @@ cls19.synth_SynthLiteral = function(l) {
   ASSERT.call(this, false, 'Unknown [' + l.type + ']');
 };
 SKIP = {type: '#Untransformed', kind: 'skip'};
-cls19.synth_Skip = function() {
+cls17.synth_Skip = function() {
   return SKIP;
 };
-cls19.synth_ResolvedThis = function(src, th, chk) {
+cls17.synth_ResolvedThis = function(src, th, chk) {
   var simp;
   simp = th.ref.scope === this.cur.getThisBase();
   return {kind: 'resolved-this', id: src, target: th, type: '#Untransformed', chk: chk, loc: src.loc, plain: simp};
 };
-cls19.synth_BareThis = function(th) {
+cls17.synth_BareThis = function(th) {
   return {type: '#Untransformed', target: th, kind: 'bthis', plain: th.ref.scope === this.cur.getThisBase()};
 };
-cls19.synth_MakeClass = function(cls, herit, target) {
+cls17.synth_MakeClass = function(cls, herit, target) {
   this.accessJZ();
   return {cls: cls, heritage: herit, kind: 'cls', type: '#Untransformed', target: target};
 };
-cls19.synth_RCheck = function(v, t) {
+cls17.synth_RCheck = function(v, t) {
   this.accessJZ();
   return {val: v, th: t, kind: 'rcheck', type: '#Untransformed'};
 };
-cls19.synth_MemList = function(mList, tProto) {
+cls17.synth_MemList = function(mList, tProto) {
   return {m: mList, type: '#Untransformed', kind: 'memlist', p: tProto};
 };
-cls19.synth_ClassSave = function(target, ctor) {
+cls17.synth_ClassSave = function(target, ctor) {
   return {target: target, ctor: ctor, kind: 'cls-assig', type: '#Untransformed'};
 };
-cls19.synth_Heritage = function(h) {
+cls17.synth_Heritage = function(h) {
   this.accessJZ();
   return {type: '#Untransformed', heritage: h, kind: 'heritage'};
 };
-cls19.synth_TC = function(right, rn) {
+cls17.synth_TC = function(right, rn) {
   this.accessJZ();
   // jz  o
   return {value: right, kind: 'cvtz', rn: rn, type: '#Untransformed'};
 };
-cls19.synth_TVal = function(ex) {
+cls17.synth_TVal = function(ex) {
   return {type: '#Untransformed', kind: 'tval', ex: ex};
 };
-cls19.synth_NameList = function(scope, vinit) {
+cls17.synth_NameList = function(scope, vinit) {
   return {type: '#Untransformed', kind: 'llinosa-names', scope: scope, withV: vinit};
 };
-cls19.synth_TZCheckPoint = function(scope) {
+cls17.synth_TZCheckPoint = function(scope) {
   ASSERT.call(this, scope.hasTZCheckPoint, 'can not create a synth tzchp for a scope that lacks one');
   return {type: '#Untransformed', kind: 'tzcheckpoint', scope: scope};
 };
@@ -14440,7 +14155,7 @@ Transformers['ImportDeclaration'] = function(n, isVal) {
 Transformers['BreakStatement'] = function(n, isVal) {
   return n;// TODO: try { break } finally { yield }
 };
-cls19.transformRawFn = function(n, isVal) {
+cls17.transformRawFn = function(n, isVal) {
   var s, unreach, cvtz, ts, th, lg, l, out, argsPrologue, fnBody, len;
   s = n['#scope'];
   s = this.setScope(s);
@@ -14498,7 +14213,7 @@ cls19.transformRawFn = function(n, isVal) {
   this.thisState = th;
   return this.synth_TransformedFn(n, argsPrologue);
 };
-cls19.transformDeclFn = function(n) {
+cls17.transformDeclFn = function(n) {
   var target;
   target = tg(n.id);
   ASSERT.call(this, target, 'unresolved (' + n.id.name + ')');
@@ -14506,7 +14221,7 @@ cls19.transformDeclFn = function(n) {
   n.target = target;
   return n;
 };
-cls19.transformExprFn = function(n) {
+cls17.transformExprFn = function(n) {
   var sn;
   sn = n['#scope'].scopeName;
   if (sn)
@@ -14514,7 +14229,7 @@ cls19.transformExprFn = function(n) {
   n = this.transformRawFn(n, true);
   return n;
 };
-cls19.transformParams = function(list) {
+cls17.transformParams = function(list) {
   var argd, argsmap, e, a, mname, lg;
   if (this.cur.firstNonSimple) {
     return this.transformParamsToArgumentsPrologue(list);
@@ -14566,7 +14281,7 @@ Transformers['ArrowFunctionExpression'] = function(n, isVal) {
 Transformers['FunctionExpression'] = function(n, isVal) {
   return this.transformExprFn(n);
 };
-cls19.transformParamsToArgumentsPrologue = function(list) {
+cls17.transformParamsToArgumentsPrologue = function(list) {
   var a, t, e, prologue, left;
   a = null;
   t = null;
@@ -14601,7 +14316,7 @@ cls19.transformParamsToArgumentsPrologue = function(list) {
   }
   return this.synth_AssigList(prologue);
 };
-cls19.synthFnExprName = function(fnName) {
+cls17.synthFnExprName = function(fnName) {
   var baseName, mname, synthName, num, rsList, synth, l, scope;
   ASSERT.call(this, fnName.synthName === '', 'synth');
   baseName = fnName.name;
@@ -14628,7 +14343,7 @@ cls19.synthFnExprName = function(fnName) {
   } while (synthName = this.rename(baseName, ++num), true);
   fnName.synthName = synthName;
 };
-cls19.e2b = function(ex) {
+cls17.e2b = function(ex) {
   return {type: 'BlockStatement', body: [{type: 'ReturnStatement', argument: ex, start: ex.start, end: ex.end, loc: ex.loc, '#c': {}, '#y': 0}], start: ex.start, end: ex.end, loc: ex.loc, '#c': {}, '#y': 0};
 };
 Transformers['MemberExpression'] = function(n, isVal) {
@@ -14637,15 +14352,18 @@ Transformers['MemberExpression'] = function(n, isVal) {
     n.property = this.tr(n.property, true);
   return n;
 };
-cls19.trSAT_mem = Transformers['MemberExpression'];
-cls19.getTCCache = function(decl) {
+cls17.trSAT_mem = Transformers['MemberExpression'];
+cls17.getTCCache = function(decl) {
   var mname;
   mname = _m(decl.ref.scope.scopeID + ':' + decl.name);
   return decl.ref.scope.reached ? this.cvtz[mname] : HAS.call(this.cvtz, mname) ? this.cvtz[mname] : CHK_NONE;
 };
-cls19.needsTZ = function(decl) {
+cls17.needsTZ = function(decl, isImported) {
   var tc, tz, ownerScope, cur;
-  if (!decl.isTemporal()) {
+  if (decl.isFn()) {
+    return false;
+  }
+  if (!decl.isTemporal() && !isImported) {
     return false;
   }
   tc = this.getTCCache(decl);
@@ -14659,6 +14377,10 @@ cls19.needsTZ = function(decl) {
       tz = true;
       break TZ;
     }
+    else if (isImported) {
+      tz = false;
+      break TZ;
+    }
     if (decl.isClassName()) {
       return tz;
     }
@@ -14669,6 +14391,12 @@ cls19.needsTZ = function(decl) {
       break TZ;
     }
     while (cur.parent !== ownerScope) {
+      if (cur.isSourceLevel() && isImported) {
+        // not asserting for source-scope inequality because a source may import something from itself actually
+        ASSERT.call(this, decl.ref.scope.isSourceLevel(), 'how can an imported decl come at a scope other than a source-scope');
+        tz = true;
+        break TZ;
+      }
       cur = cur.parent;
       ASSERT.call(this, cur, 'reached top before decl owner is reached -- tz test is only allowed in scopes that ' + 'can access the decl');
     }
@@ -14677,7 +14405,7 @@ cls19.needsTZ = function(decl) {
   tz && this.cacheTZ(decl);
   return tz;
 };
-cls19.cacheTZ = function(decl) {
+cls17.cacheTZ = function(decl) {
   var tc;
   tc = this.getTCCache(decl);
   if (tc)
@@ -14686,18 +14414,18 @@ cls19.cacheTZ = function(decl) {
     tc = CHK_NONE;
   this.cvtz[_m(decl.ref.scope.scopeID + ':' + decl.name)] = tc | CHK_T;
 };
-cls19.makeReached = function(target) {
+cls17.makeReached = function(target) {
   ASSERT.call(this, target.reached === null, 'reached used');
   target.reached = this.reachedRef;
 };
-cls19.toResolvedName = function(id, bes, manualActivation) {
+cls17.toResolvedName = function(id, bes, manualActivation) {
   var ref, target, isB, hasTZ;
   ASSERT.call(this, id.type == 'Identifier', 'no');
   ref = id['#ref'];
   target = ref.getDecl_real();
   ASSERT.call(this, target, 'unresolved <' + id.name + '>');
   isB = bes === 'binding';
-  hasTZ = !isB && this.needsTZ(target);
+  hasTZ = !isB && this.needsTZ(target, ref.getDecl_nearest().isImported());
   if (hasTZ) {
     if (target.isClassName()) {
       return this.synthCheckForTZ(target, null, -1);
@@ -14710,7 +14438,7 @@ cls19.toResolvedName = function(id, bes, manualActivation) {
   id.type = '#-ResolvedName.' + bes;
   return id;
 };
-cls19.getDeclFor = function(name, isB) {
+cls17.getDeclFor = function(name, isB) {
   var target, ref;
   ASSERT.call(this, isB === true || isB === false, 'isB');
   target = null;
@@ -14723,30 +14451,30 @@ cls19.getDeclFor = function(name, isB) {
   }
   return target;
 };
-cls19.synthCheckForTZ = function(target, t, num) {
+cls17.synthCheckForTZ = function(target, t, num) {
   this.accessJZ();
   return {liq: t, idx: num, kind: 'tzchk', type: '#Untransformed', target: target};
 };
-cls19.releaseTemp = function(t) {
+cls17.releaseTemp = function(t) {
   ASSERT.call(this, t.occupied, 'unoccupied temp');
   t.occupied = 0;
   this.tempStack.push(t);
   return t;
 };
-cls19.saveInTemp = function(expr, list) {
+cls17.saveInTemp = function(expr, list) {
   var t, tsave;
   t = this.allocTemp();
   tsave = this.synth_TempSave(t, expr);
   tsave && list.push(tsave);
   return t;
 };
-cls19.createTemp = function() {
+cls17.createTemp = function() {
   var liq;
   liq = this.cur.scs.gocLG('<t>').newL();
   liq.name = 't';
   return this.synth_Temp(liq);
 };
-cls19.allocTemp = function() {
+cls17.allocTemp = function() {
   var t;
   t = null;
   if (this.tempStack.length !== 0)
@@ -14826,7 +14554,7 @@ Transformers['Identifier'] = function(n, isVal) {
   n = this.toResolvedName(n, 'ex');
   return n;
 };
-cls19.trSAT_name = function(n, isVal) {
+cls17.trSAT_name = function(n, isVal) {
   n = this.toResolvedName(n, 'sat');
   return n;
 };
@@ -15052,7 +14780,7 @@ Transformers['UpdateExpression'] = function(n, isVal) {
   }
   return n;
 };
-cls19.ac = function(to, name, from) {
+cls17.ac = function(to, name, from) {
   if (from === null) {
     return;
   }
@@ -15062,7 +14790,7 @@ cls19.ac = function(to, name, from) {
   else
     to[name].mergeWith(from);
 };
-cls19.gec0 = function(cb, n) {
+cls17.gec0 = function(cb, n) {
   return HAS.call(cb, n) ? cb[n] : null;
 };
 Transformers['TemplateLiteral'] = function(n, isVal) {
@@ -15094,7 +14822,7 @@ Transformers['VariableDeclaration'] = function(n, isVal) {
   }
   return s.length === 1 ? s[0] : this.synth_AssigList(s);
 };
-cls19.transformDtor = function(n, kind) {
+cls17.transformDtor = function(n, kind) {
   var assig, left, right;
   assig = null;
   left = n.id;
@@ -15130,7 +14858,7 @@ Transformers['TryStatement'] = function(n, isVal) {
   }
   return n;
 };
-cls19.transformCatch = function(n) {
+cls17.transformCatch = function(n) {
   var a, s;
   a = null;
   s = this.setScope(n['#scope']);
@@ -15151,7 +14879,7 @@ cls19.transformCatch = function(n) {
   this.setScope(s);
   return n;
 };
-cls19.transformCatchArgs = function(n) {
+cls17.transformCatchArgs = function(n) {
   var l;
   ASSERT.call(this, !this.cur.argIsSimple, 'catch');
   l = this.synth_SynthAssig(n.param, this.synth_SynthName(this.cur.catchVar), true);
@@ -15161,19 +14889,19 @@ function VirtualResourceResolver(pathMan) {
   ResourceResolver.call(this, pathMan);
   this.fsMap = {};
 }
-var cls22;
-cls22 = VirtualResourceResolver.prototype = createObj(ResourceResolver.prototype);
-cls22.asNode = function(uri) {
+var cls15;
+cls15 = VirtualResourceResolver.prototype = createObj(ResourceResolver.prototype);
+cls15.asNode = function(uri) {
   var newParser;
   ASSERT.call(this, this.has(uri), 'resource not found (' + uri + ')');
   newParser = new Parser(this.fsMap[_m(uri)], {sourceType: 'module'});
   newParser.bundleScope = this.bundleScope;
   return newParser.parseProgram();
 };
-cls22.has = function(uri) {
+cls15.has = function(uri) {
   return HAS.call(this.fsMap, _m(uri));
 };
-cls22.set = function(uri, value) {
+cls15.set = function(uri, value) {
   ASSERT.call(this, !this.has(uri), 'has');
   this.fsMap[_m(uri)] = value;
 };
@@ -15202,11 +14930,11 @@ function normalize(str) {
   }
   return list.join('/');
 }
-var RRcls, cls10;
+var RRcls, cls16;
 RRcls = ResourceResolver.prototype;
-cls10 = FileResourceResolver.prototype = createObj(RRcls);
+cls16 = FileResourceResolver.prototype = createObj(RRcls);
 ;
-cls10.asNode = function(uri) {
+cls16.asNode = function(uri) {
   var src, newParser, n;
   uri = normalize(uri);
   src = this.fs.readFileSync(uri, 'utf-8').toString();
@@ -15217,19 +14945,19 @@ cls10.asNode = function(uri) {
   n['#scope']['#loader'] = '';
   return n;
 };
-cls10.hasInCache = function(uri) {
+cls16.hasInCache = function(uri) {
   uri = normalize(uri);
   return RRcls.hasInCache.call(this, uri);
 };
-cls10.loadCached = function(uri) {
+cls16.loadCached = function(uri) {
   uri = normalize(uri);
   return RRcls.loadCached.call(this, uri);
 };
-cls10.cache = function(uri, n) {
+cls16.cache = function(uri, n) {
   uri = normalize(uri);
   return RRcls.cache.call(this, uri, n);
 };
-cls10.loadNew = function(uri) {
+cls16.loadNew = function(uri) {
   uri = normalize(uri);
   return RRcls.loadNew.call(this, uri);
 };
@@ -15250,7 +14978,6 @@ cls10.loadNew = function(uri) {
   exports.Emitter = Emitter;
   exports.Transformer = Transformer;
   exports.PathMan = PathMan;
-  exports.AutoImex = AutoImex;
   exports.VirtualResourceResolver = VirtualResourceResolver;
   exports.Bundler = Bundler;
   exports.ResourceResolver = ResourceResolver;

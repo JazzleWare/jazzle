@@ -2,7 +2,6 @@
   import {INTBITLEN, D_INTBITLEN, M_INTBITLEN} from './int-constants.js';
   import {isIDHead, isIDBody} from './ctype.js';
 
-function char2int(c) { return c.charCodeAt(0); }
 var hexD = [ '1', '2', '3', '4', '5',
              '6', '7', '8', '9', 'a', 'b', 'c', 'd', 'e', 'f' ];
 hexD = ['0'].concat(hexD);
@@ -392,4 +391,4 @@ function isDirective(n) {
   );
 }
 
- export {char2int, hexD, hex, hex2, fromRunLenCodes, asBitmap, makeAcceptor, arorev, cp2sp, core, NL, hex2num, createObj, getIDName, isIDName, CB, cmn_ac, cmn_erase, cmn, isAssigList, cpReg, isCharSeq, isTemp, isInteger, belongs1to2, isResolvedName, vlq1sh31, tzc, cvc, tg, iskw, vlq, findElem, needsConstCheck, octStr2num, surrogate, isDirective};
+ export { hexD, hex, hex2, fromRunLenCodes, asBitmap, makeAcceptor, arorev, cp2sp, core, NL, hex2num, createObj, getIDName, isIDName, CB, cmn_ac, cmn_erase, cmn, isAssigList, cpReg, isCharSeq, isTemp, isInteger, belongs1to2, isResolvedName, vlq1sh31, tzc, cvc, tg, iskw, vlq, findElem, needsConstCheck, octStr2num, surrogate, isDirective};

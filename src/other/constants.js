@@ -1,4 +1,5 @@
-  import {char2int} from './util.js';
+
+function char2int(c) { return c.charCodeAt(0); }
 
 var CH_1 = char2int('1'),
     CH_2 = char2int('2'),
